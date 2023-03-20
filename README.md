@@ -1,2 +1,2 @@
 # AlpacaRL
-A simplified deep reinforcement learning library for stock and crypto trading in Alpaca Trade API.
+AlpacaRL is a python library that enables users to train, test, and deploy deep reinforcement learning algorithms for stocks and cypto trading using Alpaca API. RL algorithms are implemented using PyTorch and stable-baselines3.
