@@ -1,5 +1,5 @@
 <div align="center">
-<img align="center" src=assets/alpacarl.jpg width="55%"/>
+<img align="center" src=assets/alpacarl.jpg width="75%"/>
 </div>
 
 # AlpacaRL
