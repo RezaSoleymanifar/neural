@@ -1,5 +1,5 @@
 <div align="center">
-<img align="center" src=figs/test.jpg width="100%"/>
+<img align="center" src=figs/alpacarl.jpg width="100%"/>
 </div>
 
 [![Downloads](https://pepy.tech/badge/finrl)](https://pepy.tech/project/finrl)
@@ -10,7 +10,7 @@
 ![License](https://img.shields.io/github/license/AI4Finance-Foundation/finrl.svg?color=brightgreen)
 
 # AlpacaRL
-AlpacaRL is a python library for simplified training and deploying deep reinforcement algorithms to trade stocks and cryptocurrencies in Alpaca API.
+AlpacaRL is a python library for training and deploying deep reinforcement learning algorithms to trade stocks and cryptocurrencies in Alpaca API.
 
-Price, quotes and trade data is provided on a granular level using Alpaca API. stable version of DRL algorithms are implemented using PyTorch and stable-baselines3.
+AlpacaRL offers end-to-end suport from data collection, training, backtesting, and final placement of orders in Alpaca API. Stable version of DRL algorithms are implemented using PyTorch and stable-baselines3.
 
