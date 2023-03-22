@@ -9,3 +9,14 @@ dh = DataHandler()
 dh.set_symbols('Dow Jones')
 prices = dh.prices(start, end, interval)
 print(prices)
+
+env = CustomEnv()
+env.connect()
+observation = env.reset()
+for t in range(100):
+    action = env.action_space.sample()  # choose a random action
+    observation, reward, done, info = env.step(action)
+    if done:
+        print(f"Episode finished after {t+1} timesteps")
+        break
+env.render()
