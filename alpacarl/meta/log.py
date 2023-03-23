@@ -11,4 +11,4 @@ if not os.path.exists(log_dir):
 
 logging.basicConfig(filename=os.path.join(log_dir, "alpacarl.log"), level=logging.INFO)
 logger = logging.getLogger(__name__)
-logger.info('Logging configured')
+logger.info('Logging configured.')

@@ -7,7 +7,7 @@ end = "2020-06-08"  # End time, max=today's date
 
 dh = DataHandler()
 dh.connect()
-dh.symbols = 'Dow Jones'
+dh.symbols = 'Dow Jone'
 print(dh.symbols)
 
 
