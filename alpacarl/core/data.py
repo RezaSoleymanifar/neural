@@ -2,10 +2,13 @@ from typing import List, Union, Tuple
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import StandardScaler
-from alpacarl.meta.config import ALPACA_API_KEY, ALPACA_API_SECRET, ALPACA_API_BASE_URL, NYSE_START, NYSE_END
+from alpacarl.meta.config import ALPACA_API_KEY, ALPACA_API_SECRET, NYSE_START, NYSE_END
 from pytickersymbols import PyTickerSymbols
+import ta
+import exchange_calendars
 from alpaca_trade_api.rest import REST
 from alpacarl.meta import log
+
 
 class DataHandler:
     def __init__(self) -> None:
@@ -14,15 +17,13 @@ class DataHandler:
         self._symbols = None
         self.api = None
 
-    def connect(self) -> None:
-        self.api = REST(self.key, self.secret, ALPACA_API_BASE_URL, api_version='v2')
+    def connect(self, endpoint: str) -> None:
+        self.api = REST(self.key, self.secret, endpoint, api_version='v2')
         # check API connection
         try:
-            account_info = self.api.get_account()
-            if account_info.status_code == 200:
-                log.logger.info("Connection successful: {}".format(ALPACA_API_BASE_URL))
-            else:
-                log.logger.warning("Connection returned status code: {}".format(account_info.status_code))
+            account = self.api.get_account()
+            if account.status == 'ACTIVE':
+                log.logger.info("Connection successful: {}".format(endpoint))
         except Exception as e:
             log.logger.exception("Error connecting to API: {}".format(str(e)))
         return None
@@ -40,6 +41,7 @@ class DataHandler:
             if identifier.lower() in indices:
                 self._symbols = [stock['symbol'] for stock in list(stocks_info.get_stocks_by_index(identifier))]
             else:
+                log.logger.exception("Supported indices: {}".format(indices))
                 raise ValueError(f"{identifier} is not found in indices.")
         else:
             self._symbols = identifier
@@ -55,7 +57,7 @@ class DataHandler:
 
     @staticmethod
     def _resample(df: pd.DataFrame, interval: str) -> pd.DataFrame:
-        # forward fills then backward fills in case first row is null.
+        # resamples and forward fills missing intervals.
         map = {'1Min':'1T', '5Min':'5T', '15Min': '15T', '1H': '1H'}
         resampled = df.resample(map[interval]).ffill()
         return resampled
@@ -64,14 +66,18 @@ class DataHandler:
           -> Tuple[pd.DataFrame, np.ndarray, StandardScaler]:
         # get price data
         symbols = symbols if symbols else self.symbols
-        bars = api.get_bars(symbols, interval, start, end, adjustment='raw').df
-        bars = df.tz_convert('America/New_York')
+        log.logger.info("Downloading data for {} symbols...".format(len(symbols)))
+        bars = self.api.get_bars(symbols, interval, start, end, adjustment='raw').df
+        bars = bars.tz_convert('America/New_York')
+        log.logger.info("Downloading {:,.2f} records successful.".format(len(bars)))
 
-        # resample and forward fill missing intervals then add indicators
+
+        # resample intervals then add indicators
+        log.logger.info("Adding technical indicators and resampling...")
         df = pd.concat([self._indicators(self._resample(group[1], interval)) for group in bars.groupby('symbol')], axis = 1)
 
         # filter NYSE working days
-        nyse = ec.get_calendar("NYSE")
+        nyse = exchange_calendars.get_calendar("NYSE")
         working_days = nyse.sessions_in_range(start, end).normalize()
         df = df[df.index.floor('D').tz_localize(None).isin(working_days)]
 
@@ -85,9 +91,11 @@ class DataHandler:
 
         # save prices
         prices = df['close']
+        prices.columns = symbols
 
         # standardize 
         scaler = StandardScaler()
         features = scaler.fit_transform(df)
-
+        n, m = features.shape
+        log.logger.info("Feature engineering successful. quantity:{:,.2f}, dimensionality:{:,.2f}".format(n, m))
         return prices, features, scaler
