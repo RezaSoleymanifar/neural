@@ -1,9 +1,10 @@
 import pandas as pd
 import gym
-import numpy
+import numpy as np
 
 class BaseEnv(gym.Env):
-    def __init__(self, prices: np.ndarray, features: np.ndarray, cash: float = 1e6, trade_ratio: float = 2e-2) -> None:
+    def __init__(self, prices: np.ndarray, features: np.ndarray,\
+                  cash: float = 1e6, min_trade = 1, trade_ratio: float = 2e-2) -> None:
         self.prices = prices
         self.features = features
         self.index = 0
@@ -13,6 +14,7 @@ class BaseEnv(gym.Env):
         self.n_stocks, self.steps = prices.shape
         self.stocks = np.zeros(self.n_stocks)
         self.holds = np.zeros(self.n_stocks)
+        self.min_trade = min_trade
         self.max_trade = self.get_max_trade(trade_ratio)
         self.action_space = spaces.Box(low=-1, high=1, shape=(self.n_stocks,), dtype=np.float32)
         # state = (cash, self.stocks * self.prices, self.holds, self.features) normalized relatively
@@ -24,15 +26,20 @@ class BaseEnv(gym.Env):
         #action values inside (-threshold, threshold) are parsed as hold
         fraction = (abs(action) - threshold)/(1- threshold)
         return fraction * self.max_trade * np.sign(action) if fraction > 0 else 0
-
         
     def state(self):
-        state = np.hstack(self.cash / self.init_cash,\
-                           (self.stocks * self.prices) / self.init_cash, self.holds / self.steps, self.features)
+        # relative scaling that is agnosic to initial_cash value
+        # features won't deviate too much from (0, 1) 
+        cash_ = self.cash / self.init_cash
+        stocks_ = self.stocks * self.prices / self.init_cash
+        # saturates after 1e3 steps of holding
+        holds_ = np.tanh(self.holds * 1e-3)
+        state = np.hstack(cash_, stocks_, holds_, holds_, self.features)
         return state
     
     def get_max_trade(self):
-        # usually 2% of initial cash per trade divided by number of stocks
+        # usually 2% of initial cash per trade per stocks
+        # recommended initial_cash >= n_stocks/trade_ratio. Trades bellow $1 is clipped to 1 (API constraint).
         max_trade = (self.trade_ratio * self.init_cash)/self.n_stocks
         return max_trade
 
@@ -51,6 +58,7 @@ class BaseEnv(gym.Env):
         for stock, action in enumerate(parsed_actions):
             if action > 0 and self.cash > 0: # buy
                 buy = min(self.cash, action)
+                buy = min(buy, self.min_trade)
                 quantity = buy/self.prices[stock]
                 self.stocks[stock] += quantity
                 self.cash =- buy
@@ -87,8 +95,6 @@ class Scaler:
         self.feature_scale = feature_scale
 
 
-    
-    def reward(self, reward)
 
 class RewardShaper:
     def __init__(self) -> None:
