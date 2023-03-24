@@ -19,13 +19,12 @@ with open('./assets/scalers/scaler.pickle', 'wb') as f:
 with open('./assets/scalers/scaler.pickle', 'rb') as f:
     scaler = pickle.load(f)
 
-
 env = TrainEnv(prices, features)
+
 obs = env.reset()
-for t in range(100):
+while True:
     action = env.action_space.sample()  # choose a random action
-    obs, reward, done, _ = env.step(action)
+    obs, reward, done, history = env.step(action)
     if done:
-        print(f"Episode finished after {t+1} timesteps")
-        break
-env.render()
+        obs = env.reset()
+

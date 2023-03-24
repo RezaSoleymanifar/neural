@@ -1,8 +1,10 @@
-def sharpe():
-    pass
+import pandas as pd
 
-def return_():
-    pass
+def sharpe(assets_hist, base=0):
+    hist = pd.Series(assets_hist)
+    returns = hist.pct_change().dropna()
+    val = (returns.mean()-base)/returns.std()
+    return val
 
 class RewardShaper:
     def __init__(self) -> None:
