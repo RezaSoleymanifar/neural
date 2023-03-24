@@ -10,7 +10,5 @@
 ![License](https://img.shields.io/github/license/AI4Finance-Foundation/finrl.svg?color=brightgreen)
 
 # AlpacaRL
-AlpacaRL is a deep reinforcement learning library for high frequency trading in Alpaca API.
-
-AlpacaRL offers end-to-end suport from development to deployment in Alpaca API. Stable version of DRL algorithms are implemented using PyTorch and stable-baselines3.
+AlpacaRL is a deep reinforcement learning library for high frequency trading in Alpaca API. AlpacaRL offers end-to-end suport from development to deployment. Stable versions of DRL algorithms are implemented using PyTorch and stable-baselines3.
 

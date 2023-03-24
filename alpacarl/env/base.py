@@ -2,19 +2,18 @@ import pandas as pd
 from gym import spaces, Env
 import numpy as np
 from alpacarl.meta import log
-from alpacarl.aux.tools import sharpe
+from alpacarl.aux.tools import sharpe, print_
 from collections import defaultdict
 
 
 class TrainEnv(Env):
-    def __init__(self, prices: np.ndarray, features: np.ndarray,\
-                  init_cash: float = 1e6, min_trade = 1, trade_ratio: float = 2e-2, verbose = True) -> None:
+    def __init__(self, prices: pd.DataFrame, features: np.ndarray,\
+                  init_cash: float = 1e6, min_trade = 1, trade_ratio: float = 2e-2) -> None:
         self.prices = prices
         self.features = features
         self.index = None
         self.init_cash = init_cash
         self.cash = None
-        self.verbose = verbose
         self.assets = None
         self.steps, self.n_stocks = prices.shape
         self.positions = None #quantity
@@ -28,7 +27,7 @@ class TrainEnv(Env):
         self.history = defaultdict(list)
         
     def _parse_action(self, action: float, threshold = 0.15) -> float:
-        #  action value in (-threshold, +threshold) is parsed as hold
+        # action value in (-threshold, +threshold) is parsed as hold
         fraction = (abs(action) - threshold)/(1- threshold)
         return fraction * self.max_trade * np.sign(action) if fraction > 0 else 0
    
@@ -39,7 +38,7 @@ class TrainEnv(Env):
         # value of positions scaled by initial cash
         positions_ = (self.positions * self.prices.iloc[self.index]) / self.init_cash
 
-        # sacling ordinal holds. saturates after 1e3 steps of holding.
+        # scaling integer hold values. saturates after 1e3 steps of holding.
         holds_ = np.tanh(self.holds * 1e-3)
         state = np.hstack([cash_, positions_, holds_, self.features[self.index]])
         return state
@@ -55,17 +54,22 @@ class TrainEnv(Env):
         self.history['assets'].append(self.assets)
 
     def reset(self):
-        log.logger.info('Environment initialized. Steps in environment: {self.steps:,}')
+        log.logger.info(f'Initializing environment. Steps in environment: {self.steps:,}, symbols: {self.n_stocks}')
+
+        # initializing env vars
         self.index = 0
         self.cash = self.init_cash
         self.positions = np.zeros(self.n_stocks, dtype=np.float64)
         self.holds = np.zeros(self.n_stocks, dtype=np.int32)
         self.assets = self.cash
+
+        # update env vars history
         self._update_hist()
+        self.render()
         return self._state()
 
     def step(self, actions):
-        # 0 or some value in (-self.max_trade, +self.max_trade)
+        # parsed action is 0 or some value in (-self.max_trade, +self.max_trade)
         parsed_actions = [self._parse_action(action) for action in actions]
         self.index += 1
 
@@ -98,17 +102,31 @@ class TrainEnv(Env):
         done = self.index == self.steps - 1
 
         # log strategy performance
-        if (self.verbose and not self.index % (self.steps//10)) or done:
+        if not self.index % (self.steps//20) or done:
             self.render(done)
         return self._state(), reward, done, self.history
         
-    def render(self, done):
+    def render(self, done:bool = False) -> None:
+        # print header at env start
+        if not self.index:
+            # print results in a tear sheet format
+            print_(['Progress', 'Return','Sharpe ratio', 'Assets', 'Positions', 'Cash'], header = True)
+            return None
+        
+        # value of positions in portfolio
         positions_ = self.positions @ self.prices.iloc[self.index]
         return_ = (self.assets-self.init_cash)/self.init_cash
+
         # sharpe ratio filters volatility to reflect investor skill
         sharpe_ = sharpe(self.history['assets'])
-        
-        log.logger.info(f"""Progress: {(self.index/self.steps):<.0%}, return: {return_:<.2f}, Sharpe ratio: {sharpe_:<.2f},
-                            assets: ${self.assets:<,.2f}, positions: ${positions_:<,.2f},  cash: ${self.cash:<,.2f}""")
+        progress_ = self.index/self.steps
+
+        # add performance metrics to tear sheet
+        print_([f'{progress_:.0%}', f'{return_:.2f}', f'{sharpe_:.2f}',\
+                                f'${self.assets:,.2f}', f'${positions_:,.2f}', f'${self.cash:,.2f}'])
+                
         if done:
             log.logger.info('Episode terminated.')
+            log.logger.info(f'Progress: {progress_:<.0%}, return: {return_:<.2f}, Sharpe ratio: {sharpe_:<.2f} ' \
+                            f'assets: ${self.assets:<,.2f}, positions: ${positions_:<,.2f},  cash: ${self.cash:<,.2f}')
+        return None
