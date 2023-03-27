@@ -6,7 +6,7 @@ from alpacarl.aux.tools import sharpe, print_
 from collections import defaultdict
 
 
-class TrainEnv(Env):
+class BaseEnv(Env):
     def __init__(self, prices: pd.DataFrame, features: np.ndarray,\
                   init_cash: float = 1e6, min_trade = 1, trade_ratio: float = 2e-2) -> None:
         self.prices = prices
@@ -71,10 +71,6 @@ class TrainEnv(Env):
     def step(self, actions):
         # parsed action is 0 or some value in (-self.max_trade, +self.max_trade)
         parsed_actions = [self._parse_action(action) for action in actions]
-        self.index += 1
-
-        # increase hold time of purchased stocks
-        self.holds[self.positions > 0] += 1
 
         # iterate over parsed actions and execute.
         for stock, action in enumerate(parsed_actions):
@@ -91,8 +87,12 @@ class TrainEnv(Env):
                 self.cash += sell
                 self.holds[stock] = 0
 
+        # next state
+        self.index += 1
+        # increase hold time of purchased stocks
+        self.holds[self.positions > 0] += 1
+        # new asset value
         assets = self.cash + self.positions @ self.prices.iloc[self.index]
-
         # rewards are agnostic to initial cash value
         reward = (assets - self.assets)/self.init_cash
         self.assets = assets

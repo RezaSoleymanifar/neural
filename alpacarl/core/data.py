@@ -1,11 +1,10 @@
-from typing import List, Union, Tuple
+from typing import List, Union
 import pandas as pd
 import numpy as np
-from sklearn.preprocessing import StandardScaler
-from alpacarl.meta.config import ALPACA_API_KEY, ALPACA_API_SECRET, NYSE_START, NYSE_END
-from pytickersymbols import PyTickerSymbols
-import ta
+import os
 import exchange_calendars
+from pytickersymbols import PyTickerSymbols
+from alpacarl.meta.config import ALPACA_API_KEY, ALPACA_API_SECRET
 from alpaca_trade_api.rest import REST
 from alpacarl.meta import log
 
@@ -47,55 +46,58 @@ class DataHandler:
             self._symbols = identifier
 
     @staticmethod
-    def _indicators(df: pd.DataFrame) -> pd.DataFrame:
-        # trend
-        df['macd'] = ta.trend.macd(df['close'])
-        df['cci'] = ta.trend.cci(high = df['high'], low= df['low'], close=df['close'])
-        # momentum
-        df['rsi'] = ta.momentum.rsi(close = df['close'])
-        return df
-
-    @staticmethod
-    def _resample(df: pd.DataFrame, interval: str) -> pd.DataFrame:
-        # resamples and forward fills missing intervals.
-        map = {'1Min':'1T', '5Min':'5T', '15Min': '15T', '1H': '1H'}
-        resampled = df.resample(map[interval]).ffill()
+    def preprocess(df, date, interval):
+        # API returns no row for intervals with have no price change
+        # forward filling will recover missing data
+        start = pd.Timestamp(date, tz='America/New_York') + pd.Timedelta('9:30:00')
+        end = pd.Timestamp(date, tz='America/New_York') + pd.Timedelta('15:59:00')
+        index = pd.date_range(start=start, end=end, freq=interval)
+        # creates rows for missing intervals
+        resampled = df.reindex(index, method='ffill')
+        if resampled.isna().all().all():
+            log.logger.exception('Data does not have entries in NYSE market hours.')
+            raise ValueError
+        # backward fills if first row is nan
+        if resampled.isna().any().any():
+            resampled = resampled.bfill()
         return resampled
 
-    def featurize(self, start: str, end: str , interval: str='15Min', symbols: Union[str, List[str]] = None)\
-          -> Tuple[pd.DataFrame, np.ndarray, StandardScaler]:
-        # get price data
+    def download(self, start: str, end: str, interval: str, dir: str = None) -> Union[None, pd.DataFrame]:
         symbols = symbols if symbols else self.symbols
-        log.logger.info("Downloading data for {} symbols...".format(len(symbols)))
-        bars = self.api.get_bars(symbols, interval, start, end, adjustment='raw').df
-        bars = bars.tz_convert('America/New_York')
-        log.logger.info("Downloading {:,.2f} records successful.".format(len(bars)))
+        if dir is not None:
+            if not os.path.exists(dir):
+                os.makedirs(dir)
+            else:
+                if os.path.exists(os.path.join(dir, 'data.csv')):
+                    header = False
+                else:
+                    header = True
 
-
-        # resample intervals then add indicators
-        log.logger.info("Adding technical indicators and resampling...")
-        df = pd.concat([self._indicators(self._resample(group[1], interval)) for group in bars.groupby('symbol')], axis = 1)
-
-        # filter NYSE working days
         nyse = exchange_calendars.get_calendar("NYSE")
-        working_days = nyse.sessions_in_range(start, end).normalize()
-        df = df[df.index.floor('D').tz_localize(None).isin(working_days)]
+        working_days = nyse.sessions_in_range(start, end).strftime('%Y-%m-%d')
+        if dir is None:
+            data = list()
 
-        # filter NYSE trading hours (all symbols must trade in NYSE hours)
-        df = df[(pd.Timestamp(NYSE_START).time() <= df.index.time) &\
-         (df.index.time < pd.Timestamp(NYSE_END).time())]
+        log.logger.info(f"Downloading {interval} data for {len(self.symbols)} symbols, from {start} to {end}")
+        for day in working_days:
+            # start and end are in UTC. ET is -04:00 from March to November and -05:00 otherwise.
+            # We pad start by one hour to account for daylight saving time.
+            # after tz conversion from Nov. to March, 8:30-9:30 is extra and from March to Nov. 16:00-17:00 is extra.
+            # padded 1 hour is automatically dropped in resampling
+            start = f'{day}T8:30:00-05:00'
+            end = f'{day}T16:00:00-05:00'
+            bars = api.get_bars(self.symbols, interval, start, end, adjustment='raw', limit=None).df
+            bars = bars.tz_convert('America/New_York')
+            features = pd.concat([preprocess(group[1], day, interval) for group in bars.groupby('symbol')], axis = 1)
+            features = features.select_dtypes(include=np.number)
+            if dir is not None:
+                features.to_csv(os.path.join(dir, 'data.csv'), index=True, mode='a', header = header)
+                header = False
+            else:
+                data.append(features)
         
-        # drop null and non-number values
-        df = df.select_dtypes(include=np.number)
-        df.dropna(inplace=True)
+        return pd.concat(data) if dir is None else None
 
-        # save prices
-        prices = df['close']
-        prices.columns = symbols
-
-        # standardize 
-        scaler = StandardScaler()
-        features = scaler.fit_transform(df)
-        n, m = features.shape
-        log.logger.info("Feature engineering successful. quantity:{:,.2f}, dimensionality:{:,.2f}".format(n, m))
-        return prices, features, scaler
+    def update(self, dir):
+        # updates dataset in directory
+        pass
