@@ -16,11 +16,3 @@ def print_(entries: List, style='banner', align='left', width = 15, header = Fal
         row = tableprint.row(entries, style=style, align=align, width=width)
     print(row)
     return None
-
-class RewardShaper:
-    def __init__(self) -> None:
-        pass
-    def discount(self):
-        pass
-    def standardize(self):
-        pass

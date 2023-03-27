@@ -1,45 +1,57 @@
 import pandas as pd
-from gym import spaces, Env
+from gym import spaces, Env, ActionWrapper
 import numpy as np
 from alpacarl.meta import log
 from alpacarl.aux.tools import sharpe, print_
+from alpacarl.core.data import PeekableDataWrapper, row_generator
 from collections import defaultdict
 
 
 class BaseEnv(Env):
-    def __init__(self, prices: pd.DataFrame, features: np.ndarray,\
+    def __init__(self, data: pd.DataFrame = None, dir: str = None, chunk: int = None,\
                   init_cash: float = 1e6, min_trade = 1, trade_ratio: float = 2e-2) -> None:
-        self.prices = prices
-        self.features = features
+
+        if data is not None and dir is not None:
+            log.logger.error(("Cannot provide both file path and file object simultaneously."))
+            raise ValueError
+        elif data is None and dir is None:
+            log.logger.error(("Either file path or a file object must be provided."))
+            raise ValueError
+        elif self.dir is not None:
+            self.data = PeekableDataWrapper(row_generator(dir, chunk))
+        else:
+            self.data = PeekableDataWrapper(data)
+        
         self.index = None
         self.init_cash = init_cash
         self.cash = None
         self.assets = None
-        self.steps, self.n_stocks = prices.shape
+        self.steps, self.n_stocks, self.n_features = self.summarize()
         self.positions = None #quantity
         self.holds = None
         self.min_trade = min_trade
         self.max_trade = self._max_trade(trade_ratio)
-        self.action_space = spaces.Box(low=-1, high=1, shape=(self.n_stocks,), dtype=np.float32)
-        # state = (cash, self.positions * self.prices[self.index], self.holds, self.features[self.index])
-        self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape = (1 + self.n_stocks + self.n_stocks\
-                                                       + self.features.shape[1], ), dtype=np.float32)
+        # abs(action) = sell/buy amount, sign(action) = +1 buy, -1 sell. Action = 0 is hold.
+        self.action_space = spaces.Box(low=-np.inf, high=np.inf, shape=(self.n_stocks,), dtype=np.float32)
+        # state = (cash, self.positions, self.holds, self.features[self.index])
+        self.observation_space = spaces.Dict({
+            'cash':spaces.Box(low=0, high=np.inf, shape = (1,), dtype=np.float32),
+            'positions': spaces.Box(low=0, high=np.inf, shape = (self.n_stocks,), dtype=np.int32),
+            'holds': spaces.Box(low=0, high=np.inf, shape = (self.n_stocks,), dtype=np.int32),
+            'features': spaces.Box(low=-np.inf, high=np.inf, shape = (self.n_features,), dtype=np.float32)
+        })
+
         self.history = defaultdict(list)
-        
-    def _parse_action(self, action: float, threshold = 0.15) -> float:
-        # action value in (-threshold, +threshold) is parsed as hold
-        fraction = (abs(action) - threshold)/(1- threshold)
-        return fraction * self.max_trade * np.sign(action) if fraction > 0 else 0
+
+    def summarize(self):
+        steps = len(self.data)
+        row = self.data.peek()
+        n_stocks = len(row['close'])
+        n_features = len(row)
+        return steps, n_stocks, n_features
    
     def _state(self) -> np.ndarray:
-        # scaling that is agnosic to initial_cash value.
-        cash_ = self.cash / self.init_cash
-
-        # value of positions scaled by initial cash
-        positions_ = (self.positions * self.prices.iloc[self.index]) / self.init_cash
-
-        # scaling integer hold values. saturates after 1e3 steps of holding.
-        holds_ = np.tanh(self.holds * 1e-3)
+        
         state = np.hstack([cash_, positions_, holds_, self.features[self.index]])
         return state
     
@@ -54,6 +66,11 @@ class BaseEnv(Env):
         self.history['assets'].append(self.assets)
 
     def reset(self):
+        if self.data is not None:
+            if dir is not None:
+                ra
+            self.data = DataWrapper(self.data)
+        
         log.logger.info(f'Initializing environment. Steps in environment: {self.steps:,}, symbols: {self.n_stocks}')
 
         # initializing env vars
@@ -130,3 +147,17 @@ class BaseEnv(Env):
             log.logger.info(f'Progress: {progress_:<.0%}, return: {return_:<.2f}, Sharpe ratio: {sharpe_:<.2f} ' \
                             f'assets: ${self.assets:<,.2f}, positions: ${positions_:<,.2f},  cash: ${self.cash:<,.2f}')
         return None
+    
+    class FractionalActionWrapper(ActionWrapper):
+        # maps actions in (-1, 1) to buy/sell/hold actions
+        def __init__(self, env: Env, threshold = 0.15):
+            super().__init__(env)
+            self.threshold = threshold
+
+        def _parse_action(self, action: float) -> float:
+            # action value in (-threshold, +threshold) is parsed as hold
+            fraction = (abs(action) - self.threshold)/(1- self.threshold)
+            return fraction * self.max_trade * np.sign(action) if fraction > 0 else 0
+        
+        def action(self, action):
+            pass

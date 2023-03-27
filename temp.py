@@ -4,15 +4,15 @@ from alpacarl.env.base import BaseEnv
 
 
 interval = '1Min' # "1Min", "5Min", "15Min", "1H"
-start = "2017-01-01"  # start time, min="2017-01-01"
-end = "2017-02-01"  # End time, max=today
+start = "2018-01-02"  # start time, min="2017-01-01"
+end = "2023-03-27"  # End time, max=today
 
 dh = DataHandler()
 dh.connect(ALPACA_API_PAPER_URL)
 dh.symbols = 'Dow Jones'
-dh.download(start, end, interval, dir = './assets/data')
+# dh.download(start, end, interval, dir = './assets/data')
 
-env = BaseEnv(features)
+# env = BaseEnv(features)
 
 # obs = env.reset()
 # while True:
