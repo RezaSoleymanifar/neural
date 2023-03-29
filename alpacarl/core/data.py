@@ -4,7 +4,7 @@ import numpy as np
 import os
 import pandas_market_calendars as market_calendars
 from pytickersymbols import PyTickerSymbols
-from alpacarl.meta.config import ALPACA_API_KEY, ALPACA_API_SECRET, ALPACA_API_PAPER_URL
+from alpacarl.meta.config import ALPACA_API_KEY, ALPACA_API_SECRET, ALPACA_API_ENDPOINT, ALPACA_API_ENDPOINT_PAPER
 from alpaca_trade_api.rest import REST
 from alpacarl.meta import log
 from tqdm import tqdm
@@ -13,10 +13,13 @@ from alpacarl.meta import log
 from more_itertools import peekable
 
 
-class DataFetcher:
-    def __init__(self) -> None:
-        self.key = ALPACA_API_KEY
-        self.secret = ALPACA_API_SECRET
+class AlpacaClient:
+    def __init__(self, key: str = None, secret:str = None, paper = False) -> None:
+        # if paper = True tries connecting to paper account endpoint
+        self.key =  key if key is not None else ALPACA_API_KEY
+        self.secret = secret if secret is not None else ALPACA_API_SECRET
+        self.endpoint = ALPACA_API_ENDPOINT if not paper else ALPACA_API_ENDPOINT_PAPER
+
         self._symbols = None
         self.api = None
         stocks_info = PyTickerSymbols()
@@ -34,6 +37,15 @@ class DataFetcher:
         self.get_symbols_by_industry = lambda industry: [stock['symbol'] for stock in stocks_info.get_stocks_by_industry(industry)]
 
         self.assets = self.fetch_assets()   
+
+    def set_credentials(self, key: str, secret: str) -> None:
+        self.key = key
+        self.secret = secret
+        return None
+    
+    def set_endpoint(self, endpoint: str) -> None:
+        self.endpoint = endpoint
+        return None
 
     def get_all_equity(self):
         pass
@@ -62,13 +74,15 @@ class DataFetcher:
     def get_symbols_by_industry(self):
         pass
 
-    def validate_symbols(self):
+    def _validate_symbols(self):
         # sanity check for symbols before creating dataset
-        # checks symbols for: 1) being a valid asset 2) being active 3) having same time trades
+        # checks symbols for: 1) being a valid asset 2) being active 3) trading at the same market hours
         pass
 
-    def get_
-    def get_exchange_timezone
+
+    def get_exchange_timezone(self):
+        pass
+
     def fetch_assets(self):
         assets = self.api.list_assets()
         self.assets = pd.DataFrame([list(asset.__dict__.values())[0] for asset in assets])
@@ -79,10 +93,9 @@ class DataFetcher:
     def get_all_assets() -> pd.DataFrame:
         
 
-    def connect_to_endpoint(self, endpoint: str, key: Union[str, None] = None, secret: Union[str, None] = None) -> None:
-        key = key if key is not None else self.key
-        secret = secret if secret is not None else self.secret
-        self.api = REST(key, secret, endpoint, api_version='v2')
+    def connect_to_api() -> None:
+        # tries to connect to Alpaca API and reports result
+        self.api = REST(self.key, self.secret, self.endpoint, api_version='v2')
         # check API connection
         try:
             account = self.api.get_account()
@@ -113,8 +126,8 @@ class DataFetcher:
 
     @staticmethod
     def _preprocess(data, date, interval):
-        # API returns no row for intervals with have no price change
-        # forward filling will recover missing data
+        # API returns no row for intervals with no price change
+        # forward filling and resampling will recover missing data
         start = pd.Timestamp(date, tz='America/New_York') + pd.Timedelta('9:30:00')
         end = pd.Timestamp(date, tz='America/New_York') + pd.Timedelta('15:59:00')
         index = pd.date_range(start=start, end=end, freq=interval)
@@ -133,7 +146,11 @@ class DataFetcher:
         return resampled
 
     def create_dataset(self, start_date: str, end_date: str, time_interval: str, market: str,\
-                  symbols = None, dir: str = None, auto_clip = True) -> Union[str, pd.DataFrame]:
+                  symbols = None, dir: str = None, auto_clip_start = True, localize = True) -> Union[str, pd.DataFrame]:
+        # creates a training dataset. columns are various features of provided symbols with time resolution equal to time_interval
+        # By default symbol data is clipped then joined over the working hours of provided market.
+        # if auto_clip = True default behavior is to clip start date if some symbols do not have data within specified date range
+        # if auto_clip = False then instead of start_date symbols are clipped to match the specifed date range
         symbols = symbols if symbols else self.symbols
         if dir is not None:
             if not os.path.exists(dir):
@@ -161,7 +178,7 @@ class DataFetcher:
             end = day['market_close']
             bars = self.api.get_bars(symbols, time_interval, start, end, adjustment='raw').df
             bars = bars.tz_convert('America/New_York')
-            features = pd.concat([DataFetcher._preprocess(group[1], day, time_interval) for group in bars.groupby('symbol')], axis = 1)
+            features = pd.concat([AlpacaClient._preprocess(group[1], day, time_interval) for group in bars.groupby('symbol')], axis = 1)
             features = features.select_dtypes(include=np.number)
             if dir is not None:
                 features.to_csv(os.path.join(dir, 'data.csv'), index=True, mode='a', header = header)

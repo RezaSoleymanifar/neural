@@ -1,7 +1,7 @@
 import os 
 
-ALPACA_API_BASE_URL = 'https://api.alpaca.markets'
-ALPACA_API_PAPER_URL = 'https://paper-api.alpaca.markets'
+ALPACA_API_ENDPOINT = 'https://api.alpaca.markets'
+ALPACA_API_ENDPOINT_PAPER = 'https://paper-api.alpaca.markets'
 
 ALPACA_API_KEY = os.environ.get('ALPACA_API_KEY', None)
 ALPACA_API_SECRET = os.environ.get('ALPACA_API_SECRET', None)
