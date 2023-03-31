@@ -1,6 +1,7 @@
 import pandas as pd
-from typing import List
+from typing import List, Iterable
 import tableprint
+import tqdm
 
 def sharpe(assets_hist: List[float], base=0):
     hist = pd.Series(assets_hist)
@@ -16,3 +17,8 @@ def tabular_print(entries: List, style='banner', align='left', width = 15, heade
         row = tableprint.row(entries, style=style, align=align, width=width)
     print(row)
     return None
+
+def progress_bar(iterable: Iterable):
+    bar_format = '{l_bar}{bar}| {n_fmt}/{total_fmt} | {elapsed}<{remaining}'
+    bar = tqdm(total = iterable, bar_format = bar_format)
+    return bar
