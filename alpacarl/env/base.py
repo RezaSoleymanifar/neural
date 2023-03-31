@@ -33,10 +33,14 @@ class BaseEnv(Env):
         # instead of self.stocks (quantity) we use self.positions (USD) to reflect relative value of assets in portfolio.
         self.action_space = spaces.Box(low=-np.inf, high=np.inf, shape=(self.n_symbols,), dtype=np.float32)
         self.observation_space = spaces.Dict({
-            'cash':spaces.Box(low=0, high=np.inf, shape = (1,), dtype=np.float32),
-            'positions': spaces.Box(low=0, high=np.inf, shape = (self.n_symbols,), dtype=np.float32),
-            'holds': spaces.Box(low=0, high=np.inf, shape = (self.n_symbols,), dtype=np.int32),
-            'features': spaces.Box(low=-np.inf, high=np.inf, shape = (self.n_features,), dtype=np.float32)
+            'cash':spaces.Box(
+            low=0, high=np.inf, shape = (1,), dtype=np.float32),
+            'positions': spaces.Box(
+            low=0, high=np.inf, shape = (self.n_symbols,), dtype=np.float32),
+            'holds': spaces.Box(
+            low=0, high=np.inf, shape = (self.n_symbols,), dtype=np.int32),
+            'features': spaces.Box(
+            low=-np.inf, high=np.inf, shape = (self.n_features,), dtype=np.float32)
         })
         self.history = defaultdict(list)
         self.verbose = verbose

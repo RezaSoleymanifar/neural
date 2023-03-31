@@ -1,16 +1,15 @@
 from alpacarl.meta.config import ALPACA_API_PAPER_URL, ALPACA_API_BASE_URL
-from alpacarl.core.data import AlpacaClient, RowGenerator
+from alpacarl.core.data import AlpacaMetaClient, RowGenerator
 from alpacarl.env.base import BaseEnv, FractionalActionWrapper
 
 
-interval = '1Min' # "1Min", "5Min", "15Min", "1H"
+interval = '1Min'  # "1Min", "5Min", "15Min", "1H"
 start = "2018-01-02"  # start time, min="2017-01-01"
 end_date = "2018-01-04"  # End time, max=today
 
-client = AlpacaClient(paper = True)
-client.connect_to_api()
-client.symbols = 'Dow Jones'
-print(sorted(client.symbols))
+meta_client = AlpacaMetaClient(sandbox=True)
+meta_client.setup_clients_and_account()
+
 # dh.download(start, end, interval, dir = './assets/data')
 # data = RowGenerator(dir='assets/data/data.csv', chunk = 100_000)
 
@@ -32,4 +31,3 @@ print(sorted(client.symbols))
 #     for day in working days:
 #         for source in sources:
 #             process(generator)
-        

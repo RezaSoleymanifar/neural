@@ -1,187 +1,232 @@
-from typing import List, Union, Optional
-import pandas as pd
-import numpy as np
 import os
+from datetime import datetime
+from enum import Enum
+import re
+from typing import (List, Optional, Iterable, Type,
+    Generator, Any, Dict)
+
 import pandas_market_calendars as market_calendars
-from pytickersymbols import PyTickerSymbols
-from alpacarl.meta.config import ALPACA_API_KEY, ALPACA_API_SECRET, ALPACA_API_ENDPOINT, ALPACA_API_ENDPOINT_PAPER
-from alpaca_trade_api.rest import REST
-from alpacarl.meta import log
+import pandas as pd
+from pandas import DataFrame
+import numpy as np
 from tqdm import tqdm
-from typing import Generator, Union, Any
-from alpacarl.meta import log
 from more_itertools import peekable
 
+from alpaca.data.historical import CryptoHistoricalDataClient, StockHistoricalDataClient
+from alpaca.trading import TradingClient
+from alpaca.data.requests import CryptoBarsRequest, StockBarsRequest
+from alpaca.data.timeframe import TimeFrame, TimeFrameUnit
+from alpaca.trading.enums import AssetExchange, AssetClass
 
-class AlpacaClient:
-    def __init__(self, key: str = None, secret:str = None, paper = False) -> None:
-        # if paper = True tries connecting to paper account endpoint
-        self.key =  key if key is not None else ALPACA_API_KEY
-        self.secret = secret if secret is not None else ALPACA_API_SECRET
-        self.endpoint = ALPACA_API_ENDPOINT if not paper else ALPACA_API_ENDPOINT_PAPER
+from alpacarl.meta.config import (
+    ALPACA_API_KEY,
+    ALPACA_API_SECRET,
+    ALPACA_API_ENDPOINT,
+    ALPACA_API_ENDPOINT_PAPER)
+from alpacarl.meta import log
 
-        self._symbols = None
-        self.api = None
-        stocks_info = PyTickerSymbols()
-        self.markets = market_calendars.get_calendar_names()
-        self.get_all_assets
-        self.get_all_indices = stocks_info.get_all_indices
-        self.get_symbols_by_index = stocks_info.get_stocks_by_index
-        self.get_market_schedule = lambda market: market_calendars.get_calendar(market).schedule
-        self.get_market_timezone = lambda market: market_calendars.get_calendar(market).tz
+
+class AlpacaMetaClient:
+    def __init__(
+        self,
+        key: str,
+        secret: str,
+        sandbox=False
+        ) -> None:
+
+        # if sandbox = True tries connecting to paper account endpoint
+        self.key = key if key else ALPACA_API_KEY
+        self.secret = secret if secret else ALPACA_API_SECRET
+        self.endpoint = ALPACA_API_ENDPOINT if not sandbox else ALPACA_API_ENDPOINT_PAPER
+        self.clients = None
+        self.account = None
+
+        self._assets = None
+        self._asset_classes = None
+        self._exchanges = None
         
-        
-        # self.get_all_industries = pass
-        self.get_all_markets = market_calendars.get_calendar_names
-        # self.get_symbols_by_market = pass
-        self.get_symbols_by_industry = lambda industry: [stock['symbol'] for stock in stocks_info.get_stocks_by_industry(industry)]
-
-        self.assets = self.fetch_assets()   
-
-    def set_credentials(self, key: str, secret: str) -> None:
-        self.key = key
-        self.secret = secret
         return None
-    
-    def set_endpoint(self, endpoint: str) -> None:
-        self.endpoint = endpoint
-        return None
 
-    def get_all_equity(self):
-        pass
+    def setup_clients_and_account(self) -> None:
 
-    def get_all_crypto(self):
-        pass
+        # crypto does not need key, and secret but will be faster if provided with credentials
+        self.clients['crypto'] = CryptoHistoricalDataClient(
+            self.key, self.secret)
+        self.clients['stocks'] = StockHistoricalDataClient(
+            self.key, self.secret)
+        self.clients['trading'] = TradingClient(self.key, self.secret)
 
-    def get_all_industries(self):
-        pass
-
-    def get_all_exchanges(self):
-        pass
-
-    def get_exchange_schedule(self):
-        pass
-
-    def get_exchange_timezone(self):
-        pass
-
-    def get_symbols_by_exchange(self):
-        pass
-
-    def get_symbols_by_index(self):
-        pass
-
-    def get_symbols_by_industry(self):
-        pass
-
-    def _validate_symbols(self):
-        # sanity check for symbols before creating dataset
-        # checks symbols for: 1) being a valid asset 2) being active 3) trading at the same market hours
-        pass
-
-
-    def get_exchange_timezone(self):
-        pass
-
-    def fetch_assets(self):
-        assets = self.api.list_assets()
-        self.assets = pd.DataFrame([list(asset.__dict__.values())[0] for asset in assets])
-
-    def get_symbol_start_date(self, symbol:str):
-        pass
-
-    def get_all_assets() -> pd.DataFrame:
-        
-
-    def connect_to_api() -> None:
-        # tries to connect to Alpaca API and reports result
-        self.api = REST(self.key, self.secret, self.endpoint, api_version='v2')
-        # check API connection
         try:
-            account = self.api.get_account()
-            if account.status == 'ACTIVE':
-                log.logger.info("Connection successful: {}".format(endpoint))
+            self.account = self.clients['trading'].get_account()
+
+            if self.account.status.val == "ACTIVE":
+                log.logger.info(f'Clients and account setup is successful.')
+
         except Exception as e:
-            log.logger.exception("Error connecting to API: {}".format(str(e)))
+            log.logger.exception("Account setup failed: {}".format(str(e)))
+
         return None
+
+    @property
+    def assets(self):
+
+        if self._assets:
+            return self._assets
+        
+        assets_ = self.clients['trading'].get_all_assets()
+
+        # keep tradable active assets only.
+        assets_ = [
+            asset for asset in assets_ if
+            asset.status.value == "ACTIVE" and
+            asset.tradable]
+        
+        self._assets = _dicts_enum_to_df(assets_)
+        return self._assets
     
     @property
-    def symbols(self) -> List[str]:
-        return self._symbols
+    def exchanges(self):
+        if self.exchanges:
+            return self._exchanges
+        exchanges_ = [item.value for item in AssetExchange]
+        self._exchanges = exchanges_
+        return self._exchanges
     
-    @symbols.setter
-    def symbols(self, identifier: Union[str, List[str]]) -> List[str]:
-        # identifier is index or list of symbols
-        if isinstance(identifier, str):
-            indices = [index.lower() for index in self.get_all_indices()]
-            if identifier.lower() in indices:
-                self._symbols = [stock['symbol'] for stock in list(self.get_symbols_by_index(identifier))]
-            else:
-                log.logger.exception("Supported indices: {}".format(indices))
-                raise ValueError(f"{identifier} is not found in indices.")
-        else:
-            # sets symbols equal to provided list of symbols
-            self._symbols = identifier
-        print(len(self._symbols))
+    @property
+    def asset_classes(self):
+        if self._asset_classes:
+            return self._asset_classes
+        asset_classes_ = [item.value for item in AssetClass]
+        self._asset_classes = asset_classes_
+        return self._asset_classes
 
+    @property
+    def positions(self):
+        positions_ = self.clients['trading'].get_all_positions()
+        self._positions = _dicts_enum_to_df(positions_)
+        return self._positions
+
+    def set_credentials(self, key: str, secret: str) -> None:
+
+        if not isinstance(key, str) or not isinstance(secret):
+            raise ValueError(f'key and secret must of type {str}')
+        
+        self.key = key
+        self.secret = secret
+
+        return None
+
+    def set_endpoint(self, endpoint: str) -> None:
+
+        if not isinstance(endpoint, str):
+            raise ValueError(f'endpoint must of type {str}')
+
+        return None
+
+    def validate_symbols(self, symbols: List[str]):
+
+        valid_symbols = self.assets['symbol'].unique()
+
+        # checks if symbols name is valid
+        for symbol in symbols:
+            if symbol not in valid_symbols:
+                raise ValueError(f'Symbol {symbol} is not a supported symbol.')
+        
+        # checks if symbols have the same asset class
+        symbol_classes = self.assets.loc[self.assets['symbol'].isin(symbols),
+            'asset_class'].unique()
+
+        if len(symbol_classes) != 1:
+            raise ValueError('Symbols are not of the same asset class.')
+        
+        class_ = symbol_classes.pop()
+        
+        return class_
+    
     @staticmethod
-    def _preprocess(data, date, interval):
-        # API returns no row for intervals with no price change
-        # forward filling and resampling will recover missing data
-        start = pd.Timestamp(date, tz='America/New_York') + pd.Timedelta('9:30:00')
-        end = pd.Timestamp(date, tz='America/New_York') + pd.Timedelta('15:59:00')
-        index = pd.date_range(start=start, end=end, freq=interval)
+    def _resample_and_ffil(open, close, interval):
+        # resample and forward fills missing rows
+
+        index = pd.date_range(start=open, end=close, freq=interval)
+
         # creates rows for missing intervals
         resampled = data.reindex(index, method='ffill')
         if resampled.isna().all().all():
-            log.logger.exception('Data does not have entries in NYSE market hours.')
+            log.logger.exception(
+                'Data does not have entries in NYSE market hours.')
             raise ValueError
+        
         # backward fills if first row is nan
         if resampled.isna().any().any():
             resampled = resampled.bfill()
-        
+
         # Prefix column names with symbol
         symbol = resampled['symbol'][0]
         resampled.columns = [f'{symbol}_{col}' for col in data.columns]
         return resampled
+    
+    def create_dataset(self,
+        start_date: str,
+        end_date: str,
+        resolution: str,
+        symbols=None,
+        dir: str = None,
+        file_name: str = 'data.csv',
+        ) -> str | pd.DataFrame:
+        
+        # converts to expected input formats
+        start_date, end_date = to_datetime(start_date), to_datetime(end_date)
+        resolution = to_timeframe(resolution)
 
-    def create_dataset(self, start_date: str, end_date: str, time_interval: str, market: str,\
-                  symbols = None, dir: str = None, auto_clip_start = True, localize = True) -> Union[str, pd.DataFrame]:
-        # creates a training dataset. columns are various features of provided symbols with time resolution equal to time_interval
-        # By default symbol data is clipped then joined over the working hours of provided market.
-        # if auto_clip = True default behavior is to clip start date if some symbols do not have data within specified date range
-        # if auto_clip = False then instead of start_date symbols are clipped to match the specifed date range
-        symbols = symbols if symbols else self.symbols
+        # check if symbols are valid names and of the same asset class type
+        asset_class = self.validate_symbols(symbols)
+
+        downloader, request = Downloader(meta_client = self, asset_class = asset_class)
+
+        calendar = Calendar(Calendar.ALWAYS_OPEN
+            ) if asset_class == 'CRYPTO' else Calendar(Calendar.NYSE)
+
+        # if dir does not exist create it
         if dir is not None:
             if not os.path.exists(dir):
                 os.makedirs(dir)
+
+            # if file already exists just appends rows
             else:
-                if os.path.exists(os.path.join(dir, 'data.csv')):
+                if os.path.exists(os.path.join(dir, file_name)):
                     header = False
                 else:
                     header = True
 
-        nyse = market_calendars.get_calendar('NYSE')
-        schedule = nyse.schedule(start_date=start_date, end_date=end_date)
-        progress_bar = tqdm(total=len(len(schedule)), bar_format='{l_bar}{bar}| {n_fmt}/{total_fmt} | {elapsed}<{remaining}')
-        
+        schedule = calendar.get_schedule(start_date=start_date, end_date=end_date)
+        time_zone = calendar.get_time_zone()
+
+        progress_bar = tqdm(total=len(len(schedule)),
+        bar_format='{l_bar}{bar}| {n_fmt}/{total_fmt} | {elapsed}<{remaining}')
+
+        # use memory if dir is not provided
         if dir is None:
             data = list()
-        log.logger.info(f"Downloading data for {len(self.symbols)} symbols // frequency: {time_interval} //"\
-                         f" {len(schedule)} working days from {start_date} to {end_date}")
+
+        log.logger.info(
+            f"Downloading data for {len(self.symbols)} symbols | resolution: {resolution} |"
+            f" {len(schedule)} working days from {start_date} to {end_date}"
+        )
+
         for _, day in schedule:
-            # start and end are in UTC. ET is -04:00 from March to November and -05:00 otherwise.
-            # We pad start by one hour to account for daylight saving time.
-            # after tz conversion from Nov. to March, 8:30-9:30 is extra and from March to Nov. 16:00-17:00 is extra.
-            # padded 1 hour is automatically dropped in resampling
+            
             start = day['market_open']
             end = day['market_close']
-            bars = self.api.get_bars(symbols, time_interval, start, end, adjustment='raw').df
+
+            bars = downloader(request(symbol_or_symbols=symbol, timeframe=resolution, start=start, end=end))
             bars = bars.tz_convert('America/New_York')
-            features = pd.concat([AlpacaClient._preprocess(group[1], day, time_interval) for group in bars.groupby('symbol')], axis = 1)
+
+            features = pd.concat([AlpacaMetaClient._resample_and_ffil(
+                group[1], day, resolution) for group in bars.groupby('symbol')], axis=1)
             features = features.select_dtypes(include=np.number)
             if dir is not None:
-                features.to_csv(os.path.join(dir, 'data.csv'), index=True, mode='a', header = header)
+                features.to_csv(os.path.join(dir, 'data.csv'),
+                                index=True, mode='a', header=header)
                 header = False
             else:
                 data.append(features)
@@ -189,41 +234,103 @@ class AlpacaClient:
         progress_bar.close()
         return pd.concat(data) if dir is None else None
 
+class Downloader():
+    def __init__(self, meta_client: AlpacaMetaClient, asset_class: str) -> None:
+        self.meta_client = meta_client
+        self.asset_class = asset_class
+
+    def get_downloader_and_request(self):
+
+        # choose relevant client
+        if self.asset_class == 'US_EQUITY':
+            client = self.meta_client.clients['stocks']
+            downloader = client.get_stocks_bars
+            request = StockBarsRequest
+            
+
+        elif self.asset_class == 'CRYPTO':
+            client = self.meta_client.clients['crypto']
+            downloader = client.get_crypto_bars
+            request = CryptoBarsRequest
+            
+        return downloader, request
+    
+class Calendar:
+    NYSE = 'NYSE'
+    ALWAYS_OPEN = '24/7'
+
+    def __init__(self, calendar_type = Type[Calendar]) -> None:
+        self.calendar_type = calendar_type
+        self.calendar = None
+    
+    def get_calendar(self):
+        calendar = market_calendars.get_calendar(self.calendar_type.value)
+        return calendar
+
+    # get core hours of calendar
+    def get_schedule(self, start_date, end_date):
+        self.calendar = self.get_calendar()
+        schedule = self.calendar.schedule(start_date=start_date, end_date=end_date)
+        return schedule
+    
+    def get_time_zone(self):
+
+        if self.calendar_type == Calendar.ALWAYS_OPEN:
+            time_zone =  'UTC'
+
+        elif self.calendar_type == Calendar.NYSE:
+            time_zone = 'America/New_York'
+
+        return time_zone
+
 class RowGenerator():
-    # creates generator to iterate through large CSV file by loading chunks into RAM
+    # creates generator to iterate through large CSV file by loading chunks
+    # into RAM
     def __init__(self, dir: str, chunk: Optional[str] = None) -> None:
+
         self.dir = dir
         self.chunk = chunk
 
     def __len__(self):
         # counts number of rows in RowGenerator object
-        count = -1 # skipping header row
+        count = -1  # skipping header row
         # create pointer to file
+
         with open(self.dir) as file:
             for _ in file:
                 count += 1
         return count
 
     def iterrows(self) -> Generator[Any, None, None]:
-        # returns a generator object to iterate through rows similar to pd.DataFrame
+
+        # returns a generator object to iterate through rows similar to
+        # pd.DataFrame
         chunk_iterator = pd.read_csv(self.dir, chunksize=self.chunk)
         idx = -1
+
         # Loop over the chunks and yield each row from the current chunk
         for chunk in chunk_iterator:
             for _, row in chunk.iterrows():
                 idx += 1
                 yield idx, row
 
+
 class PeekableDataWrapper:
     # A wrapper that gives peek and reset ability to generator like objects
-    def __init__(self, data: Union[pd.DataFrame, RowGenerator]):
-        if not isinstance(data, pd.DataFrame) and not isinstance(data, RowGenerator):
-            log.logger.error('Can only wrap pd.DataFrame or a RowGenerator object.')
+    def __init__(self, data: DataFrame | RowGenerator):
+
+        if not isinstance(data, pd.DataFrame) and not isinstance(
+            data, RowGenerator):
+
+            log.logger.error(
+                'Can only wrap pd.DataFrame or a RowGenerator objects.')
+            
             raise ValueError
-        
+
         self.data = data
         self.generator = None
         self.reset()
+        return None
 
     def reset(self):
         self.generator = peekable(self.data.iterrows())
@@ -231,12 +338,53 @@ class PeekableDataWrapper:
 
     def peek(self):
         return self.generator.peek()
-    
+
     def __iter__(self):
         yield from self.generator
-    
+
     def __next__(self):
         return next(self.generator)
 
     def __len__(self):
         return len(self.data)
+
+# converts dictionaries of enum objects into dataframe
+def _dicts_enum_to_df(
+    info: Iterable[Dict[str, str]]
+    ) -> DataFrame:
+    
+    for dict_ in info:
+        for key, val in dict_.items():
+            dict_[key] = val.value if isinstance(val, Enum) else val
+
+    df = DataFrame(info)
+    return df
+
+def to_datetime(date: str):
+    try:
+        date_format = "%Y-%m-%d"
+        dt = datetime.strptime(date, date_format)
+    except:
+        ValueError('Invalid date. Valid examples: 2022-03-20, 2015-01-01')
+    return dt
+
+def to_timeframe(time_frame: str):
+
+    match = re.search(r'(\d+)(\w+)', time_frame)
+
+    if match:
+
+        amount = int(match.group(1))
+        unit = match.group(2)
+
+        map = {
+            'Min': TimeFrameUnit.Minute,
+            'Hour': TimeFrameUnit.Hour,
+            'Day': TimeFrameUnit.Day,
+            'Week': TimeFrameUnit.Week,
+            'Month': TimeFrameUnit.Month}
+
+        return TimeFrame(amount, map[unit])
+    else:
+        raise ValueError(
+            "Invalid timeframe. Valid examples: 59Min, 23Hour, 1Day, 1Week, 12Month")

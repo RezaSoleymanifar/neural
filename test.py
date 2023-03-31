@@ -1,12 +1,31 @@
-from alpaca_trade_api.rest import REST
-from alpacarl.meta.config import ALPACA_API_KEY, ALPACA_API_SECRET, ALPACA_API_PAPER_URL
+import math
+import sys
 
-interval = '1Min' # "1Min", "5Min", "15Min", "1H"
-start = "2018-01-02"  # start time, min="2017-01-01"
-end = "2018-01-04"  # End time, max=today
-symbol = ['DOW']
 
-api = REST(ALPACA_API_KEY, ALPACA_API_SECRET, ALPACA_API_PAPER_URL, api_version='v2')
+def example1():
+    # This is a long comment. This should be wrapped to fit within 72 characters.
+    some_tuple = (1, 2, 3, 'a')
+    some_variable = {'long': 'Long code lines should be wrapped within 79 characters.',
+                     'other': [math.pi, 100, 200, 300, 9876543210, 'This is a long string that goes on'],
+                     'more': {'inner': 'This whole logical line should be wrapped.', some_tuple: [1,
+                                                                                                  20, 300, 40000, 500000000, 60000000000000000]}}
+    return (some_tuple, some_variable)
 
-df = api.get_bars(['DOW'], interval, start, end, adjustment='raw', limit=None).df
-print(df)
+
+def example2(): return {'has_key() is deprecated': True}.has_key(
+    {'f': 2}.has_key(''))
+
+
+class Example3(object):
+    def __init__(self, bar):
+        # Comments should have a space after the hash.
+        if bar:
+            bar += 1
+            bar = bar * bar
+            return bar
+        else:
+            some_string = """
+                       Indentation in multiline strings should not be touched.
+Only actual code should be reindented.
+"""
+            return (sys.path, some_string)
