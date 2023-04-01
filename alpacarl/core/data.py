@@ -5,12 +5,15 @@ import re
 from typing import (List, Optional, Iterable, Type,
     Generator, Any, Dict, Tuple)
 from dataclasses import dataclass
+from functools import reduce
+
 
 import pandas_market_calendars as market_calendars
 import pandas as pd
 from pandas import DataFrame
 import numpy as np
-from tqdm import tqdm
+import pickle
+import tarfile
 from more_itertools import peekable
 
 from alpaca.data.historical import CryptoHistoricalDataClient, StockHistoricalDataClient
@@ -27,39 +30,58 @@ from alpacarl.meta.config import (
 from alpacarl.meta import log
 from alpacarl.aux.tools import progress_bar
 
+class DatasetChainType(Enum):
+    HORIZONTAL = 'HORIZONTAL'
+    VERTICAL = 'VERTICAL'
+
 class DatasetType(Enum):
     BAR = 'BAR'
     QUOTE = 'QUOTE'
     TRADE = 'TRADE'
     ORDER_BOOK = 'ORDER_BOOK'
+    SENTIMENT = 'SENTIMENT'
 
+class ColumnType(Enum):
+    OPEN = 'OPEN'
+    HIGH = 'HIGH'
+    LOW = 'LOW'
+    CLOSE = 'CLOSE'
+
+
+# represents a dataset file.
 @dataclass
 class Dataset:
-    path: str | List[str]
-    dataset_type: DatasetType | DatasetChainType
+    path: List[str]
+    dataset_type: List[DatasetType]
     start: datetime
     end: datetime
-    symbols: List[str] | List[List[str]]
+    symbols: List[str]
     resolution: str
     n_rows: int
-    n_columns: int | List[int]
-    csv: str | List[str] = 'dataset.csv'
+    n_columns: int
+    price_column_names = Optional[List[str]]
+    chain_type: Optional[DatasetChainType]
 
     def __or__(self, other):
 
-        if isinstance(self.dataset_type, DatasetTypeChain):
-            if self.dataset_type.chain_type == DatasetChainType.VERTICAL:
+        if self.chain_type and self.chain_type == DatasetChainType.VERTICAL:
                 raise ValueError(
                     'Cannot horizontally chain a vetically chained dataset.')
 
-        if isinstance(other.dataset_type, DatasetTypeChain):
+        if other.chain_type:
             raise TypeError(
-                'Left-associative operator | : in x | y, y can only be DatasetType, not DatasetTypeChain.')
+                'Left-associative operator | : in x | y, only x can be already chained.')
 
         # checking compatibility
         if not isinstance(other, Dataset):
             raise ValueError('Only Dataset objects can be added.')
 
+        if self.symbols != other.symbols:
+            raise ValueError('Datasets must have the same symbols.')
+        
+        if self.price_column_names and other.price_column_names:
+            raise ValueError('Only one of datasets can have non empty price_column_names attribute.')
+        
         if self.resolution != other.resolution:
             raise ValueError('Datasets must have the same resolution.')
 
@@ -72,113 +94,81 @@ class Dataset:
         if self.end != other.end:
             raise ValueError('Datasets do not have the same end dates.')
 
-        path = self.path + \
-            other.path if isinstance(self.path, List) else [
-                self.path, other.path]
-        
+        path = self.path + other.path
         dataset_type = self.dataset_type + other.dataset_type
-
-        symbols = self.symbols + \
-            other.symbols if isinstance(self.symbols, List[List]) else [
-                self.symbols, other.symbols]
-        
-        n_columns = self.n_columns + other.n_columns if isinstance(
-            self.n_columns, List) else [self.n_columns, other.n_columns]
-        
-        csv = self.csv + \
-            other.csv if isinstance(self.n_columns, List) else [
-                self.csv, other.csv]
+        n_columns = self.n_columns + other.n_columns
+        price_column_names = self.price_column_names if self.price_column_names else other.price_column_names
 
         return Dataset(
             path=path,
             dataset_type=dataset_type,
             start=self.start,
             end=self.end,
-            symbols=symbols,
+            symbols=self.symbols,
             resolution=self.resolution,
             n_rows=self.n_rows,
             n_columns=n_columns,
-            csv=csv
-            )
+            price_column_names = price_column_names,
+            chain_type=DatasetChainType.HORIZONTAL)
 
     def __and__(self, other):
         
-        if isinstance(self.dataset_type, DatasetTypeChain):
-            if self.dataset_type.chain_type == DatasetChainType.HORIZONTAL:
-                raise ValueError('Cannot vertically chain a horizontally chained dataset.')
-        
-        if isinstance(other.dataset_type, DatasetTypeChain):
-            raise TypeError('Left-associative operator + : in x + y, y can only be DatasetType, not DatasetTypeChain.')
+        if self.chain_type and self.chain_type == DatasetChainType.HORIZONTAL:
+            raise ValueError(
+                'Cannot vertically chain a horizontally chained dataset.')
+
+        if other.chain_type:
+            raise TypeError(
+                'Left-associative operator + : in x + y, only x can be already chained.')
                             
         # checking compatibility
         if not isinstance(other, Dataset):
             raise ValueError('Only Dataset objects can be added.')
+
+        if self.symbols != other.symbols:
+            raise ValueError('Datasets must have the same symbols.')    
+
+        if self.n_columns != other.n_columns:
+            raise ValueError('Datasets must have the same number of columns.')
+
+        if self.price_column_names != other.price_column_names:
+            raise ValueError('Datasets must have same price_column_names attribute.')
         
         if self.resolution != other.resolution:
             raise ValueError('Datasets must have the same resolution.')
         
-        if self.symbols != other.symbols:
-            raise ValueError('Vertical chaining requires datasets to have same symbols.')
-        
         if other.start <= self.end:
             raise ValueError('Datasets cannot have overlapping time spans in vertical chaining.')
+    
         
-        if self.n_columns != other.n_columns:
-            raise ValueError('Datasets must have the same number of rows.')
          
         
-        path = self.path + other.path if isinstance(self.path, List) else [self.path, other.path]
+        path = self.path + other.path
         dataset_type = self.dataset_type + other.dataset_type
         end = other.end
-        n_rows = self.n_rows + other.n_rows if isinstance(self.n_rows, List) else [self.n_rows, other.n_rows]
+        n_rows = self.n_rows + other.n_rows
 
         return Dataset(
-            path=paths,
+            path=path,
             dataset_type=dataset_type,
             start=self.start,
-            end=self.end,
+            end=end,
             symbols=self.symbols,
             resolution=self.resolution,
             n_rows=n_rows,
             n_columns=self.n_columns,
-            csv= csvs
-        )
-    
-class DatasetChainType(Enum):
-    HORIZONTAL = 'HORIZONTAL'
-    VERTICAL = 'VERTICAL'
+            price_column_names=self.price_column_names,
+            chain_type=DatasetChainType.VERTICAL)
 
 
-class DatasetTypeChain:
-    def __init__(
-            self,
-            *dataset_types: DatasetType,
-            chain_type: DatasetChainType
-            ) -> None:
-        self.dataset_types = dataset_types
-        self.chain_type = chain_type
-    
-    def __add__(self, other: DatasetType | DatasetChainType):
-
-        if isinstance(other.dataset_type, DatasetTypeChain):
-            if self.chain_type != other.chain_type:
-                raise ValueError(
-                    'Cannot chain two incompatible chain types.')
-        
-        elif isinstance(self.dataset_types)
-            
-        # checking compatibility
-        if not isinstance(other, Dataset):
-            raise ValueError('Only Dataset objects can be added.')
-
-
-    
-class Calendar:
-
+class CalendarType(Enum):
     NYSE = 'NYSE'
     ALWAYS_OPEN = '24/7'
 
-    def __init__(self, calendar_type=Type[Calendar]) -> None:
+
+class Calendar:
+
+    def __init__(self, calendar_type=CalendarType) -> None:
         self.calendar_type = calendar_type
         self.calendar = None
     
@@ -205,81 +195,6 @@ class Calendar:
             time_zone = 'America/New_York'
 
         return time_zone
-
-class RowGenerator():
-    # TODO: takes list of dirs and iterates and concates them on the fly.
-    # creates generator to iterate through large CSV file by loading chunks
-    # into RAM
-    def __init__(
-        self, 
-        dir: str, 
-        chunk: Optional[str] = None, 
-        skiprows = ...,
-        nrows = ...
-        ) -> None:
-
-        self.dir = dir
-        self.chunk = chunk
-        self.skiprows = skiprows
-        self.nrows = nrows
-
-    def __len__(self):
-        # counts number of rows in RowGenerator object
-        count = -1  # skipping header row
-        # create pointer to file
-
-        with open(self.dir) as file:
-            for _ in file:
-                count += 1
-        return count
-
-    def iterrows(self) -> Generator[Any, None, None]:
-
-        # returns a generator object to iterate through rows similar to
-        # pd.DataFrame
-        chunk_iterator = pd.read_csv(self.dir, chunksize=self.chunk)
-        idx = -1
-
-        # Loop over the chunks and yield each row from the current chunk
-        for chunk in chunk_iterator:
-            yield from chunk.iterrows()
-
-    # multiplies into RowGenrator instnaces each dedicated to one part of dataframe
-    def multiply(self):
-        pass
-
-class PeekableDataWrapper:
-    # A wrapper that gives peek and reset ability to generator like objects
-    def __init__(self, data: DataFrame | RowGenerator):
-
-        if not isinstance(data, pd.DataFrame) and not isinstance(
-            data, RowGenerator):
-
-            log.logger.error(
-                'Can only wrap pd.DataFrame or a RowGenerator objects.')
-            
-            raise ValueError
-
-        self.data = data
-        self.generator = None
-        self.reset()
-        return None
-
-    def reset(self):
-        self.generator = peekable(self.data.iterrows())
-        return None
-
-    def peek(self):
-        return self.generator.peek()
-
-    def __iter__(self):
-        yield from self.generator
-
-    def __next__(self):
-        return next(self.generator)
-
-    def __len__(self):
-        return len(self.data)
     
 class AlpacaMetaClient:
     def __init__(
@@ -336,7 +251,7 @@ class AlpacaMetaClient:
             asset.status.value == "ACTIVE" and
             asset.tradable]
         
-        self._assets = _dicts_enum_to_df(assets_)
+        self._assets = dicts_enum_to_df(assets_)
         return self._assets
     
     @property
@@ -358,7 +273,7 @@ class AlpacaMetaClient:
     @property
     def positions(self):
         positions_ = self.clients['trading'].get_all_positions()
-        self._positions = _dicts_enum_to_df(positions_)
+        self._positions = dicts_enum_to_df(positions_)
         return self._positions
 
     def set_credentials(self, key: str, secret: str) -> None:
@@ -398,13 +313,13 @@ class AlpacaMetaClient:
         
         return class_
     
-    def create_dataset(self,
+    def download_and_create_dataset(self,
         dataset_type: DatasetType,
         start_date: str,
         end_date: str,
         resolution: str,
-        symbols: str | List[str] = None,
-        dir: str = None,
+        symbols: str | List[str],
+        dir: Optional[str] = None,
         ) -> str | pd.DataFrame:
         
         # converts to expected input formats
@@ -414,7 +329,7 @@ class AlpacaMetaClient:
         # check if symbols are valid names and of the same asset class type
         asset_class = self.validate_symbols(symbols)
 
-        downloader, request = Downloader(meta_client = self, asset_class = asset_class)
+        downloader, request = DataDownloader(meta_client = self, asset_class = asset_class)
 
         if asset_class == 'USE_EQUITY':
             calendar = Calendar(calendar_type= Calendar.NYSE)
@@ -477,29 +392,156 @@ class AlpacaMetaClient:
 
         return pd.concat(data) if dir is None else None
 
-class Downloader():
-    def __init__(self, meta_client: AlpacaMetaClient, asset_class: str) -> None:
+class DataDownloader():
+    def __init__(self, meta_client: AlpacaMetaClient) -> None:
+
         self.meta_client = meta_client
-        self.asset_class = asset_class
 
-    def get_downloader_and_request(self, dataset_type: DatasetType):
+        return None
 
-        # choose relevant client
-        if self.asset_class == 'US_EQUITY':
-            client = self.meta_client.clients['stocks']
-            downloader = client.get_stocks_bars
-            request = StockBarsRequest
-            
-
-        elif self.asset_class == 'CRYPTO':
-            client = self.meta_client.clients['crypto']
-            downloader = client.get_crypto_bars
-            request = CryptoBarsRequest
-            
-        return downloader, request
+    def get_downloader_and_request(self, dataset_type: DatasetType, asset_class = AssetClass):
         
+        if dataset_type == DatasetType.BAR:
+            # choose relevant client
+            if asset_class == AssetClass.US_EQUITY:
+                client = self.meta_client.clients['stocks']
+                downloader = client.get_stocks_bars
+                request = StockBarsRequest
+                
+            elif asset_class == AssetClass.CRYPTO:
+                client = self.meta_client.clients['crypto']
+                downloader = client.get_crypto_bars
+                request = CryptoBarsRequest
+                
+            return downloader, request
+
+class DataProcessor:
+    def __init__(self) -> None:
+        pass 
+
+    def resample_and_ffil(data, open: datetime, close: datetime, interval: str):
+        # resamples and forward fills missing rows in [open, close] range
+
+        index = pd.date_range(start=open, end=close, freq=interval)
+
+        # creates rows for missing intervals
+        resampled = data.reindex(index, method='ffill')
+        if resampled.isna().all().all():
+            log.logger.exception(
+                'Data does not have entries in NYSE market hours.')
+            raise ValueError
+
+        # backward fills if first row is nan
+        if resampled.isna().any().any():
+            resampled = resampled.bfill()
+
+        # Prefix column names with symbol
+        symbol = resampled['symbol'][0]
+        resampled.columns = [f'{symbol}_{col}' for col in data.columns]
+        return resampled
+
+class DatasetIO:
+
+    def save_dataset(path: str, data: DataFrame, meta_data: Dataset):
+        pass
+
+    def load_dataset(path: str, vertical = False):
+
+        if os.path.isfile(path):
+            with tarfile.open(path, 'r') as tar_file:
+                with tar_file.extractfile('meta_data') as pickle_file:
+                    dataset =  pickle.load(pickle_file)
+
+            dataset.path = path
+
+            return dataset
+
+        elif os.path.isdir(path):
+
+            datasets = list()
+
+            for filename in os.listdir(path):
+
+                file_path = os.path.join(path, filename)
+                dataset = DatasetIO.load_dataset(file_path)
+                datasets.append(dataset)
+
+            # chaining datasets happening here
+            datasets = reduce(lambda x, y: x | y, datasets
+                ) if not vertical else reduce(lambda x, y: x + y, datasets)
+
+        return dataset
+
+class RowGenerator():
+    # to iteratively return info required for environments from a dataset.
+    def __init__(
+        self, 
+        dataset: Dataset, 
+        chunksize: Optional[int] = None, 
+        skiprows = None,
+        nrows = None,
+        ) -> None:
+
+        self.dataset = dataset
+        self.chunksize = chunksize
+        self.skiprows = skiprows
+        self.nrows = nrows
+
+    def __len__(self):
+
+        return self.dataset.n_rows
+
+    def generate(self) -> Generator[Any, None, None]:
+
+        # returns a generator object to iterate through rows similar to
+        # pd.DataFrame
+        
+        chunk_iterator = pd.read_csv(self.dir, chunksize=self.chunk)
+        idx = -1
+
+        # Loop over the chunks and yield each row from the current chunk
+        for chunk in chunk_iterator:
+            yield from chunk.iterrows()
+
+    # multiplies into RowGenrator instnaces each dedicated to one part of dataframe
+    def multiply(self):
+        pass
+
+class PeekableDataWrapper:
+    # A wrapper that gives peek and reset ability to generator like objects
+    def __init__(self, data: DataFrame | RowGenerator):
+
+        if not isinstance(data, pd.DataFrame) and not isinstance(
+            data, RowGenerator):
+
+            log.logger.error(
+                'Can only wrap pd.DataFrame or a RowGenerator objects.')
+            
+            raise ValueError
+
+        self.data = data
+        self.generator = None
+        self.reset()
+        return None
+
+    def reset(self):
+        self.generator = peekable(self.data.generate())
+        return None
+
+    def peek(self):
+        return self.generator.peek()
+
+    def __iter__(self):
+        yield from self.generator
+
+    def __next__(self):
+        return next(self.generator)
+
+    def __len__(self):
+        return len(self.data)
+    
 # converts dictionaries of enum objects into dataframe
-def _dicts_enum_to_df(
+def dicts_enum_to_df(
     info: Iterable[Dict[str, str]]
     ) -> DataFrame:
     
@@ -538,24 +580,3 @@ def to_timeframe(time_frame: str):
     else:
         raise ValueError(
             "Invalid timeframe. Valid examples: 59Min, 23Hour, 1Day, 1Week, 12Month")
-
-def _resample_and_ffil(data, open: datetime, close: datetime, interval: str):
-    # resamples and forward fills missing rows in [open, close] range
-
-    index = pd.date_range(start=open, end=close, freq=interval)
-
-    # creates rows for missing intervals
-    resampled = data.reindex(index, method='ffill')
-    if resampled.isna().all().all():
-        log.logger.exception(
-            'Data does not have entries in NYSE market hours.')
-        raise ValueError
-
-    # backward fills if first row is nan
-    if resampled.isna().any().any():
-        resampled = resampled.bfill()
-
-    # Prefix column names with symbol
-    symbol = resampled['symbol'][0]
-    resampled.columns = [f'{symbol}_{col}' for col in data.columns]
-    return resampled

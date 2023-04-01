@@ -9,19 +9,15 @@ from typing import Union, Tuple, Optional
 
 
 class BaseEnv(Env):
-    def __init__(self, data: Union[pd.DataFrame, RowGenerator], init_cash: Optional[float] = 1e6,\
-                  min_trade: Optional[float] = 1, verbose: Optional[bool] = True) -> None:
-        # input is a dataframe, or a generator tied to a dataframe.
-        # rows correspond to intervals of fixed length (1Min, 15Min, etc.)
-        # column names are prefixed with relevant symbol
-        # columns containing 'close' string will be interpretted as the interval price.
-        # all the columns are used as features in sate space
+    def __init__(self, source: RowGenerator, init_cash: float = 1e6,\
+                  min_trade: float = 1, verbose: bool = True) -> None:
         
-        if data is None:
-            log.logger.error(("Data must be provided."))
+        if source is None:
+            log.logger.error(("Environment source must be provided."))
             raise ValueError
         else:
-            self.data = PeekableDataWrapper(data)
+            self.data = PeekableDataWrapper(source)
+
         self.index = None
         self.init_cash = init_cash
         self.cash = None
@@ -30,6 +26,7 @@ class BaseEnv(Env):
         self.stocks = None # quantity of each stock held
         self.holds = None # steps stock has had not trades
         self.min_trade = min_trade
+
         # instead of self.stocks (quantity) we use self.positions (USD) to reflect relative value of assets in portfolio.
         self.action_space = spaces.Box(low=-np.inf, high=np.inf, shape=(self.n_symbols,), dtype=np.float32)
         self.observation_space = spaces.Dict({
