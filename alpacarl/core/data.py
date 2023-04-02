@@ -6,6 +6,7 @@ from typing import (List, Optional, Iterable, Type,
     Generator, Any, Dict, Tuple)
 from dataclasses import dataclass
 from functools import reduce
+import io
 
 
 import pandas_market_calendars as market_calendars
@@ -30,10 +31,6 @@ from alpacarl.meta.config import (
 from alpacarl.meta import log
 from alpacarl.aux.tools import progress_bar
 
-class DatasetChainType(Enum):
-    HORIZONTAL = 'HORIZONTAL'
-    VERTICAL = 'VERTICAL'
-
 class DatasetType(Enum):
     BAR = 'BAR'
     QUOTE = 'QUOTE'
@@ -42,6 +39,8 @@ class DatasetType(Enum):
     SENTIMENT = 'SENTIMENT'
 
 class ColumnType(Enum):
+    PRICE = 'PRICE'
+    FEATURE = 'FEATURE'
     OPEN = 'OPEN'
     HIGH = 'HIGH'
     LOW = 'LOW'
@@ -51,36 +50,21 @@ class ColumnType(Enum):
 # represents a dataset file.
 @dataclass
 class Dataset:
-    path: List[str]
+    path: str | os.PathLike
     dataset_type: List[DatasetType]
     start: datetime
     end: datetime
-    symbols: List[str]
+    symbols: List[Tuple[str]]
     resolution: str
     n_rows: int
     n_columns: int
-    price_column_names = Optional[List[str]]
-    chain_type: Optional[DatasetChainType]
+    column_types = List[Dict[ColumnType, Tuple[bool]]]
 
-    def __or__(self, other):
-
-        if self.chain_type and self.chain_type == DatasetChainType.VERTICAL:
-                raise ValueError(
-                    'Cannot horizontally chain a vetically chained dataset.')
-
-        if other.chain_type:
-            raise TypeError(
-                'Left-associative operator | : in x | y, only x can be already chained.')
+    def __add__(self, other):
 
         # checking compatibility
         if not isinstance(other, Dataset):
             raise ValueError('Only Dataset objects can be added.')
-
-        if self.symbols != other.symbols:
-            raise ValueError('Datasets must have the same symbols.')
-        
-        if self.price_column_names and other.price_column_names:
-            raise ValueError('Only one of datasets can have non empty price_column_names attribute.')
         
         if self.resolution != other.resolution:
             raise ValueError('Datasets must have the same resolution.')
@@ -94,13 +78,12 @@ class Dataset:
         if self.end != other.end:
             raise ValueError('Datasets do not have the same end dates.')
 
-        path = self.path + other.path
         dataset_type = self.dataset_type + other.dataset_type
         n_columns = self.n_columns + other.n_columns
-        price_column_names = self.price_column_names if self.price_column_names else other.price_column_names
+        column_types = self.column_types + other.column_types
 
         return Dataset(
-            path=path,
+            path=self.path,
             dataset_type=dataset_type,
             start=self.start,
             end=self.end,
@@ -442,60 +425,70 @@ class DataProcessor:
 
 class DatasetIO:
 
-    def save_dataset(path: str, data: DataFrame, meta_data: Dataset):
+    def save_dataset(path: str | os.PathLike, data_frame: DataFrame, meta_data: Dataset):
         pass
 
-    def load_dataset(path: str, vertical = False):
+    def load_dataset(path: str | os.PathLike, vertical = False):
 
         if os.path.isfile(path):
             with tarfile.open(path, 'r') as tar_file:
                 with tar_file.extractfile('meta_data') as pickle_file:
                     dataset =  pickle.load(pickle_file)
 
+                csv = tar_file.extractfile('dataset.csv')
+
             dataset.path = path
 
-            return dataset
+            return dataset, csv
 
         elif os.path.isdir(path):
 
             datasets = list()
+            csvs = list()
 
             for filename in os.listdir(path):
 
                 file_path = os.path.join(path, filename)
-                dataset = DatasetIO.load_dataset(file_path)
-                datasets.append(dataset)
+                dataset, csv = DatasetIO.load_dataset(file_path)
+                datasets.append(datasets)
+                csvs.append(csv)
 
             # chaining datasets happening here
             datasets = reduce(lambda x, y: x | y, datasets
                 ) if not vertical else reduce(lambda x, y: x + y, datasets)
 
-        return dataset
+        return dataset, csvs
 
 class RowGenerator():
     # to iteratively return info required for environments from a dataset.
     def __init__(
         self, 
         dataset: Dataset, 
-        chunksize: Optional[int] = None, 
-        skiprows = None,
-        nrows = None,
+        batch_size: Optional[int] = None, 
+        skip_rows = None,
+        max_rows = None,
         ) -> None:
 
         self.dataset = dataset
-        self.chunksize = chunksize
-        self.skiprows = skiprows
-        self.nrows = nrows
+        self.batch_size = chunksize
+        self.skip_rows = skiprows
+        self.max_rows = max_rows
 
     def __len__(self):
 
         return self.dataset.n_rows
 
-    def generate(self) -> Generator[Any, None, None]:
+    def __iter__(self) -> Generator[Any, None, None]:
 
-        # returns a generator object to iterate through rows similar to
-        # pd.DataFrame
+        chain_type = self.dataset.chain_type
+
+        if chain_type == DatasetChainType.HORIZONTAL:
+            pass
         
+        if not chain_type or chain_type == DatasetChainType.VERTICAL:
+            path = self.dataset.path
+            for path in path
+
         chunk_iterator = pd.read_csv(self.dir, chunksize=self.chunk)
         idx = -1
 
@@ -503,9 +496,13 @@ class RowGenerator():
         for chunk in chunk_iterator:
             yield from chunk.iterrows()
 
-    # multiplies into RowGenrator instnaces each dedicated to one part of dataframe
-    def multiply(self):
-        pass
+    # returns mutually exclusive generators each covering a continous section of dataset.
+    def divide(self, n: int):
+        len(self)
+        for i in range(n):
+            skiprows = i * chunk_s
+            nrows = chunk_size if i < n - 1 else None  # For the last chunk, read until the end of the file
+
 
 class PeekableDataWrapper:
     # A wrapper that gives peek and reset ability to generator like objects
@@ -525,7 +522,7 @@ class PeekableDataWrapper:
         return None
 
     def reset(self):
-        self.generator = peekable(self.data.generate())
+        self.generator = peekable(self.data.get_generator())
         return None
 
     def peek(self):
