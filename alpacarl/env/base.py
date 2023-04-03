@@ -3,26 +3,31 @@ from gym import spaces, Env, ActionWrapper
 import numpy as np
 from alpacarl.meta import log
 from alpacarl.aux.tools import sharpe, tabular_print
-from alpacarl.core.data import PeekableDataWrapper, RowGenerator
+from alpacarl.core.data import RowGenerator, ColumnType
 from collections import defaultdict
-from typing import Union, Tuple, Optional
+from typing import Tuple, Optional
 
 
 class BaseEnv(Env):
-    def __init__(self, source: RowGenerator, init_cash: float = 1e6,\
+    def __init__(self, data_generator: RowGenerator, init_cash: float = 1e6,\
                   min_trade: float = 1, verbose: bool = True) -> None:
         
-        if source is None:
-            log.logger.error(("Environment source must be provided."))
+        if data_generator is None:
+            log.logger.error(("data_generator must be provided."))
             raise ValueError
         else:
-            self.data = PeekableDataWrapper(source)
+            self.data_generator = data_generator
 
+        self.dataset_metadata = self.deta_generator.dataset_metadata
+        self.column_schema = self.dataset_metadata.column_schema
+        self.asset_price_mask = self.column_schema[ColumnType.ASSET_PRICE]
         self.index = None
         self.init_cash = init_cash
         self.cash = None
-        self.assets = None # cash or stocks
-        self.steps, self.n_symbols, self.n_features = self.summarize_data()
+        self.assets = None # cash or stocks/crypto
+        self.steps = self.deta_generator.n_rows
+        self.n_features = self.data_generator.n_columns
+        self.n_symbols = len(self.dataset_metadata.symbols)   
         self.stocks = None # quantity of each stock held
         self.holds = None # steps stock has had not trades
         self.min_trade = min_trade
@@ -41,27 +46,17 @@ class BaseEnv(Env):
         })
         self.history = defaultdict(list)
         self.verbose = verbose
-
-    def summarize_data(self) -> Tuple[int, int, int]:
-        # peeks at data to collect some stats
-        steps = len(self.data)
-        _, row = self.data.peek()
-        n_symbols = len(row.filter(regex='close'))
-        n_features = len(row)
-        return steps, n_symbols, n_features
     
-    def _next_row(self) -> Tuple[int, np.ndarray, np.ndarray]:
-        # steps thorugh env
-        index, row = next(self.data)
-        # 'close' column names determine symbol prices at current state
-        # multiple 'close' column names indicate that many symbols to trade.
-        prices = row.filter(regex='close').values.astype(np.float32)
-        features = row.values.astype(np.float32)
-        return index, prices, features
+    def prices_and_features_generator(self) -> Tuple[np.ndarray, np.ndarray]:
 
-    def _get_state(self) -> np.ndarray:
-        # positions is rescaled with prices to make corresponding state entries comparable.
-        # will enhance DRL agent's perception of ratio of each stock in portfolio.
+        features = next(self.deta_generator)
+        features.astype(np.float32)
+        prices = features[self.asset_price_mask]
+        
+        yield prices, features
+
+    def _get_env_state(self) -> np.ndarray:
+
         positions = self.stocks * self.prices
         state = np.hstack([self.cash, positions, self.holds, self.features])
         return state
@@ -71,11 +66,13 @@ class BaseEnv(Env):
 
     def reset(self):
         # resetting input state
-        self.data.reset()
+        self.deta_generator.reset()
+        
         log.logger.info(f'Initializing environment. Steps: '\
                         f'{self.steps:,}, symbols: {self.n_symbols}, features: {self.n_features}')
-
-        self.index, self.prices, self.features = self._next_row()
+        
+        self.index = 0
+        self.prices, self.features = next(self.prices_and_features_generator())
         self.cash = self.init_cash
         self.stocks = np.zeros((self.n_symbols,), dtype=np.int32)
         self.holds = np.zeros((self.n_symbols,), dtype=np.int32)
@@ -84,7 +81,7 @@ class BaseEnv(Env):
         # cache env history
         self._cache_hist()
         # compute state
-        self.state = self._get_state()
+        self.state = self._get_env_state()
         return self.state
 
     def step(self, actions):
@@ -103,7 +100,7 @@ class BaseEnv(Env):
                 self.cash += sell
                 self.holds[stock] = 0
 
-        self.index, self.prices, self.features = BaseEnv._next(self.data)
+        self.prices, self.features = next(self.prices_and_features_generator())
         # increase hold time of purchased stocks
         self.holds[self.stocks > 0] += 1
         # new asset value
@@ -111,7 +108,7 @@ class BaseEnv(Env):
         reward = assets - self.assets
         self.assets = assets
         # comoputes states using env vars
-        self.state = self._get_state()
+        self.state = self._get_env_state()
         self._cache_hist()
 
         # report terminal state

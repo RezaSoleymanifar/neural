@@ -11,7 +11,7 @@ symbols = ['AAPL']
 meta_client = AlpacaMetaClient(sandbox=True)
 meta_client.setup_clients_and_account()
 
-meta_client.download_and_create_dataset(DatasetType.BAR, start_date, end_date, resolution, symbols)
+meta_client.download_and_write_dataset(DatasetType.BAR, start_date, end_date, resolution, symbols)
 
 # dh.download(start, end, interval, dir = './assets/data')
 # data = RowGenerator(dir='assets/data/data.csv', chunk = 100_000)

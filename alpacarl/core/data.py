@@ -6,15 +6,13 @@ from typing import (List, Optional, Iterable, Type,
     Generator, Any, Dict, Tuple)
 from dataclasses import dataclass
 from functools import reduce
-import io
-
+from math import ceil
 
 import pandas_market_calendars as market_calendars
 import pandas as pd
 from pandas import DataFrame
 import numpy as np
 import pickle
-import tarfile
 from more_itertools import peekable
 import h5py
 
@@ -45,7 +43,6 @@ class ColumnType(Enum):
     LOW = 'LOW'
     CLOSE = 'CLOSE'
 
-
 @dataclass
 class DatasetMetadata:
     dataset_type: List[DatasetType]
@@ -58,7 +55,7 @@ class DatasetMetadata:
     n_rows: int
     n_columns: int
 
-    def join_column_schema(self, other):
+    def join_column_schemas(self, other):
         if set(self.column_schema.keys()) != set(other.column_schema.keys()):
             raise ValueError('Datasets do not have matching column_schema structure.')
         
@@ -101,7 +98,7 @@ class DatasetMetadata:
 
         dataset_type = self.dataset_type + other.dataset_type
         n_columns = self.n_columns + other.n_columns
-        column_schema = self.join_column_schema(other)
+        column_schema = self.join_column_schemas(other)
 
         return DatasetMetadata(
             dataset_type=dataset_type,
@@ -151,7 +148,7 @@ class DatasetMetadata:
 
         dataset_type = self.dataset_type + other.dataset_type
         n_columns = self.n_columns + other.n_columns
-        column_schema = self.join_column_schema(other)
+        column_schema = self.join_column_schemas(other)
 
         return DatasetMetadata(
             dataset_type=dataset_type,
@@ -314,14 +311,14 @@ class AlpacaMetaClient:
         
         return class_
     
-    def download_and_create_dataset(self,
+    def download_and_write_dataset(self,
         dataset_type: DatasetType,
         start_date: str,
         end_date: str,
         resolution: str,
-        symbols: str | List[str],
-        dir: Optional[str] = None,
-        ) -> str | pd.DataFrame:
+        symbols: List[str],
+        path: str,
+        ) -> None:
         
         # converts to expected input formats
         start_date, end_date = to_datetime(start_date), to_datetime(end_date)
@@ -373,12 +370,14 @@ class AlpacaMetaClient:
             market_close = day['market_close']
 
             bars = downloader(
-                request(symbol_or_symbols=symbol, timeframe=resolution,
+                request(symbol_or_symbols=symbols, timeframe=resolution,
                 start=market_open, end=market_close))
             
             bars = bars.tz_convert(time_zone)
 
-            features = pd.concat([_resample_and_ffil(group[1], day, resolution) for group in bars.groupby('symbol')], axis=1)
+            features = pd.concat(
+                [DataProcessor.resample_and_ffil(group[1], day, resolution
+                ) for group in bars.groupby('symbol')], axis=1)
 
             features = features.select_dtypes(include=np.number)
             if dir is not None:
@@ -464,10 +463,11 @@ class DatasetIO:
 
                 else:
 
-                    target_dataset_metadata, target_dataset = DatasetIO.load_from_hdf5(hdf5, target_dataset_name= target_dataset_name)
+                    target_dataset_metadata, target_dataset = DatasetIO.load_from_hdf5(
+                        hdf5, target_dataset_name= target_dataset_name)
 
                     new_metadata = target_dataset_metadata + metadata
-                    n_rows, n_columns = target_dataset_name.shape
+                    n_rows, n_columns = target_dataset.shape
                     n_rows_, n_columns_ = data_to_write.shape
 
                     if n_columns_ != n_columns:
@@ -475,11 +475,11 @@ class DatasetIO:
 
                     new_n_rows, new_n_columns = n_rows + n_rows_, n_columns
 
-                    target_dataset_name.resize((new_n_rows, new_n_columns))
+                    target_dataset.resize((new_n_rows, new_n_columns))
 
                     # Append the new data to the dataset and update metadata
-                    target_dataset_name[n_rows:new_n_rows, :] = data_to_write
-                    target_dataset_name.attrs['metadata'] = new_metadata
+                    target_dataset[n_rows:new_n_rows, :] = data_to_write
+                    target_dataset.attrs['metadata'] = new_metadata
 
         else:
 
@@ -487,7 +487,10 @@ class DatasetIO:
         
         return None
 
-    def extract_dataset(hdf5: h5py.File, target_dataset_name: str):
+    def extract_dataset(
+            hdf5: h5py.File,
+            target_dataset_name: str
+            ) -> Tuple[DatasetMetadata, h5py.Dataset]:
 
         target_dataset = hdf5[target_dataset_name]
         serialized_metadata = target_dataset.attrs['metadata']
@@ -513,74 +516,77 @@ class DatasetIO:
                             hdf5 = hdf5, target_dataset_name= dataset_name)
                         dataset_list.append(dataset)
                         metadata_list.append(metadata)
-                        metadata = reduce(lambda x, y: x | y, metadata_list)
+                        joined_metadata = reduce(lambda x, y: x | y, metadata_list)
 
-                    return metadata, dataset_list
+                    return joined_metadata, dataset_list
                 
                 else:
                     metadata, dataset =  DatasetIO.extract_dataset(
                         hdf5 = hdf5, target_dataset_name=target_dataset_name)
                     return metadata, [dataset]
         else:
-
             raise ValueError(f'Path {path} does not exist.')
 
-
-class RowGenerator():
+class RowGenerator:
     # to iteratively return info required for environments from a dataset.
     def __init__(
         self, 
         dataset_metadata: DatasetMetadata, 
-        datasets: List[h5py.Dataset]
-        start_index = None,
-        end_index = None,
-        batch_size: Optional[int] = None,
-        ) -> None:
+        datasets: List[h5py.Dataset],
+        start_index: int = 0,
+        end_index : Optional[int] = None,
+        n_rows_per_read: Optional[int] = None) -> None:
 
         self.dataset_metadata = dataset_metadata
+        self.datasets = datasets
         self.start_index = start_index
-        self.end_index = end_index
-        self.batch_size = batch_size
+        self.end_index = end_index if end_index is not None else self.dataset_metadata.n_rows
+        self.n_rows = self.end_index - self.start_index
+        self.n_columns = self.dataset_metadata.n_columns
+        self.n_rows_per_read = n_rows_per_read if n_rows_per_read is not None else self.n_rows
 
-
-    def __iter__:
-        for 
-    # returns mutually exclusive generators each covering a continous section of dataset.
-    def divide(self, n: int):
-
-
-class PeekableDataWrapper:
-    # A wrapper that gives peek and reset ability to generator like objects
-    def __init__(self, data: DataFrame | RowGenerator):
-
-        if not isinstance(data, pd.DataFrame) and not isinstance(
-            data, RowGenerator):
-
-            log.logger.error(
-                'Can only wrap pd.DataFrame or a RowGenerator objects.')
-            
-            raise ValueError
-
-        self.data = data
-        self.generator = None
-        self.reset()
-        return None
+    # end_index = n_rows thus it's a dummy index.
+    def __iter__(self):
+        for i in range(self.start_index, self.end_index, self.n_rows_per_read):
+            end = min(i + self.n_rows_per_read, self.end_index)
+            data_in_memory = [dataset[i:end, :] for dataset in self.datasets]
+            rows_in_memory = np.hstack(data_in_memory)
+            n_rows_in_memory = len(rows_in_memory)
+            for j in range(n_rows_in_memory):
+                row = rows_in_memory[j, :]
+                yield row
 
     def reset(self):
-        self.generator = peekable(self.data.get_generator())
-        return None
+        return  RowGenerator(
+            dataset_metadata=self.dataset_metadata,
+            datasets=self.datasets,
+            start_index=self.start_index,
+            end_index=self.end_index,
+            n_rows_per_read=self.n_rows_per_read)
+    
+    def reproduce(self, n: int):
 
-    def peek(self):
-        return self.generator.peek()
+        assert n > 0, "n must be a positive integer"
+        step, remainder = self.dataset_metadata.n_rows // n
+        generators = []
+        
+        for i in range(n):
 
-    def __iter__(self):
-        yield from self.generator
+            start = i * step + min(i, remainder)
+            end = (i + 1) * step + min(i+1, remainder)
 
-    def __next__(self):
-        return next(self.generator)
+            generator = RowGenerator(
+                dataset_metadata=self.dataset_metadata,
+                datasets=self.datasets,
+                start_index=start,
+                end_index=end,
+                memory_rows=self.memory_rows)
+            
+            generators.append(generator)
 
-    def __len__(self):
-        return len(self.data)
+        return generators
+
+
     
 # converts dictionaries of enum objects into dataframe
 def dicts_enum_to_df(
@@ -622,6 +628,3 @@ def to_timeframe(time_frame: str):
     else:
         raise ValueError(
             "Invalid timeframe. Valid examples: 59Min, 23Hour, 1Day, 1Week, 12Month")
-    
-def combine_column_type_masks(*args: Dict[]):
-    # aggregates column type masks suitable for filtering concatenated rows. 

@@ -1,5 +1,5 @@
 <div align="center">
-<img align="center" src=figs/alpacarl.jpg width="100%"/>
+<img align="center" src=figs/alpacarl.png width="100%"/>
 </div>
 
 [![Downloads](https://pepy.tech/badge/finrl)](https://pepy.tech/project/finrl)
@@ -10,6 +10,10 @@
 ![License](https://img.shields.io/github/license/AI4Finance-Foundation/finrl.svg?color=brightgreen)
 
 # AlpacaRL
-AlpacaRL is a deep reinforcement learning library for high frequency stocks and crypto trading in Alpaca API. AlpacaRL offers end-to-end suport from development to deployment of custom tailored algorithms. Stable versions of state of the art DRL algorithms are implemented using PyTorch and stable-baselines3. AlpacaRL offers a minimalist pythonic interface that enables users to focus on rapid testing, and prototyping. Environment design, preprossing, feature engineering, reward shaping, and model configuration procedures are encapsulated allowing user to focus on atomic components without continuity concerns or boilerplate code.
+AlpacaRL is a deep reinforcement learning python package that is specifically designed for high-frequency stocks and crypto trading with Alpaca API.
 
-Example showing how you can achieve required configurations of DRL algorithms specified in their original papers:
+The Alpaca API provides low-latency, commission-free trading of stocks and crypto assets, making it an ideal platform for high-frequency trading strategies that can benefit from the speed and efficiency of deep reinforcement learning algorithms.
+ 
+Our library provides support for all stages of development to deployment processes, from data collection to feature engineering, model design, training, back-testing and final implementation in market environment.
+
+AlpacaRL supports an array of state of the art DRL algorithms utilizing stable-baselines3 and PyTorch. AlpacaRL emphasizes a minimal and pythonic interface that eliminates continuity concerns or boilerplate code, by encapsulating logical compoents of high frequency trading process. Data retrieval, model training and inference operations are highly optimized thanks to HDF5 file format, GPU processing support, and C-level Cython implementation of bottlenecks.
