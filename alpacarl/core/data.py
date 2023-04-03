@@ -16,6 +16,7 @@ import numpy as np
 import pickle
 import tarfile
 from more_itertools import peekable
+import h5py
 
 from alpaca.data.historical import CryptoHistoricalDataClient, StockHistoricalDataClient
 from alpaca.trading import TradingClient
@@ -36,35 +37,55 @@ class DatasetType(Enum):
     QUOTE = 'QUOTE'
     TRADE = 'TRADE'
     ORDER_BOOK = 'ORDER_BOOK'
-    SENTIMENT = 'SENTIMENT'
 
 class ColumnType(Enum):
-    PRICE = 'PRICE'
-    FEATURE = 'FEATURE'
+    ASSET_PRICE = 'ASSET_PRICE'
     OPEN = 'OPEN'
     HIGH = 'HIGH'
     LOW = 'LOW'
     CLOSE = 'CLOSE'
 
 
-# represents a dataset file.
 @dataclass
-class Dataset:
-    path: str | os.PathLike
+class DatasetMetadata:
     dataset_type: List[DatasetType]
+    column_schema = Dict[ColumnType, Tuple[bool]]
+    asset_class = AssetClass
+    symbols = Tuple(str)
     start: datetime
     end: datetime
-    symbols: List[Tuple[str]]
     resolution: str
     n_rows: int
     n_columns: int
-    column_types = List[Dict[ColumnType, Tuple[bool]]]
 
-    def __add__(self, other):
+    def join_column_schema(self, other):
+        if set(self.column_schema.keys()) != set(other.column_schema.keys()):
+            raise ValueError('Datasets do not have matching column_schema structure.')
+        
+        merged_schema = dict()
+
+        for key in self.column_schema.keys():
+            merged_schema[key] = self.column_schema[key] + other.column_schema[key]
+        
+        return merged_schema
+
+
+    def __or__(self, other):
+        # For automatic type checking and metadata generation when joining datasets
+        # x | y automatically type checks and updates metadata of joined datasets.
 
         # checking compatibility
-        if not isinstance(other, Dataset):
-            raise ValueError('Only Dataset objects can be added.')
+        if not isinstance(other, DatasetMetadata):
+            raise ValueError('Only Dataset objects can be chained.')
+        
+        if other.dataset_type in self.dataset_type:
+            raise ValueError('Duplicate dataset type is not allowed in horizontal chaining.')
+
+        if self.asset_class != other.asset_class:
+            raise ValueError('Datasets must have the same asset classes.')
+        
+        if self.symbols != other.symbols:
+            raise ValueError('Datasets must have the same symbols.')
         
         if self.resolution != other.resolution:
             raise ValueError('Datasets must have the same resolution.')
@@ -80,10 +101,59 @@ class Dataset:
 
         dataset_type = self.dataset_type + other.dataset_type
         n_columns = self.n_columns + other.n_columns
-        column_types = self.column_types + other.column_types
+        column_schema = self.join_column_schema(other)
 
-        return Dataset(
-            path=self.path,
+        return DatasetMetadata(
+            dataset_type=dataset_type,
+            column_schema = column_schema,
+            asset_class=self.asset_class,
+            symbols=self.symbols,            
+            start=self.start,
+            end=self.end,
+            resolution=self.resolution,
+            n_rows=self.n_rows,
+            n_columns=n_columns)
+
+
+    def __and__(self, other):
+        # For automatic type checking and metadata generation when appending to datasets
+        # x + y automatically type checks and updates metadata of appended datasets.
+
+        # checking compatibility
+        if not isinstance(other, DatasetMetadata):
+            raise ValueError('Only Dataset objects can be appended.')
+        
+        if self.dataset_type != other.dataset_type:
+            raise ValueError(f'Dataset types {self.dataset_type} and {other.dataset_type} are mismatched.')
+        
+        if self.column_schema != other.column_schema:
+            raise ValueError(f'Datasets must have identical column schema.')
+        
+        if self.asset_class != other.asset_class:
+            raise ValueError('Datasets must have the same asset classes.')
+        
+        if self.symbols != other.symbols:
+            raise ValueError('Datasets must have the same symbols.')
+
+        if other.start <= self.end:
+            raise ValueError(f'Cannot perform append. End time: {self.end}, and start time: {other.start} overlap.')       
+
+        if abs(self.end.date() - other.start.date()).days != 1:
+            raise ValueError(f'End date {self.end} and start date {other.start}  are not 1 day apart.')
+        
+        if self.resolution != other.resolution:
+            raise ValueError(
+                f'Dataset resolutions{self.resolution} and {other.resolution} are mismatched.')
+        
+        if self.n_columns != other.n_columns:
+            raise ValueError('Dataset number of columns mismatch.')
+
+
+        dataset_type = self.dataset_type + other.dataset_type
+        n_columns = self.n_columns + other.n_columns
+        column_schema = self.join_column_schema(other)
+
+        return DatasetMetadata(
             dataset_type=dataset_type,
             start=self.start,
             end=self.end,
@@ -91,63 +161,11 @@ class Dataset:
             resolution=self.resolution,
             n_rows=self.n_rows,
             n_columns=n_columns,
-            price_column_names = price_column_names,
-            chain_type=DatasetChainType.HORIZONTAL)
-
-    def __and__(self, other):
-        
-        if self.chain_type and self.chain_type == DatasetChainType.HORIZONTAL:
-            raise ValueError(
-                'Cannot vertically chain a horizontally chained dataset.')
-
-        if other.chain_type:
-            raise TypeError(
-                'Left-associative operator + : in x + y, only x can be already chained.')
-                            
-        # checking compatibility
-        if not isinstance(other, Dataset):
-            raise ValueError('Only Dataset objects can be added.')
-
-        if self.symbols != other.symbols:
-            raise ValueError('Datasets must have the same symbols.')    
-
-        if self.n_columns != other.n_columns:
-            raise ValueError('Datasets must have the same number of columns.')
-
-        if self.price_column_names != other.price_column_names:
-            raise ValueError('Datasets must have same price_column_names attribute.')
-        
-        if self.resolution != other.resolution:
-            raise ValueError('Datasets must have the same resolution.')
-        
-        if other.start <= self.end:
-            raise ValueError('Datasets cannot have overlapping time spans in vertical chaining.')
+            column_schema = column_schema)
     
-        
-         
-        
-        path = self.path + other.path
-        dataset_type = self.dataset_type + other.dataset_type
-        end = other.end
-        n_rows = self.n_rows + other.n_rows
-
-        return Dataset(
-            path=path,
-            dataset_type=dataset_type,
-            start=self.start,
-            end=end,
-            symbols=self.symbols,
-            resolution=self.resolution,
-            n_rows=n_rows,
-            n_columns=self.n_columns,
-            price_column_names=self.price_column_names,
-            chain_type=DatasetChainType.VERTICAL)
-
-
 class CalendarType(Enum):
     NYSE = 'NYSE'
     ALWAYS_OPEN = '24/7'
-
 
 class Calendar:
 
@@ -425,83 +443,110 @@ class DataProcessor:
 
 class DatasetIO:
 
-    def save_dataset(path: str | os.PathLike, data_frame: DataFrame, meta_data: Dataset):
-        pass
+    def write_to_hdf5(
+        path: str | os.PathLike, 
+        data_to_write: np.ndarray, 
+        metadata: DatasetMetadata, 
+        target_dataset_name: str):
 
-    def load_dataset(path: str | os.PathLike, vertical = False):
+        if os.path.exists(path):
 
-        if os.path.isfile(path):
-            with tarfile.open(path, 'r') as tar_file:
-                with tar_file.extractfile('meta_data') as pickle_file:
-                    dataset =  pickle.load(pickle_file)
+            with h5py.File(path, 'w') as hdf5:
 
-                csv = tar_file.extractfile('dataset.csv')
+                if target_dataset_name not in hdf5:
 
-            dataset.path = path
+                    # Create a fixed-size dataset with a predefined data type and dimensions
+                    target_dataset = hdf5.create_dataset(
+                        name = target_dataset_name, shape=data_to_write.shape, dtype=np.float32, chunks = True)
+                    
+                    serialized_metadata = pickle.dumps(metadata)
+                    target_dataset.attrs['metadata'] = serialized_metadata
 
-            return dataset, csv
+                else:
 
-        elif os.path.isdir(path):
+                    target_dataset_metadata, target_dataset = DatasetIO.load_from_hdf5(hdf5, target_dataset_name= target_dataset_name)
 
-            datasets = list()
-            csvs = list()
+                    new_metadata = target_dataset_metadata + metadata
+                    n_rows, n_columns = target_dataset_name.shape
+                    n_rows_, n_columns_ = data_to_write.shape
 
-            for filename in os.listdir(path):
+                    if n_columns_ != n_columns:
+                        raise ValueError('Mismatch in number of columns.')
 
-                file_path = os.path.join(path, filename)
-                dataset, csv = DatasetIO.load_dataset(file_path)
-                datasets.append(datasets)
-                csvs.append(csv)
+                    new_n_rows, new_n_columns = n_rows + n_rows_, n_columns
 
-            # chaining datasets happening here
-            datasets = reduce(lambda x, y: x | y, datasets
-                ) if not vertical else reduce(lambda x, y: x + y, datasets)
+                    target_dataset_name.resize((new_n_rows, new_n_columns))
 
-        return dataset, csvs
+                    # Append the new data to the dataset and update metadata
+                    target_dataset_name[n_rows:new_n_rows, :] = data_to_write
+                    target_dataset_name.attrs['metadata'] = new_metadata
+
+        else:
+
+            raise ValueError(f'Path {path} does not exist.')
+        
+        return None
+
+    def extract_dataset(hdf5: h5py.File, target_dataset_name: str):
+
+        target_dataset = hdf5[target_dataset_name]
+        serialized_metadata = target_dataset.attrs['metadata']
+        metadata = pickle.loads(serialized_metadata)
+
+        return metadata, target_dataset            
+
+    def load_from_hdf5(
+        path: str | os.PathLike, 
+        target_dataset_name: Optional[str] = None
+        ) -> Tuple[DatasetMetadata, List[h5py.Dataset]]:
+
+        if os.path.exists(path):
+
+            with h5py.File(path, 'r') as hdf5:
+
+                if target_dataset_name is None:
+                    dataset_list = list()
+                    metadata_list = list()
+                    for dataset_name in hdf5:
+
+                        metadata, dataset = DatasetIO.extract_dataset(
+                            hdf5 = hdf5, target_dataset_name= dataset_name)
+                        dataset_list.append(dataset)
+                        metadata_list.append(metadata)
+                        metadata = reduce(lambda x, y: x | y, metadata_list)
+
+                    return metadata, dataset_list
+                
+                else:
+                    metadata, dataset =  DatasetIO.extract_dataset(
+                        hdf5 = hdf5, target_dataset_name=target_dataset_name)
+                    return metadata, [dataset]
+        else:
+
+            raise ValueError(f'Path {path} does not exist.')
+
 
 class RowGenerator():
     # to iteratively return info required for environments from a dataset.
     def __init__(
         self, 
-        dataset: Dataset, 
-        batch_size: Optional[int] = None, 
-        skip_rows = None,
-        max_rows = None,
+        dataset_metadata: DatasetMetadata, 
+        datasets: List[h5py.Dataset]
+        start_index = None,
+        end_index = None,
+        batch_size: Optional[int] = None,
         ) -> None:
 
-        self.dataset = dataset
-        self.batch_size = chunksize
-        self.skip_rows = skiprows
-        self.max_rows = max_rows
+        self.dataset_metadata = dataset_metadata
+        self.start_index = start_index
+        self.end_index = end_index
+        self.batch_size = batch_size
 
-    def __len__(self):
 
-        return self.dataset.n_rows
-
-    def __iter__(self) -> Generator[Any, None, None]:
-
-        chain_type = self.dataset.chain_type
-
-        if chain_type == DatasetChainType.HORIZONTAL:
-            pass
-        
-        if not chain_type or chain_type == DatasetChainType.VERTICAL:
-            path = self.dataset.path
-            for path in path
-
-        chunk_iterator = pd.read_csv(self.dir, chunksize=self.chunk)
-        idx = -1
-
-        # Loop over the chunks and yield each row from the current chunk
-        for chunk in chunk_iterator:
-            yield from chunk.iterrows()
-
+    def __iter__:
+        for 
     # returns mutually exclusive generators each covering a continous section of dataset.
     def divide(self, n: int):
-        len(self)
-        for i in range(n):
-            skiprows = i * chunk_s
-            nrows = chunk_size if i < n - 1 else None  # For the last chunk, read until the end of the file
 
 
 class PeekableDataWrapper:
@@ -577,3 +622,6 @@ def to_timeframe(time_frame: str):
     else:
         raise ValueError(
             "Invalid timeframe. Valid examples: 59Min, 23Hour, 1Day, 1Week, 12Month")
+    
+def combine_column_type_masks(*args: Dict[]):
+    # aggregates column type masks suitable for filtering concatenated rows. 
