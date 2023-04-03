@@ -9,7 +9,6 @@
 [![Documentation Status](https://readthedocs.org/projects/finrl/badge/?version=latest)](https://finrl.readthedocs.io/en/latest/?badge=latest)
 ![License](https://img.shields.io/github/license/AI4Finance-Foundation/finrl.svg?color=brightgreen)
 
-# AlpacaRL
 AlpacaRL is a deep reinforcement learning python package that is specifically designed for high-frequency stocks and crypto trading with Alpaca API.
 
 The Alpaca API provides low-latency, commission-free trading of stocks and crypto assets, making it an ideal platform for high-frequency trading strategies that can benefit from the speed and efficiency of deep reinforcement learning algorithms.
