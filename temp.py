@@ -1,8 +1,9 @@
 from alpacarl.meta.constants import ALPACA_API_PAPER_URL, ALPACA_API_BASE_URL, CUSTOM_SYMBOLS
-from alpacarl.core.data import RowGenerator, DatasetDownloader
+from alpacarl.core.data.ops import RowGenerator, DatasetDownloader
 from alpacarl.env.base import BaseEnv, FractionalActionWrapper
-from alpacarl.core.data import DatasetType, DatasetIO
+from alpacarl.core.data.ops import DatasetType, DatasetIO
 from alpacarl.core.client import AlpacaMetaClient
+
 
 path = ''
 symbols = ['AAPL']
@@ -11,7 +12,7 @@ end_date = "2018-01-04"  # End time, max=today
 resolution = '1Min'  # "1Min", "5Min", "15Min", "1H"
 
 
-dataset_metadata, _ = DatasetIO.load_from_hdf5(path = path)
+metadata, _ = DatasetIO.load_from_hdf5(path = path)
 client = AlpacaMetaClient(sandbox=True)
 client.setup_clients_and_account()
 data_downloader = DatasetDownloader(client)

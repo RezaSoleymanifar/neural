@@ -2,6 +2,41 @@ import pandas as pd
 from typing import List, Iterable
 import tableprint
 import tqdm
+from enums import CalendarType
+import pandas_market_calendars as market_calendars
+
+
+class Calendar:
+
+    def __init__(self, calendar_type=CalendarType) -> None:
+        self.calendar_type = calendar_type
+        self.calendar = None
+
+    def get_calendar(self):
+
+        calendar = market_calendars.get_calendar(self.calendar_type.value)
+
+        return calendar
+
+    # get core hours of calendar
+    def get_schedule(self, start_date, end_date):
+
+        self.calendar = self.get_calendar()
+        schedule = self.calendar.schedule(
+            start_date=start_date, end_date=end_date)
+
+        return schedule
+
+    def get_time_zone(self) -> str:
+
+        if self.calendar_type == Calendar.ALWAYS_OPEN:
+            time_zone = 'UTC'
+
+        elif self.calendar_type == Calendar.NYSE:
+            time_zone = 'America/New_York'
+
+        return time_zone
+    
 
 def sharpe(assets_hist: List[float], base=0):
     hist = pd.Series(assets_hist)

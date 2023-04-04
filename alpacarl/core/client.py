@@ -111,20 +111,14 @@ class AlpacaMetaClient:
 
         return None
 
-    def get_symbols_asset_class(self, symbols: List[str]):
+# converts dictionaries of enum objects into dataframe
+def dicts_enum_to_df(
+        info: Iterable[Dict[str, str]]
+        ) -> DataFrame:
 
-        # checks if symbols name is valid
-        for symbol in symbols:
-            if symbol not in self.symbols:
-                raise ValueError(f'Symbol {symbol} is not a supported symbol.')
+    for dict_ in info:
+        for key, val in dict_.items():
+            dict_[key] = val.value if isinstance(val, Enum) else val
 
-        asset_classes = set(
-            self.symbols[symbol]['asset_class'] for symbol in symbols)
-
-        # checks if symbols have the same asset class
-        if len(asset_classes) != 1:
-            raise ValueError('Symbols are not of the same asset class.')
-
-        asset_class = asset_classes.pop()
-
-        return asset_class
+    df = DataFrame(info)
+    return df

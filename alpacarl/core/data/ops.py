@@ -8,172 +8,13 @@ from alpacarl.aux.tools import progress_bar
 
 import os, re
 from datetime import datetime
-from enum import Enum
-from typing import (List, Optional, Iterable, Dict, Tuple)
-from dataclasses import dataclass
+from typing import (List, Optional, Tuple)
 from functools import reduce
 
-import pandas_market_calendars as market_calendars
 import pandas as pd
 import numpy as np
 import pickle, h5py
 
-
-class DatasetType(Enum):
-    BAR = 'BAR'
-    QUOTE = 'QUOTE'
-    TRADE = 'TRADE'
-    ORDER_BOOK = 'ORDER_BOOK'
-
-
-class ColumnType(Enum):
-    PRICE = 'PRICE'
-    OPEN = 'OPEN'
-    HIGH = 'HIGH'
-    LOW = 'LOW'
-    CLOSE = 'CLOSE'
-
-class CalendarType(Enum):
-    NYSE = 'NYSE'
-    ALWAYS_OPEN = '24/7'
-
-
-@dataclass
-class DatasetMetadata:
-    dataset_type: List[DatasetType]
-    column_schema = Dict[ColumnType, Tuple[bool]]
-    asset_class = AssetClass
-    symbols = Tuple(str)
-    start: datetime
-    end: datetime
-    resolution: str
-    n_rows: int
-    n_columns: int
-
-    def __or__(self, other):
-        # For automatic type checking and metadata generation when joining datasets
-        # x | y automatically type checks and updates metadata of joined datasets.
-
-        # checking compatibility
-        if not isinstance(other, DatasetMetadata):
-            raise ValueError('Only Dataset objects can be chained.')
-
-        if other.dataset_type in self.dataset_type:
-            raise ValueError(
-                'Duplicate dataset type is not allowed in horizontal chaining.')
-
-        if self.asset_class != other.asset_class:
-            raise ValueError('Datasets must have the same asset classes.')
-
-        if self.symbols != other.symbols:
-            raise ValueError('Datasets must have the same symbols.')
-
-        if self.resolution != other.resolution:
-            raise ValueError('Datasets must have the same resolution.')
-
-        if self.n_rows != other.n_rows:
-            raise ValueError('Datasets must have the same number of rows.')
-
-        if self.start != other.start:
-            raise ValueError('Datasets do not have the same start dates.')
-
-        if self.end != other.end:
-            raise ValueError('Datasets do not have the same end dates.')
-
-        dataset_type = self.dataset_type + other.dataset_type
-        n_columns = self.n_columns + other.n_columns
-        column_schema = self.join_column_schemas(other)
-
-        return DatasetMetadata(
-            dataset_type=dataset_type,
-            column_schema=column_schema,
-            asset_class=self.asset_class,
-            symbols=self.symbols,
-            start=self.start,
-            end=self.end,
-            resolution=self.resolution,
-            n_rows=self.n_rows,
-            n_columns=n_columns)
-
-    def __and__(self, other):
-        # For automatic type checking and metadata generation when appending to datasets
-        # x + y automatically type checks and updates metadata of appended datasets.
-
-        # checking compatibility
-        if not isinstance(other, DatasetMetadata):
-            raise ValueError('Only Dataset objects can be appended.')
-
-        if self.dataset_type != other.dataset_type:
-            raise ValueError(
-                f'Dataset types {self.dataset_type} and {other.dataset_type} are mismatched.')
-
-        if self.column_schema != other.column_schema:
-            raise ValueError(f'Datasets must have identical column schema.')
-
-        if self.asset_class != other.asset_class:
-            raise ValueError('Datasets must have the same asset classes.')
-
-        if self.symbols != other.symbols:
-            raise ValueError('Datasets must have the same symbols.')
-
-        if other.start <= self.end:
-            raise ValueError(
-                f'Cannot perform append. End time: {self.end}, and start time: {other.start} overlap.')
-
-        if abs(self.end.date() - other.start.date()).days != 1:
-            raise ValueError(
-                f'End date {self.end} and start date {other.start}  are not 1 day apart.')
-
-        if self.resolution != other.resolution:
-            raise ValueError(
-                f'Dataset resolutions{self.resolution} and {other.resolution} are mismatched.')
-
-        if self.n_columns != other.n_columns:
-            raise ValueError('Dataset number of columns mismatch.')
-
-        dataset_type = self.dataset_type + other.dataset_type
-        n_columns = self.n_columns + other.n_columns
-        column_schema = self.join_column_schemas(other)
-
-        return DatasetMetadata(
-            dataset_type=dataset_type,
-            start=self.start,
-            end=self.end,
-            symbols=self.symbols,
-            resolution=self.resolution,
-            n_rows=self.n_rows,
-            n_columns=n_columns,
-            column_schema=column_schema)
-    
-    @staticmethod
-    def create_column_schema(dataset_type, data: pd.DataFrame):
-        
-        column_schema = dict()
-
-        if dataset_type == DatasetType.BAR:
-
-            asset_price_Mask = data.columns.str.contains('close')
-            column_schema[ColumnType.PRICE] = asset_price_Mask
-
-        else:
-
-            asset_price_Mask = [False]*data.shape[1]
-            column_schema[ColumnType.PRICE] = asset_price_Mask
-            
-
-
-    def join_column_schemas(self, other):
-        if set(self.column_schema.keys()) != set(other.column_schema.keys()):
-            raise ValueError(
-                'Datasets do not have matching column_schema structure.')
-
-        merged_schema = dict()
-
-        for key in self.column_schema.keys():
-            merged_schema[key] = self.column_schema[key] + \
-                other.column_schema[key]
-
-        return merged_schema
     
 class DatasetDownloader():
     def __init__(
@@ -185,6 +26,29 @@ class DatasetDownloader():
 
         return None
 
+    def validate_symbols(self, symbols: List[str]):
+
+        duplicate_symbols = list(set([x for x in symbols if symbols.count(x) > 1]))
+        if duplicate_symbols is not None:
+            raise ValueError(f'Symbols {duplicate_symbols} have duplicate values.')
+        
+
+        # checks if symbols name is valid
+        for symbol in symbols:
+            if symbol not in self.symbols:
+                raise ValueError(f'Symbol {symbol} is not a supported symbol.')
+
+        asset_classes = set(
+            self.symbols[symbol]['asset_class'] for symbol in symbols)
+
+        # checks if symbols have the same asset class
+        if len(asset_classes) != 1:
+            raise ValueError('Symbols are not of the same asset class.')
+
+        asset_class = asset_classes.pop()
+
+        return asset_class
+    
     def download_and_write_dataset(self,
         path: str,
         target_dataset_name: str,
@@ -198,11 +62,16 @@ class DatasetDownloader():
         if not os.path.exists(path):
             raise ValueError(f'Path {path} does not exist.')
         
+        
         # converts to expected input formats
         start_date, end_date = to_datetime(start_date), to_datetime(end_date)
-        resolution = to_timeframe(resolution)
+        if start_date = datetime.today
 
-        asset_class = self.get_symbols_asset_class(symbols)
+        resolution = to_timeframe(resolution)
+        # API produces results in sorted order of symbols
+        symbols = sorted(symbols)
+        
+        asset_class = self.validate_symbols(symbols)
 
         downloader, request = DatasetDownloader(
             meta_client = self, dataset_type = dataset_type, asset_class = asset_class)
@@ -235,7 +104,8 @@ class DatasetDownloader():
                 start=market_open, end=market_close))
             
             bars = bars.tz_convert(time_zone)
-
+            
+            if bars['symbol'].nunique() != symbols:
 
 
             features_df = pd.concat(
@@ -247,10 +117,12 @@ class DatasetDownloader():
             n_rows, n_columns = features_np.shape
 
 
-            column_schema = DatasetMetadata.create_column_schema(dataset_type, features_df)
-            dataset_metadata = DatasetMetadata(
+            column_schema = DatasetMetadata.create_column_schema(
+                dataset_type, features_df)
+            
+            metadata = DatasetMetadata(
                 dataset_type= dataset_type,
-                column_schema = None,
+                column_schema = column_schema,
                 asset_class=asset_class,
                 symbols=symbols,
                 start= start_date,
@@ -260,7 +132,11 @@ class DatasetDownloader():
                 n_columns= n_columns,
             )
 
-            DatasetIO.write_to_hdf5(path, features_np, dataset_metadata, target_dataset_name)
+            DatasetIO.write_to_hdf5(
+                path = path, 
+                data_to_write=features_np, 
+                metadata= metadata, 
+                target_dataset_name= target_dataset_name)
 
             progress_bar_.update(1)
         progress_bar_.close()
@@ -311,36 +187,6 @@ class DataProcessor:
         symbol = resampled['symbol'][0]
         resampled.columns = [f'{symbol}_{col}' for col in data.columns]
         return resampled
-    
-class Calendar:
-
-    def __init__(self, calendar_type=CalendarType) -> None:
-        self.calendar_type = calendar_type
-        self.calendar = None
-    
-    def get_calendar(self):
-
-        calendar = market_calendars.get_calendar(self.calendar_type.value)
-
-        return calendar
-
-    # get core hours of calendar
-    def get_schedule(self, start_date, end_date):
-
-        self.calendar = self.get_calendar()
-        schedule = self.calendar.schedule(start_date=start_date, end_date=end_date)
-
-        return schedule
-    
-    def get_time_zone(self) -> str:
-
-        if self.calendar_type == Calendar.ALWAYS_OPEN:
-            time_zone =  'UTC'
-
-        elif self.calendar_type == Calendar.NYSE:
-            time_zone = 'America/New_York'
-
-        return time_zone
 
 class DatasetIO:
 
@@ -442,64 +288,47 @@ class RowGenerator:
     # end_index = n_rows thus it's a dummy index.
     def __iter__(self):
         
-        for range_to_load in np.array_split(range(self.start_index, self.end_index), self.n_chunks):
-            data_in_memory = [dataset[range_to_load, :] for dataset in self.datasets]
-            rows_in_memory = np.hstack(data_in_memory)
+        start = 0
+        for end in np.linspace(self.start_index, self.end_index, self.n_chunks, dtype= int, endpoint=True):
+            rows_in_memory = np.hstack([dataset[start:end, :] for dataset in self.datasets])
             for row in rows_in_memory:
                 yield row
+            start = end
 
     def reset(self):
         return  RowGenerator(
             dataset_metadata=self.dataset_metadata,
             datasets=self.datasets,
             start_index=self.start_index,
-            end_index=self.end_index,
+            end_index=self.end_index, # exclusive
             n_rows_per_read=self.n_rows_per_read)
     
     def reproduce(self, n: int):
 
         assert n > 0, "n must be a positive integer"
+        generators = list()
 
-        for range_to_generate in np.array_split(range(self.start_index, self.end_index), n):
+        start_index = 0
 
-        step, remainder = self.dataset_metadata.n_rows // n
-        generators = []
-    
-        for i in range(n):
-
-            start = i * step + min(i, remainder)
-            end = (i + 1) * step + min(i+1, remainder)
-
+        for end_index in np.linspace(self.start_index, self.end_index, self.n_chunks, dtype=int, endpoint=True):
             generator = RowGenerator(
                 dataset_metadata=self.dataset_metadata,
                 datasets=self.datasets,
-                start_index=start,
-                end_index=end,
-                memory_rows=self.memory_rows)
+                start_index=start_index,
+                end_index=end_index,
+                n_chunks=self.n_chunks)
             
             generators.append(generator)
-
+            start_index = end_index
         return generators
     
-# converts dictionaries of enum objects into dataframe
-def dicts_enum_to_df(
-    info: Iterable[Dict[str, str]]
-    ) -> DataFrame:
-    
-    for dict_ in info:
-        for key, val in dict_.items():
-            dict_[key] = val.value if isinstance(val, Enum) else val
-
-    df = DataFrame(info)
-    return df
-
-def to_datetime(date: str):
-    try:
-        date_format = "%Y-%m-%d"
-        dt = datetime.strptime(date, date_format)
-    except:
-        ValueError('Invalid date. Valid examples: 2022-03-20, 2015-01-01')
-    return dt
+# def to_datetime(date: str):
+#     try:
+#         date_format = "%Y-%m-%d"
+#         dt = datetime.strptime(date, date_format)
+#     except:
+#         ValueError('Invalid date. Valid examples: 2022-03-20, 2015-01-01')
+#     return dt
 
 def to_timeframe(time_frame: str):
 

@@ -1,19 +1,26 @@
-import pandas as pd
-from gym import spaces, Env, ActionWrapper
-import numpy as np
-from alpacarl.meta import log
-from alpacarl.aux.tools import sharpe, tabular_print
-from alpacarl.core.data import RowGenerator, ColumnType
 from collections import defaultdict
 from typing import Tuple, Optional
 
+import numpy as np
+from gym import spaces, Env, ActionWrapper
+
+from alpacarl.meta import log
+from alpacarl.aux.tools import sharpe, tabular_print
+from alpacarl.core.data.ops import RowGenerator, ColumnType
+
 
 class BaseEnv(Env):
-    def __init__(self, data_generator: RowGenerator, init_cash: float = 1e6,\
-                  min_trade: float = 1, verbose: bool = True) -> None:
+    def __init__(
+        self, 
+        data_generator: RowGenerator, 
+        init_cash: float = 1e6,
+        min_trade: float = 1, 
+        verbose: bool = True
+        ) -> None:
         
         if data_generator is None:
-            log.logger.error(("data_generator must be provided."))
+            log.logger.error(
+                ("data_generator must be provided."))
             raise ValueError
         else:
             self.data_generator = data_generator
@@ -24,16 +31,16 @@ class BaseEnv(Env):
         self.index = None
         self.init_cash = init_cash
         self.cash = None
-        self.assets = None # cash or stocks/crypto
+        self.assets = None # cash + stocks/crypto
         self.steps = self.deta_generator.n_rows
         self.n_features = self.data_generator.n_columns
         self.n_symbols = len(self.dataset_metadata.symbols)   
         self.stocks = None # quantity of each stock held
-        self.holds = None # steps stock has had not trades
+        self.holds = None # steps stock did not have trades
         self.min_trade = min_trade
 
-        # instead of self.stocks (quantity) we use self.positions (USD) to reflect relative value of assets in portfolio.
-        self.action_space = spaces.Box(low=-np.inf, high=np.inf, shape=(self.n_symbols,), dtype=np.float32)
+        self.action_space = spaces.Box(
+            low=-np.inf, high=np.inf, shape=(self.n_symbols,), dtype=np.float32)
         self.observation_space = spaces.Dict({
             'cash':spaces.Box(
             low=0, high=np.inf, shape = (1,), dtype=np.float32),
@@ -42,13 +49,15 @@ class BaseEnv(Env):
             'holds': spaces.Box(
             low=0, high=np.inf, shape = (self.n_symbols,), dtype=np.int32),
             'features': spaces.Box(
-            low=-np.inf, high=np.inf, shape = (self.n_features,), dtype=np.float32)
-        })
+            low=-np.inf, high=np.inf, shape = (self.n_features,), dtype=np.float32)})
+        
         self.history = defaultdict(list)
         self.verbose = verbose
         self.render_every = self.step//20
     
-    def prices_and_features_generator(self) -> Tuple[np.ndarray, np.ndarray]:
+    def prices_and_features_generator(
+        self
+        ) -> Tuple[np.ndarray, np.ndarray]:
 
         features = next(self.deta_generator)
         features.astype(np.float32)
@@ -59,7 +68,8 @@ class BaseEnv(Env):
     def _get_env_state(self) -> np.ndarray:
 
         positions = self.stocks * self.prices
-        state = np.hstack([self.cash, positions, self.holds, self.features])
+        state = np.hstack(
+            [self.cash, positions, self.holds, self.features])
         return state
 
     def _cache_hist(self):
@@ -69,11 +79,12 @@ class BaseEnv(Env):
         # resetting input state
         self.deta_generator.reset()
         
-        log.logger.info(f'Initializing environment. Steps: '\
-                        f'{self.steps:,}, symbols: {self.n_symbols}, features: {self.n_features}')
+        log.logger.info(
+            f'Steps: {self.steps}, symbols: {self.n_symbols}, features: {self.n_features}')
         
         self.index = 0
-        self.prices, self.features = next(self.prices_and_features_generator())
+        self.prices, self.features = next(
+            self.prices_and_features_generator())
         self.cash = self.init_cash
         self.stocks = np.zeros((self.n_symbols,), dtype=np.int32)
         self.holds = np.zeros((self.n_symbols,), dtype=np.int32)
@@ -124,7 +135,9 @@ class BaseEnv(Env):
         # print header at first render
         if self.index == self.render_every:
             # print results in a tear sheet format
-            tabular_print(['Progress', 'Return','Sharpe ratio', 'Assets', 'Positions', 'Cash'], header = True)
+            tabular_print(
+                ['Progress', 'Return','Sharpe ratio',
+                'Assets', 'Positions', 'Cash'], header = True)
         
         # total value of positions in portfolio
         positions_ = self.stocks @ self.prices
@@ -134,36 +147,13 @@ class BaseEnv(Env):
         sharpe_ = sharpe(self.history['assets'])
         progress_ = self.index/self.steps
 
+        metrics = [f'{progress_:.0%}', f'{return_:.2%}', f'{sharpe_:.4f}',
+            f'${self.assets:,.2f}', f'${positions_:,.2f}', f'${self.cash:,.2f}']
+        
         # add performance metrics to tear sheet
-        tabular_print([f'{progress_:.0%}', f'{return_:.2%}', f'{sharpe_:.4f}',\
-                                f'${self.assets:,.2f}', f'${positions_:,.2f}', f'${self.cash:,.2f}'])
+        tabular_print(metrics)
                 
         if done:
             log.logger.info('Episode terminated.')
-            log.logger.info(f'Progress: {progress_:<.0%}, return: {return_:<.2%}, Sharpe ratio: {sharpe_:<.4f} ' \
-                            f'assets: ${self.assets:<,.2f}, positions: ${positions_:<,.2f},  cash: ${self.cash:<,.2f}')
+            log.logger.info(*metrics)
         return None
-    
-class FractionalActionWrapper(ActionWrapper):
-    # maps actions in (-1, 1) to buy/sell/hold
-    def __init__(self, env: Env, ratio = 0.02):
-        super().__init__(env)
-        base_env = env.unwrapped
-        self.max_trade = self._set_max_trade(ratio)
-        self.n_symbols = base_env.n_symbols
-        self.init_cash = base_env.init_cash
-        self.action_space = spaces.Box(low = -1, high = 1, shape = (self.n_symbols, ))
-        self.threshold = 0.15
-    
-    def _set_max_trade(self, trade_ratio: float) -> float:
-        # sets value for self.max_trade
-        # Default: 2% of initial cash per trade per stocks
-        # Recommended initial_cash >= n_stocks/trade_ratio. Trades bellow $1 is clipped to 1 (API constraint).
-        max_trade = (trade_ratio * self.init_cash)/self.n_symbols
-        return max_trade
-
-    def action(self, action: float, threshold = 0.15) -> float:
-        # action value in (-threshold, +threshold) is parsed as hold
-        fraction = (abs(action) - self.threshold)/(1- self.threshold)
-        return fraction * self.max_trade * np.sign(action) if fraction > 0 else 0
-        
