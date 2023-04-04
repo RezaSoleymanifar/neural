@@ -20,7 +20,7 @@ class BaseEnv(Env):
 
         self.dataset_metadata = self.deta_generator.dataset_metadata
         self.column_schema = self.dataset_metadata.column_schema
-        self.asset_price_mask = self.column_schema[ColumnType.ASSET_PRICE]
+        self.asset_price_mask = self.column_schema[ColumnType.PRICE]
         self.index = None
         self.init_cash = init_cash
         self.cash = None
@@ -46,6 +46,7 @@ class BaseEnv(Env):
         })
         self.history = defaultdict(list)
         self.verbose = verbose
+        self.render_every = self.step//20
     
     def prices_and_features_generator(self) -> Tuple[np.ndarray, np.ndarray]:
 
@@ -115,16 +116,15 @@ class BaseEnv(Env):
         done = self.index == self.steps - 1
 
         # tabulate decision maker performance
-        if (self.verbose and not self.index % (self.steps//20)) or done:
+        if (self.verbose and self.index % self.render_every == 0) or done:
             self.render(done)
         return self.state, reward, done, self.history
         
     def render(self, done:bool = False) -> None:
         # print header at first render
-        if self.index == self.steps//20:
+        if self.index == self.render_every:
             # print results in a tear sheet format
             tabular_print(['Progress', 'Return','Sharpe ratio', 'Assets', 'Positions', 'Cash'], header = True)
-            return None
         
         # total value of positions in portfolio
         positions_ = self.stocks @ self.prices

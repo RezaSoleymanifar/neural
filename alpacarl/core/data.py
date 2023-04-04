@@ -1,34 +1,23 @@
-import os
+from alpaca.data.timeframe import TimeFrame, TimeFrameUnit
+from alpaca.trading.enums import AssetClass
+from alpaca.data.requests import CryptoBarsRequest, StockBarsRequest
+from alpacarl.core.client import AlpacaMetaClient
+
+from alpacarl.meta import log
+from alpacarl.aux.tools import progress_bar
+
+import os, re
 from datetime import datetime
 from enum import Enum
-import re
-from typing import (List, Optional, Iterable, Type,
-    Generator, Any, Dict, Tuple)
+from typing import (List, Optional, Iterable, Dict, Tuple)
 from dataclasses import dataclass
 from functools import reduce
-from math import ceil
 
 import pandas_market_calendars as market_calendars
 import pandas as pd
-from pandas import DataFrame
 import numpy as np
-import pickle
-from more_itertools import peekable
-import h5py
+import pickle, h5py
 
-from alpaca.data.historical import CryptoHistoricalDataClient, StockHistoricalDataClient
-from alpaca.trading import TradingClient
-from alpaca.data.requests import CryptoBarsRequest, StockBarsRequest
-from alpaca.data.timeframe import TimeFrame, TimeFrameUnit
-from alpaca.trading.enums import AssetExchange, AssetClass
-
-from alpacarl.meta.config import (
-    ALPACA_API_KEY,
-    ALPACA_API_SECRET,
-    ALPACA_API_ENDPOINT,
-    ALPACA_API_ENDPOINT_PAPER)
-from alpacarl.meta import log
-from alpacarl.aux.tools import progress_bar
 
 class DatasetType(Enum):
     BAR = 'BAR'
@@ -36,12 +25,18 @@ class DatasetType(Enum):
     TRADE = 'TRADE'
     ORDER_BOOK = 'ORDER_BOOK'
 
+
 class ColumnType(Enum):
-    ASSET_PRICE = 'ASSET_PRICE'
+    PRICE = 'PRICE'
     OPEN = 'OPEN'
     HIGH = 'HIGH'
     LOW = 'LOW'
     CLOSE = 'CLOSE'
+
+class CalendarType(Enum):
+    NYSE = 'NYSE'
+    ALWAYS_OPEN = '24/7'
+
 
 @dataclass
 class DatasetMetadata:
@@ -55,18 +50,6 @@ class DatasetMetadata:
     n_rows: int
     n_columns: int
 
-    def join_column_schemas(self, other):
-        if set(self.column_schema.keys()) != set(other.column_schema.keys()):
-            raise ValueError('Datasets do not have matching column_schema structure.')
-        
-        merged_schema = dict()
-
-        for key in self.column_schema.keys():
-            merged_schema[key] = self.column_schema[key] + other.column_schema[key]
-        
-        return merged_schema
-
-
     def __or__(self, other):
         # For automatic type checking and metadata generation when joining datasets
         # x | y automatically type checks and updates metadata of joined datasets.
@@ -74,16 +57,17 @@ class DatasetMetadata:
         # checking compatibility
         if not isinstance(other, DatasetMetadata):
             raise ValueError('Only Dataset objects can be chained.')
-        
+
         if other.dataset_type in self.dataset_type:
-            raise ValueError('Duplicate dataset type is not allowed in horizontal chaining.')
+            raise ValueError(
+                'Duplicate dataset type is not allowed in horizontal chaining.')
 
         if self.asset_class != other.asset_class:
             raise ValueError('Datasets must have the same asset classes.')
-        
+
         if self.symbols != other.symbols:
             raise ValueError('Datasets must have the same symbols.')
-        
+
         if self.resolution != other.resolution:
             raise ValueError('Datasets must have the same resolution.')
 
@@ -102,15 +86,14 @@ class DatasetMetadata:
 
         return DatasetMetadata(
             dataset_type=dataset_type,
-            column_schema = column_schema,
+            column_schema=column_schema,
             asset_class=self.asset_class,
-            symbols=self.symbols,            
+            symbols=self.symbols,
             start=self.start,
             end=self.end,
             resolution=self.resolution,
             n_rows=self.n_rows,
             n_columns=n_columns)
-
 
     def __and__(self, other):
         # For automatic type checking and metadata generation when appending to datasets
@@ -119,32 +102,34 @@ class DatasetMetadata:
         # checking compatibility
         if not isinstance(other, DatasetMetadata):
             raise ValueError('Only Dataset objects can be appended.')
-        
+
         if self.dataset_type != other.dataset_type:
-            raise ValueError(f'Dataset types {self.dataset_type} and {other.dataset_type} are mismatched.')
-        
+            raise ValueError(
+                f'Dataset types {self.dataset_type} and {other.dataset_type} are mismatched.')
+
         if self.column_schema != other.column_schema:
             raise ValueError(f'Datasets must have identical column schema.')
-        
+
         if self.asset_class != other.asset_class:
             raise ValueError('Datasets must have the same asset classes.')
-        
+
         if self.symbols != other.symbols:
             raise ValueError('Datasets must have the same symbols.')
 
         if other.start <= self.end:
-            raise ValueError(f'Cannot perform append. End time: {self.end}, and start time: {other.start} overlap.')       
+            raise ValueError(
+                f'Cannot perform append. End time: {self.end}, and start time: {other.start} overlap.')
 
         if abs(self.end.date() - other.start.date()).days != 1:
-            raise ValueError(f'End date {self.end} and start date {other.start}  are not 1 day apart.')
-        
+            raise ValueError(
+                f'End date {self.end} and start date {other.start}  are not 1 day apart.')
+
         if self.resolution != other.resolution:
             raise ValueError(
                 f'Dataset resolutions{self.resolution} and {other.resolution} are mismatched.')
-        
+
         if self.n_columns != other.n_columns:
             raise ValueError('Dataset number of columns mismatch.')
-
 
         dataset_type = self.dataset_type + other.dataset_type
         n_columns = self.n_columns + other.n_columns
@@ -158,205 +143,81 @@ class DatasetMetadata:
             resolution=self.resolution,
             n_rows=self.n_rows,
             n_columns=n_columns,
-            column_schema = column_schema)
+            column_schema=column_schema)
     
-class CalendarType(Enum):
-    NYSE = 'NYSE'
-    ALWAYS_OPEN = '24/7'
+    @staticmethod
+    def create_column_schema(dataset_type, data: pd.DataFrame):
+        
+        column_schema = dict()
 
-class Calendar:
+        if dataset_type == DatasetType.BAR:
 
-    def __init__(self, calendar_type=CalendarType) -> None:
-        self.calendar_type = calendar_type
-        self.calendar = None
+            asset_price_Mask = data.columns.str.contains('close')
+            column_schema[ColumnType.PRICE] = asset_price_Mask
+
+        else:
+
+            asset_price_Mask = [False]*data.shape[1]
+            column_schema[ColumnType.PRICE] = asset_price_Mask
+            
+
+
+    def join_column_schemas(self, other):
+        if set(self.column_schema.keys()) != set(other.column_schema.keys()):
+            raise ValueError(
+                'Datasets do not have matching column_schema structure.')
+
+        merged_schema = dict()
+
+        for key in self.column_schema.keys():
+            merged_schema[key] = self.column_schema[key] + \
+                other.column_schema[key]
+
+        return merged_schema
     
-    def get_calendar(self):
-
-        calendar = market_calendars.get_calendar(self.calendar_type.value)
-
-        return calendar
-
-    # get core hours of calendar
-    def get_schedule(self, start_date, end_date):
-
-        self.calendar = self.get_calendar()
-        schedule = self.calendar.schedule(start_date=start_date, end_date=end_date)
-
-        return schedule
-    
-    def get_time_zone(self):
-
-        if self.calendar_type == Calendar.ALWAYS_OPEN:
-            time_zone =  'UTC'
-
-        elif self.calendar_type == Calendar.NYSE:
-            time_zone = 'America/New_York'
-
-        return time_zone
-    
-class AlpacaMetaClient:
+class DatasetDownloader():
     def __init__(
         self,
-        key: str,
-        secret: str,
-        sandbox=False
+        meta_client: AlpacaMetaClient
         ) -> None:
 
-        # if sandbox = True tries connecting to paper account endpoint
-        self.key = key if key else ALPACA_API_KEY
-        self.secret = secret if secret else ALPACA_API_SECRET
-        self.endpoint = ALPACA_API_ENDPOINT if not sandbox else ALPACA_API_ENDPOINT_PAPER
-        self.clients = None
-        self.account = None
-
-        self._assets = None
-        self._asset_classes = None
-        self._exchanges = None
-        
-        return None
-
-    def setup_clients_and_account(self) -> None:
-
-        # crypto does not need key, and secret but will be faster if provided with credentials
-        self.clients['crypto'] = CryptoHistoricalDataClient(
-            self.key, self.secret)
-        self.clients['stocks'] = StockHistoricalDataClient(
-            self.key, self.secret)
-        self.clients['trading'] = TradingClient(self.key, self.secret)
-
-        try:
-            self.account = self.clients['trading'].get_account()
-
-            if self.account.status.val == "ACTIVE":
-                log.logger.info(f'Clients and account setup is successful.')
-
-        except Exception as e:
-            log.logger.exception("Account setup failed: {}".format(str(e)))
+        self.meta_client = meta_client
 
         return None
 
-    @property
-    def assets(self):
-
-        if self._assets:
-            return self._assets
-        
-        assets_ = self.clients['trading'].get_all_assets()
-
-        # keep tradable active assets only.
-        assets_ = [
-            asset for asset in assets_ if
-            asset.status.value == "ACTIVE" and
-            asset.tradable]
-        
-        self._assets = dicts_enum_to_df(assets_)
-        return self._assets
-    
-    @property
-    def exchanges(self):
-        if self.exchanges:
-            return self._exchanges
-        exchanges_ = [item.value for item in AssetExchange]
-        self._exchanges = exchanges_
-        return self._exchanges
-    
-    @property
-    def asset_classes(self):
-        if self._asset_classes:
-            return self._asset_classes
-        asset_classes_ = [item.value for item in AssetClass]
-        self._asset_classes = asset_classes_
-        return self._asset_classes
-
-    @property
-    def positions(self):
-        positions_ = self.clients['trading'].get_all_positions()
-        self._positions = dicts_enum_to_df(positions_)
-        return self._positions
-
-    def set_credentials(self, key: str, secret: str) -> None:
-
-        if not isinstance(key, str) or not isinstance(secret):
-            raise ValueError(f'key and secret must of type {str}')
-        
-        self.key = key
-        self.secret = secret
-
-        return None
-
-    def set_endpoint(self, endpoint: str) -> None:
-
-        if not isinstance(endpoint, str):
-            raise ValueError(f'endpoint must of type {str}')
-
-        return None
-
-    def validate_symbols(self, symbols: List[str]):
-
-        valid_symbols = self.assets['symbol'].unique()
-
-        # checks if symbols name is valid
-        for symbol in symbols:
-            if symbol not in valid_symbols:
-                raise ValueError(f'Symbol {symbol} is not a supported symbol.')
-        
-        # checks if symbols have the same asset class
-        symbol_classes = self.assets.loc[self.assets['symbol'].isin(symbols),
-            'asset_class'].unique()
-
-        if len(symbol_classes) != 1:
-            raise ValueError('Symbols are not of the same asset class.')
-        
-        class_ = symbol_classes.pop()
-        
-        return class_
-    
     def download_and_write_dataset(self,
+        path: str,
+        target_dataset_name: str,
         dataset_type: DatasetType,
+        symbols: List[str],
+        resolution: str,
         start_date: str,
         end_date: str,
-        resolution: str,
-        symbols: List[str],
-        path: str,
         ) -> None:
+        
+        if not os.path.exists(path):
+            raise ValueError(f'Path {path} does not exist.')
         
         # converts to expected input formats
         start_date, end_date = to_datetime(start_date), to_datetime(end_date)
         resolution = to_timeframe(resolution)
 
-        # check if symbols are valid names and of the same asset class type
-        asset_class = self.validate_symbols(symbols)
+        asset_class = self.get_symbols_asset_class(symbols)
 
-        downloader, request = DataDownloader(meta_client = self, asset_class = asset_class)
+        downloader, request = DatasetDownloader(
+            meta_client = self, dataset_type = dataset_type, asset_class = asset_class)
 
-        if asset_class == 'USE_EQUITY':
+        if asset_class == AssetClass.US_EQUITY:
             calendar = Calendar(calendar_type= Calendar.NYSE)
         
-        elif asset_class == 'CRYPTO':
+        elif asset_class == AssetClass.CRYPTO:
             calendar = Calendar(calendar_type = Calendar.ALWAYS_OPEN)
-
-        # if dir does not exist create it
-        # header flag allows download continuity of large datasets
-        if dir is not None:
-            if not os.path.exists(dir):
-                os.makedirs(dir)
-                header = True
-            # if file already exists just appends rows
-            else:
-                if os.path.exists(os.path.join(dir, file_name)):
-                    header = False
-                else:
-                    header = True
 
         schedule = calendar.get_schedule(start_date=start_date, end_date=end_date)
         time_zone = calendar.get_time_zone()
 
         # shows dataset download progress bar
         progress_bar_ = progress_bar(total=len(schedule))
-
-        # use memory if dir is not provided
-        if dir is None:
-            data = list()
 
         log.logger.info(
             f"Downloading dataset for {len(self.symbols)} symbols | resolution: {resolution} |"
@@ -375,31 +236,41 @@ class AlpacaMetaClient:
             
             bars = bars.tz_convert(time_zone)
 
-            features = pd.concat(
+
+
+            features_df = pd.concat(
                 [DataProcessor.resample_and_ffil(group[1], day, resolution
                 ) for group in bars.groupby('symbol')], axis=1)
 
-            features = features.select_dtypes(include=np.number)
-            if dir is not None:
-                features.to_csv(os.path.join(dir, 'data.csv'),
-                                index=True, mode='a', header=header)
-                header = False
-            else:
-                data.append(features)
+            features_df = features_df.select_dtypes(include=np.number)
+            features_np = features_df.to_numpy(dtype = np.float32)
+            n_rows, n_columns = features_np.shape
+
+
+            column_schema = DatasetMetadata.create_column_schema(dataset_type, features_df)
+            dataset_metadata = DatasetMetadata(
+                dataset_type= dataset_type,
+                column_schema = None,
+                asset_class=asset_class,
+                symbols=symbols,
+                start= start_date,
+                end= end_date,
+                resolution = resolution,
+                n_rows= n_rows,
+                n_columns= n_columns,
+            )
+
+            DatasetIO.write_to_hdf5(path, features_np, dataset_metadata, target_dataset_name)
 
             progress_bar_.update(1)
         progress_bar_.close()
 
-        return pd.concat(data) if dir is None else None
-
-class DataDownloader():
-    def __init__(self, meta_client: AlpacaMetaClient) -> None:
-
-        self.meta_client = meta_client
-
         return None
-
-    def get_downloader_and_request(self, dataset_type: DatasetType, asset_class = AssetClass):
+    
+    def get_downloader_and_request(
+        self, 
+        dataset_type: DatasetType, 
+        asset_class = AssetClass):
         
         if dataset_type == DatasetType.BAR:
             # choose relevant client
@@ -414,6 +285,7 @@ class DataDownloader():
                 request = CryptoBarsRequest
                 
             return downloader, request
+    
 
 class DataProcessor:
     def __init__(self) -> None:
@@ -439,6 +311,36 @@ class DataProcessor:
         symbol = resampled['symbol'][0]
         resampled.columns = [f'{symbol}_{col}' for col in data.columns]
         return resampled
+    
+class Calendar:
+
+    def __init__(self, calendar_type=CalendarType) -> None:
+        self.calendar_type = calendar_type
+        self.calendar = None
+    
+    def get_calendar(self):
+
+        calendar = market_calendars.get_calendar(self.calendar_type.value)
+
+        return calendar
+
+    # get core hours of calendar
+    def get_schedule(self, start_date, end_date):
+
+        self.calendar = self.get_calendar()
+        schedule = self.calendar.schedule(start_date=start_date, end_date=end_date)
+
+        return schedule
+    
+    def get_time_zone(self) -> str:
+
+        if self.calendar_type == Calendar.ALWAYS_OPEN:
+            time_zone =  'UTC'
+
+        elif self.calendar_type == Calendar.NYSE:
+            time_zone = 'America/New_York'
+
+        return time_zone
 
 class DatasetIO:
 
@@ -453,7 +355,6 @@ class DatasetIO:
             with h5py.File(path, 'w') as hdf5:
 
                 if target_dataset_name not in hdf5:
-
                     # Create a fixed-size dataset with a predefined data type and dimensions
                     target_dataset = hdf5.create_dataset(
                         name = target_dataset_name, shape=data_to_write.shape, dtype=np.float32, chunks = True)
@@ -467,18 +368,11 @@ class DatasetIO:
                         hdf5, target_dataset_name= target_dataset_name)
 
                     new_metadata = target_dataset_metadata + metadata
-                    n_rows, n_columns = target_dataset.shape
-                    n_rows_, n_columns_ = data_to_write.shape
 
-                    if n_columns_ != n_columns:
-                        raise ValueError('Mismatch in number of columns.')
-
-                    new_n_rows, new_n_columns = n_rows + n_rows_, n_columns
-
-                    target_dataset.resize((new_n_rows, new_n_columns))
+                    target_dataset.resize((new_metadata.n_rows, new_metadata.n_columns))
 
                     # Append the new data to the dataset and update metadata
-                    target_dataset[n_rows:new_n_rows, :] = data_to_write
+                    target_dataset[metadata.n_rows:new_metadata.n_rows, :] = data_to_write
                     target_dataset.attrs['metadata'] = new_metadata
 
         else:
@@ -535,7 +429,7 @@ class RowGenerator:
         datasets: List[h5py.Dataset],
         start_index: int = 0,
         end_index : Optional[int] = None,
-        n_rows_per_read: Optional[int] = None) -> None:
+        n_chunks : Optional[int] = 1) -> None:
 
         self.dataset_metadata = dataset_metadata
         self.datasets = datasets
@@ -543,17 +437,15 @@ class RowGenerator:
         self.end_index = end_index if end_index is not None else self.dataset_metadata.n_rows
         self.n_rows = self.end_index - self.start_index
         self.n_columns = self.dataset_metadata.n_columns
-        self.n_rows_per_read = n_rows_per_read if n_rows_per_read is not None else self.n_rows
+        self.n_chunks = n_chunks
 
     # end_index = n_rows thus it's a dummy index.
     def __iter__(self):
-        for i in range(self.start_index, self.end_index, self.n_rows_per_read):
-            end = min(i + self.n_rows_per_read, self.end_index)
-            data_in_memory = [dataset[i:end, :] for dataset in self.datasets]
+        
+        for range_to_load in np.array_split(range(self.start_index, self.end_index), self.n_chunks):
+            data_in_memory = [dataset[range_to_load, :] for dataset in self.datasets]
             rows_in_memory = np.hstack(data_in_memory)
-            n_rows_in_memory = len(rows_in_memory)
-            for j in range(n_rows_in_memory):
-                row = rows_in_memory[j, :]
+            for row in rows_in_memory:
                 yield row
 
     def reset(self):
@@ -567,9 +459,12 @@ class RowGenerator:
     def reproduce(self, n: int):
 
         assert n > 0, "n must be a positive integer"
+
+        for range_to_generate in np.array_split(range(self.start_index, self.end_index), n):
+
         step, remainder = self.dataset_metadata.n_rows // n
         generators = []
-        
+    
         for i in range(n):
 
             start = i * step + min(i, remainder)
@@ -585,8 +480,6 @@ class RowGenerator:
             generators.append(generator)
 
         return generators
-
-
     
 # converts dictionaries of enum objects into dataframe
 def dicts_enum_to_df(
