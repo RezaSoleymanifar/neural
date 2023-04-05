@@ -1,1 +1,8 @@
 assets/
+
+.vscode
+.gitignore
+
+temp.py
+test.py
+setup.cfg
