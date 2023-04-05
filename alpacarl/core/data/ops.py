@@ -1,30 +1,29 @@
-import os, re
 from datetime import datetime
 from typing import (List, Optional, Tuple)
 from functools import reduce
+import os
+
 
 import pandas as pd
 import numpy as np
 import pickle, h5py
 
 from alpaca.data.requests import CryptoBarsRequest, StockBarsRequest
-from alpaca.data.timeframe import TimeFrame, TimeFrameUnit
 from alpaca.trading.enums import AssetClass
 
-from alpacarl.api.client import AlpacaMetaClient
-from alpacarl.core.data.enums import DatasetType
+from alpacarl.connect.client import AlpacaMetaClient
+from alpacarl.core.data.enums import DatasetType, DatasetMetadata
 from alpacarl.meta import log
-from alpacarl.aux.tools import progress_bar
-from alpacarl.aux.tools import Calendar
+from alpacarl.tools.ops import progress_bar, Calendar, to_timeframe, create_column_schema
 
     
 class DatasetDownloader():
     def __init__(
         self,
-        meta_client: AlpacaMetaClient
+        client: AlpacaMetaClient
         ) -> None:
 
-        self.meta_client = meta_client
+        self.meta_client = client
 
         return None
 
@@ -40,12 +39,11 @@ class DatasetDownloader():
 
         # checks if symbols name is valid
         for symbol in symbols:
-            if symbol not in self.symbols:
+            if symbol not in self.client.symbols:
                 raise ValueError(
                     f'Symbol {symbol} is not a supported symbol.')
 
-        asset_classes = set(
-            self.symbols[symbol][
+        asset_classes = set(self.client.symbols[symbol][
             'asset_class'] for symbol in symbols)
 
         # checks if symbols have the same asset class
@@ -57,32 +55,36 @@ class DatasetDownloader():
 
         return asset_class
     
-    def download_dataset_to_hdf5(self,
-        path: str,
+    def download_dataset_to_hdf5(
+        self,
+        path: str | os.PathLike,
         target_dataset_name: str,
         dataset_type: DatasetType,
         symbols: List[str],
         resolution: str,
-        start_date: str,
-        end_date: str,
+        start_date: datetime.date,
+        end_date: datetime.date,
         ) -> None:
+
+        # converts to expected input formats
+        if end_date == datetime.today():
+            raise ValueError(
+            'Today\'s data is only available through streaming.')
         
+
         if not os.path.exists(path):
             raise ValueError(f'Path {path} does not exist.')
         
-        
-        # converts to expected input formats
-        if to_datetime(end_date) == datetime.today():
-            raise ValueError('Current day\'s data is only available through streaming.')
-        
+    
         resolution = to_timeframe(resolution)
+
         # API produces results in sorted order of symbols
         symbols = sorted(symbols)
-        
+
         asset_class = self.validate_symbols(symbols)
 
         downloader, request = DatasetDownloader(
-            meta_client = self, dataset_type = dataset_type, asset_class = asset_class)
+            client = self, dataset_type = dataset_type, asset_class = asset_class)
 
         if asset_class == AssetClass.US_EQUITY:
             calendar = Calendar(calendar_type= Calendar.NYSE)
@@ -107,31 +109,44 @@ class DatasetDownloader():
             market_open = day['market_open']
             market_close = day['market_close']
 
+
             bars = downloader(
                 request(symbol_or_symbols=symbols, timeframe=resolution,
                 start=market_open, end=market_close))
-            
+
             bars = bars.tz_convert(time_zone)
             
             if bars['symbol'].nunique() != symbols:
+                pass
 
 
             features_df = pd.concat(
-                [DataProcessor.resample_and_ffil(group[1], day, resolution
-                ) for group in bars.groupby('symbol')], axis=1)
+                [DataProcessor.resample_and_ffil(data = group[1],
+                open = market_open, close = market_close, resolution = resolution)
+                for group in bars.groupby('symbol')],
+                axis=1)
+
+
+            symbols_in_df = features_df['symbols'].tolist()
+            missing_symbols = set(symbols_in_df) ^ set(symbols)
+
+            if len(missing_symbols) != 0:
+                raise ValueError(
+                f'No data for symbols {missing_symbols} on {start_date}.')
 
             features_df = features_df.select_dtypes(include=np.number)
+            column_schema = create_column_schema(
+                data=features_df,
+                dataset_type=dataset_type)
+            
             features_np = features_df.to_numpy(dtype = np.float32)
             n_rows, n_columns = features_np.shape
 
-
-            column_schema = DatasetMetadata.create_column_schema(
-                dataset_type, features_df)
             
             metadata = DatasetMetadata(
                 dataset_type= dataset_type,
-                column_schema = column_schema,
                 asset_class=asset_class,
+                column_schema = column_schema,
                 symbols=symbols,
                 start= start_date,
                 end= end_date,
@@ -159,11 +174,13 @@ class DatasetDownloader():
         if dataset_type == DatasetType.BAR:
             # choose relevant client
             if asset_class == AssetClass.US_EQUITY:
+
                 client = self.meta_client.clients['stocks']
                 downloader = client.get_stocks_bars
                 request = StockBarsRequest
                 
             elif asset_class == AssetClass.CRYPTO:
+
                 client = self.meta_client.clients['crypto']
                 downloader = client.get_crypto_bars
                 request = CryptoBarsRequest
@@ -175,16 +192,23 @@ class DataProcessor:
     def __init__(self) -> None:
         pass 
 
-    def resample_and_ffil(data, open: datetime, close: datetime, interval: str):
+    def resample_and_ffil(
+            data, 
+            open: datetime, 
+            close: datetime, 
+            resolution: str):
+        
         # resamples and forward fills missing rows in [open, close] range
-
-        index = pd.date_range(start=open, end=close, freq=interval)
+        index = pd.date_range(
+            start=open, end=close, freq=resolution)
 
         # creates rows for missing intervals
         resampled = data.reindex(index, method='ffill')
+
         if resampled.isna().all().all():
+
             log.logger.exception(
-                'Data does not have entries in NYSE market hours.')
+                'Data does not have entries in market hours.')
             raise ValueError
 
         # backward fills if first row is nan
@@ -193,7 +217,10 @@ class DataProcessor:
 
         # Prefix column names with symbol
         symbol = resampled['symbol'][0]
-        resampled.columns = [f'{symbol}_{col}' for col in data.columns]
+
+        resampled.columns = [
+            f'{symbol}_{col}' for col in data.columns]
+        
         return resampled
 
 class DatasetIO:
@@ -204,34 +231,33 @@ class DatasetIO:
         metadata: DatasetMetadata, 
         target_dataset_name: str):
 
-        if os.path.exists(path):
-
-            with h5py.File(path, 'w') as hdf5:
-
-                if target_dataset_name not in hdf5:
-                    # Create a fixed-size dataset with a predefined data type and dimensions
-                    target_dataset = hdf5.create_dataset(
-                        name = target_dataset_name, shape=data_to_write.shape, dtype=np.float32, chunks = True)
-                    
-                    serialized_metadata = pickle.dumps(metadata)
-                    target_dataset.attrs['metadata'] = serialized_metadata
-
-                else:
-
-                    target_dataset_metadata, target_dataset = DatasetIO.load_from_hdf5(
-                        hdf5, target_dataset_name= target_dataset_name)
-
-                    new_metadata = target_dataset_metadata + metadata
-
-                    target_dataset.resize((new_metadata.n_rows, new_metadata.n_columns))
-
-                    # Append the new data to the dataset and update metadata
-                    target_dataset[metadata.n_rows:new_metadata.n_rows, :] = data_to_write
-                    target_dataset.attrs['metadata'] = new_metadata
-
-        else:
-
+        if not os.path.exists(path):
             raise ValueError(f'Path {path} does not exist.')
+        
+        with h5py.File(path, 'w') as hdf5:
+
+            if target_dataset_name not in hdf5:
+                # Create a fixed-size dataset with a predefined data type and dimensions
+                target_dataset = hdf5.create_dataset(
+                    name = target_dataset_name, shape=data_to_write.shape,
+                    dtype=np.float32, chunks = True)
+                
+                serialized_metadata = pickle.dumps(metadata)
+                target_dataset.attrs['metadata'] = serialized_metadata
+
+            else:
+
+                target_dataset_metadata, target_dataset = DatasetIO.load_from_hdf5(
+                    hdf5, target_dataset_name= target_dataset_name)
+
+                new_metadata = target_dataset_metadata + metadata
+
+                target_dataset.resize(
+                    (new_metadata.n_rows, new_metadata.n_columns))
+
+                # Append the new data to the dataset and update metadata
+                target_dataset[metadata.n_rows:new_metadata.n_rows, :] = data_to_write
+                target_dataset.attrs['metadata'] = new_metadata
         
         return None
 
@@ -251,29 +277,36 @@ class DatasetIO:
         target_dataset_name: Optional[str] = None
         ) -> Tuple[DatasetMetadata, List[h5py.Dataset]]:
 
-        if os.path.exists(path):
-
-            with h5py.File(path, 'r') as hdf5:
-
-                if target_dataset_name is None:
-                    dataset_list = list()
-                    metadata_list = list()
-                    for dataset_name in hdf5:
-
-                        metadata, dataset = DatasetIO.extract_dataset(
-                            hdf5 = hdf5, target_dataset_name= dataset_name)
-                        dataset_list.append(dataset)
-                        metadata_list.append(metadata)
-                        joined_metadata = reduce(lambda x, y: x | y, metadata_list)
-
-                    return joined_metadata, dataset_list
-                
-                else:
-                    metadata, dataset =  DatasetIO.extract_dataset(
-                        hdf5 = hdf5, target_dataset_name=target_dataset_name)
-                    return metadata, [dataset]
-        else:
+        if not os.path.exists(path):
             raise ValueError(f'Path {path} does not exist.')
+        
+        with h5py.File(path, 'r') as hdf5:
+
+            if target_dataset_name is None:
+
+                dataset_list = list()
+                metadata_list = list()
+
+                for dataset_name in hdf5:
+
+                    metadata, dataset = DatasetIO.extract_dataset(
+                        hdf5 = hdf5, target_dataset_name= dataset_name)
+                    
+                    dataset_list.append(dataset)
+                    metadata_list.append(metadata)
+
+                
+                joined_metadata = reduce(lambda x, y: x | y, metadata_list)
+
+                return joined_metadata, dataset_list
+            
+            else:
+
+                metadata, dataset =  DatasetIO.extract_dataset(
+                    hdf5 = hdf5, target_dataset_name=target_dataset_name)
+                
+                return metadata, [dataset]
+
 
 class RowGenerator:
     # to iteratively return info required for environments from a dataset.
@@ -297,19 +330,30 @@ class RowGenerator:
     def __iter__(self):
         
         start = 0
-        for end in np.linspace(self.start_index, self.end_index, self.n_chunks, dtype= int, endpoint=True):
-            rows_in_memory = np.hstack([dataset[start:end, :] for dataset in self.datasets])
+
+        for end in np.linspace(
+            self.start_index, 
+            self.end_index,
+            self.n_chunks, 
+            dtype= int, 
+            endpoint=True):
+            
+            rows_in_memory = np.hstack([dataset[start:end, :] 
+                for dataset in self.datasets])
+            
             for row in rows_in_memory:
                 yield row
+
             start = end
 
     def reset(self):
+
         return  RowGenerator(
             dataset_metadata=self.dataset_metadata,
             datasets=self.datasets,
             start_index=self.start_index,
             end_index=self.end_index, # exclusive
-            n_rows_per_read=self.n_rows_per_read)
+            n_chunks = self.n_chunks)
     
     def reproduce(self, n: int):
 
@@ -318,7 +362,13 @@ class RowGenerator:
 
         start_index = 0
 
-        for end_index in np.linspace(self.start_index, self.end_index, self.n_chunks, dtype=int, endpoint=True):
+        for end_index in np.linspace(
+            self.start_index, 
+            self.end_index, 
+            self.n_chunks, 
+            dtype=int, 
+            endpoint=True):
+
             generator = RowGenerator(
                 dataset_metadata=self.dataset_metadata,
                 datasets=self.datasets,
@@ -327,34 +377,8 @@ class RowGenerator:
                 n_chunks=self.n_chunks)
             
             generators.append(generator)
+
             start_index = end_index
+
         return generators
     
-# def to_datetime(date: str):
-#     try:
-#         date_format = "%Y-%m-%d"
-#         dt = datetime.strptime(date, date_format)
-#     except:
-#         ValueError('Invalid date. Valid examples: 2022-03-20, 2015-01-01')
-#     return dt
-
-def to_timeframe(time_frame: str):
-
-    match = re.search(r'(\d+)(\w+)', time_frame)
-
-    if match:
-
-        amount = int(match.group(1))
-        unit = match.group(2)
-
-        map = {
-            'Min': TimeFrameUnit.Minute,
-            'Hour': TimeFrameUnit.Hour,
-            'Day': TimeFrameUnit.Day,
-            'Week': TimeFrameUnit.Week,
-            'Month': TimeFrameUnit.Month}
-
-        return TimeFrame(amount, map[unit])
-    else:
-        raise ValueError(
-            "Invalid timeframe. Valid examples: 59Min, 23Hour, 1Day, 1Week, 12Month")

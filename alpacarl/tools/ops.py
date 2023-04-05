@@ -1,10 +1,16 @@
-from enums import CalendarType
+from datetime import datetime
 from typing import List, Iterable
 
 import pandas_market_calendars as market_calendars
 import pandas as pd
 import tableprint
 import tqdm
+import re
+
+from alpaca.data.timeframe import TimeFrame, TimeFrameUnit
+
+from alpacarl.tools.enums import CalendarType
+from alpacarl.core.data.enums import DatasetType, ColumnType
 
 
 class Calendar:
@@ -40,13 +46,51 @@ class Calendar:
         return time_zone
     
 
-def sharpe(assets_hist: List[float], base=0):
+def create_column_schema(data: pd.DataFrame, dataset_type: DatasetType):
 
-    hist = pd.Series(assets_hist)
-    returns = hist.pct_change().dropna()
-    val = (returns.mean()-base)/returns.std()
+    column_schema = dict()
 
-    return val
+    if dataset_type == DatasetType.BAR:
+
+        asset_price_Mask = data.columns.str.contains('close')
+        column_schema[ColumnType.PRICE] = asset_price_Mask
+
+    else:
+
+        asset_price_Mask = [False]*data.shape[1]
+        column_schema[ColumnType.PRICE] = asset_price_Mask
+
+    return column_schema
+
+def to_datetime(date: str):
+    try:
+        date_format = "%Y-%m-%d"
+        dt = datetime.strptime(date, date_format)
+    except:
+        ValueError('Invalid date. Valid examples: 2022-03-20, 2015-01-01')
+    return dt
+
+
+def to_timeframe(time_frame: str):
+
+    match = re.search(r'(\d+)(\w+)', time_frame)
+
+    if match:
+
+        amount = int(match.group(1))
+        unit = match.group(2)
+
+        map = {
+            'Min': TimeFrameUnit.Minute,
+            'Hour': TimeFrameUnit.Hour,
+            'Day': TimeFrameUnit.Day,
+            'Week': TimeFrameUnit.Week,
+            'Month': TimeFrameUnit.Month}
+
+        return TimeFrame(amount, map[unit])
+    else:
+        raise ValueError(
+            "Invalid timeframe. Valid examples: 59Min, 23Hour, 1Day, 1Week, 12Month")
 
 def tabular_print(
         entries: List, style='banner',
@@ -67,3 +111,12 @@ def progress_bar(iterable: Iterable):
     bar_format = '{l_bar}{bar}| {n_fmt}/{total_fmt} | {elapsed}<{remaining}'
     bar = tqdm(total = iterable, bar_format = bar_format)
     return bar
+
+
+def sharpe(assets_hist: List[float], base=0):
+
+    hist = pd.Series(assets_hist)
+    returns = hist.pct_change().dropna()
+    val = (returns.mean()-base)/returns.std()
+
+    return val

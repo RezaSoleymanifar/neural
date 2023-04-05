@@ -8,7 +8,6 @@ import pandas as pd
 from alpaca.trading.enums import AssetClass
 
 
-
 class DatasetType(Enum):
     BAR = 'BAR'
     QUOTE = 'QUOTE'
@@ -130,23 +129,6 @@ class DatasetMetadata:
             n_rows=self.n_rows,
             n_columns=n_columns,
             column_schema=column_schema)
-
-    def _create_column_schema(
-            self, 
-            dataset_type, 
-            data: pd.DataFrame):
-
-        column_schema = dict()
-
-        if dataset_type == DatasetType.BAR:
-
-            asset_price_Mask = data.columns.str.contains('close')
-            column_schema[ColumnType.PRICE] = asset_price_Mask
-
-        else:
-
-            asset_price_Mask = [False]*data.shape[1]
-            column_schema[ColumnType.PRICE] = asset_price_Mask
 
     def _join_column_schemas(self, other):
         if set(self.column_schema.keys()) != set(other.column_schema.keys()):

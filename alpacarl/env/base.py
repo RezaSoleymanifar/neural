@@ -5,7 +5,7 @@ import numpy as np
 from gym import spaces, Env
 
 from alpacarl.meta import log
-from alpacarl.aux.tools import sharpe, tabular_print
+from alpacarl.tools.ops import sharpe, tabular_print
 from alpacarl.core.data.ops import RowGenerator, ColumnType
 
 
@@ -122,7 +122,7 @@ class BaseEnv(Env):
                 sell = min(
                     self.stocks[stock] * self.prices[stock], abs(action))
                 quantity = sell/self.prices[stock]
-                
+
                 self.stocks[stock] -= quantity
                 self.cash += sell
                 self.holds[stock] = 0
