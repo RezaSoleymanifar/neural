@@ -3,18 +3,19 @@ from typing import (List, Optional, Tuple)
 from functools import reduce
 import os
 
-
+from alpaca.trading.enums import AssetClass, AssetStatus
 import pandas as pd
 import numpy as np
 import pickle, h5py
 
-from alpaca.data.requests import CryptoBarsRequest, StockBarsRequest
 from alpaca.trading.enums import AssetClass, AssetStatus
+from alpaca.data.historical.stock import StockBarsRequest
+from alpaca.data.historical.crypto import CryptoBarsRequest
 
-from alpacarl.connect.client import AlpacaMetaClient
 from alpacarl.core.data.enums import DatasetType, DatasetMetadata
-from alpacarl.meta import log
-from alpacarl.meta.exceptions import CorruptDataError
+from alpacarl.connect.client import AlpacaMetaClient
+from alpacarl.common import logger
+from alpacarl.common.exceptions import CorruptDataError
 from alpacarl.tools.ops import (progress_bar, Calendar, 
     to_timeframe, create_column_schema, validate_path)
 
@@ -111,7 +112,7 @@ class DatasetDownloader():
         # shows dataset download progress bar
         progress_bar_ = progress_bar(total=len(schedule))
 
-        log.logger.info(
+        logger.info(
             f"Downloading dataset for {len(self.symbols)} symbols | resolution: {resolution} |"
             f" {len(schedule)} working days from {start_date} to {end_date}"
         )
@@ -220,7 +221,7 @@ class DataProcessor:
 
         if resampled.isna().all().all():
 
-            log.logger.exception(
+            logger.exception(
                 'Data does not have entries in market hours.')
             raise ValueError
 

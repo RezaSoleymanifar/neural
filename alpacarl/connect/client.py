@@ -4,8 +4,8 @@ from alpaca.trading.enums import AccountStatus, AssetExchange, AssetClass
 from alpaca.data.historical import StockHistoricalDataClient, CryptoHistoricalDataClient
 from alpaca.trading import TradingClient
 
-from alpacarl.meta.constants import (ALPACA_API_KEY, ALPACA_API_SECRET)
-from alpacarl.meta import log
+from alpacarl.common.constants import ALPACA_API_KEY, ALPACA_API_SECRET
+from alpacarl.common import logger
 from alpacarl.tools.ops import objects_to_df
 
 
@@ -33,6 +33,9 @@ class AlpacaMetaClient:
 
     def setup_clients_and_account(self) -> None:
 
+        if self.key is None or self.secret is None:
+            raise ValueError('Key and secret are required for account login.')
+        
         self.clients = dict()
 
         # crypto does not need key, and secret but will be faster if provided
@@ -47,11 +50,11 @@ class AlpacaMetaClient:
             self.account = self.clients['trading'].get_account()
 
             if self.account.status == AccountStatus.ACTIVE:
-                log.logger.info(
+                logger.info(
                     f'Clients and account setup successful.')
 
         except Exception as e:
-            log.logger.exception(
+            logger.exception(
                 "Account setup failed: {}".format(str(e)))
             
         return None

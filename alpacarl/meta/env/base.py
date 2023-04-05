@@ -4,7 +4,7 @@ from typing import Tuple
 import numpy as np
 from gym import spaces, Env
 
-from alpacarl.meta import log
+from alpacarl.common import log
 from alpacarl.tools.ops import sharpe, tabular_print
 from alpacarl.core.data.ops import RowGenerator, ColumnType
 

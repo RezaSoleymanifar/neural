@@ -5,7 +5,6 @@ from dataclasses import dataclass
 
 from alpaca.trading.enums import AssetClass
 
-
 class DatasetType(Enum):
     BAR = 'BAR'
     QUOTE = 'QUOTE'
@@ -18,8 +17,6 @@ class ColumnType(Enum):
     HIGH = 'HIGH'
     LOW = 'LOW'
     CLOSE = 'CLOSE'
-import pandas_market_calendars as market_calendars
-
 
 @dataclass
 class DatasetMetadata:
