@@ -1,11 +1,3 @@
-from alpaca.data.timeframe import TimeFrame, TimeFrameUnit
-from alpaca.trading.enums import AssetClass
-from alpaca.data.requests import CryptoBarsRequest, StockBarsRequest
-from alpacarl.core.client import AlpacaMetaClient
-
-from alpacarl.meta import log
-from alpacarl.aux.tools import progress_bar
-
 import os, re
 from datetime import datetime
 from typing import (List, Optional, Tuple)
@@ -14,6 +6,16 @@ from functools import reduce
 import pandas as pd
 import numpy as np
 import pickle, h5py
+
+from alpaca.data.requests import CryptoBarsRequest, StockBarsRequest
+from alpaca.data.timeframe import TimeFrame, TimeFrameUnit
+from alpaca.trading.enums import AssetClass
+
+from alpacarl.api.client import AlpacaMetaClient
+from alpacarl.core.data.enums import DatasetType
+from alpacarl.meta import log
+from alpacarl.aux.tools import progress_bar
+from alpacarl.aux.tools import Calendar
 
     
 class DatasetDownloader():
@@ -28,28 +30,34 @@ class DatasetDownloader():
 
     def validate_symbols(self, symbols: List[str]):
 
-        duplicate_symbols = list(set([x for x in symbols if symbols.count(x) > 1]))
+        duplicate_symbols = list(
+            set([x for x in symbols if symbols.count(x) > 1]))
+        
         if duplicate_symbols is not None:
-            raise ValueError(f'Symbols {duplicate_symbols} have duplicate values.')
+            raise ValueError(
+            f'Symbols {duplicate_symbols} have duplicate values.')
         
 
         # checks if symbols name is valid
         for symbol in symbols:
             if symbol not in self.symbols:
-                raise ValueError(f'Symbol {symbol} is not a supported symbol.')
+                raise ValueError(
+                    f'Symbol {symbol} is not a supported symbol.')
 
         asset_classes = set(
-            self.symbols[symbol]['asset_class'] for symbol in symbols)
+            self.symbols[symbol][
+            'asset_class'] for symbol in symbols)
 
         # checks if symbols have the same asset class
         if len(asset_classes) != 1:
-            raise ValueError('Symbols are not of the same asset class.')
+            raise ValueError(
+                'Symbols are not of the same asset class.')
 
         asset_class = asset_classes.pop()
 
         return asset_class
     
-    def download_and_write_dataset(self,
+    def download_dataset_to_hdf5(self,
         path: str,
         target_dataset_name: str,
         dataset_type: DatasetType,
@@ -64,9 +72,9 @@ class DatasetDownloader():
         
         
         # converts to expected input formats
-        start_date, end_date = to_datetime(start_date), to_datetime(end_date)
-        if start_date = datetime.today
-
+        if to_datetime(end_date) == datetime.today():
+            raise ValueError('Current day\'s data is only available through streaming.')
+        
         resolution = to_timeframe(resolution)
         # API produces results in sorted order of symbols
         symbols = sorted(symbols)

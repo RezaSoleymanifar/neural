@@ -3,7 +3,11 @@ from datetime import datetime
 from typing import (List, Dict, Tuple)
 from dataclasses import dataclass
 
+import pandas as pd
+
 from alpaca.trading.enums import AssetClass
+
+
 
 class DatasetType(Enum):
     BAR = 'BAR'
@@ -64,7 +68,7 @@ class DatasetMetadata:
 
         dataset_type = self.dataset_type + other.dataset_type
         n_columns = self.n_columns + other.n_columns
-        column_schema = self.join_column_schemas(other)
+        column_schema = self._join_column_schemas(other)
 
         return DatasetMetadata(
             dataset_type=dataset_type,
@@ -115,7 +119,7 @@ class DatasetMetadata:
 
         dataset_type = self.dataset_type + other.dataset_type
         n_columns = self.n_columns + other.n_columns
-        column_schema = self.join_column_schemas(other)
+        column_schema = self._join_column_schemas(other)
 
         return DatasetMetadata(
             dataset_type=dataset_type,
@@ -127,8 +131,10 @@ class DatasetMetadata:
             n_columns=n_columns,
             column_schema=column_schema)
 
-    @staticmethod
-    def create_column_schema(dataset_type, data: pd.DataFrame):
+    def _create_column_schema(
+            self, 
+            dataset_type, 
+            data: pd.DataFrame):
 
         column_schema = dict()
 
@@ -142,7 +148,7 @@ class DatasetMetadata:
             asset_price_Mask = [False]*data.shape[1]
             column_schema[ColumnType.PRICE] = asset_price_Mask
 
-    def join_column_schemas(self, other):
+    def _join_column_schemas(self, other):
         if set(self.column_schema.keys()) != set(other.column_schema.keys()):
             raise ValueError(
                 'Datasets do not have matching column_schema structure.')

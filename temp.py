@@ -2,7 +2,7 @@ from alpacarl.meta.constants import ALPACA_API_PAPER_URL, ALPACA_API_BASE_URL, C
 from alpacarl.core.data.ops import RowGenerator, DatasetDownloader
 from alpacarl.env.base import BaseEnv, FractionalActionWrapper
 from alpacarl.core.data.ops import DatasetType, DatasetIO
-from alpacarl.core.client import AlpacaMetaClient
+from alpacarl.api.client import AlpacaMetaClient
 
 
 path = ''
@@ -16,7 +16,7 @@ metadata, _ = DatasetIO.load_from_hdf5(path = path)
 client = AlpacaMetaClient(sandbox=True)
 client.setup_clients_and_account()
 data_downloader = DatasetDownloader(client)
-DatasetDownloader.download_and_write_dataset(
+DatasetDownloader.download_dataset_to_hdf5(
     path, DatasetType.BAR, symbols, resolution, start_date, end_date)
 
 # dh.download(start, end, interval, dir = './assets/data')

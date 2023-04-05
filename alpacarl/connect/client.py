@@ -1,13 +1,20 @@
+from typing import Iterable, Dict
+from enum import Enum
+
+import pandas as pd
+
 from alpaca.trading.enums import AssetExchange, AssetClass, AccountStatus, AssetStatus
 from alpaca.data.historical import CryptoHistoricalDataClient, StockHistoricalDataClient
 from alpaca.trading import TradingClient
+
 from alpacarl.meta.constants import (
     ALPACA_API_KEY,
     ALPACA_API_SECRET,
     ALPACA_API_ENDPOINT,
     ALPACA_API_ENDPOINT_PAPER)
-
 from alpacarl.meta import log
+
+
 
 class AlpacaMetaClient:
     def __init__(
@@ -47,7 +54,8 @@ class AlpacaMetaClient:
                     f'Clients and account setup successful. Account is active.')
 
         except Exception as e:
-            log.logger.exception("Account setup failed: {}".format(str(e)))
+            log.logger.exception(
+                "Account setup failed: {}".format(str(e)))
 
         return None
 
@@ -56,7 +64,8 @@ class AlpacaMetaClient:
 
         if self._symbols is None:
             self._symbols = {
-                asset.pop('symbol'): asset for asset in self._assets}
+                asset.pop(
+                'symbol'): asset for asset in self._assets}
 
         return self._symbols
 
@@ -64,10 +73,12 @@ class AlpacaMetaClient:
     def assets(self):
 
         if self._assets is None:
-            assets_ = self.clients['trading'].get_all_assets()
+            assets_ = self.clients[
+            'trading'].get_all_assets()
             # keep tradable active assets only.
-            self._assets = [asset for asset in assets_ if
-                            asset.status == AssetStatus.ACTIVE and asset.tradable]
+            self._assets = [
+                asset for asset in assets_ if
+                asset.status == AssetStatus.ACTIVE and asset.tradable]
 
         return dicts_enum_to_df(self._assets)
 
@@ -90,7 +101,8 @@ class AlpacaMetaClient:
     @property
     def positions(self):
 
-        self._positions = self.clients['trading'].get_all_positions()
+        self._positions = self.clients[
+            'trading'].get_all_positions()
 
         return dicts_enum_to_df(self._positions)
 
@@ -114,11 +126,11 @@ class AlpacaMetaClient:
 # converts dictionaries of enum objects into dataframe
 def dicts_enum_to_df(
         info: Iterable[Dict[str, str]]
-        ) -> DataFrame:
+        ) -> pd.DataFrame:
 
     for dict_ in info:
         for key, val in dict_.items():
             dict_[key] = val.value if isinstance(val, Enum) else val
 
-    df = DataFrame(info)
+    df = pd.DataFrame(info)
     return df

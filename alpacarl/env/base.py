@@ -1,8 +1,8 @@
 from collections import defaultdict
-from typing import Tuple, Optional
+from typing import Tuple
 
 import numpy as np
-from gym import spaces, Env, ActionWrapper
+from gym import spaces, Env
 
 from alpacarl.meta import log
 from alpacarl.aux.tools import sharpe, tabular_print
@@ -40,16 +40,24 @@ class BaseEnv(Env):
         self.min_trade = min_trade
 
         self.action_space = spaces.Box(
-            low=-np.inf, high=np.inf, shape=(self.n_symbols,), dtype=np.float32)
+            low=-np.inf, high=np.inf, shape=(
+            self.n_symbols,), dtype=np.float32)
+        
         self.observation_space = spaces.Dict({
             'cash':spaces.Box(
             low=0, high=np.inf, shape = (1,), dtype=np.float32),
+
             'positions': spaces.Box(
-            low=0, high=np.inf, shape = (self.n_symbols,), dtype=np.float32),
+            low=0, high=np.inf, shape = (
+            self.n_symbols,), dtype=np.float32),
+
             'holds': spaces.Box(
-            low=0, high=np.inf, shape = (self.n_symbols,), dtype=np.int32),
+            low=0, high=np.inf, shape = (
+            self.n_symbols,), dtype=np.int32),
+            
             'features': spaces.Box(
-            low=-np.inf, high=np.inf, shape = (self.n_features,), dtype=np.float32)})
+            low=-np.inf, high=np.inf, shape = (
+            self.n_features,), dtype=np.float32)})
         
         self.history = defaultdict(list)
         self.verbose = verbose
@@ -99,20 +107,29 @@ class BaseEnv(Env):
     def step(self, actions):
         # iterates over actions iterable
         for stock, action in enumerate(actions):
+
             if action > 0 and self.cash > 0: # buy
+
                 buy = min(self.cash, action)
                 buy = max(self.min_trade, buy)
                 quantity = buy/self.prices[stock]
+
                 self.stocks[stock] += quantity
                 self.cash -= buy
+
             elif action < 0 and self.stocks[stock] > 0: # sell
-                sell = min(self.stocks[stock] * self.prices[stock], abs(action))
+
+                sell = min(
+                    self.stocks[stock] * self.prices[stock], abs(action))
                 quantity = sell/self.prices[stock]
+                
                 self.stocks[stock] -= quantity
                 self.cash += sell
                 self.holds[stock] = 0
 
-        self.prices, self.features = next(self.prices_and_features_generator())
+        self.prices, self.features = next(
+            self.prices_and_features_generator())
+        
         # increase hold time of purchased stocks
         self.holds[self.stocks > 0] += 1
         # new asset value
@@ -129,15 +146,18 @@ class BaseEnv(Env):
         # tabulate decision maker performance
         if (self.verbose and self.index % self.render_every == 0) or done:
             self.render(done)
+            
         return self.state, reward, done, self.history
         
     def render(self, done:bool = False) -> None:
+
         # print header at first render
         if self.index == self.render_every:
+
             # print results in a tear sheet format
-            tabular_print(
+            print(tabular_print(
                 ['Progress', 'Return','Sharpe ratio',
-                'Assets', 'Positions', 'Cash'], header = True)
+                'Assets', 'Positions', 'Cash'], header = True))
         
         # total value of positions in portfolio
         positions_ = self.stocks @ self.prices
