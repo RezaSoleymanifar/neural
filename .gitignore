@@ -1,8 +1,15 @@
+# directories
 assets/
+.vscode/
+notebooks/
 
-.vscode
+# special files
 .gitignore
 
+# log files
+*.log
+
+# temp files
 temp.py
 test.py
 setup.cfg
