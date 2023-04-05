@@ -1,35 +1,31 @@
-from alpaca.trading.enums import AssetExchange, AssetClass, AccountStatus, AssetStatus
-from alpaca.data.historical import CryptoHistoricalDataClient, StockHistoricalDataClient
+from typing import Optional
+
+from alpaca.trading.enums import AccountStatus, AssetExchange, AssetClass
+from alpaca.data.historical import StockHistoricalDataClient, CryptoHistoricalDataClient
 from alpaca.trading import TradingClient
 
-from alpacarl.meta.constants import (
-    ALPACA_API_KEY,
-    ALPACA_API_SECRET,
-    ALPACA_API_ENDPOINT,
-    ALPACA_API_ENDPOINT_PAPER
-)
+from alpacarl.meta.constants import (ALPACA_API_KEY, ALPACA_API_SECRET)
 from alpacarl.meta import log
-from alpacarl.tools.ops import dicts_enum_to_df
+from alpacarl.tools.ops import objects_to_df
 
 
 
 class AlpacaMetaClient:
     def __init__(
-            self,
-            key: str,
-            secret: str,
-            sandbox=False
-            ) -> None:
+        self,
+        key: Optional[str] = None,
+        secret: Optional[str] = None,
+        ) -> None:
 
         # if sandbox = True tries connecting to paper account endpoint
-        self.key = key if key else ALPACA_API_KEY
-        self.secret = secret if secret else ALPACA_API_SECRET
-        self.endpoint = ALPACA_API_ENDPOINT if not sandbox else ALPACA_API_ENDPOINT_PAPER
+        self.key = key if key is not None else ALPACA_API_KEY
+        self.secret = secret if secret is not None else ALPACA_API_SECRET
+
         self.clients = None
         self.account = None
-
         self._assets = None
-        self.__symbols = None
+        self._symbols = None
+        self._positions = None
         self._asset_classes = None
         self._exchanges = None
 
@@ -37,47 +33,46 @@ class AlpacaMetaClient:
 
     def setup_clients_and_account(self) -> None:
 
+        self.clients = dict()
+
         # crypto does not need key, and secret but will be faster if provided
         self.clients['crypto'] = CryptoHistoricalDataClient(
-            self.key, self.secret)
+            api_key = self.key, secret_key =self.secret)
         self.clients['stocks'] = StockHistoricalDataClient(
-            self.key, self.secret)
-        self.clients['trading'] = TradingClient(self.key, self.secret)
-
+            api_key=self.key, secret_key=self.secret)
+        self.clients['trading'] = TradingClient(
+            api_key=self.key, secret_key=self.secret)
+        
         try:
             self.account = self.clients['trading'].get_account()
 
             if self.account.status == AccountStatus.ACTIVE:
                 log.logger.info(
-                    f'Clients and account setup successful. Account is active.')
+                    f'Clients and account setup successful.')
 
         except Exception as e:
             log.logger.exception(
                 "Account setup failed: {}".format(str(e)))
-
+            
         return None
 
     @property
     def __symbols(self):
 
-        if self.__symbols is None:
-            self.__symbols = {
+        if self._symbols is None:
+            self._symbols = {
                 asset.pop('symbol'): asset for asset in self._assets}
 
-        return self.__symbols
+        return self._symbols
 
     @property
     def assets(self):
 
         if self._assets is None:
-            assets_ = self.clients[
-            'trading'].get_all_assets()
-            # keep tradable active assets only.
-            self._assets = [
-                asset for asset in assets_ if
-                asset.status == AssetStatus.ACTIVE and asset.tradable]
+            self._assets = self.clients[
+                'trading'].get_all_assets()
 
-        return dicts_enum_to_df(self._assets)
+        return objects_to_df(self._assets)
 
     @property
     def exchanges(self):
@@ -98,24 +93,20 @@ class AlpacaMetaClient:
     @property
     def positions(self):
 
-        self._positions = self.clients[
-            'trading'].get_all_positions()
+        self._positions = self.clients['trading'].get_all_positions()
 
-        return dicts_enum_to_df(self._positions)
+        return objects_to_df(self._positions)
 
-    def set_credentials(self, key: str, secret: str) -> None:
+    def set_credentials(
+        self, 
+        key: str, 
+        secret: str
+        ) -> None:
 
-        if not isinstance(key, str) or not isinstance(secret, key):
+        if not isinstance(key, str) or not isinstance(secret, str):
             raise ValueError(f'key and secret must of type {str}')
 
         self.key = key
         self.secret = secret
-
-        return None
-
-    def set_endpoint(self, endpoint: str) -> None:
-
-        if not isinstance(endpoint, str):
-            raise ValueError(f'endpoint must of type {str}')
 
         return None

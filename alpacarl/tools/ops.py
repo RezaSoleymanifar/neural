@@ -1,9 +1,10 @@
 from datetime import datetime
 from typing import List, Iterable, Dict
+from enum import Enum
 
 import pandas_market_calendars as market_calendars
 import pandas as pd
-import tableprint, tqdm, re
+import tableprint, tqdm, re, os
 
 from alpaca.data.timeframe import TimeFrame, TimeFrameUnit
 
@@ -44,6 +45,23 @@ class Calendar:
         return time_zone
     
 
+def validate_path(
+    file_path: str | os.PathLike
+    ) -> None:
+
+    if os.path.isdir(file_path):
+        raise ValueError(
+            "The specified path is a directory, not a file.")
+    
+    else:
+        dir_path = os.path.dirname(file_path)
+
+        if not os.path.isdir(dir_path):
+            raise ValueError(
+                "The directory leading to the specified file does not exist.")
+        
+    return None
+
 def create_column_schema(data: pd.DataFrame, dataset_type: DatasetType):
 
     column_schema = dict()
@@ -63,10 +81,10 @@ def create_column_schema(data: pd.DataFrame, dataset_type: DatasetType):
 def to_datetime(date: str):
     try:
         date_format = "%Y-%m-%d"
-        dt = datetime.strptime(date, date_format)
+        date_time_ = datetime.strptime(date, date_format)
     except:
         ValueError('Invalid date. Valid examples: 2022-03-20, 2015-01-01')
-    return dt
+    return date_time_
 
 
 def to_timeframe(time_frame: str):
@@ -119,14 +137,17 @@ def sharpe(assets_hist: List[float], base=0):
 
     return val
 
-# converts dictionaries of enum objects into dataframe
-def dicts_enum_to_df(
-        info: Iterable[Dict[str, str]]
-) -> pd.DataFrame:
+# converts collection of enum objects dataframe.
+def objects_to_df(
+    object_collection: Iterable[Dict[str, str]]
+    ) -> pd.DataFrame:
 
-    for dict_ in info:
-        for key, val in dict_.items():
-            dict_[key] = val.value if isinstance(val, Enum) else val
+    for index, object in enumerate(object_collection):
+        object_dict = dict(object)
 
-    df = pd.DataFrame(info)
+        for key, val in object_dict.items():
+            object_dict[key] = val.value if isinstance(val, Enum) else val
+            object_collection[index] = object_dict
+
+    df = pd.DataFrame(object_collection)
     return df

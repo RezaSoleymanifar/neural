@@ -26,7 +26,7 @@ class DatasetMetadata:
     dataset_type: List[DatasetType]
     column_schema = Dict[ColumnType, Tuple[bool]]
     asset_class = AssetClass
-    symbols = Tuple(str)
+    symbols = Tuple[str]
     start: datetime
     end: datetime
     resolution: str
@@ -43,25 +43,25 @@ class DatasetMetadata:
 
         if other.dataset_type in self.dataset_type:
             raise ValueError(
-                'Duplicate dataset type is not allowed in horizontal chaining.')
-
+                f'Dataset types {self.dataset_type} and {other.dataset_type} are mismatched.')
+        
         if self.asset_class != other.asset_class:
             raise ValueError('Datasets must have the same asset classes.')
 
         if self.symbols != other.symbols:
             raise ValueError('Datasets must have the same symbols.')
+        
+        if self.start != other.start:
+            raise ValueError('Datasets do not have the same start dates.')
+
+        if self.end != other.end:
+            raise ValueError('Datasets do not have the same end dates.')
 
         if self.resolution != other.resolution:
             raise ValueError('Datasets must have the same resolution.')
 
         if self.n_rows != other.n_rows:
             raise ValueError('Datasets must have the same number of rows.')
-
-        if self.start != other.start:
-            raise ValueError('Datasets do not have the same start dates.')
-
-        if self.end != other.end:
-            raise ValueError('Datasets do not have the same end dates.')
 
         dataset_type = self.dataset_type + other.dataset_type
         n_columns = self.n_columns + other.n_columns
@@ -115,7 +115,7 @@ class DatasetMetadata:
             raise ValueError('Dataset number of columns mismatch.')
 
         dataset_type = self.dataset_type + other.dataset_type
-        n_columns = self.n_columns + other.n_columns
+        n_rows = self.n_row + other.n_rows
         column_schema = self._join_column_schemas(other)
 
         return DatasetMetadata(
@@ -124,19 +124,22 @@ class DatasetMetadata:
             end=self.end,
             symbols=self.symbols,
             resolution=self.resolution,
-            n_rows=self.n_rows,
-            n_columns=n_columns,
+            n_rows=n_rows,
+            n_columns=self.n_columns,
             column_schema=column_schema)
 
     def _join_column_schemas(self, other):
+
         if set(self.column_schema.keys()) != set(other.column_schema.keys()):
+
             raise ValueError(
                 'Datasets do not have matching column_schema structure.')
 
         merged_schema = dict()
 
         for key in self.column_schema.keys():
-            merged_schema[key] = self.column_schema[key] + \
-                other.column_schema[key]
+            
+            merged_schema[key] = self.column_schema[
+                key] + other.column_schema[key]
 
         return merged_schema

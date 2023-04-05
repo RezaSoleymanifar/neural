@@ -9,14 +9,14 @@ import numpy as np
 import pickle, h5py
 
 from alpaca.data.requests import CryptoBarsRequest, StockBarsRequest
-from alpaca.trading.enums import AssetClass
+from alpaca.trading.enums import AssetClass, AssetStatus
 
 from alpacarl.connect.client import AlpacaMetaClient
 from alpacarl.core.data.enums import DatasetType, DatasetMetadata
 from alpacarl.meta import log
 from alpacarl.meta.exceptions import CorruptDataError
 from alpacarl.tools.ops import (progress_bar, Calendar, 
-    to_timeframe, create_column_schema)
+    to_timeframe, create_column_schema, validate_path)
 
     
 class DatasetDownloader():
@@ -31,22 +31,31 @@ class DatasetDownloader():
 
     def validate_symbols(self, symbols: List[str]):
 
-        duplicate_symbols = list(
-            set([x for x in symbols if symbols.count(x) > 1]))
+        duplicate_symbols = list(set([
+            symbol for symbol in symbols if symbols.count(symbol) > 1]))
         
         if duplicate_symbols is not None:
             raise ValueError(
-            f'Symbols {duplicate_symbols} have duplicate values.')
+                f'Symbols {duplicate_symbols} have duplicate values.')
         
-
         # checks if symbols name is valid
         for symbol in symbols:
-            if symbol not in self.client.symbols:
+            if symbol not in self.client.__AlpacaMetaClient_symbols:
+                raise KeyError(
+                    f'Symbol {symbol} is not a known symbol.')
+        
+        for symbol in symbols:
+            if not self.client.__AlpacaMetaClient_symbols[symbol].tradable:
                 raise ValueError(
-                    f'Symbol {symbol} is not a supported symbol.')
+                    f'Symbol {symbol} is not a tradable symbol.')
+        
+        for symbol in symbols:
+            if not self.__AlpacaMetaClient_symbols[symbol].status == AssetStatus.ACTIVE:
+                raise ValueError(
+                    f'Symbol {symbol} is not an active symbol.')
 
-        asset_classes = set(self.client.symbols[symbol][
-            'asset_class'] for symbol in symbols)
+        asset_classes = set(self.client.__AlpacaMetaClient_symbols[
+            symbol].asset_class for symbol in symbols)
 
         # checks if symbols have the same asset class
         if len(asset_classes) != 1:
@@ -59,7 +68,7 @@ class DatasetDownloader():
     
     def download_dataset_to_hdf5(
         self,
-        path: str | os.PathLike,
+        file_path: str | os.PathLike,
         target_dataset_name: str,
         dataset_type: DatasetType,
         symbols: List[str],
@@ -68,14 +77,16 @@ class DatasetDownloader():
         end_date: datetime.date,
         ) -> None:
 
+        validate_path(file_path=file_path)
+        
         # converts to expected input formats
         if end_date == datetime.today():
             raise ValueError(
             'Today\'s data is only available through streaming.')
         
 
-        if not os.path.exists(path):
-            raise ValueError(f'Path {path} does not exist.')
+        if not os.path.exists(file_path):
+            raise ValueError(f'Path {file_path} does not exist.')
         
     
         resolution = to_timeframe(resolution)
@@ -123,7 +134,7 @@ class DatasetDownloader():
 
 
             features_df = pd.concat(
-                [DataProcessor.resample_and_ffil(data = group[1],
+                [DataProcessor.resample_and_forward_fill(data = group[1],
                 open = market_open, close = market_close, resolution = resolution)
                 for group in bars.groupby('symbol')],
                 axis=1)
@@ -146,7 +157,7 @@ class DatasetDownloader():
 
             
             metadata = DatasetMetadata(
-                dataset_type= dataset_type,
+                dataset_type= [dataset_type],
                 asset_class=asset_class,
                 column_schema = column_schema,
                 symbols=symbols,
@@ -158,7 +169,7 @@ class DatasetDownloader():
             )
 
             DatasetIO.write_to_hdf5(
-                path = path, 
+                file_path = file_path, 
                 data_to_write=features_np, 
                 metadata= metadata, 
                 target_dataset_name= target_dataset_name)
@@ -194,7 +205,7 @@ class DataProcessor:
     def __init__(self) -> None:
         pass 
 
-    def resample_and_ffil(
+    def resample_and_forward_fill(
             data, 
             open: datetime, 
             close: datetime, 
@@ -228,15 +239,17 @@ class DataProcessor:
 class DatasetIO:
 
     def write_to_hdf5(
-        path: str | os.PathLike, 
+        file_path: str | os.PathLike, 
         data_to_write: np.ndarray, 
         metadata: DatasetMetadata, 
         target_dataset_name: str):
 
-        if not os.path.exists(path):
-            raise ValueError(f'Path {path} does not exist.')
+        validate_path(file_path=file_path)
+
+        if not os.path.exists(file_path):
+            raise ValueError(f'Path {file_path} does not exist.')
         
-        with h5py.File(path, 'w') as hdf5:
+        with h5py.File(file_path, 'w') as hdf5:
 
             if target_dataset_name not in hdf5:
                 # Create a fixed-size dataset with a predefined data type and dimensions
@@ -263,7 +276,7 @@ class DatasetIO:
         
         return None
 
-    def extract_dataset(
+    def _extract_dataset(
             hdf5: h5py.File,
             target_dataset_name: str
             ) -> Tuple[DatasetMetadata, h5py.Dataset]:
@@ -273,19 +286,25 @@ class DatasetIO:
         metadata = pickle.loads(serialized_metadata)
 
         if metadata.n_rows != len(target_dataset):
-            raise CorruptDataError(f'Mismatch in number of rows')
+            raise CorruptDataError(
+                f'Rows in {target_dataset_name}: {len(target_dataset)}.' 
+                f'Rows in metadata: {metadata.n_rows}')
+        
+        if metadata.n_columns != target_dataset.shape[1]:
+            raise CorruptDataError(
+                f'Columns in {target_dataset_name}: {target_dataset.shape[1]}.'
+                f'Rows in metadata: {metadata.n_columns}')
 
         return metadata, target_dataset            
 
     def load_from_hdf5(
-        path: str | os.PathLike, 
+        file_path: str | os.PathLike, 
         target_dataset_name: Optional[str] = None
         ) -> Tuple[DatasetMetadata, List[h5py.Dataset]]:
 
-        if not os.path.exists(path):
-            raise ValueError(f'Path {path} does not exist.')
+        validate_path(file_path= file_path)
         
-        with h5py.File(path, 'r') as hdf5:
+        with h5py.File(file_path, 'r') as hdf5:
 
             if target_dataset_name is None:
 
@@ -294,7 +313,7 @@ class DatasetIO:
 
                 for dataset_name in hdf5:
 
-                    metadata, dataset = DatasetIO.extract_dataset(
+                    metadata, dataset = DatasetIO._extract_dataset(
                         hdf5 = hdf5, target_dataset_name= dataset_name)
                     
                     dataset_list.append(dataset)
@@ -307,7 +326,7 @@ class DatasetIO:
             
             else:
 
-                metadata, dataset =  DatasetIO.extract_dataset(
+                metadata, dataset =  DatasetIO._extract_dataset(
                     hdf5 = hdf5, target_dataset_name=target_dataset_name)
                 
                 return metadata, [dataset]
