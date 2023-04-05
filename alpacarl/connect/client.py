@@ -1,8 +1,3 @@
-from typing import Iterable, Dict
-from enum import Enum
-
-import pandas as pd
-
 from alpaca.trading.enums import AssetExchange, AssetClass, AccountStatus, AssetStatus
 from alpaca.data.historical import CryptoHistoricalDataClient, StockHistoricalDataClient
 from alpaca.trading import TradingClient
@@ -11,8 +6,10 @@ from alpacarl.meta.constants import (
     ALPACA_API_KEY,
     ALPACA_API_SECRET,
     ALPACA_API_ENDPOINT,
-    ALPACA_API_ENDPOINT_PAPER)
+    ALPACA_API_ENDPOINT_PAPER
+)
 from alpacarl.meta import log
+from alpacarl.tools.ops import dicts_enum_to_df
 
 
 
@@ -32,6 +29,7 @@ class AlpacaMetaClient:
         self.account = None
 
         self._assets = None
+        self.__symbols = None
         self._asset_classes = None
         self._exchanges = None
 
@@ -60,14 +58,13 @@ class AlpacaMetaClient:
         return None
 
     @property
-    def symbols(self):
+    def __symbols(self):
 
-        if self._symbols is None:
-            self._symbols = {
-                asset.pop(
-                'symbol'): asset for asset in self._assets}
+        if self.__symbols is None:
+            self.__symbols = {
+                asset.pop('symbol'): asset for asset in self._assets}
 
-        return self._symbols
+        return self.__symbols
 
     @property
     def assets(self):
@@ -122,15 +119,3 @@ class AlpacaMetaClient:
             raise ValueError(f'endpoint must of type {str}')
 
         return None
-
-# converts dictionaries of enum objects into dataframe
-def dicts_enum_to_df(
-        info: Iterable[Dict[str, str]]
-        ) -> pd.DataFrame:
-
-    for dict_ in info:
-        for key, val in dict_.items():
-            dict_[key] = val.value if isinstance(val, Enum) else val
-
-    df = pd.DataFrame(info)
-    return df

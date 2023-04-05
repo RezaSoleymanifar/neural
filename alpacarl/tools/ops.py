@@ -1,11 +1,9 @@
 from datetime import datetime
-from typing import List, Iterable
+from typing import List, Iterable, Dict
 
 import pandas_market_calendars as market_calendars
 import pandas as pd
-import tableprint
-import tqdm
-import re
+import tableprint, tqdm, re
 
 from alpaca.data.timeframe import TimeFrame, TimeFrameUnit
 
@@ -120,3 +118,15 @@ def sharpe(assets_hist: List[float], base=0):
     val = (returns.mean()-base)/returns.std()
 
     return val
+
+# converts dictionaries of enum objects into dataframe
+def dicts_enum_to_df(
+        info: Iterable[Dict[str, str]]
+) -> pd.DataFrame:
+
+    for dict_ in info:
+        for key, val in dict_.items():
+            dict_[key] = val.value if isinstance(val, Enum) else val
+
+    df = pd.DataFrame(info)
+    return df

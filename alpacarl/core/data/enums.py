@@ -3,8 +3,6 @@ from datetime import datetime
 from typing import (List, Dict, Tuple)
 from dataclasses import dataclass
 
-import pandas as pd
-
 from alpaca.trading.enums import AssetClass
 
 

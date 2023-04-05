@@ -14,7 +14,9 @@ from alpaca.trading.enums import AssetClass
 from alpacarl.connect.client import AlpacaMetaClient
 from alpacarl.core.data.enums import DatasetType, DatasetMetadata
 from alpacarl.meta import log
-from alpacarl.tools.ops import progress_bar, Calendar, to_timeframe, create_column_schema
+from alpacarl.meta.exceptions import CorruptDataError
+from alpacarl.tools.ops import (progress_bar, Calendar, 
+    to_timeframe, create_column_schema)
 
     
 class DatasetDownloader():
@@ -269,6 +271,9 @@ class DatasetIO:
         target_dataset = hdf5[target_dataset_name]
         serialized_metadata = target_dataset.attrs['metadata']
         metadata = pickle.loads(serialized_metadata)
+
+        if metadata.n_rows != len(target_dataset):
+            raise CorruptDataError(f'Mismatch in number of rows')
 
         return metadata, target_dataset            
 
