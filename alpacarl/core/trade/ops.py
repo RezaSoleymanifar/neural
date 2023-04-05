@@ -1,4 +1,4 @@
-from models import BaseActor
+from model import BaseActor
 
 
 class Trader:
