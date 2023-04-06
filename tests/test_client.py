@@ -5,22 +5,19 @@ sys.path.insert(0, os.path.abspath(
     os.path.join(os.path.dirname(__file__), '..')))
 
 import unittest
-from alpacarl.connect import AlpacaMetaClient
+from base import BaseConnectionTest
 from log import logger
 
 
-class TestClient(unittest.TestCase):
+class TestClient(BaseConnectionTest):
         
     @classmethod
     def setUpClass(cls):
-
-        cls.client = AlpacaMetaClient()
-        cls.client.setup_clients_and_account()
-
-        logger.info('connection test passed.')
+        super().setUpClass()
+        logger.info('Client setup test: SUCESSFUL.')
         
     
-    def test_client_functionality(self):
+    def test_functions(self):
         
         print(
         f"""
@@ -30,26 +27,19 @@ class TestClient(unittest.TestCase):
         exchange: {self.client.exchanges}
         """)
         logger.info(
-            'Client functions test successful.')
+            'Client functions test: SUCCESSFUL.')
     
     def set_credentials(client):
 
         client.set_credentials(
             secret= 'False', key= 'True')
+        
         logger.info(
-            'Credentials setting test successful.')
+            'Credentials setup test: SUCCESSFUL.')
 
+    def tearDown(self):
+        logger.info('CLIENT TEST DONE')
 
-class TestData(TestClient):
-
-    @classmethod
-
-    def setUpClass(cls):
-        super().setUpClass()
-        logger.info('Client setup for for data testing successful.')
-    
-    def func():
-        pass
 
 if __name__ == '__main__':
     unittest.main()
