@@ -7,7 +7,7 @@ sys.path.insert(0, os.path.abspath(
     os.path.join(os.path.dirname(__file__), '..')))
 
 
-from alpacarl.connect.client import AlpacaMetaClient
+from neural.connect.client import AlpacaMetaClient
 
 
 class BaseConnectionTest(unittest.TestCase):
