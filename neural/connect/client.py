@@ -4,9 +4,9 @@ from alpaca.trading.enums import AccountStatus, AssetExchange, AssetClass
 from alpaca.data.historical import StockHistoricalDataClient, CryptoHistoricalDataClient
 from alpaca.trading import TradingClient
 
-from alpacarl.common.log import logger
-from alpacarl.common.constants import ALPACA_API_KEY, ALPACA_API_SECRET
-from alpacarl.tools.ops import objects_to_df
+from neural.common.log import logger
+from neural.common.constants import ALPACA_API_KEY, ALPACA_API_SECRET
+from neural.tools.ops import objects_to_df
 
 
 

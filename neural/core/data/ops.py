@@ -12,15 +12,15 @@ from alpaca.trading.enums import AssetClass, AssetStatus
 from alpaca.data.historical.stock import StockBarsRequest
 from alpaca.data.historical.crypto import CryptoBarsRequest
 
-from alpacarl.common import logger
-from alpacarl.common.exceptions import CorruptDataError
-from alpacarl.core.data.enums import DatasetType, DatasetMetadata
-from alpacarl.connect.client import AlpacaMetaClient
-from alpacarl.tools.ops import (progress_bar, Calendar,
+from neural.common import logger
+from neural.common.exceptions import CorruptDataError
+from neural.core.data.enums import DatasetType, DatasetMetadata
+from neural.connect.client import AlpacaMetaClient
+from neural.tools.ops import (progress_bar, Calendar,
     to_timeframe, create_column_schema, validate_path)
 
     
-class DatasetDownloader():
+class DataFetcher():
     def __init__(
         self,
         client: AlpacaMetaClient
@@ -121,8 +121,10 @@ class DatasetDownloader():
 
         asset_class = self._validate_symbols(symbols)
 
-        downloader, request = DatasetDownloader(
-            client = self, dataset_type = dataset_type, asset_class = asset_class)
+        data_fetcher = DataFetcher(self.client)
+
+        downloader, request = data_fetcher.get_downloader_and_request(
+            dataset_type = dataset_type, asset_class = asset_class)
 
         if asset_class == AssetClass.US_EQUITY:
             calendar = Calendar(calendar_type= Calendar.NYSE)

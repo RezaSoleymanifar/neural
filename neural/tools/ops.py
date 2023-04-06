@@ -8,8 +8,8 @@ import tableprint, tqdm, re, os
 
 from alpaca.data.timeframe import TimeFrame, TimeFrameUnit
 
-from alpacarl.tools.enums import CalendarType
-from alpacarl.core.data.enums import DatasetType, ColumnType
+from neural.tools.enums import CalendarType
+from neural.core.data.enums import DatasetType, ColumnType
 
 
 class Calendar:

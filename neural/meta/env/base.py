@@ -4,9 +4,9 @@ from typing import Tuple
 import numpy as np
 from gym import spaces, Env
 
-from alpacarl.common import log
-from alpacarl.tools.ops import sharpe, tabular_print
-from alpacarl.core.data.ops import RowGenerator, ColumnType
+from neural.common import log
+from neural.tools.ops import sharpe, tabular_print
+from neural.core.data.ops import RowGenerator, ColumnType
 
 
 class BaseEnv(Env):
