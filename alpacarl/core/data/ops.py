@@ -12,11 +12,11 @@ from alpaca.trading.enums import AssetClass, AssetStatus
 from alpaca.data.historical.stock import StockBarsRequest
 from alpaca.data.historical.crypto import CryptoBarsRequest
 
-from alpacarl.core.data.enums import DatasetType, DatasetMetadata
-from alpacarl.connect.client import AlpacaMetaClient
 from alpacarl.common import logger
 from alpacarl.common.exceptions import CorruptDataError
-from alpacarl.tools.ops import (progress_bar, Calendar, 
+from alpacarl.core.data.enums import DatasetType, DatasetMetadata
+from alpacarl.connect.client import AlpacaMetaClient
+from alpacarl.tools.ops import (progress_bar, Calendar,
     to_timeframe, create_column_schema, validate_path)
 
     
@@ -26,36 +26,39 @@ class DatasetDownloader():
         client: AlpacaMetaClient
         ) -> None:
 
-        self.meta_client = client
+        self.client = client
 
         return None
 
-    def validate_symbols(self, symbols: List[str]):
+    def _validate_symbols(self, symbols: List[str]):
 
+        if len(symbols) == 0:
+            raise ValueError('symbols argument cannot be an empty sequence.')
+        
         duplicate_symbols = list(set([
             symbol for symbol in symbols if symbols.count(symbol) > 1]))
         
-        if duplicate_symbols is not None:
+        if duplicate_symbols:
             raise ValueError(
                 f'Symbols {duplicate_symbols} have duplicate values.')
         
         # checks if symbols name is valid
         for symbol in symbols:
-            if symbol not in self.client.__AlpacaMetaClient_symbols:
-                raise KeyError(
+
+            if symbol not in self.client._AlpacaMetaClient__symbols:
+                raise ValueError(
                     f'Symbol {symbol} is not a known symbol.')
-        
-        for symbol in symbols:
-            if not self.client.__AlpacaMetaClient_symbols[symbol].tradable:
+
+            if not self.client._AlpacaMetaClient__symbols[symbol].tradable:
                 raise ValueError(
                     f'Symbol {symbol} is not a tradable symbol.')
         
-        for symbol in symbols:
-            if not self.__AlpacaMetaClient_symbols[symbol].status == AssetStatus.ACTIVE:
+            if not self.client._AlpacaMetaClient__symbols[
+                symbol].status == AssetStatus.ACTIVE:
                 raise ValueError(
                     f'Symbol {symbol} is not an active symbol.')
 
-        asset_classes = set(self.client.__AlpacaMetaClient_symbols[
+        asset_classes = set(self.client._AlpacaMetaClient__symbols[
             symbol].asset_class for symbol in symbols)
 
         # checks if symbols have the same asset class
@@ -66,7 +69,28 @@ class DatasetDownloader():
         asset_class = asset_classes.pop()
 
         return asset_class
-    
+
+    def get_downloader_and_request(
+        self, 
+        dataset_type: DatasetType, 
+        asset_class = AssetClass):
+        
+        if dataset_type == DatasetType.BAR:
+            # choose relevant client
+            if asset_class == AssetClass.US_EQUITY:
+
+                client = self.client.clients['stocks']
+                downloader = client.get_stocks_bars
+                request = StockBarsRequest
+                
+            elif asset_class == AssetClass.CRYPTO:
+
+                client = self.client.clients['crypto']
+                downloader = client.get_crypto_bars
+                request = CryptoBarsRequest
+                
+            return downloader, request
+        
     def download_dataset_to_hdf5(
         self,
         file_path: str | os.PathLike,
@@ -95,7 +119,7 @@ class DatasetDownloader():
         # API produces results in sorted order of symbols
         symbols = sorted(symbols)
 
-        asset_class = self.validate_symbols(symbols)
+        asset_class = self._validate_symbols(symbols)
 
         downloader, request = DatasetDownloader(
             client = self, dataset_type = dataset_type, asset_class = asset_class)
@@ -179,27 +203,6 @@ class DatasetDownloader():
         progress_bar_.close()
 
         return None
-    
-    def get_downloader_and_request(
-        self, 
-        dataset_type: DatasetType, 
-        asset_class = AssetClass):
-        
-        if dataset_type == DatasetType.BAR:
-            # choose relevant client
-            if asset_class == AssetClass.US_EQUITY:
-
-                client = self.meta_client.clients['stocks']
-                downloader = client.get_stocks_bars
-                request = StockBarsRequest
-                
-            elif asset_class == AssetClass.CRYPTO:
-
-                client = self.meta_client.clients['crypto']
-                downloader = client.get_crypto_bars
-                request = CryptoBarsRequest
-                
-            return downloader, request
     
 
 class DataProcessor:

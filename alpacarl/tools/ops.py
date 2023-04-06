@@ -141,13 +141,14 @@ def sharpe(assets_hist: List[float], base=0):
 def objects_to_df(
     object_collection: Iterable[Dict[str, str]]
     ) -> pd.DataFrame:
-
-    for index, object in enumerate(object_collection):
+    
+    objects_collection_ = object_collection.copy()
+    for index, object in enumerate(objects_collection_):
         object_dict = dict(object)
 
         for key, val in object_dict.items():
             object_dict[key] = val.value if isinstance(val, Enum) else val
-            object_collection[index] = object_dict
+            objects_collection_[index] = object_dict
 
-    df = pd.DataFrame(object_collection)
+    df = pd.DataFrame(objects_collection_)
     return df

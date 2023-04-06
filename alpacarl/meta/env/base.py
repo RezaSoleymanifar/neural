@@ -27,7 +27,7 @@ class BaseEnv(Env):
 
         self.dataset_metadata = self.deta_generator.dataset_metadata
         self.column_schema = self.dataset_metadata.column_schema
-        self.asset_price_mask = self.column_schema[ColumnType.PRICE]
+        self.asset_price_mask = self.dataset_metadata.column_schema[ColumnType.PRICE]
         self.index = None
         self.init_cash = init_cash
         self.cash = None

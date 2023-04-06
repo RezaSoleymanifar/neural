@@ -1,12 +1,12 @@
-import sys
-import os
-
-sys.path.insert(0, os.path.abspath(
-    os.path.join(os.path.dirname(__file__), '..')))
-
 import unittest
 from base import BaseConnectionTest
 from log import logger
+import sys
+import os
+
+
+sys.path.insert(0, os.path.abspath(
+    os.path.join(os.path.dirname(__file__), '..')))
 
 
 class TestClient(BaseConnectionTest):
@@ -21,8 +21,8 @@ class TestClient(BaseConnectionTest):
         
         print(
         f"""
-        assets: {self.client.assets}
-        positions: {self.client.positions}
+        assets: {self.client.assets.head()}
+        positions: {self.client.positions.head()}
         asset classes: {self.client.asset_classes}
         exchange: {self.client.exchanges}
         """)

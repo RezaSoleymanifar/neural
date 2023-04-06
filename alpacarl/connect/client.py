@@ -4,8 +4,8 @@ from alpaca.trading.enums import AccountStatus, AssetExchange, AssetClass
 from alpaca.data.historical import StockHistoricalDataClient, CryptoHistoricalDataClient
 from alpaca.trading import TradingClient
 
+from alpacarl.common.log import logger
 from alpacarl.common.constants import ALPACA_API_KEY, ALPACA_API_SECRET
-from alpacarl.common import logger
 from alpacarl.tools.ops import objects_to_df
 
 
@@ -56,15 +56,19 @@ class AlpacaMetaClient:
         except Exception as e:
             logger.exception(
                 "Account setup failed: {}".format(str(e)))
-            
+
         return None
 
     @property
     def __symbols(self):
+        
+        # makes sure assets are fetched.
+        if self._assets is None:
+            self.assets
 
         if self._symbols is None:
             self._symbols = {
-                asset.pop('symbol'): asset for asset in self._assets}
+                asset.symbol: asset for asset in self._assets}
 
         return self._symbols
 

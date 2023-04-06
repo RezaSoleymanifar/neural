@@ -1,11 +1,13 @@
 import unittest
 import sys
 import os
+from log import logger
 
 sys.path.insert(0, os.path.abspath(
     os.path.join(os.path.dirname(__file__), '..')))
 
-from alpacarl.connect import AlpacaMetaClient
+
+from alpacarl.connect.client import AlpacaMetaClient
 
 
 class BaseConnectionTest(unittest.TestCase):
@@ -15,7 +17,7 @@ class BaseConnectionTest(unittest.TestCase):
 
         cls.client = AlpacaMetaClient()
         cls.client.setup_clients_and_account()
-
+        logger.info('Base connection test: SUCCESSFUL')
 
 
 if __name__ == '__main__':
