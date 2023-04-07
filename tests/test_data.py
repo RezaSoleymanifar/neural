@@ -1,10 +1,10 @@
 from log import logger
+from datetime import datetime
 import unittest
 import sys
 import os
 from base import BaseConnectionTest
 from alpaca.trading.enums import AssetClass
-import logging
 
 
 sys.path.insert(0, os.path.abspath(
@@ -12,9 +12,7 @@ sys.path.insert(0, os.path.abspath(
 
 from neural.core.data.ops import DataFetcher
 from neural.common.constants import DOW_JONES_SYMBOLS
-from alpaca.trading.enums import AssetStatus
 from neural.tools.ops import to_timeframe
-from datetime import datetime
 
 
 class TestData(BaseConnectionTest):
@@ -129,6 +127,9 @@ class TestData(BaseConnectionTest):
         self.assertEqual(asset_class, AssetClass.CRYPTO)
         logger.info(asset_class)
 
+
+        self.data_fetcher._validate_symbols(DOW_JONES_SYMBOLS)
+        
         logger.info('Symbol validation test: SUCCESSFUL.')
 
 

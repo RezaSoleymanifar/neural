@@ -9,7 +9,6 @@ sys.path.insert(0, os.path.abspath(
 
 from neural.connect.client import AlpacaMetaClient
 
-
 class BaseConnectionTest(unittest.TestCase):
 
     @classmethod
