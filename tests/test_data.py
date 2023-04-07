@@ -28,7 +28,6 @@ class TestData(BaseConnectionTest):
         self.assets = self.client.assets
 
 
-
         # empty sequence
         with self.assertRaises(ValueError) as cm:
             SYMBOLS = []

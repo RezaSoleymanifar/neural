@@ -97,8 +97,8 @@ class DataFetcher():
         symbols: List[str],
         asset_class: AssetClass,
         resolution: str,
-        start: datetime,
-        end: datetime,
+        start: datetime.date,
+        end: datetime.date,
     ) -> None:
         
 
@@ -131,8 +131,6 @@ class DataFetcher():
         ) -> None:
 
         validate_path(file_path=file_path)
-
-        
 
         asset_class = self._validate_symbols(symbols)
         # API produces results in sorted order of symbols

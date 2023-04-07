@@ -14,7 +14,11 @@ from neural.core.data.enums import DatasetType, ColumnType
 
 class Calendar:
 
-    def __init__(self, calendar_type=CalendarType) -> None:
+    def __init__(
+        self, 
+        calendar_type=CalendarType
+        ) -> None:
+        
         self.calendar_type = calendar_type
         self.calendar = None
 
@@ -36,10 +40,10 @@ class Calendar:
 
     def get_time_zone(self) -> str:
 
-        if self.calendar_type == Calendar.ALWAYS_OPEN:
+        if self.calendar_type == CalendarType.ALWAYS_OPEN:
             time_zone = 'UTC'
 
-        elif self.calendar_type == Calendar.NYSE:
+        elif self.calendar_type == CalendarType.NYSE:
             time_zone = 'America/New_York'
 
         return time_zone
@@ -79,11 +83,14 @@ def create_column_schema(data: pd.DataFrame, dataset_type: DatasetType):
     return column_schema
 
 def to_datetime(date: str):
+
     try:
-        date_format = "%Y-%m-%d"
+        date_format = "%d/%m/%Y"
         date_time_ = datetime.strptime(date, date_format)
+
     except:
-        ValueError('Invalid date. Valid examples: 2022-03-20, 2015-01-01')
+        raise ValueError('Invalid date. Valid examples: 20/03/2018, 01/01/2015')
+
     return date_time_
 
 

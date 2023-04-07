@@ -10,7 +10,7 @@ if not os.path.exists(log_dir):
 FILE_NAME = 'alpacarl.log'
 logging.basicConfig(filename=os.path.join(log_dir, FILE_NAME), level=logging.DEBUG)
 logger = logging.getLogger('neural')
-logger.info('AlpacaRL logging configured.')
+logger.info('neural logger configured.')
 
 # create console handler and set level to INFO
 console_handler = logging.StreamHandler()
