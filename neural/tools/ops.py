@@ -4,7 +4,8 @@ from enum import Enum
 
 import pandas_market_calendars as market_calendars
 import pandas as pd
-import tableprint, tqdm, re, os
+import tableprint, re, os
+from tqdm import tqdm
 
 from alpaca.data.timeframe import TimeFrame, TimeFrameUnit
 
@@ -29,10 +30,15 @@ class Calendar:
         return calendar
 
     # get core hours of calendar
-    def get_schedule(self, start_date, end_date):
+    def get_schedule(
+            self, 
+            start_date, 
+            end_date
+            ) -> pd.DataFrame:
 
         self.calendar = self.get_calendar()
-
+        
+        # Time returned is always UTC
         schedule = self.calendar.schedule(
             start_date=start_date, end_date=end_date)
 
@@ -66,19 +72,14 @@ def validate_path(
         
     return None
 
-def create_column_schema(data: pd.DataFrame, dataset_type: DatasetType):
+def create_column_schema(data: pd.DataFrame):
 
     column_schema = dict()
 
-    if dataset_type == DatasetType.BAR:
+    for column_type in ColumnType:
 
-        asset_price_Mask = data.columns.str.contains('close')
-        column_schema[ColumnType.PRICE] = asset_price_Mask
-
-    else:
-
-        asset_price_Mask = [False]*data.shape[1]
-        column_schema[ColumnType.PRICE] = asset_price_Mask
+        mask = data.columns.str.match(column_type.value.lower())
+        column_schema[column_type] = mask
 
     return column_schema
 
@@ -111,6 +112,7 @@ def to_timeframe(time_frame: str):
             'Month': TimeFrameUnit.Month}
 
         return TimeFrame(amount, map[unit])
+    
     else:
         raise ValueError(
             "Invalid timeframe. Valid examples: 59Min, 23Hour, 1Day, 1Week, 12Month")
@@ -130,9 +132,9 @@ def tabular_print(
 
     return row
 
-def progress_bar(iterable: Iterable):
+def progress_bar(total: Iterable):
     bar_format = '{l_bar}{bar}| {n_fmt}/{total_fmt} | {elapsed}<{remaining}'
-    bar = tqdm(total = iterable, bar_format = bar_format)
+    bar = tqdm(total = total, bar_format = bar_format)
     return bar
 
 
