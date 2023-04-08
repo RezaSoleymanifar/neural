@@ -138,13 +138,13 @@ class DataFetcher():
 
         # getting target market schedule
         if asset_class == AssetClass.US_EQUITY:
-            calendar = Calendar(calendar_type= Calendar.NYSE)
+            calendar = Calendar(asset_class= Calendar.NYSE)
         
         elif asset_class == AssetClass.CRYPTO:
-            calendar = Calendar(calendar_type = Calendar.ALWAYS_OPEN)
+            calendar = Calendar(asset_class = Calendar.ALWAYS_OPEN)
 
         schedule = calendar.get_schedule(start_date=start_date, end_date=end_date)
-        time_zone = calendar.get_time_zone()
+        time_zone = calendar.get_local_time_zone()
 
 
         if len(schedule) == 0:

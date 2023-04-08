@@ -5,6 +5,7 @@ from dataclasses import dataclass
 import pickle
 
 from alpaca.trading.enums import AssetClass
+from neural.tools.ops import Calendar
 
 class DatasetType(Enum):
     BAR = 'BAR'
@@ -80,7 +81,7 @@ class DatasetMetadata:
             end=self.end,
             resolution=self.resolution,
             n_rows=self.n_rows,
-            n_columns=self.n_columns,
+            n_columns=n_columns,
         )
 
     def __add__(self, other):
@@ -106,11 +107,11 @@ class DatasetMetadata:
 
         if other.start <= self.end:
             raise ValueError(
-                f'Cannot perform append. End time: {self.end}, and start time: {other.start} overlap.')
+                f'Current end time: {self.end}, and appended dataset start time {other.start} overlap.')
 
         if abs(self.end.date() - other.start.date()).days != 1:
             raise ValueError(
-                f'End date {self.end} and start date {other.start}  are not 1 day apart.')
+                f'End date {self.end} and start date {other.start}  are not exactly 1 day apart.')
 
         if self.resolution != other.resolution:
             raise ValueError(
@@ -119,12 +120,11 @@ class DatasetMetadata:
         if self.n_columns != other.n_columns:
             raise ValueError('Dataset number of columns mismatch.')
 
-        dataset_type = self.dataset_type + other.dataset_type
         n_rows = self.n_rows + other.n_rows
         column_schema = self._join_column_schemas(other)
 
         return DatasetMetadata(
-            dataset_type=dataset_type,
+            dataset_type=self.dataset_type,
             column_schema=column_schema,
             asset_class=self.asset_class,
             symbols=self.symbols,
@@ -150,3 +150,8 @@ class DatasetMetadata:
                 key] + other.column_schema[key]
 
         return merged_schema
+    
+    def check_dates_continuity(self, start, end):
+        calendar = Calendar(self.asset_class)
+        schedule = calendar.get_schedule(start, start)
+

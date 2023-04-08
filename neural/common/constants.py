@@ -21,4 +21,4 @@ CUSTOM_SYMBOLS = ['AAPL', 'ABBV', 'ABT', 'ACN', 'ADBE', 'AMZN',
     'NEE', 'NFLX', 'NKE', 'NVDA', 'ORCL', 'PEP', 'PFE', 'PG', 'PYPL',
     'SBUX', 'T', 'TSLA', 'UNH', 'UPS', 'V', 'VZ', 'WMT', 'XOM']
 
-HDF5_DEFAULT_MAX_ROWS = 2e6
+HDF5_DEFAULT_MAX_ROWS = 2_000_000

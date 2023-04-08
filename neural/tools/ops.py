@@ -2,58 +2,12 @@ from datetime import datetime
 from typing import List, Iterable, Dict
 from enum import Enum
 
-import pandas_market_calendars as market_calendars
 import pandas as pd
 import tableprint, re, os
 from tqdm import tqdm
 
 from alpaca.data.timeframe import TimeFrame, TimeFrameUnit
-
-from neural.tools.enums import CalendarType
-from neural.core.data.enums import DatasetType, ColumnType
-
-
-class Calendar:
-
-    def __init__(
-        self, 
-        calendar_type=CalendarType
-        ) -> None:
-        
-        self.calendar_type = calendar_type
-        self.calendar = None
-
-    def get_calendar(self):
-
-        calendar = market_calendars.get_calendar(self.calendar_type.value)
-
-        return calendar
-
-    # get core hours of calendar
-    def get_schedule(
-            self, 
-            start_date, 
-            end_date
-            ) -> pd.DataFrame:
-
-        self.calendar = self.get_calendar()
-        
-        # Time returned is always UTC
-        schedule = self.calendar.schedule(
-            start_date=start_date, end_date=end_date)
-
-        return schedule
-
-    def get_time_zone(self) -> str:
-
-        if self.calendar_type == CalendarType.ALWAYS_OPEN:
-            time_zone = 'UTC'
-
-        elif self.calendar_type == CalendarType.NYSE:
-            time_zone = 'America/New_York'
-
-        return time_zone
-    
+from neural.core.data.enums import ColumnType
 
 def validate_path(
     file_path: str | os.PathLike

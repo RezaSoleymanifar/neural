@@ -1,8 +1,9 @@
+from stable_baselines3.common.callbacks import BaseCallback
 from gym import ActionWrapper, Env, spaces
 import numpy as np
 
 
-class FractionalActionWrapper(ActionWrapper):
+class BHSFractionalActionWrapper(ActionWrapper):
 
     # maps actions in (-1, 1) to buy/sell/hold
     def __init__(self, env: Env, ratio = 0.02):
@@ -31,4 +32,67 @@ class FractionalActionWrapper(ActionWrapper):
         fraction = (abs(action) - self.threshold)/(1- self.threshold)
 
         return fraction * self.max_trade * np.sign(action) if fraction > 0 else 0
-        
+
+
+class ActionMagnitudeScaler(ActionWrapper):
+    # scales magnitute of actions of env
+
+    pass
+
+class EnvWarmupWrapper(ActionWrapper):
+    # runs env with random actions.
+    # warms up running parameters of observation scaling wrappers.
+    pass
+
+
+class RunningIndicatorsWrapper(Env):
+    # computes running indicators
+    pass
+
+class ObservationStackerWrapper(Env):
+    # stacks successive observations of env to augment env state
+    # usefull to encode memory in env state
+    pass
+
+class NormalizeRewardsWrapper(BaseCallback):
+    # normalizes rewards of an episode
+    pass
+
+class DiscountRewardsWrapper(BaseCallback):
+    # discoutns rewards of an episode
+    pass
+
+
+
+
+
+
+
+
+# class CustomRewardWrapper(BaseCallback):
+
+#     def __init__(self, env, discount_factor=0.99):
+#         super(CustomRewardWrapper, self).__init__()
+#         self.env = env
+#         self.discount_factor = discount_factor
+#         self.rewards_buffer = []
+
+#     def _on_step(self) -> bool:
+#         reward = self.locals["rewards"][0]
+#         self.rewards_buffer.append(reward)
+#         return True
+
+#     def _on_episode_end(self) -> bool:
+#         rewards = np.array(self.rewards_buffer)
+#         self.rewards_buffer = []
+#         discounted_rewards = []
+#         cum_reward = 0
+#         for reward in rewards[::-1]:
+#             cum_reward = reward + self.discount_factor * cum_reward
+#             discounted_rewards.insert(0, cum_reward)
+#         mean = np.mean(discounted_rewards)
+#         std = np.std(discounted_rewards)
+#         normalized_rewards = (discounted_rewards - mean) / (std + 1e-9)
+#         for i in range(len(normalized_rewards)):
+#             self.env.memory[i]["reward"] = normalized_rewards[i]
+#         return True

@@ -6,7 +6,8 @@ from gym import spaces, Env
 
 from neural.common import log
 from neural.tools.ops import sharpe, tabular_print
-from neural.core.data.ops import RowGenerator, ColumnType
+from neural.core.data.ops import RowGenerator
+from neural.core.data.enums import ColumnType
 
 
 class BaseEnv(Env):
@@ -27,7 +28,7 @@ class BaseEnv(Env):
 
         self.dataset_metadata = self.deta_generator.dataset_metadata
         self.column_schema = self.dataset_metadata.column_schema
-        self.asset_price_mask = self.dataset_metadata.column_schema[ColumnType.PRICE]
+        self.asset_price_mask = self.dataset_metadata.column_schema[ColumnType.CLOSE]
         self.index = None
         self.init_cash = init_cash
         self.cash = None

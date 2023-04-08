@@ -11,7 +11,7 @@
 ![License](https://img.shields.io/github/license/AI4Finance-Foundation/finrl.svg?color=brightgreen)
 
 <h1></h1><h2></h2>
-<h1>neuralHFT: <span style="font-size: 70%;">high frequency trading using deep reinforcement learning</span></h1>
+<h1>neuralHFT: <span style="font-size: 70%;">deep reinforcement learning for high frequency trading.</span></h1>
 
 
 neuralHFT is a pythonic libarary that is written and optimized for high-frequency stocks and crypto trading. neuralHFT offers seamless integration with [Alpaca API](https://alpaca.markets/) allowing end-to-end support from development to deployment of DRL algorithms.

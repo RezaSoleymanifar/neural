@@ -7,7 +7,7 @@ log_dir = os.path.join(log_dir, "logs")
 if not os.path.exists(log_dir):
     os.makedirs(log_dir)
 
-FILE_NAME = 'alpacarl.log'
+FILE_NAME = 'neural.log'
 logging.basicConfig(filename=os.path.join(log_dir, FILE_NAME), level=logging.DEBUG)
 logger = logging.getLogger('neural')
 logger.info('neural logger configured.')

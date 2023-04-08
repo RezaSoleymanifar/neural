@@ -23,11 +23,10 @@ from neural.common import logger
 from neural.common.exceptions import CorruptDataError
 from neural.core.data.enums import DatasetType, DatasetMetadata
 from neural.connect.client import AlpacaMetaClient
-from neural.tools.ops import (progress_bar, Calendar,
-    to_timeframe, create_column_schema, validate_path)
-from neural.tools.enums import CalendarType
-from neural.common.constants HDF5_DEFAULT_MAX_ROWS
-
+from neural.tools.ops import (progress_bar, to_timeframe, 
+    create_column_schema, validate_path)
+from neural.tools.misc import Calendar
+from neural.common.constants import HDF5_DEFAULT_MAX_ROWS
     
 class DataFetcher():
     def __init__(
@@ -192,13 +191,7 @@ class DataFetcher():
         self._validate_resolution(resolution=resolution)
 
 
-        # getting market schedule
-        if asset_class == AssetClass.US_EQUITY:
-            calendar = Calendar(calendar_type= CalendarType.NYSE)
-        
-        elif asset_class == AssetClass.CRYPTO:
-            calendar = Calendar(calendar_type = CalendarType.ALWAYS_OPEN)
-
+        calendar = Calendar(asset_class= asset_class)
         schedule = calendar.get_schedule(start_date=start_date, end_date=end_date)
 
         if len(schedule) == 0:
@@ -352,35 +345,34 @@ class DatasetIO:
         with h5py.File(file_path, 'a') as hdf5:
 
             if target_dataset_name not in hdf5:
-
                 # Create a fixed-size dataset with a predefined data type and dimensions
                 target_dataset = hdf5.create_dataset(
-                    name = target_dataset_name, shape=data_to_write.shape,
-                    dtype=np.float32, chunks = True)
-                
+                    name = target_dataset_name, data=data_to_write,
+                    dtype=np.float32, maxshape=(HDF5_DEFAULT_MAX_ROWS, 
+                    data_to_write.shape[1]), chunks=True)
+
                 serialized_metadata = pickle.dumps(metadata, protocol=0)
                 target_dataset.attrs['metadata'] = serialized_metadata
 
             else:
 
                 target_dataset_metadata, target_dataset = DatasetIO._extract_target_dataset(
-                    hdf5=hdf5, maxshape=(HDF5_DEFAULT_MAX_ROWS, metadata.n_columns), target_dataset_name=target_dataset_name)
-                                
-                new_metadata = target_dataset_metadata + metadata
-
-                target_dataset.resize(
-                    (new_metadata.n_rows, new_metadata.n_columns))
-
+                    hdf5=hdf5, target_dataset_name=target_dataset_name)
+                
                 # Append the new data to the dataset and update metadata
-                target_dataset[metadata.n_rows:new_metadata.n_rows, :] = data_to_write
-                target_dataset.attrs['metadata'] = new_metadata
+                new_metadata = target_dataset_metadata + metadata
+                target_dataset.resize((new_metadata.n_rows, new_metadata.n_columns))
+                
+                target_dataset[target_dataset_metadata.n_rows : new_metadata.n_rows, :] = data_to_write
+                serialized_new_metadata = pickle.dumps(new_metadata, protocol=0)
+                target_dataset.attrs['metadata'] = serialized_new_metadata
         
         return None
 
     def _extract_target_dataset(
-            hdf5: h5py.File,
-            target_dataset_name: str
-            ) -> Tuple[DatasetMetadata, h5py.Dataset]:
+        hdf5: h5py.File,
+        target_dataset_name: str
+        ) -> Tuple[DatasetMetadata, h5py.Dataset]:
 
         target_dataset = hdf5[target_dataset_name]
         serialized_metadata = target_dataset.attrs['metadata']
