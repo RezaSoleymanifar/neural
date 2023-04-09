@@ -44,7 +44,9 @@ def to_datetime(date: str):
         date_time_ = datetime.strptime(date, date_format)
 
     except:
-        raise ValueError('Invalid date. Valid examples: 20/03/2018, 01/01/2015')
+        raise ValueError(
+            'Invalid date. Valid examples: 20/03/2018, 01/01/2015'
+            )
 
     return date_time_
 

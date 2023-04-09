@@ -2,11 +2,14 @@ from datetime import datetime
 from typing import (List, Optional, Tuple, Any)
 from functools import reduce
 import os
+from abc import ABC, abstractmethod
+import asyncio
 
 from alpaca.trading.enums import AssetClass, AssetStatus
 import pandas as pd
 import numpy as np
-import pickle, h5py, json
+import pickle
+import h5py as h5
 
 from alpaca.trading.enums import AssetClass, AssetStatus
 
@@ -342,7 +345,7 @@ class DatasetIO:
 
         validate_path(file_path=file_path)
         
-        with h5py.File(file_path, 'a') as hdf5:
+        with h5.File(file_path, 'a') as hdf5:
 
             if target_dataset_name not in hdf5:
                 # Create a fixed-size dataset with a predefined data type and dimensions
@@ -370,14 +373,15 @@ class DatasetIO:
         return None
 
     def _extract_target_dataset(
-        hdf5: h5py.File,
+        hdf5: h5.File,
         target_dataset_name: str
-        ) -> Tuple[DatasetMetadata, h5py.Dataset]:
+        ) -> Tuple[DatasetMetadata, h5.Dataset]:
 
         target_dataset = hdf5[target_dataset_name]
         serialized_metadata = target_dataset.attrs['metadata']
         metadata = pickle.loads(serialized_metadata.encode())
-
+        
+        # corrupt data check
         if metadata.n_rows != len(target_dataset):
             raise CorruptDataError(
                 f'Rows in {target_dataset_name}: {len(target_dataset)}.' 
@@ -393,44 +397,78 @@ class DatasetIO:
     def load_from_hdf5(
         file_path: str | os.PathLike, 
         target_dataset_name: Optional[str] = None
-        ) -> Tuple[DatasetMetadata, List[h5py.Dataset]]:
+        ) -> Tuple[DatasetMetadata, List[h5.Dataset]]:
 
         validate_path(file_path= file_path)
         
-        with h5py.File(file_path, 'r') as hdf5:
+        hdf5 =  h5.File(file_path, 'r')
 
-            if target_dataset_name is None:
 
-                dataset_list = list()
-                metadata_list = list()
+        if target_dataset_name is not None:
 
-                for dataset_name in hdf5:
-
-                    metadata, dataset = DatasetIO._extract_target_dataset(
-                        hdf5 = hdf5, target_dataset_name= dataset_name)
-                    
-                    dataset_list.append(dataset)
-                    metadata_list.append(metadata)
-
-                
-                joined_metadata = reduce(lambda x, y: x | y, metadata_list)
-
-                return joined_metadata, dataset_list
+            metadata, dataset =  DatasetIO._extract_target_dataset(
+                hdf5 = hdf5, target_dataset_name=target_dataset_name)
             
-            else:
+            return metadata, [dataset]
+        
 
-                metadata, dataset =  DatasetIO._extract_target_dataset(
-                    hdf5 = hdf5, target_dataset_name=target_dataset_name)
-                
-                return metadata, [dataset]
+        dataset_list = list()
+        metadata_list = list()
+
+        for dataset_name in hdf5:
+
+            metadata, dataset = DatasetIO._extract_target_dataset(
+                hdf5 = hdf5, target_dataset_name= dataset_name)
+            
+            dataset_list.append(dataset)
+            metadata_list.append(metadata)
+
+        
+        joined_metadata = reduce(lambda x, y: x | y, metadata_list)
+
+        return joined_metadata, dataset_list
+
+            
+    def merge_datasets(self):
+
+        # merges all datasets into one contiguous dataset
+        raise NotImplemented(
+            'method not implemented yet.'
+        )
 
 
-class RowGenerator:
-    # to iteratively return info required for environments from a dataset.
+class AbstractStaticDataFeeder(ABC):
+    @abstractmethod
+    def reset(self):
+        pass
+    
+    @abstractmethod
+    def reproduce(self):
+        pass
+
+    # @abstractmethod
+    # def __delete__(self):
+    #     pass
+    
+
+class AbstractAsyncDataFeeder(ABC):
+
+    @abstractmethod
+    async def __aiter__(self):
+        pass
+
+
+class AsyncDataFeeder(AbstractAsyncDataFeeder):
+    # to stream and iteratively aggregate live data required for environment
+    pass
+
+
+class StaticDataFeeder(AbstractStaticDataFeeder):
+    # to iteratively return data required for environment from a static source.
     def __init__(
         self, 
         dataset_metadata: DatasetMetadata, 
-        datasets: List[h5py.Dataset],
+        datasets: List[h5.Dataset | np.ndarray],
         start_index: int = 0,
         end_index : Optional[int] = None,
         n_chunks : Optional[int] = 1) -> None:
@@ -443,59 +481,54 @@ class RowGenerator:
         self.n_columns = self.dataset_metadata.n_columns
         self.n_chunks = n_chunks
 
-    # end_index = n_rows thus it's a dummy index.
-    def __iter__(self):
-        
-        start = 0
-
-        for end in np.linspace(
-            self.start_index, 
-            self.end_index,
-            self.n_chunks, 
-            dtype= int, 
-            endpoint=True):
-            
-            rows_in_memory = np.hstack([dataset[start:end, :] 
-                for dataset in self.datasets])
-            
-            for row in rows_in_memory:
-                yield row
-
-            start = end
 
     def reset(self):
+        
+        chunk_edge_indices =  np.linspace(
+            start = self.start_index, 
+            stop = self.end_index,
+            num = self.n_chunks+1, 
+            dtype= int, 
+            endpoint=True)
+        
+        for start, end in zip(chunk_edge_indices[:-1], chunk_edge_indices[1:]):
 
-        return  RowGenerator(
-            dataset_metadata=self.dataset_metadata,
-            datasets=self.datasets,
-            start_index=self.start_index,
-            end_index=self.end_index, # exclusive
-            n_chunks = self.n_chunks)
+            joined_chunks_in_memory = np.hstack([dataset[start:end, :] 
+                for dataset in self.datasets])
+            
+            for row in joined_chunks_in_memory:
+                yield row
+
     
     def reproduce(self, n: int):
+        # multiplies into nonoverlapping contiguous sub-feeders that span dataset.
+        # facilitates parallelizing training.
 
         assert n > 0, "n must be a positive integer"
-        generators = list()
+        static_data_feeders = list()
 
-        start_index = 0
 
-        for end_index in np.linspace(
-            self.start_index, 
-            self.end_index, 
-            self.n_chunks, 
-            dtype=int, 
-            endpoint=True):
+        edge_indices = np.linspace(
+            start=self.start_index,
+            stop=self.end_index,
+            num=self.n+1,
+            dtype=int,
+            endpoint=True)
 
-            generator = RowGenerator(
+        for start, end in zip(edge_indices[:-1], edge_indices[1:]):
+
+            static_data_feeder = StaticDataFeeder(
                 dataset_metadata=self.dataset_metadata,
                 datasets=self.datasets,
-                start_index=start_index,
-                end_index=end_index,
+                start_index=start,
+                end_index=end,
                 n_chunks=self.n_chunks)
             
-            generators.append(generator)
+            static_data_feeders.append(static_data_feeder)
 
-            start_index = end_index
+        return static_data_feeders
 
-        return generators
-    
+    # def __del__(self):
+    #     for dataset in self.datasets:
+    #         if dataset:
+    #             dataset.file.close()

@@ -5,7 +5,7 @@ from dataclasses import dataclass
 import pickle
 
 from alpaca.trading.enums import AssetClass
-from neural.tools.ops import Calendar
+from neural.tools.misc import Calendar
 
 class DatasetType(Enum):
     BAR = 'BAR'
@@ -34,8 +34,13 @@ class DatasetMetadata:
 
 
     def __str__(self):
-        attributes = [(attr, getattr(self, attr)) for attr in self.__annotations__]
-        return '\n'.join([f'{attr}: {value}' for attr, value in attributes])
+
+        attributes = [(attr, getattr(self, attr))
+             for attr in self.__annotations__]
+        
+        return '\n'.join([
+            f'{attr}: {value}' for attr, value in attributes])
+    
     
     def __or__(self, other):
         # For automatic type checking and metadata generation when joining datasets
@@ -43,7 +48,7 @@ class DatasetMetadata:
 
         # checking compatibility
         if not isinstance(other, DatasetMetadata):
-            raise ValueError('Only Dataset objects can be chained.')
+            raise ValueError('Only DatasetMetadata objects can be joined.')
 
         if other.dataset_type in self.dataset_type:
             raise ValueError(
@@ -92,26 +97,35 @@ class DatasetMetadata:
         if not isinstance(other, DatasetMetadata):
             raise ValueError('Only Dataset objects can be appended.')
 
+
         if self.dataset_type != other.dataset_type:
             raise ValueError(
                 f'Dataset types {self.dataset_type} and {other.dataset_type} are mismatched.')
 
+
         if pickle.dumps(self.column_schema) != pickle.dumps(other.column_schema):
             raise ValueError(f'Datasets must have identical column schema.')
+
 
         if self.asset_class != other.asset_class:
             raise ValueError('Datasets must have the same asset classes.')
 
+
         if self.symbols != other.symbols:
             raise ValueError('Datasets must have the same symbols.')
 
+
         if other.start <= self.end:
+            
             raise ValueError(
                 f'Current end time: {self.end}, and appended dataset start time {other.start} overlap.')
 
-        if abs(self.end.date() - other.start.date()).days != 1:
+
+        if not self._consecutive_dates(prev_end = self.end, cur_start = other.start):
+
             raise ValueError(
-                f'End date {self.end} and start date {other.start}  are not exactly 1 day apart.')
+                f'Non-consecutive market hours between end time {self.end} and {self.start}.'
+            )
 
         if self.resolution != other.resolution:
             raise ValueError(
@@ -151,7 +165,14 @@ class DatasetMetadata:
 
         return merged_schema
     
-    def check_dates_continuity(self, start, end):
+    def _consecutive_dates(self, prev_end, cur_start):
+
+        start_date = prev_end.date()
+        end_date = cur_start.date()
+
         calendar = Calendar(self.asset_class)
-        schedule = calendar.get_schedule(start, start)
+        schedule = calendar.get_schedule(
+            start_date= start_date, end_date= end_date)
+        
+        return True if len(schedule) == 2 else False
 

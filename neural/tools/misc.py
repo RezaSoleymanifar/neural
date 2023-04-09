@@ -1,7 +1,7 @@
 from alpaca.trading.enums import AssetClass
 from neural.tools.enums import CalendarType
 import pandas_market_calendars as market_calendars
-
+import pandas as pd
 
 class Calendar:
 
@@ -13,7 +13,9 @@ class Calendar:
         self.asset_class = asset_class
         self.calendar = None
 
-    def get_calendar(self):
+    def _get_calendar(
+        self
+        ) -> market_calendars.MarketCalendar:
 
         if self.asset_class == AssetClass.US_EQUITY:
 
@@ -34,10 +36,10 @@ class Calendar:
             end_date
             ) -> pd.DataFrame:
 
-        calendar = self.get_calendar()
+        calendar = self._get_calendar()
         
         # Time returned is always UTC
-        schedule = self.calendar.schedule(
+        schedule = calendar.schedule(
             start_date=start_date, end_date=end_date)
 
         return schedule
