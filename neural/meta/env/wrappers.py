@@ -34,12 +34,37 @@ class BuyHoldSellZoneActionWrapper(ActionWrapper):
         return fraction * self.max_trade_per_asset * np.sign(action) if fraction > 0 else 0
 
 
+class IntegerAssetQuantityActionWrapper(ActionWrapper):
+    #enforces actions to map to integer quantity of share
+    pass
+
+class MinMaxTradeActionWrapper(ActionWrapper):
+    # clips actions to some values
+    pass
+
+class LongActionWrapper(ActionWrapper):
+    # adjusts actions so that asset quantities are never negative (no shorting)
+    pass
+
+class ShortActionWrapper(ActionWrapper):
+    # enforces some limits on how much to short
+    pass
+
+class MarginActionWrapper(ActionWrapper):
+    # enforces some limits on margin buying
+    pass
+
+class MinCashActionWrapper(ActionWrapper):
+    # enforces a minimum amount of cash in portfolio
+    pass
+
 class ActionMagnitudeScaler(ActionWrapper):
     # scales magnitute of actions of env
     pass
 
 
 class AgnosticObservationWrapper(Env):
+    # scales state with respect to assets to make agent initial assets value.
     pass
 
 
@@ -69,7 +94,7 @@ class DiscountRewardsWrapper(BaseCallback):
 class EnvRenderWrapper(Env):
     pass
 
-class PositionValuesObservationWrapper(Env);(Env):
+class PositionValuesObservationWrapper(Env):
     pass
 
 class TradeEnvWrapper(Env):

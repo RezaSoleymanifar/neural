@@ -7,6 +7,11 @@ import pickle
 from alpaca.trading.enums import AssetClass
 from neural.tools.misc import Calendar
 
+class StreamType(Enum):
+    BAR = 'BAR'
+    QUOTE = 'QUOTE'
+    TRADE = 'TRADE'
+    
 class DatasetType(Enum):
     BAR = 'BAR'
     QUOTE = 'QUOTE'
@@ -19,6 +24,15 @@ class ColumnType(Enum):
     CLOSE = 'CLOSE'
     BID = 'BID'
     ASK = 'ASK'
+
+@dataclass
+class StreamMetaData:
+    stream_type: List[StreamType]
+    column_schema: Dict[ColumnType, Tuple[bool]]
+    asset_class: AssetClass
+    symbols: Tuple[str]
+    resolution: str
+    n_columns: int
 
 @dataclass
 class DatasetMetadata:

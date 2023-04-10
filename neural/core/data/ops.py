@@ -443,7 +443,7 @@ class AbstractStaticDataFeeder(ABC):
         pass
     
     @abstractmethod
-    def reproduce(self):
+    def split(self):
         pass
 
     # @abstractmethod
@@ -459,7 +459,7 @@ class AbstractAsyncDataFeeder(ABC):
 
 
 class AsyncDataFeeder(AbstractAsyncDataFeeder):
-    # to stream and iteratively aggregate live data required for environment
+    # to stream and iteratively aggregate live data
     pass
 
 
@@ -500,7 +500,7 @@ class StaticDataFeeder(AbstractStaticDataFeeder):
                 yield row
 
     
-    def reproduce(self, n: int):
+    def split(self, n: int):
         # multiplies into nonoverlapping contiguous sub-feeders that span dataset.
         # facilitates parallelizing training.
 
@@ -514,6 +514,7 @@ class StaticDataFeeder(AbstractStaticDataFeeder):
             num=self.n+1,
             dtype=int,
             endpoint=True)
+
 
         for start, end in zip(edge_indices[:-1], edge_indices[1:]):
 
