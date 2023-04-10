@@ -440,11 +440,11 @@ class DatasetIO:
 class AbstractStaticDataFeeder(ABC):
     @abstractmethod
     def reset(self):
-        pass
+        raise NotImplementedError
     
     @abstractmethod
     def split(self):
-        pass
+        raise NotImplementedError
 
     # @abstractmethod
     # def __delete__(self):
@@ -490,7 +490,8 @@ class StaticDataFeeder(AbstractStaticDataFeeder):
             num = self.n_chunks+1, 
             dtype= int, 
             endpoint=True)
-        
+
+
         for start, end in zip(chunk_edge_indices[:-1], chunk_edge_indices[1:]):
 
             joined_chunks_in_memory = np.hstack([dataset[start:end, :] 
