@@ -5,40 +5,118 @@ from neural.common.log import logger
 from neural.tools.ops import sharpe, tabular_print
 from neural.meta.env.base import AbstractMarketEnv
 from collections import defaultdict
+from abc import abstractmethod, ABC
 
 
-class MarketEnvWrapper(Wrapper, AbstractMarketEnv):
 
+class MarketEnvWrapper(Wrapper):
+
+    # adds funcitonality to type check and return underlyig market env
     def __init__(self, env: Env) -> None:
+        self.base_env = env.unwrapped
         super().__init__(env)
-        self.market_env = env.unwrapped
+        
 
-        if not isinstance(self.market_env, AbstractMarketEnv):
+        if not isinstance(
+            self.base_env, AbstractMarketEnv):
 
             raise ValueError(
-                f'Base env {self.market_env} is not instance of {AbstractMarketEnv}.'
+                f'Base env {self.base_env} is not instance of {AbstractMarketEnv}.'
                 )
-    
 
-class TerminalActionWrapper(ActionWrapper, MarketEnvWrapper):
+
+def market_wrapper(wrapper_class):
+
+    class MarketEnvWrapper(wrapper_class):
+        pass
+
+    return MarketEnvWrapper
+
+
+
+class AbstractConflictingWrapper(ABC):
+
+    @abstractmethod
+    def _check_conflict(self):
+
+        raise NotImplementedError
+
+
+class TerminalActionWrapper(Wrapper):
     # actions after this wrapper cannot be altered
-    # used to enforce hard market constraints like minimum allowable buy/sell
+    # used to enforce hard market constraints
+
     def __init__(self, env: Env) -> None:
+
+        self._check_conflict(env)
         super().__init__(env)
 
-    def _conflict_exists(self, env: Env, cls):
 
-        if isinstance(env, cls):
+    def _check_conflict(self, env: Env):
+
+        if isinstance(env, ActionWrapper):
 
             raise ValueError(
-            f'Wrapping not allowed. Environment {env} is a {ActionWrapper}.'
+            f'Wrapping {ActionWrapper} with {TerminalActionWrapper} not allowed. Environment {env} is a {ActionWrapper}.'
             )
         
         # Recursively check for conflicting action wrappers in the enclosed environments
-        return self._conflict_exists(env.env) if hasattr(env, 'env') else False
+        return self._check_conflict(env.env) if hasattr(env, 'env') else None
 
 
-class MinTradeSizeActionWrapper(TerminalActionWrapper):
+def terminal_action(class_):
+
+    class TerminalActionWrapper(class_):
+        pass
+
+    return TerminalActionWrapper
+
+
+
+@market_wrapper
+class MarketEnvMetadataWrapper:
+    # wraps a market env to track env metadata
+    # downstream wrappers can utilize this metadata
+    def __init__(self) -> None:
+        super().__init__()
+
+
+    def _update_summary():
+        pass
+
+
+class MetadataDependentWrapper:
+
+    def __init__(self, env):
+
+        self.market_metadata_env = self._check_conflict(env)
+        super().__init__(env)
+
+    def _check_conflict(self, env):
+
+        if isinstance(env, MarketEnvMetadataWrapper):
+            return env
+        
+        elif hasattr(env, 'env'):
+            return self._check_conflict(env)
+        
+        else:
+            raise TypeError(
+                f'{MetadataDependentWrapper} cannot wrap underlying {env} with no {MarketEnvMetadataWrapper} around it.'
+            )
+
+
+def metadata_dependent(wrapper_class):
+
+    class MetadataDependentWrapper(wrapper_class):
+        pass
+
+    return MetadataDependentWrapper
+
+
+
+@terminal_action
+class MinTradeSizeActionWrapper(ActionWrapper):
     
     def action(actions):
 
@@ -47,12 +125,22 @@ class MinTradeSizeActionWrapper(TerminalActionWrapper):
     
         return new_actions
 
+@metadata_dependent
+@market_wrapper
+class RelativeShortSizingActionWrapper(ActionWrapper):
 
-class RelativeShortSizingActionWrapper(ActionWrapper, MarketEnvWrapper):
     def __init__(self, env: Env, short_raio = 0.1) -> None:
         super().__init__(env)
+        self.short_ratio = short_raio
+
+    
+    def _set_max_short_size(self):
+        self.short_size = self.short_ratio * self.base_env.net_worth
+        return None
     
     def action(self, actions):
+        self._set_max_short_size()
+
         # iterates over actions
         for asset, action in enumerate(actions):
 
@@ -77,17 +165,21 @@ class RelativeShortSizingActionWrapper(ActionWrapper, MarketEnvWrapper):
         return actions
 
 
-class RelativeMarginSizingActionWrapper(ActionWrapper, MarketEnvWrapper):
+@metadata_dependent
+@market_wrapper
+class RelativeMarginSizingActionWrapper(ActionWrapper):
     pass
 
 
-class EnvWarmupWrapperActionWrapper(ActionWrapper, MarketEnvWrapper):
+class EnvWarmupWrapperActionWrapper(ActionWrapper):
     # runs env with random actions.
     # warms up running parameters of observation scaling wrappers.
     pass
 
 
-class RelativePositionSizingActionWrapper(ActionWrapper, MarketEnvWrapper):
+@metadata_dependent
+@market_wrapper
+class RelativePositionSizingActionWrapper(ActionWrapper):
     # ensures positions taken at each step is a maximum fixed percentage of net worth
     # maps actions in (-1, 1) to buy/sell/hold following position sizing strategy
     # trade_ratio = 0.02 means max of 2% of net_worth is traded at each step
@@ -97,7 +189,6 @@ class RelativePositionSizingActionWrapper(ActionWrapper, MarketEnvWrapper):
     def __init__(self, env: Env, trade_ratio = 0.02, threshold = 0.15):
 
         super().__init__(env)
-        self.base_env = env.unwrapped
         self.trade_ratio = trade_ratio
         self.threshold = threshold
         self.max_trade = None
@@ -143,18 +234,22 @@ class RelativePositionSizingActionWrapper(ActionWrapper, MarketEnvWrapper):
         return new_actions
 
 
-class IntegerAssetQuantityActionWrapper(ActionWrapper, MarketEnvWrapper):
+class IntegerAssetQuantityActionWrapper(ActionWrapper):
     #enforces actions to map to integer quantity of share
     pass
 
 
-class ActionScalerActionWrapper(ActionWrapper, MarketEnvWrapper):
+@metadata_dependent
+@market_wrapper
+class RelativeActionScalerActionWrapper(ActionWrapper):
     # linearly scales magnitute of actions to make it 
     # proportional to a starting cash differnet than training.
     pass
 
 
-class ConsoleTearsheetRenderWrapper(MarketEnvWrapper):
+@metadata_dependent
+@market_wrapper
+class ConsoleTearsheetRenderWrapper:
     
     def __init__(
         self, env: Env,
@@ -164,23 +259,23 @@ class ConsoleTearsheetRenderWrapper(MarketEnvWrapper):
         super().__init__(env)
         self.verbosity = verbosity
         self.history = defaultdict(list)
-        self.render_every = self.market_env.n_steps//self.verbosity
+        self.render_every = self.base_env.n_steps//self.verbosity
 
 
-    def _cache_base_env_hist(self):
+    def _cache_market_env_hist(self):
 
-        self.history['assets'].append(self.market_env.net_worth)
+        self.history['assets'].append(self.base_env.net_worth)
 
 
     def reset(self):
 
         state = self.env.reset()
-        self._cache_base_env_hist()
+        self._cache_market_env_hist()
 
         logger.info(
-            f'Steps: {self.market_env.n_steps}, '
-            f'symbols: {self.market_env.n_symbols}, '
-            f'features: {self.market_env.n_features}'
+            f'Steps: {self.base_env.n_steps}, '
+            f'symbols: {self.base_env.n_symbols}, '
+            f'features: {self.base_env.n_features}'
         )
 
         return state
@@ -189,10 +284,10 @@ class ConsoleTearsheetRenderWrapper(MarketEnvWrapper):
     def step(self, actions):
 
         state, reward, done, info = self.env.step(actions)
-        self._cache_base_env_hist()
+        self._cache_market_env_hist()
 
-        if (self.market_env.index != 0 and
-            self.market_env.index % self.render_every == 0
+        if (self.base_env.index != 0 and
+            self.base_env.index % self.render_every == 0
             ) or done:
 
             self.render()
@@ -245,57 +340,29 @@ class ConsoleTearsheetRenderWrapper(MarketEnvWrapper):
         return None
     
 
-
-class NetWorthAgnosticObsWrapper(ObservationWrapper, MarketEnvWrapper):
+@market_wrapper
+class NetWorthAgnosticObsWrapper(ObservationWrapper):
     # scales state with respect to assets to make agent initial assets value.
     pass
 
 
-class RunningIndicatorsObsnWrapper(ObservationWrapper, MarketEnvWrapper):
+@market_wrapper
+class RunningIndicatorsObsWrapper(ObservationWrapper):
     # computes running indicators
     pass
 
-
-class ObservationStackerObsWrapper(ObservationWrapper, Env):
-    # stacks successive observations of env to augment env state
-    # usefull to encode memory in env state
+@market_wrapper
+class ObservationStackerObsWrapper(ObservationWrapper):
+    # augments observations by stacking them
+    # usefull to encode memory in env observation
     pass
 
+@market_wrapper
 class NormalizeRewardsWrapper(RewardWrapper, BaseCallback):
     # normalizes rewards of an episode
     pass
 
-class DiscountRewardsWrapper(BaseCallback):
+market_wrapper
+class DiscountRewardsWrapper(RewardWrapper, BaseCallback):
     # discoutns rewards of an episode
     pass
-
-
-
-
-# class CustomRewardWrapper(BaseCallback):
-
-#     def __init__(self, env, discount_factor=0.99):
-#         super(CustomRewardWrapper, self).__init__()
-#         self.env = env
-#         self.discount_factor = discount_factor
-#         self.rewards_buffer = []
-
-#     def _on_step(self) -> bool:
-#         reward = self.locals["rewards"][0]
-#         self.rewards_buffer.append(reward)
-#         return True
-
-#     def _on_episode_end(self) -> bool:
-#         rewards = np.array(self.rewards_buffer)
-#         self.rewards_buffer = []
-#         discounted_rewards = []
-#         cum_reward = 0
-#         for reward in rewards[::-1]:
-#             cum_reward = reward + self.discount_factor * cum_reward
-#             discounted_rewards.insert(0, cum_reward)
-#         mean = np.mean(discounted_rewards)
-#         std = np.std(discounted_rewards)
-#         normalized_rewards = (discounted_rewards - mean) / (std + 1e-9)
-#         for i in range(len(normalized_rewards)):
-#             self.env.memory[i]["reward"] = normalized_rewards[i]
-#         return True

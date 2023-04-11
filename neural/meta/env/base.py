@@ -7,6 +7,7 @@ from abc import ABC, abstractmethod
 from neural.common.log import logger
 from neural.core.data.ops import StaticDataFeeder, AsyncDataFeeder
 from neural.core.data.enums import ColumnType
+from neural.connect.client import AlpacaMetaClient
 
 
 class AbstractMarketEnv(Env, ABC):
@@ -31,19 +32,18 @@ class TrainMarketEnv(AbstractMarketEnv):
     # use action wrappers to enforce no margin, no short or neither
     def __init__(
         self, 
-        data_feeder: StaticDataFeeder,
+        market_data_feeder: StaticDataFeeder,
         initial_cash: float = 1e6,
-        verbose: bool = True
         ) -> None:
         
-        if data_feeder is None:
+        if market_data_feeder is None:
 
             logger.error(
                 ("data_feeder must be provided."))
             raise TypeError
         
         else:
-            self.data_feeder = data_feeder
+            self.data_feeder = market_data_feeder
 
         self.dataset_metadata = self.data_feeder.dataset_metadata
         self.column_schema = self.dataset_metadata.column_schema
@@ -113,8 +113,10 @@ class TrainMarketEnv(AbstractMarketEnv):
         self.next_row()
 
         self.cash = self.initial_cash
-        self.asset_quantities = np.zeros((self.n_symbols,), dtype=np.float32)
-        self.holds = np.zeros((self.n_symbols,), dtype=np.int32)
+        self.asset_quantities = np.zeros(
+            (self.n_symbols,), dtype=np.float32)
+        self.holds = np.zeros(
+            (self.n_symbols,), dtype=np.int32)
         self.net_worth = self.cash
 
         # cache env history
@@ -131,18 +133,17 @@ class TrainMarketEnv(AbstractMarketEnv):
         # iterates over actions
         for asset, action in enumerate(actions):
 
-            if action > 0 and self.cash > 0: # buy
-
-                buy = min(self.cash, action)
+            if action > 0: # buy
+                
+                buy = action
                 quantity = buy/self.asset_prices[asset]
 
                 self.asset_quantities[asset] += quantity
                 self.cash -= buy
 
-            elif action < 0 and self.asset_quantities[asset] > 0: # sell
+            elif action < 0:
                 
-                sell = min(
-                    self.asset_quantities[asset] * self.asset_prices[asset], abs(action))
+                sell = abs(action)
                 quantity = sell/self.asset_prices[asset]
 
                 self.asset_quantities[asset] -= quantity
@@ -153,7 +154,7 @@ class TrainMarketEnv(AbstractMarketEnv):
         self.next_row()
 
         # increase hold time of purchased stocks
-        self.holds[self.asset_quantities > 0] += 1
+        self.holds[self.asset_quantities != 0] += 1
 
         # new asset value
         new_net_worth = self.cash + self.asset_quantities @ self.asset_prices
@@ -171,4 +172,18 @@ class TrainMarketEnv(AbstractMarketEnv):
 
 
 class TradeMarketEnv(AbstractMarketEnv):
-    pass
+    def __init__(
+        self,
+        client: AlpacaMetaClient,
+        market_data_feeder: StaticDataFeeder,
+    ) -> None:
+        pass
+    
+    def next_row(self):
+        pass
+
+    def constrct_observation(self):
+        pass
+    
+    def reset():
+        pass

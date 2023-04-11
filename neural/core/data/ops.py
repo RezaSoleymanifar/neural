@@ -3,7 +3,6 @@ from typing import (List, Optional, Tuple, Any)
 from functools import reduce
 import os
 from abc import ABC, abstractmethod
-import asyncio
 
 from alpaca.trading.enums import AssetClass, AssetStatus
 import pandas as pd
