@@ -6,74 +6,100 @@ from neural.tools.ops import sharpe, tabular_print
 from neural.meta.env.base import AbstractMarketEnv
 from collections import defaultdict
 from abc import abstractmethod, ABC
+from typing import Type, Callable, Optional
+from neural.common.exceptions import IncompatibleWrapperError
 
 
 
-class MarketEnvWrapper(Wrapper):
-
-    # adds funcitonality to type check and return underlyig market env
-    def __init__(self, env: Env) -> None:
-        self.base_env = env.unwrapped
-        super().__init__(env)
-        
-
-        if not isinstance(
-            self.base_env, AbstractMarketEnv):
-
-            raise ValueError(
-                f'Base env {self.base_env} is not instance of {AbstractMarketEnv}.'
-                )
-
-
-def market_wrapper(wrapper_class):
-
-    class MarketEnvWrapper(wrapper_class):
-        pass
-
-    return MarketEnvWrapper
-
-
-
-class AbstractConflictingWrapper(ABC):
+class AbstractConstrainedWrapper(ABC):
 
     @abstractmethod
-    def _check_conflict(self):
+    def _check_constraint(self):
 
         raise NotImplementedError
 
 
-class TerminalActionWrapper(Wrapper):
-    # actions after this wrapper cannot be altered
-    # used to enforce hard market constraints
 
-    def __init__(self, env: Env) -> None:
+def constraint(
+    constraint_function: Callable,
+    constrained_type=Type[Env],
+    constraint_attr: Optional[str] = None):
 
-        self._check_conflict(env)
-        super().__init__(env)
+    if not issubclass(constrained_type, Env):
+
+        raise TypeError(
+            f"{constrained_type} must be a subclass of {Env}")
 
 
-    def _check_conflict(self, env: Env):
+    def constraint_decorator(wrapper_class: Type[Wrapper]):
 
-        if isinstance(env, ActionWrapper):
+        if not issubclass(wrapper_class, Wrapper):
+            raise TypeError(
+                f"{wrapper_class} must be a subclass of {Wrapper}")
 
-            raise ValueError(
-            f'Wrapping {ActionWrapper} with {TerminalActionWrapper} not allowed. Environment {env} is a {ActionWrapper}.'
+
+        class ConstrainedWrapper(
+            wrapper_class, AbstractConstrainedWrapper):
+
+            def __init__(self, env: Env, *args, **kwargs) -> None:
+
+                if constraint_attr is not None and isinstance(constraint_attr, str):
+                    setattr(self, constraint_attr, self._check_constraint(env))
+
+                else:
+                    self._check_constraint(env)
+
+                super().__init__(env, *args, **kwargs)
+
+            def _check_constraint(self, env):
+                return constraint_function(env, constrained_type)
+
+        return ConstrainedWrapper
+
+    return constraint_decorator
+
+
+def unwrapped_is(wrapped_env, constrained_type):
+
+    unwrapped_env = wrapped_env.unwrapped
+
+    if not isinstance(unwrapped_env, constrained_type):
+
+        raise IncompatibleWrapperError(
+            f'{wrapped_env} requires {unwrapped_env} to be of type {constrained_type}.'
             )
-        
-        # Recursively check for conflicting action wrappers in the enclosed environments
-        return self._check_conflict(env.env) if hasattr(env, 'env') else None
+
+    return unwrapped_env
 
 
-def terminal_action(class_):
+def first_of(wrapped_env, constrained_type):
+    
+    if hasattr(wrapped_env, 'env'):
+        if isinstance(wrapped_env.env, constrained_type):
 
-    class TerminalActionWrapper(class_):
-        pass
+            raise IncompatibleWrapperError(
+                f'{wrapped_env.env} of type {constrained_type} is applied before enclosing constrained wrapper.'
+            )
+        else:
+            first_of(wrapped_env.env)
+    
 
-    return TerminalActionWrapper
+def requires(wrapped_env, constrained_type):
+
+    if not hasattr(wrapped_env, 'env'):
+
+        raise IncompatibleWrapperError(
+            f'{constrained_type} wrapper is not applied before the enclosing constrained wrapper.')
+    
+    elif isinstance(wrapped_env.env, constrained_type):
+        return wrapped_env.env
+    
+    else:
+        return requires(wrapped_env.env, constrained_type)
 
 
 
-@market_wrapper
+@constraint(unwrapped_is, AbstractMarketEnv, 'market_env')
 class MarketEnvMetadataWrapper:
     # wraps a market env to track env metadata
     # downstream wrappers can utilize this metadata
@@ -85,38 +111,19 @@ class MarketEnvMetadataWrapper:
         pass
 
 
-class MetadataDependentWrapper:
 
-    def __init__(self, env):
-
-        self.market_metadata_env = self._check_conflict(env)
-        super().__init__(env)
-
-    def _check_conflict(self, env):
-
-        if isinstance(env, MarketEnvMetadataWrapper):
-            return env
-        
-        elif hasattr(env, 'env'):
-            return self._check_conflict(env)
-        
-        else:
-            raise TypeError(
-                f'{MetadataDependentWrapper} cannot wrap underlying {env} with no {MarketEnvMetadataWrapper} around it.'
-            )
-
-
-def metadata_dependent(wrapper_class):
-
-    class MetadataDependentWrapper(wrapper_class):
-        pass
-
-    return MetadataDependentWrapper
+class EnvWarmupWrapperActionWrapper(ActionWrapper):
+    # runs env with random actions.
+    # warms up running parameters of observation scaling wrappers.
+    pass
 
 
 
-@terminal_action
+@constraint(first_of, ActionWrapper)
 class MinTradeSizeActionWrapper(ActionWrapper):
+    
+    def __init__(self, env: Env) -> None:
+        super().__init__(env)
     
     def action(actions):
 
@@ -125,8 +132,9 @@ class MinTradeSizeActionWrapper(ActionWrapper):
     
         return new_actions
 
-@metadata_dependent
-@market_wrapper
+
+@constraint(requires, MarketEnvMetadataWrapper, 'market_metadata_env')
+@constraint(unwrapped_is, AbstractMarketEnv, 'market_env')
 class RelativeShortSizingActionWrapper(ActionWrapper):
 
     def __init__(self, env: Env, short_raio = 0.1) -> None:
@@ -165,20 +173,14 @@ class RelativeShortSizingActionWrapper(ActionWrapper):
         return actions
 
 
-@metadata_dependent
-@market_wrapper
+@constraint(requires, MarketEnvMetadataWrapper, 'market_metadata_env')
+@constraint(unwrapped_is, AbstractMarketEnv, 'market_env')
 class RelativeMarginSizingActionWrapper(ActionWrapper):
     pass
 
 
-class EnvWarmupWrapperActionWrapper(ActionWrapper):
-    # runs env with random actions.
-    # warms up running parameters of observation scaling wrappers.
-    pass
-
-
-@metadata_dependent
-@market_wrapper
+@constraint(requires, MarketEnvMetadataWrapper, 'market_metadata_env')
+@constraint(unwrapped_is, AbstractMarketEnv, 'market_env')
 class RelativePositionSizingActionWrapper(ActionWrapper):
     # ensures positions taken at each step is a maximum fixed percentage of net worth
     # maps actions in (-1, 1) to buy/sell/hold following position sizing strategy
@@ -239,16 +241,15 @@ class IntegerAssetQuantityActionWrapper(ActionWrapper):
     pass
 
 
-@metadata_dependent
-@market_wrapper
+@constraint(unwrapped_is, AbstractMarketEnv, 'market_env')
 class RelativeActionScalerActionWrapper(ActionWrapper):
     # linearly scales magnitute of actions to make it 
     # proportional to a starting cash differnet than training.
     pass
 
 
-@metadata_dependent
-@market_wrapper
+@constraint(requires, MarketEnvMetadataWrapper, 'market_metadata_env')
+@constraint(unwrapped_is, AbstractMarketEnv, 'market_env')
 class ConsoleTearsheetRenderWrapper:
     
     def __init__(
@@ -340,29 +341,31 @@ class ConsoleTearsheetRenderWrapper:
         return None
     
 
-@market_wrapper
+@constraint(unwrapped_is, AbstractMarketEnv, 'market_env')
 class NetWorthAgnosticObsWrapper(ObservationWrapper):
     # scales state with respect to assets to make agent initial assets value.
     pass
 
 
-@market_wrapper
+@constraint(unwrapped_is, AbstractMarketEnv, 'market_env')
 class RunningIndicatorsObsWrapper(ObservationWrapper):
     # computes running indicators
     pass
 
-@market_wrapper
+@constraint(unwrapped_is, AbstractMarketEnv, 'market_env')
 class ObservationStackerObsWrapper(ObservationWrapper):
     # augments observations by stacking them
     # usefull to encode memory in env observation
     pass
 
-@market_wrapper
+
+@constraint(unwrapped_is, AbstractMarketEnv, 'market_env')
 class NormalizeRewardsWrapper(RewardWrapper, BaseCallback):
     # normalizes rewards of an episode
     pass
 
-market_wrapper
+
+@constraint(unwrapped_is, AbstractMarketEnv, 'market_env')
 class DiscountRewardsWrapper(RewardWrapper, BaseCallback):
     # discoutns rewards of an episode
     pass

@@ -2,35 +2,40 @@ from typing import List, Type, Dict, Tuple
 from gym import Wrapper
 
 from neural.meta.env.wrappers import (
-    RunningIndicatorsObsWrapper, 
+    RelativeMarginSizingActionWrapper, 
+    RelativeShortSizingActionWrapper,
     RelativePositionSizingActionWrapper, 
-    ConsoleTearsheetRenderWrapper)
+    ConsoleTearsheetRenderWrapper,
+    MarketEnvMetadataWrapper)
 
-from neural.meta.env.base import TrainMarketEnv
+from neural.meta.env.base import TrainMarketEnvWrapper
 from dataclasses import dataclass
+from abc import abstractmethod, ABC
 
 
-@dataclass
-class Pipe:
-    wrapper_classes: List[
-        Tuple[Type[Wrapper], Dict]]
-    # Other attributes for the pipe
+class AbstractPipe(ABC):
 
-    def Make_pipe(
-        wrappers: List[Type[Wrapper]]):
+    def __init__(self) -> None:
+        super().__init__()
+        self.trade = None
 
-        def pipe(env_instance):
-            for wrapper_class in wrappers:
-                env_instance = wrapper_class(env_instance)
-            return env_instance
+    @abstractmethod
+    def pipe(self, env):
 
-        return pipe
+        raise NotImplementedError
+    
 
-class PPOPipe(Pipe):
-    def __init__(self):
-        wrapper_classes = [
-            (RunningIndicatorsObsWrapper, {'arg1': 10, 'arg2': 'foo'}),
-            (RelativePositionSizingActionWrapper, {'arg1': 20, 'arg2': 'bar'}),
-            (ConsoleTearsheetRenderWrapper, {'arg1': 30, 'arg2': 'baz'})
-        ]
-        super().__init__(wrapper_classes=wrapper_classes)
+class NoShortNoMarginPipe(AbstractPipe):
+    def __init__(self) -> None:
+        
+        self.meta_data = MarketEnvMetadataWrapper
+        self.position_sizing = RelativePositionSizingActionWrapper
+        self.margin_sizing = RelativeMarginSizingActionWrapper
+        self.short_sizing = RelativeShortSizingActionWrapper
+        self.render = ConsoleTearsheetRenderWrapper
+
+    def pipe(self, env):
+        env = self.meta_data(env)
+        env = self.position_sizing(env, trade_ratio = 0.3)
+        env = self.render(env, verbosity = 20)
+        return env
