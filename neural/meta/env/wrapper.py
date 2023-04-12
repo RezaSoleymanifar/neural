@@ -59,6 +59,7 @@ def constraint(
     return constraint_decorator
 
 
+
 def unwrapped_is(wrapped_env, constrained_type):
 
     unwrapped_env = wrapped_env.unwrapped
@@ -70,6 +71,7 @@ def unwrapped_is(wrapped_env, constrained_type):
             )
 
     return unwrapped_env
+
 
 
 def first_of(wrapped_env, constrained_type):
@@ -84,21 +86,53 @@ def first_of(wrapped_env, constrained_type):
             first_of(wrapped_env.env)
     
 
+
 def requires(wrapped_env, constrained_type):
 
-    if not hasattr(wrapped_env, 'env'):
+    def requires_helper(wrapped_env, initial_arg):
 
-        raise IncompatibleWrapperError(
-            f'{constrained_type} wrapper is not applied before the enclosing constrained wrapper.')
+        if not hasattr(wrapped_env, 'env'):
+
+            raise IncompatibleWrapperError(
+                f'{initial_arg} requires wrapper of type {constrained_type} to exist in the underlying wrappers.')
+
+        elif isinstance(wrapped_env.env, constrained_type):
+            return wrapped_env.env
+
+        else:
+            return requires_helper(wrapped_env.env, initial_arg)
+
+    return requires_helper(wrapped_env, wrapped_env)
+
+
+def last_of()
+
+    def last_of_helper(outer_most_wrapper, initial_arg):
+
+        if not isinstance(outer_most_wrapper, ConstraintCheckerWrapper):
+            return None
+        
+        else:
+
+            if isinstance(outer_most_wrapper, constrained_type):
+
+                raise IncompatibleWrapperError(
+                    f'{outer_most_wrapper} wrapper of type {constrained_type} is applied after FILL LATER')
+            else:
+                return last_of_helper(outer)
+
+
     
-    elif isinstance(wrapped_env.env, constrained_type):
-        return wrapped_env.env
+
+class ConstraintCheckerWrapper(Wrapper):
+    def __init__(self, env: Env) -> None:
+        super().__init__(env)
+
+    def _check_constraint(self, env):
+        if hasattr(env, 'env'):
+            if hasattr(env.env, '')
     
-    else:
-        return requires(wrapped_env.env, constrained_type)
-
-
-
+        
 @constraint(unwrapped_is, AbstractMarketEnv, 'market_env')
 class MarketEnvMetadataWrapper:
     # wraps a market env to track env metadata
@@ -106,9 +140,28 @@ class MarketEnvMetadataWrapper:
     def __init__(self) -> None:
         super().__init__()
 
+    def _update_summary(self):
 
-    def _update_summary():
-        pass
+        asset_quantities = self.market_env.asset_quantities
+        asset_prices = self.market_env.asset_prices
+        net_worth = self.market_env.net_worth
+        initial_cash = self.market_env.initial_cash
+
+        short_mask = asset_quantities < 0
+        long_mask = asset_quantities > 0
+
+        # total value of positions in portfolio
+        self.positions = asset_quantities @ asset_prices
+
+        self.shorts = asset_quantities[short_mask] @ asset_prices[short_mask]
+        self.longs = asset_quantities[long_mask] @ asset_prices[long_mask]
+        # sharpe ratio filters volatility to reflect investor skill
+        
+        self.profit = net_worth - initial_cash
+        self.return_ = (net_worth - initial_cash)/initial_cash
+
+        sharpe_ = sharpe(self.history['assets'])
+        progress_ = self.base_env.index/self.base_env.n_steps
 
 
 
@@ -143,10 +196,13 @@ class RelativeShortSizingActionWrapper(ActionWrapper):
 
     
     def _set_max_short_size(self):
-        self.short_size = self.short_ratio * self.base_env.net_worth
+
+        self.short_size = self.short_ratio * self.market_env.net_worth
+
         return None
     
     def action(self, actions):
+
         self._set_max_short_size()
 
         # iterates over actions
@@ -175,7 +231,7 @@ class RelativeShortSizingActionWrapper(ActionWrapper):
 
 @constraint(requires, MarketEnvMetadataWrapper, 'market_metadata_env')
 @constraint(unwrapped_is, AbstractMarketEnv, 'market_env')
-class RelativeMarginSizingActionWrapper(ActionWrapper):
+class ContinuousRelativeMarginSizingActionWrapper(ActionWrapper):
     pass
 
 
@@ -236,6 +292,7 @@ class RelativePositionSizingActionWrapper(ActionWrapper):
         return new_actions
 
 
+@constraint(unwrapped_is, AbstractMarketEnv, 'market_env')
 class IntegerAssetQuantityActionWrapper(ActionWrapper):
     #enforces actions to map to integer quantity of share
     pass
@@ -339,18 +396,27 @@ class ConsoleTearsheetRenderWrapper:
             logger.info('Episode terminated.')
             logger.info(*metrics)
         return None
-    
 
+
+@constraint(unwrapped_is, AbstractMarketEnv, 'market_env')
+class PositionValuesObservationWrapper(ObservationWrapper):
+    # augments observations such that instead of number shares held
+    # USD value of assets (positions) is used.
+    pass
+
+@constraint(requires, PositionValuesObservationWrapper)
 @constraint(unwrapped_is, AbstractMarketEnv, 'market_env')
 class NetWorthAgnosticObsWrapper(ObservationWrapper):
     # scales state with respect to assets to make agent initial assets value.
     pass
 
 
+
 @constraint(unwrapped_is, AbstractMarketEnv, 'market_env')
 class RunningIndicatorsObsWrapper(ObservationWrapper):
     # computes running indicators
     pass
+
 
 @constraint(unwrapped_is, AbstractMarketEnv, 'market_env')
 class ObservationStackerObsWrapper(ObservationWrapper):
@@ -368,4 +434,8 @@ class NormalizeRewardsWrapper(RewardWrapper, BaseCallback):
 @constraint(unwrapped_is, AbstractMarketEnv, 'market_env')
 class DiscountRewardsWrapper(RewardWrapper, BaseCallback):
     # discoutns rewards of an episode
+    pass
+
+@constraint(unwrapped_is, AbstractMarketEnv)
+class ExperienceRecorderWrapper(Wrapper):
     pass

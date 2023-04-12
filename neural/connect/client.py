@@ -7,16 +7,34 @@ from alpaca.trading import TradingClient
 from neural.common.log import logger
 from neural.common.constants import ALPACA_API_KEY, ALPACA_API_SECRET
 from neural.tools.ops import objects_to_df
+from abc import ABC, abstractmethod
 
 
+class AbstractClient(ABC):
 
-class AlpacaMetaClient:
+    @abstractmethod
+    def set_credentials(self, *args, **kwargs):
+
+        raise NotImplementedError
+
+    @property
+    @abstractmethod
+    def assets(self, *args, **kwargs):
+        raise NotImplementedError
+
+    @property
+    @abstractmethod
+    def positions(self, *args, **kwargs):
+        raise NotImplementedError
+    
+
+class AlpacaMetaClient(AbstractClient):
     def __init__(
         self,
         key: Optional[str] = None,
         secret: Optional[str] = None,
         ) -> None:
-
+        super.__init__
         # if sandbox = True tries connecting to paper account endpoint
         self.key = key if key is not None else ALPACA_API_KEY
         self.secret = secret if secret is not None else ALPACA_API_SECRET
