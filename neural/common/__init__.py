@@ -1,2 +1,2 @@
 from neural.common.log import logger
-from neural.common.constants import ALPACA_API_KEY, ALPACA_API_SECRET
+from neural.common.constants import API_KEY, API_SECRET

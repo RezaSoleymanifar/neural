@@ -7,19 +7,19 @@ from abc import ABC, abstractmethod
 from neural.common.log import logger
 from neural.core.data.ops import StaticDataFeeder, AsyncDataFeeder
 from neural.core.data.enums import ColumnType
-from neural.connect.client import AlpacaMetaClient
+from neural.core.trade.ops import AlpacaTrader, AbstractTrader
 
 
 class AbstractMarketEnv(Env, ABC):
 
     # abstract method for both trading and training envs
     @abstractmethod
-    def next_row(self):
+    def update_env(self):
 
         raise NotImplementedError
     
     @abstractmethod
-    def constrct_observation(self):
+    def construct_observation(self):
 
         raise NotImplementedError
 
@@ -83,7 +83,7 @@ class TrainMarketEnv(AbstractMarketEnv):
             self.n_features,), dtype=np.float32)})
     
 
-    def next_row(self) -> np.ndarray:
+    def update_env(self) -> np.ndarray:
 
         self.features = next(self.row_generator)
         self.asset_prices = self.features[self.asset_price_mask]
@@ -91,7 +91,7 @@ class TrainMarketEnv(AbstractMarketEnv):
         
         return None
 
-    def constrct_observation(self) -> np.ndarray:
+    def construct_observation(self) -> np.ndarray:
         
         observation = {
             'cash': self.cash,
@@ -110,7 +110,7 @@ class TrainMarketEnv(AbstractMarketEnv):
         self.row_generator = self.data_feeder.reset()
         
         self.index = 0
-        self.next_row()
+        self.update_env()
 
         self.cash = self.initial_cash
         self.asset_quantities = np.zeros(
@@ -121,7 +121,7 @@ class TrainMarketEnv(AbstractMarketEnv):
 
         # cache env history
         # compute state
-        self.observation = self.constrct_observation()
+        self.observation = self.construct_observation()
 
         return self.observation
 
@@ -151,7 +151,7 @@ class TrainMarketEnv(AbstractMarketEnv):
                 self.holds[asset] = 0
 
 
-        self.next_row()
+        self.update_env()
 
         # increase hold time of purchased stocks
         self.holds[self.asset_quantities != 0] += 1
@@ -162,7 +162,7 @@ class TrainMarketEnv(AbstractMarketEnv):
         self.net_worth = new_net_worth
         
         # returns states using env vars
-        self.observation = self.constrct_observation()
+        self.observation = self.construct_observation()
 
         # report terminal state
         done = self.index == self.n_steps - 1
@@ -174,16 +174,66 @@ class TrainMarketEnv(AbstractMarketEnv):
 class TradeMarketEnv(AbstractMarketEnv):
     def __init__(
         self,
-        client: AlpacaMetaClient,
-        market_data_feeder: StaticDataFeeder,
-    ) -> None:
-        pass
+        trader: AbstractTrader
+        ) -> None:
+        self.trader = trader
+        self.data_feeder = AsyncDataFeeder(self.trader.dataset_metadata)
     
-    def next_row(self):
-        pass
+    def update_env(self):
+        self.features = next(self.row_generator)
+        self.asset_prices = self.features[self.asset_price_mask]
 
-    def constrct_observation(self):
-        pass
+    def construct_observation(self) -> np.ndarray:
+
+        observation = {
+            'cash': self.cash,
+            'asset_quantities': self.asset_quantities,
+            'holds': self.holds,
+            'features': self.features
+        }
+
+        return observation
     
-    def reset():
-        pass
+    def reset(
+        self
+        ) -> Dict:
+
+        # resetting input state
+        self.row_generator = self.data_feeder.reset()
+
+        self.update_env()
+
+        self.cash, self.asset_quantities, self.net_wroth = self.trader.get_portfolio_metadata()
+
+        self.holds = np.zeros(
+            (self.n_symbols,), dtype=np.int32)
+
+        # compute state
+        self.observation = self.construct_observation()
+
+        return self.observation
+
+
+    def step(
+        self,
+        actions: np.ndarray
+        ) -> Tuple[Dict, np.float32, bool, Dict]:
+
+        self.trader.place_orders(actions)
+        previous_net_worth = self.net_worth
+
+        # takes time equal to trading resolution
+        self.update_env()
+
+        # increase hold time of purchased stocks
+        self.holds[self.asset_quantities != 0] += 1
+
+        # new asset value
+        self.cash, self.asset_quantities, self.net_wroth = self.trader.get_portfolio_metadata()
+        reward = self.net_worth - previous_net_worth
+
+        # returns states using env vars
+        self.observation = self.construct_observation()
+
+
+        return self.observation, reward, False, self.info

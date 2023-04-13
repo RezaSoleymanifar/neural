@@ -67,7 +67,8 @@ def unwrapped_is(wrapped_env, constrained_type):
     if not isinstance(unwrapped_env, constrained_type):
 
         raise IncompatibleWrapperError(
-            f'{wrapped_env} requires {unwrapped_env} to be of type {constrained_type}.'
+            f'{wrapped_env} requires {unwrapped_env} '
+            f'to be of type {constrained_type}.'
             )
 
     return unwrapped_env
@@ -80,7 +81,8 @@ def first_of(wrapped_env, constrained_type):
         if isinstance(wrapped_env.env, constrained_type):
 
             raise IncompatibleWrapperError(
-                f'{wrapped_env.env} of type {constrained_type} is applied before enclosing constrained wrapper.'
+                f'{wrapped_env.env} of type {constrained_type} '
+                f'is applied before enclosing constrained wrapper.'
             )
         else:
             first_of(wrapped_env.env)
@@ -94,7 +96,8 @@ def requires(wrapped_env, constrained_type):
         if not hasattr(wrapped_env, 'env'):
 
             raise IncompatibleWrapperError(
-                f'{initial_arg} requires wrapper of type {constrained_type} to exist in the underlying wrappers.')
+                f'{initial_arg} requires wrapper of type {constrained_type} '
+                f'to exist in the underlying wrappers.')
 
         elif isinstance(wrapped_env.env, constrained_type):
             return wrapped_env.env

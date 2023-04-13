@@ -17,11 +17,8 @@ from dataclasses import dataclass
 from abc import abstractmethod, ABC
 
 
-class AbstractPipe(ABC):
 
-    def __init__(self, env: TrainMarketEnv) -> None:
-        super().__init__()
-        
+class AbstractPipe(ABC):   
 
     @staticmethod
     def extend(pipe):
@@ -40,6 +37,7 @@ class AbstractPipe(ABC):
     def pipe(self):
 
         raise NotImplementedError
+
 
 
 

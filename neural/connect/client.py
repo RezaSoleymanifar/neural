@@ -5,9 +5,10 @@ from alpaca.data.historical import StockHistoricalDataClient, CryptoHistoricalDa
 from alpaca.trading import TradingClient
 
 from neural.common.log import logger
-from neural.common.constants import ALPACA_API_KEY, ALPACA_API_SECRET
+from neural.common.constants import API_KEY, API_SECRET
 from neural.tools.ops import objects_to_df
 from abc import ABC, abstractmethod
+
 
 
 class AbstractClient(ABC):
@@ -17,16 +18,12 @@ class AbstractClient(ABC):
 
         raise NotImplementedError
 
-    @property
     @abstractmethod
-    def assets(self, *args, **kwargs):
+    def check_connection(self, *args, **kwargs):
         raise NotImplementedError
 
-    @property
-    @abstractmethod
-    def positions(self, *args, **kwargs):
-        raise NotImplementedError
-    
+
+
 
 class AlpacaMetaClient(AbstractClient):
     def __init__(
@@ -36,8 +33,8 @@ class AlpacaMetaClient(AbstractClient):
         ) -> None:
         super.__init__
         # if sandbox = True tries connecting to paper account endpoint
-        self.key = key if key is not None else ALPACA_API_KEY
-        self.secret = secret if secret is not None else ALPACA_API_SECRET
+        self.key = key if key is not None else API_KEY
+        self.secret = secret if secret is not None else API_SECRET
 
         self.clients = None
         self.account = None
@@ -46,34 +43,6 @@ class AlpacaMetaClient(AbstractClient):
         self._positions = None
         self._asset_classes = None
         self._exchanges = None
-
-        return None
-
-    def setup_clients_and_account(self) -> None:
-
-        if self.key is None or self.secret is None:
-            raise ValueError('Key and secret are required for account login.')
-        
-        self.clients = dict()
-
-        # crypto does not need key, and secret but will be faster if provided
-        self.clients['crypto'] = CryptoHistoricalDataClient(
-            api_key = self.key, secret_key =self.secret)
-        self.clients['stocks'] = StockHistoricalDataClient(
-            api_key=self.key, secret_key=self.secret)
-        self.clients['trading'] = TradingClient(
-            api_key=self.key, secret_key=self.secret)
-        
-        try:
-            self.account = self.clients['trading'].get_account()
-
-            if self.account.status == AccountStatus.ACTIVE:
-                logger.info(
-                    f'Clients and account setup successful.')
-
-        except Exception as e:
-            logger.exception(
-                "Account setup failed: {}".format(str(e)))
 
         return None
 
@@ -121,6 +90,38 @@ class AlpacaMetaClient(AbstractClient):
         self._positions = self.clients['trading'].get_all_positions()
 
         return objects_to_df(self._positions)
+    
+
+    def setup_clients_and_account(self) -> None:
+
+        if self.key is None or self.secret is None:
+            raise ValueError('Key and secret are required for account login.')
+        self.account.portfolio_value
+        self.clients = dict()
+
+        # crypto does not need key, and secret but will be faster if provided
+        self.clients['crypto'] = CryptoHistoricalDataClient(
+            api_key = self.key, secret_key =self.secret)
+        self.clients['stocks'] = StockHistoricalDataClient(
+            api_key=self.key, secret_key=self.secret)
+        self.clients['trading'] = TradingClient(
+            api_key=self.key, secret_key=self.secret)
+
+        try:
+
+            self.account = self.clients['trading'].get_account()
+
+            if self.check_connection():
+
+                logger.info(
+                    f'Clients and account setup successful. Status: {self.account.status}')
+
+        except Exception as e:
+
+            logger.exception(
+                f'Account setup failed: {e}')
+
+        return None
 
     def set_credentials(
         self, 
@@ -135,3 +136,7 @@ class AlpacaMetaClient(AbstractClient):
         self.secret = secret
 
         return None
+    
+    def check_connection(self, *args, **kwargs):
+
+        return True if self.account.status == AccountStatus.ACTIVE else False

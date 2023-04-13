@@ -1,120 +1,159 @@
 from neural.core.data.enums import DatasetMetadata
-from neural.core.data.ops import AlpacaMetaClient, AsyncDataFeeder
+from neural.core.data.ops import AsyncDataFeeder
+from neural.connect.client import AbstractClient
 from neural.meta.env.base import TradeMarketEnv, TrainMarketEnv
 from neural.meta.env.pipe import AbstractPipe
-from alpaca.trading.enums import AccountStatus
+from neural.connect.client import AlpacaMetaClient
 from torch import nn
 import os
+from abc import ABC, abstractmethod
+from typing import Optional
+import numpy as np
 
 
-class Trader:
+class AbstractTrader(ABC):
 
-    def __init__(self, client: AlpacaMetaClient, model : nn.Module, pipe: AbstractPipe, dataset_metadata: DatasetMetadata):
+    def __init__(self,
+        client: AbstractClient,
+        model: nn.Module,
+        pipe: AbstractPipe,
+        dataset_metadata: DatasetMetadata):
 
-        self.dataset_metadata = dataset_metadata
-        self.data_feeder = AsyncDataFeeder(self.dataset_metadata)
-        self._trade_market_env = TradeMarketEnv(self.data_feeder)
-        self._
         self.client = client
-        self.model = None
+        self.model = model
+        self.pipe = pipe
+        self.dataset_metadata = dataset_metadata
 
-        try:
-            client.account.status == AccountStatus.ACTIVE
-    @property
-    def model(self):
-        return self._model
+        self._cash = None
+        self._asset_quantities = None
+        self._net_worth = None
 
-    @model.setter
-    def model(self, model_object: nn.Module):
-        
-        if not isinstance(model_object, nn.Module):
-            raise TypeError(
-                f'model {model_object} needs to be instance of {nn.Module}.'
-            )
-        
-        self._model = model_object
-
-
-    @property
-    def train_market_env(self):
-        return self._train_market_env
+        return None
     
     @property
-    def trade_market_env(self):
-        return self._trade_market_env
+    @abstractmethod
+    def cash(self):
 
-    @trade_market_env.setter
-    def trade_market_env(self, trade_market_env_object: TradeMarketEnv):
+        raise NotImplementedError
+    
+    @property
+    @abstractmethod
+    def asset_quantities(self):
 
-        if not isinstance(trade_market_env_object, TradeMarketEnv):
+        raise NotImplementedError
+    
+    @property
+    @abstractmethod
+    def net_worth(self):
 
-            raise TypeError(
-                f'Trading environment {trade_market_env_object} needs to be instance of {TradeMarketEnv}.'
-            )
+        raise NotImplementedError
+    
+    # this method is responsible for starting the trading process.
+    @abstractmethod
+    def trade(self, *args, **kwargs):
 
-        self._trade_market_env = trade_market_env_object
+        raise NotImplementedError
 
-    def set_model(self, model: torch.nn.Module) -> None:
-        self.model = model
+    # takes actions from model and places relevant orders
+    @abstractmethod
+    def place_orders(self, actions, *args, **kwargs):
 
-    def trade(self, resolution: str, cash: float, commission: float, max_episode_steps: int) -> None:
-        # Create the trade environment
-        trade_env = TradeMarketEnv(
-            cash=cash,
-            commission=commission,
-            max_episode_steps=max_episode_steps,
-            resolution=resolution,
-            metadata=self.dataset_metadata,
-            data_feeder=self.data_feeder,
-            client=self.client,
-            model=self.model
-        )
+        raise NotImplementedError
 
-        # Run the trade environment
-        obs = trade_env.reset()
-        while True:
-            action = self.model(obs)
-            obs, reward, done, info = trade_env.step(action)
-            if done:
-                break
 
-    def warmup_pipe(self, env: TrainMarketEnv, n_episodes: Optional[int] = None):
-        # warms up pipe wrappers for application of new env
-        # initial investement dpendent wrappers like
-        # observation normalizers will get readjusted
-        # with this method.
-        piped_train_env = self.pipe(self.env)
-        piped_train_env.reset()
 
-        n_episodes = n_episodes if n_episodes is not None else 1
+class AlpacaTrader(AbstractTrader):
 
-        for _ in range(n_episodes):
-            while True:
+    def __init__(self, 
+        client: AlpacaMetaClient, 
+        model : nn.Module, 
+        pipe: AbstractPipe, 
+        dataset_metadata: DatasetMetadata):
 
-                action = piped_train_env.action_space.sample()
-                *_, done, _ = piped_train_env.step(action)
+        super().__init__(
+            client,
+            model,
+            pipe,
+            dataset_metadata)
 
-                if done:
-                    break
+    @property
+    def cash(self):
+        self._cash = self.client.account.cash
+        return self._cash
+    
+    @property
+    def asset_quantities(self):
+        self._asset_quantities = self.client.account.equity
+        return self._asset_quantities
+    
+    @property
+    def net_worth(self):
+        self._net_worth = self.client.account.portfolio_value
+        return self._net_worth
+
+
+    def place_orders(actions):
+        pass
+
 
     def trade(self):
 
-        if self.trade_market_env is None:
+        self.trade_market_env = TradeMarketEnv(trader = self)
 
-            raise ValueError(
-                f'A trading environement of type {TradeMarketEnv} must be provided for trading.'
-            )
 
-        if self.model is None:
-
-            raise ValueError(
-                f'A model object of type {nn.Module} must be provided for trading.'
-            )
-
-        piped_env = self.pipe(self.trade_market_env)
-        observation = self.reset()
+        piped_trade_env = self.pipe(self.trade_market_env)
+        observation = piped_trade_env.reset()
 
         while True:
-
             action = self.model(observation)
-            observation, reward, done, info = piped_env.step(action)
+            observation, reward, done, info = piped_trade_env.step(action)
+
+
+class CustomAlpacaTrader(AlpacaTrader):
+
+    def __init__(
+            self, client: 
+            AlpacaMetaClient, 
+            model: nn.Module, 
+            pipe: AbstractPipe, 
+            dataset_metadata: DatasetMetadata
+            ) -> None:
+        
+        super().__init__(
+            client, 
+            model, 
+            pipe, 
+            dataset_metadata)
+
+        self.warumup_dataset_path = None
+
+
+    def record_experiences(self):
+        raise NotImplementedError
+    
+
+    def warumup_pipe(warmup_env: TrainMarketEnv, n_episode: Optional[int] = None):
+        raise NotImplementedError
+
+
+    def place_orders(actions):
+        raise NotImplementedError
+
+
+    def trade(self):
+
+        trade_market_env = TradeMarketEnv(trader=self)
+
+        if self.warumup_dataset_path is not None:
+
+            self.warmup_pipe(n_episodes=3)
+
+        piped_trade_env = self.pipe(trade_market_env)
+        obs = piped_trade_env.reset()
+
+        while True:
+            action = self.model(obs)
+            observation, reward, done, info = piped_trade_env.step(action)
+            self.record_experiences(observation, reward, done)
+            if done:
+                break

@@ -1,7 +1,8 @@
 import os
 
-ALPACA_API_KEY = os.environ.get('ALPACA_API_KEY', None)
-ALPACA_API_SECRET = os.environ.get('ALPACA_API_SECRET', None)
+
+API_KEY = os.environ.get('API_KEY', None)
+API_SECRET = os.environ.get('API_SECRET', None)
 
 
 DOW_JONES_SYMBOLS = ['AAPL', 'AXP', 'BA', 'CAT', 'CSCO', 'CVX',
