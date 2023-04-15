@@ -8,14 +8,14 @@ from alpaca.trading.enums import AssetClass
 from neural.tools.misc import Calendar
 
 class StreamType(Enum):
-    BAR = 'BAR'
     QUOTE = 'QUOTE'
     TRADE = 'TRADE'
+    ORDER_BOOK = 'ORDER_BOOK'
     
 class DatasetType(Enum):
-    BAR = 'BAR'
+    BAR = 'BAR' # bar is aggregated trade stream
     QUOTE = 'QUOTE'
-    TRADE = 'TRADE'
+    ORDER_BOOK = 'ORDER_BOOK'
 
 class ColumnType(Enum):
     OPEN = 'OPEN'
@@ -24,6 +24,8 @@ class ColumnType(Enum):
     CLOSE = 'CLOSE'
     BID = 'BID'
     ASK = 'ASK'
+    SENTIMENT = 'SENTIMENT'
+    EMBEDDING = 'EMBEDDING'
 
 @dataclass
 class StreamMetaData:

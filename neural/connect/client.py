@@ -96,7 +96,6 @@ class AlpacaMetaClient(AbstractClient):
 
         if self.key is None or self.secret is None:
             raise ValueError('Key and secret are required for account login.')
-        self.account.portfolio_value
         self.clients = dict()
 
         # crypto does not need key, and secret but will be faster if provided
@@ -110,7 +109,6 @@ class AlpacaMetaClient(AbstractClient):
         try:
 
             self.account = self.clients['trading'].get_account()
-
             if self.check_connection():
 
                 logger.info(
