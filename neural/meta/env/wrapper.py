@@ -1,17 +1,22 @@
-from stable_baselines3.common.callbacks import BaseCallback
-from gym import ActionWrapper, Env, spaces, Wrapper, ObservationWrapper, RewardWrapper
-import numpy as np
-from neural.common.log import logger
-from neural.tools.ops import sharpe, tabular_print
-from neural.meta.env.base import AbstractMarketEnv, TrainMarketEnv, TradeMarketEnv
+from __future__ import annotations
+
 from collections import defaultdict
 from abc import abstractmethod, ABC
-from typing import Type, Callable, Optional
-from neural.common.exceptions import IncompatibleWrapperError
+from typing import Type, Callable, Optional, TYPE_CHECKING
 from datetime import datetime
-from neural.connect.client import AlpacaMetaClient
-from neural.core.trade.ops import CustomAlpacaTrader
-from gym.wrappers import NormalizeReward
+
+import numpy as np
+from gym import ActionWrapper, Env, Wrapper, ObservationWrapper, RewardWrapper
+
+from neural.common.log import logger
+from neural.common.exceptions import IncompatibleWrapperError
+from neural.meta.env.base import AbstractMarketEnv, TrainMarketEnv, TradeMarketEnv
+
+from neural.tools.ops import sharpe, tabular_print
+
+if TYPE_CHECKING:
+    from neural.core.trade.ops import AlpacaTraderTemplate
+
 
 
 class AbstractConstrainedWrapper(ABC):
@@ -232,7 +237,7 @@ class AlpacaTradeEnvMetadataWrapper(AbstractMarketEnvMetadataWrapper):
 
         self.trader = self.market_env.trader
 
-        if not isinstance(self.trader, CustomAlpacaTrader):
+        if not isinstance(self.trader, AlpacaTraderTemplate):
 
             raise IncompatibleWrapperError(
                 f'Market env {self.market_env} must have trader of type {CustomAlpacaTrader}.')
@@ -274,7 +279,7 @@ class AlpacaTradeEnvMetadataWrapper(AbstractMarketEnvMetadataWrapper):
 
 @constraint(requires, TrainMarketEnvMetadataWrapper, 'market_metadata_env')
 @constraint(unwrapped_is, AbstractMarketEnv, 'market_env')
-class ConsoleTearsheetRenderWrapper:
+class ConsoleTearsheetRenderWrapper(Wrapper):
 
     def __init__(
         self, env: Env,
@@ -426,11 +431,17 @@ class RelativeMarginSizingActionWrapper(ActionWrapper):
             action[asset] = buy
 
         return action
+
+class AbstractPositionSizingActionWrapper(ABC):
     
+    @abstractmethod
+    def parse_action(self, action_, *args, **kwargs):
+
+        raise NotImplementedError    
 
 @constraint(requires, AbstractMarketEnvMetadataWrapper, 'market_metadata_env')
 @constraint(unwrapped_is, AbstractMarketEnv, 'market_env')
-class ContinuousRelativePositionSizingActionWrapper(ActionWrapper):
+class ContinuousRelativePositionSizingActionWrapper(ActionWrapper, AbstractPositionSizingActionWrapper):
     # ensures positions taken at each step is a maximum fixed percentage of net worth
     # maps actions in (-1, 1) to buy/sell/hold following position sizing strategy
     # trade_ratio = 0.02 means max of 2% of net_worth is traded at each step
@@ -459,13 +470,13 @@ class ContinuousRelativePositionSizingActionWrapper(ActionWrapper):
 
 
 
-    def parse_action(self, action: float) -> float:
+    def parse_action(self, action_: float) -> float:
 
         # action value in (-threshold, +threshold) is parsed as hold
-        fraction = (abs(action) - self.hold_threshold)/(
+        fraction = (abs(action_) - self.hold_threshold)/(
             1- self.hold_threshold)
 
-        parsed_action =  fraction * self._max_trade_per_asset * np.sign(action
+        parsed_action =  fraction * self._max_trade_per_asset * np.sign(action_
             ) if fraction > 0 else 0
         
         return parsed_action
@@ -480,6 +491,7 @@ class ContinuousRelativePositionSizingActionWrapper(ActionWrapper):
             action) for action in action]
         
         return new_actions
+
 
 
 @constraint(unwrapped_is_not, TradeMarketEnv)
@@ -586,7 +598,6 @@ class WealthAgnosticFeatureEngineeringWrapper(ObservationWrapper):
 
 
 
-
 @constraint(unwrapped_is, AbstractMarketEnv, 'market_env')
 class ObservationBufferWrapper(ObservationWrapper):
 
@@ -598,6 +609,7 @@ class ObservationBufferWrapper(ObservationWrapper):
 
 class RunningMeanSTD:
     pass
+
 
 
 @constraint(wraps, ObservationBufferWrapper)
@@ -616,7 +628,7 @@ class NormalizeObservationsWrapper(ObservationWrapper):
 
 
 @constraint(unwrapped_is, AbstractMarketEnv, 'market_env')
-class NormalizeRewardsWrapper(RewardWrapper, BaseCallback):
+class NormalizeRewardsWrapper(RewardWrapper):
     # normalizes rewards of an episode
     pass
 

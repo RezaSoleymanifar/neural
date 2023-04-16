@@ -1,13 +1,16 @@
-from typing import Tuple, Dict
+from __future__ import annotations
+
+from typing import Tuple, Dict, TYPE_CHECKING
 
 import numpy as np
 from gym import spaces, Env
 
 from abc import ABC, abstractmethod
-from neural.common.log import logger
 from neural.core.data.ops import StaticDataFeeder, AsyncDataFeeder
 from neural.core.data.enums import ColumnType
-from neural.core.trade.ops import CustomAlpacaTrader, AbstractTrader
+
+if TYPE_CHECKING:
+    from neural.core.trade.ops import AbstractTrader
 
 
 class AbstractMarketEnv(Env, ABC):

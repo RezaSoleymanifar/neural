@@ -1,7 +1,5 @@
-from typing import List, Type, Dict, Tuple, Optional
-from gym import Wrapper
-from torch import nn
-
+from abc import abstractmethod, ABC
+from typing import Optional
 
 from neural.meta.env.wrapper import (
     MinTradeSizeActionWrapper,
@@ -11,38 +9,58 @@ from neural.meta.env.wrapper import (
     ConsoleTearsheetRenderWrapper,
     TrainMarketEnvMetadataWrapper)
 
-from neural.meta.env.base import AbstractMarketEnv, TrainMarketEnv, TradeMarketEnv
-from dataclasses import dataclass
-from abc import abstractmethod, ABC
+from neural.meta.env.base import AbstractMarketEnv
 
 
 
 class AbstractPipe(ABC):   
 
+
     @abstractmethod
     def pipe(self, env):
 
         raise NotImplementedError
-    
+
+
     def warmup(
             self,
-            warmup_env: AbstractMarketEnv,
-            n_episodes: Optional[int] = None):
+            env: AbstractMarketEnv,
+            n_episodes: Optional[int] = None
+            ) -> None:
+        
+        piped_env = self.pipe(env)
 
         for _ in n_episodes:
-            piped_env = self.pipe(warmup_env)
-            observation = piped_env.reset()
+
+            _ = piped_env.reset()
 
             while True:
+
                 action = piped_env.action_space.sample()
-                observation, reward, done, info = piped_env.step(action)
+                *_, done, _ = piped_env.step(action)
+
                 if done:
                     break
 
+        return None
 
-class NoShortNoMarginPipe(AbstractPipe):
 
-    def __init__(self) -> None:
+class ContinuousShortMarginPipe(AbstractPipe):
+
+    def __init__(
+            self,
+            min_action: float = 1,
+            initial_margin: float = 1,
+            short_ratio: float = 0,
+            trade_ratio: float = 0.02,
+            verbosity: int = 20
+            ) -> None:
+        
+        self.min_action = min_action
+        self.initial_margin = initial_margin
+        self.short_ratio = short_ratio
+        self.trade_ratio = trade_ratio
+        self.verbosity = verbosity
 
         self.metadata_wrapper = TrainMarketEnvMetadataWrapper
         self.min_trade = MinTradeSizeActionWrapper
@@ -51,10 +69,15 @@ class NoShortNoMarginPipe(AbstractPipe):
         self.short_sizing = RelativeShortSizingActionWrapper
         self.render = ConsoleTearsheetRenderWrapper
 
+        return None
+
     def pipe(self, env):
+
+        env = self.min_trade(env, min_action = self.min_action)
         env = self.metadata_wrapper(env)
-        env = self.margin_sizing(initial_margin = 1) # equivalent to no margin
-        env = self.short_sizing(short_ratio = 0) # equivalent to no short
-        env = self.position_sizing(env, trade_ratio=0.02)
-        env = self.render(env, verbosity = 20)
+        env = self.margin_sizing(env, initial_margin = self.initial_margin)
+        env = self.short_sizing(env, short_ratio = self.short_ratio)
+        env = self.position_sizing(env, trade_ratio=self.trade_ratio)
+        env = self.render(env, verbosity = self.verbosity)
+
         return env
