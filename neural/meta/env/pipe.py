@@ -23,7 +23,21 @@ class AbstractPipe(ABC):
     def pipe(self, env):
 
         raise NotImplementedError
+    
+    def warmup(
+            self,
+            warmup_env: AbstractMarketEnv,
+            n_episodes: Optional[int] = None):
 
+        for _ in n_episodes:
+            piped_env = self.pipe(warmup_env)
+            observation = piped_env.reset()
+
+            while True:
+                action = piped_env.action_space.sample()
+                observation, reward, done, info = piped_env.step(action)
+                if done:
+                    break
 
 
 class NoShortNoMarginPipe(AbstractPipe):

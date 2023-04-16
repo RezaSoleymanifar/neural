@@ -10,7 +10,9 @@ from typing import Type, Callable, Optional
 from neural.common.exceptions import IncompatibleWrapperError
 from datetime import datetime
 from neural.connect.client import AlpacaMetaClient
-from neural.core.trade.ops import AlpacaTrader
+from neural.core.trade.ops import CustomAlpacaTrader
+from gym.wrappers import NormalizeReward
+
 
 class AbstractConstrainedWrapper(ABC):
 
@@ -73,6 +75,28 @@ def unwrapped_is(wrapper_in_constructor, constrained_type):
     return unwrapped_env
 
 
+def unwrapped_is_not(wrapper_in_constructor, constrained_type):
+
+    unwrapped_env = wrapper_in_constructor.unwrapped
+
+    if  isinstance(unwrapped_env, constrained_type):
+
+        raise IncompatibleWrapperError(
+            f'{wrapper_in_constructor} is incompatible with {unwrapped_env} '
+            f'of type {constrained_type}.'
+        )
+
+    return unwrapped_env
+
+def encloses(wrapper_in_constructor, constrained_type):
+
+    if  hasattr(wrapper_in_constructor, 'env'):
+
+        raise IncompatibleWrapperError(
+            f'The enclosing wrapper requires {wrapper_in_constructor} '
+            f' be of type {constrained_type}.')
+
+    return wrapper_in_constructor
 
 def first_of(wrapper_at_constructor, constrained_type):
 
@@ -112,16 +136,14 @@ def requires(wrapper_at_constructor, constrained_type):
     return requires_helper(wrapper_at_constructor, wrapper_at_constructor)
 
 
-        
-@constraint(unwrapped_is, None, 'market_env')
-class TrainMarketEnvMetadataWrapper(Wrapper):
-    # wraps a market env to track env metadata
-    # upstream wrappers can utilize this metadata
-    def __init__(self) -> None:
-        super().__init__()
+
+class AbstractMarketEnvMetadataWrapper(Wrapper, ABC):
+    def __init__(self, env: Env) -> None:
+        super().__init__(env)
 
         self.history = defaultdict(list)
         self.initial_cash = self.market_env.initial_cash
+        self.n_symbols = self.market_env.n_symbols
         self.cash = None
         self.asset_quantities = None
         self.positions = None
@@ -134,6 +156,36 @@ class TrainMarketEnvMetadataWrapper(Wrapper):
         self.sharpe = None
         self.progress = None
 
+
+    @abstractmethod
+    def _update_metadata(self, *args, **kwargs):
+        raise NotImplementedError
+        
+    @abstractmethod
+    def _cache_hist(self, *args, **kwargs):
+        raise NotImplementedError
+
+    def reset(self):
+
+        observation = self.env.reset()
+        self._update_metadata()
+
+        return observation
+
+    def step(self, action):
+
+        observation, reward, done, info = self.env.step(action)
+        self._update_metadata()
+
+        return observation, reward, done, info
+
+
+@constraint(unwrapped_is, TrainMarketEnv, 'market_env')
+class TrainMarketEnvMetadataWrapper(AbstractMarketEnvMetadataWrapper):
+    # wraps a market env to track env metadata
+    # upstream wrappers can utilize this metadata
+    def __init__(self, env: Env) -> None:
+        super().__init__(env)
 
     def _update_metadata(self):
 
@@ -166,53 +218,25 @@ class TrainMarketEnvMetadataWrapper(Wrapper):
 
     def _cache_hist(self):
 
-        self.history['assets'].append(self.net_wroth)
+        self.history['assets'].append(self.net_worth)
 
         return None
-    
-
-    def reset(self):
-
-        observation = self.env.reset()
-        self._update_metadata()
-
-        return observation
-    
-
-    def step(self, actions):
-
-        observation, reward, done, info = self.env.step(actions)
-        self._update_metadata()
-
-        return observation, reward, done, info
 
 
 @constraint(requires, TradeMarketEnv, 'market_env')
-class AlpacaTradeEnvMetadataWrapper:
+class AlpacaTradeEnvMetadataWrapper(AbstractMarketEnvMetadataWrapper):
 
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(self, env: Env) -> None:
+        super().__init__(env)
 
         self.trader = self.market_env.trader
 
-        if not isinstance(self.trader, AlpacaTrader):
+        if not isinstance(self.trader, CustomAlpacaTrader):
 
             raise IncompatibleWrapperError(
-                f'Market env {self.market_env} must have trader of type {AlpacaTrader}.')
+                f'Market env {self.market_env} must have trader of type {CustomAlpacaTrader}.')
         
-        self.history = defaultdict(list)
-        self.initial_cash = self.market_env.initial_cash
-        self.cash = None
-        self.asset_quantities = None
-        self.positions = None
-        self.net_worth = None
-        self.portfolio_value = None
-        self.longs = None
-        self.shorts = None
-        self.profit = None
-        self.return_ = None
-        self.sharpe = None
-        self.progress = None
+
 
     def _update_metadata(self):
 
@@ -245,37 +269,24 @@ class AlpacaTradeEnvMetadataWrapper:
         self.history['net_worth'].append(self.net_wroth)
 
         return None
-
-
-    def reset(self):
-
-        observation = self.env.reset()
-        self._update_metadata()
-        
-        return observation
     
-    def step(self, actions):
-
-        observation, reward, done, info = self.env.step(actions)
-        self._update_metadata()
-
-        return observation, reward, done, info
-
 
 
 @constraint(first_of, ActionWrapper)
 class MinTradeSizeActionWrapper(ActionWrapper):
     
+    # ensures no action wrapper exists after this wrapper
+    # to maintain min trade size.
     def __init__(self, env: Env, min_action = 1) -> None:
         super().__init__(env)
         self.min_action = min_action
 
-    def action(self, actions):
+    def action(self, action):
 
-        new_actions = [action if abs(action) >= self.min_action
-            else 0 for action in actions]
+        new_action = [action_ if abs(action_) >= self.min_action
+            else 0 for action_ in action]
     
-        return new_actions
+        return new_action
 
 
 @constraint(requires, TrainMarketEnvMetadataWrapper, 'market_metadata_env')
@@ -296,7 +307,7 @@ class RelativeShortSizingActionWrapper(ActionWrapper):
         return None
     
 
-    def action(self, actions):
+    def action(self, action):
         # performs actions without applying the effects and modifies actions
         # that would lead to short sizing limit violation.
 
@@ -304,55 +315,55 @@ class RelativeShortSizingActionWrapper(ActionWrapper):
 
         self._set_short_budget()
 
-        for asset, action in enumerate(actions):
+        for asset, action_ in enumerate(action):
 
-            if action > 0:
+            if action_ > 0:
                 continue
             
             if self.short_budget == 0:
-                actions[asset] = 0
+                action[asset] = 0
                 continue
 
-            sell = min(abs(action), self.short_budget)
+            sell = min(abs(action_), self.short_budget)
             short = abs(min(0, positions[asset] - sell))
             self.short_budget -= short
-            actions[asset] = -sell
+            action[asset] = -sell
 
-        return actions
+        return action
 
 
 @constraint(requires, TrainMarketEnvMetadataWrapper, 'market_metadata_env')
 @constraint(unwrapped_is, AbstractMarketEnv, 'market_env')
 class RelativeMarginSizingActionWrapper(ActionWrapper):
 
-    def __init__(self, env: Env, initial_margin=1.00) -> None:
+    def __init__(self, env: Env, initial_margin= 1) -> None:
         super().__init__(env)
 
         self.initial_margin = initial_margin
 
 
-    def action(self, actions):
+    def action(self, action):
         # performs actions without applying the effects and modifies actions
         # that would lead to short sizing limit violation.
 
 
-        for asset, action in enumerate(actions):
+        for asset, action_ in enumerate(action):
 
-            if action < 0:
+            if action_ < 0:
                 continue
 
             if self.cash <= 0:
-                actions[asset] = 0
+                action[asset] = 0
                 continue
 
             leverage = 1/self.initial_margin
-            buy = min(action, leverage * self.cash)
-            actions[asset] = buy
+            buy = min(action_, leverage * self.cash)
+            action[asset] = buy
 
-        return actions
+        return action
     
 
-@constraint(requires, TrainMarketEnvMetadataWrapper, 'market_metadata_env')
+@constraint(requires, AbstractMarketEnvMetadataWrapper, 'market_metadata_env')
 @constraint(unwrapped_is, AbstractMarketEnv, 'market_env')
 class ContinuousRelativePositionSizingActionWrapper(ActionWrapper):
     # ensures positions taken at each step is a maximum fixed percentage of net worth
@@ -361,169 +372,177 @@ class ContinuousRelativePositionSizingActionWrapper(ActionWrapper):
     # max_trade and min_trade are max/min (USD) for each asset at each step
     # action in (-threshold, threshold) is parsed as hold
     # action outside this range is linearly projected to (min_trade, max_trade)
-    def __init__(self, env: Env, trade_ratio = 0.02, threshold = 0.15):
+    def __init__(self, env: Env, trade_ratio = 0.02, hold_threshold = 0.15):
 
         super().__init__(env)
         self.trade_ratio = trade_ratio
-        self.threshold = threshold
-        self.max_trade = None
+        self.hold_threshold = hold_threshold
+        self._max_trade_per_asset = None
 
         self.action_space = spaces.Box(
             low = -1, high = 1, shape = (self.n_symbols, ))
         
 
     
-    def _set_max_trade(self, trade_ratio: float) -> float:
-        
+    def _set_max_trade_per_asset(self, trade_ratio: float) -> float:
         # sets value for self.max_trade
         # Recommended initial_cash >= n_stocks/trade_ratio. 
         # Trades bellow $1 is clipped to 1 (API constraint).
-        max_trade = (trade_ratio * self.market_metadata_env.net_worth)/self.n_symbols
+        self._max_trade_per_asset = (trade_ratio * self.market_metadata_env.net_worth)/self.n_symbols
 
-        return max_trade
+        return None
 
 
 
     def parse_action(self, action: float) -> float:
 
         # action value in (-threshold, +threshold) is parsed as hold
-        fraction = (abs(action) - self.threshold)/(
-            1- self.threshold)
+        fraction = (abs(action) - self.hold_threshold)/(
+            1- self.hold_threshold)
 
-        parsed_action =  fraction * self.max_trade * np.sign(action
+        parsed_action =  fraction * self._max_trade_per_asset * np.sign(action
             ) if fraction > 0 else 0
         
         return parsed_action
 
 
-    def action(self, actions):
 
-        self.max_trade = self._set_max_trade(self.trade_ratio)
+    def action(self, action):
 
-        new_actions = [
-            self.parse_action(action) for action in actions]
+        self._set_max_trade_per_asset(self.trade_ratio)
+
+        new_actions = [self.parse_action(
+            action) for action in action]
         
         return new_actions
 
 
+@constraint(unwrapped_is_not, TradeMarketEnv)
 @constraint(unwrapped_is, AbstractMarketEnv, 'market_env')
 class IntegerAssetQuantityActionWrapper(ActionWrapper):
-    #enforces actions to map to integer quantity of share
-    pass
-
-
-
-@constraint(requires, TrainMarketEnvMetadataWrapper, 'market_metadata_env')
-@constraint(unwrapped_is, AbstractMarketEnv, 'market_env')
-class ConsoleTearsheetRenderWrapper:
-    
-    def __init__(
-        self, env: Env,
-        verbosity: int = 20
-        ) -> None:
+    # enforces actions to map to integer quantity of share
+    # would not be valid in trade market env due to price
+    # slippage before execution of orders.
+    def __init__(self, env: Env) -> None:
 
         super().__init__(env)
-        self.verbosity = verbosity
-        self.render_every = self.base_env.n_steps//self.verbosity
+        self.asset_prices = None
 
+    def action(self, action):
 
-    def reset(self):
+        asset_prices = self.market_metadata_env.asset_prices
 
-        state = self.env.reset()
-        self._cache_market_env_hist()
-
-        logger.info(
-            f'Steps: {self.base_env.n_steps}, '
-            f'symbols: {self.base_env.n_symbols}, '
-            f'features: {self.base_env.n_features}'
-        )
-
-        return state
-    
-
-    def step(self, actions):
-
-        state, reward, done, info = self.env.step(actions)
-        self._cache_market_env_hist()
-
-        if (self.base_env.index != 0 and
-            self.base_env.index % self.render_every == 0
-            ) or done:
-
-            self.render()
-
-        return state, reward, done, info
-    
-
-    def render(self, done: bool = False) -> None:
-
-        # print header at first render
-        if self.base_env.index == self.render_every:
-
-            # print results in a tear sheet format
-            print(tabular_print(
-                ['Progress', 'Return', 'Sharpe ratio',
-                'Net worth', 'Positions', 'Cash', 'Profit',
-                'Longs', 'Shorts'], header=True))
-
-        asset_quantities = self.base_env.asset_quantities
-        asset_prices = self.base_env.asset_prices
-        net_worth = self.base_env.net_worth
-        initial_cash = self.base_env.initial_cash
-
-        short_mask = asset_quantities < 0
-        long_mask = asset_quantities > 0
-
-        # total value of positions in portfolio
-        positions = asset_quantities @ asset_prices
-
-        shorts = asset_quantities[short_mask] @ asset_prices[short_mask]
-        longs = asset_quantities[long_mask] @ asset_prices[long_mask]
-        # sharpe ratio filters volatility to reflect investor skill
+        for asset , action_ in action:
+            asset_price = asset_prices[asset]
+            action_ = (action_ // asset_price) * asset_price
+            action[asset] = action_
         
-        profit = net_worth - initial_cash
-        return_ = (net_worth - initial_cash)/initial_cash
-
-        sharpe_ = sharpe(self.history['assets'])
-        progress_ = self.base_env.index/self.base_env.n_steps
-
-        metrics = [f'{progress_:.0%}', f'{return_:.2%}', f'{sharpe_:.4f}',
-            f'${self.base_env.net_worth:,.2f}', f'${positions:,.2f}', f'${self.base_env.cash:,.2f}',
-            f'${profit:,.2f}', f'${longs:,.2f}', f'${shorts:,.2f}']
-        
-        # add performance metrics to tear sheet
-        print(tabular_print(metrics))
-
-        if done:
-            logger.info('Episode terminated.')
-            logger.info(*metrics)
-        return None
+        return action
 
 
-@constraint(unwrapped_is, AbstractMarketEnv, 'market_env')
-class PositionValuesObservationWrapper(ObservationWrapper):
+@constraint(first_of, ObservationWrapper)
+@constraint(requires, AbstractMarketEnvMetadataWrapper, 'market_metadata_env')
+class PositionsFeatureEngineeringWrapper(ObservationWrapper):
     # augments observations such that instead of number shares held
     # USD value of assets (positions) is used.
-    pass
 
-@constraint(requires, PositionValuesObservationWrapper)
-@constraint(unwrapped_is, AbstractMarketEnv, 'market_env')
-class NetWorthAgnosticObsWrapper(ObservationWrapper):
-    # scales state with respect to assets to make agent initial assets value.
-    pass
+    def __init__(self, env: Env) -> None:
+
+        super().__init__(env)
+        self.n_symbols = self.market_metadata_env.n_symbols
+
+        self.observation_space = spaces.Dict({
+
+            'cash': spaces.Box(
+                low=-np.inf, high=np.inf, shape=(1,), dtype=np.float32),
+
+            'positions': spaces.Box(
+                low=-np.inf, high=np.inf, shape=(
+                    self.n_symbols,), dtype=np.float32),
+
+            'holds': spaces.Box(
+                low=0, high=np.inf, shape=(
+                    self.n_symbols,), dtype=np.int32),
+
+            'features': spaces.Box(
+                low=-np.inf, high=np.inf, shape=(
+                    self.n_features,), dtype=np.float32)})
+        
+    def observation(self, observation):
+
+        asset_prices= self.market_metadata_env.asset_prices
+        asset_quantities = observation.pop('asset_quantities')
+
+        observation['positions'] = asset_prices * asset_quantities
+        return observation
+    
+
+
+@constraint(encloses, PositionsFeatureEngineeringWrapper)
+@constraint(requires, AbstractMarketEnvMetadataWrapper, 'market_metadata_env')
+class WealthAgnosticFeatureEngineeringWrapper(ObservationWrapper):
+    # Augment observations so that 
+    def __init__(self, env: Env) -> None:
+
+        super().__init__(env)
+        self.initial_cash = self.market_metadata_env.initial_cash
+        self.n_symbols = self.market_metadata_env.n_symbols
+
+        self.observation_space = spaces.Dict({
+
+            'cash':spaces.Box(
+            low=-np.inf, high=np.inf, shape = (1,), dtype=np.float32),
+
+            'positions': spaces.Box(
+            low=-np.inf, high=np.inf, shape = (
+            self.n_symbols,), dtype=np.float32),
+
+            'holds': spaces.Box(
+            low=0, high=np.inf, shape = (
+            self.n_symbols,), dtype=np.int32),
+            
+            'features': spaces.Box(
+            low=-np.inf, high=np.inf, shape = (
+            self.n_features,), dtype=np.float32),
+
+            'return': spaces.Box(
+                low=-np.inf, high=np.inf, shape=(1,), dtype=np.float32),})
+    
+
+    def observation(self, observation):
+
+        net_worth = self.market_metadata_env.net_worth
+
+        observation['positions'] /= net_worth
+        observation['cash'] /= net_worth
+        observation['return'] = net_worth/self.initial_cash - 1
+
+        return observation
+
 
 
 
 @constraint(unwrapped_is, AbstractMarketEnv, 'market_env')
 class RunningIndicatorsObsWrapper(ObservationWrapper):
+
     # computes running indicators
-    pass
+    def observation(self, observation):
+        return None
 
 
 @constraint(unwrapped_is, AbstractMarketEnv, 'market_env')
 class ObservationStackerObsWrapper(ObservationWrapper):
+
     # augments observations by stacking them
     # usefull to encode memory in env observation
+    pass
+
+
+class NormalizeEnv:
+    pass
+
+
+class RunningMeanSTD:
     pass
 
 
@@ -533,11 +552,9 @@ class NormalizeRewardsWrapper(RewardWrapper, BaseCallback):
     pass
 
 
-@constraint(unwrapped_is, AbstractMarketEnv, 'market_env')
-class DiscountRewardsWrapper(RewardWrapper, BaseCallback):
-    # discoutns rewards of an episode
-    pass
 
 @constraint(unwrapped_is, AbstractMarketEnv)
 class ExperienceRecorderWrapper(Wrapper):
+    # saves experiences in buffer writes to hdf5 when 
+    # buffer reaches a certain size.
     pass

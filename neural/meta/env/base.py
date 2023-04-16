@@ -7,7 +7,7 @@ from abc import ABC, abstractmethod
 from neural.common.log import logger
 from neural.core.data.ops import StaticDataFeeder, AsyncDataFeeder
 from neural.core.data.enums import ColumnType
-from neural.core.trade.ops import AlpacaTrader, AbstractTrader
+from neural.core.trade.ops import CustomAlpacaTrader, AbstractTrader
 
 
 class AbstractMarketEnv(Env, ABC):
@@ -61,10 +61,10 @@ class TrainMarketEnv(AbstractMarketEnv):
         
         self.observation_space = spaces.Dict({
             'cash':spaces.Box(
-            low=0, high=np.inf, shape = (1,), dtype=np.float32),
+            low=-np.inf, high=np.inf, shape = (1,), dtype=np.float32),
 
             'asset_quantities': spaces.Box(
-            low=0, high=np.inf, shape = (
+            low=-np.inf, high=np.inf, shape = (
             self.n_symbols,), dtype=np.float32),
 
             'holds': spaces.Box(

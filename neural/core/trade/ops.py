@@ -8,9 +8,10 @@ from torch import nn
 import os
 from abc import ABC, abstractmethod
 from typing import Optional
-import numpy as np
 from neural.common.constants import PATTERN_DAY_TRADER_MINIMUM_NET_WORTH
-from neural.common.exceptions import IncompatibleTradeConstraint
+from neural.common.exceptions import TradeConstraintViolationError
+
+
 
 class AbstractTrader(ABC):
 
@@ -91,13 +92,15 @@ class AbstractTrader(ABC):
 
 
 
-class AlpacaTrader(AbstractTrader):
+class AlpacaTraderTemplate(AbstractTrader):
 
-    def __init__(self, 
-        client: AlpacaMetaClient, 
-        model : nn.Module, 
-        pipe: AbstractPipe, 
+
+    def __init__(self,
+        client: AlpacaMetaClient,
+        model: nn.Module,
+        pipe: AbstractPipe,
         dataset_metadata: DatasetMetadata):
+
 
         super().__init__(
             client,
@@ -105,19 +108,22 @@ class AlpacaTrader(AbstractTrader):
             pipe,
             dataset_metadata)
 
+
     @property
     def initial_cash(self):
-    
+
         if self._initial_cash is None:
             self._initial_cash = self.client.cash
 
         return self._initial_cash
-       
+
+
     @property
     def cash(self):
         self._cash = self.client.account.cash
         return self._cash
-    
+
+
     @property
     def asset_quantities(self):
 
@@ -141,6 +147,7 @@ class AlpacaTrader(AbstractTrader):
 
             asset_quantities.append(quantity)
         return asset_quantities
+
 
     @property
     def positions(self):
@@ -167,14 +174,14 @@ class AlpacaTrader(AbstractTrader):
 
             positions.append(position)
         return positions
-    
+
     @property
     def net_worth(self):
 
         self._net_worth = self.client.account.portfolio_value
 
         return self._net_worth
-    
+
 
     @property
     def longs(self):
@@ -192,68 +199,77 @@ class AlpacaTrader(AbstractTrader):
         return self._shorts
 
 
-    def place_orders(self, actions, *args, **kwargs):
-
-        if not self.check_trade_constraints():
-            raise IncompatibleTradeConstraint('Incompatible trade constraint.')
+    def place_orders(self, action, *args, **kwargs):
+        raise NotImplemented
 
 
-    def check_trade_constraints(self):
-        
+    def check_trade_constraints(self, *args, **kwargs):
+
         # pattern day trader constraint
         patttern_day_trader = self.client.account.pattern_day_trader
         net_worth = self.net_worth
-        
+
         pattern_day_trader_constraint = True if not patttern_day_trader \
             else net_worth > PATTERN_DAY_TRADER_MINIMUM_NET_WORTH
 
-        
-    
         # margin trading
         margin = abs(self.cash) if self.cash < 0 else 0
         maintenance_margin = 1.00
 
-        margin_constraint = margin * maintenance_margin <= self.porftfolio_value 
+        margin_constraint = margin * maintenance_margin <= self.porftfolio_value
 
         return pattern_day_trader_constraint and margin_constraint
-    
+
+
     def trade(self):
 
         self.trade_market_env = TradeMarketEnv(trader = self)
-
 
         piped_trade_env = self.pipe(self.trade_market_env)
         observation = piped_trade_env.reset()
 
         while True:
+
             action = self.model(observation)
             observation, reward, done, info = piped_trade_env.step(action)
 
 
-class CustomAlpacaTrader(AlpacaTrader):
+class CustomAlpacaTrader(AlpacaTraderTemplate):
 
-    def __init__(
-            self, client: 
-            AlpacaMetaClient, 
-            model: nn.Module, 
-            pipe: AbstractPipe, 
-            dataset_metadata: DatasetMetadata
-            ) -> None:
-        
+    # inherit and override apply rules to 
+    def __init__(self, 
+        client: AlpacaMetaClient, 
+        model : nn.Module, 
+        pipe: AbstractPipe, 
+        dataset_metadata: DatasetMetadata):
+
         super().__init__(
-            client, 
-            model, 
-            pipe, 
+            client,
+            model,
+            pipe,
             dataset_metadata)
+    
 
-
-    def record_experiences(self):
+    def apply_rules(self, *args, **kwargs):
+        # any user
         raise NotImplementedError
+    
 
+    def customize_place_orders(self, place_order_func):
 
-    def place_orders(actions):
-        raise NotImplementedError
+        def custom_place_order(action):
 
+            self.check_trade_constraints()
+            self.apply_rules()
 
-    def trade(self):
-        raise NotImplementedError
+            place_order_func(action)
+
+            return None
+
+        return custom_place_order
+    
+
+    @customize_place_orders
+    def place_orders(self, action, *args, **kwargs):
+
+        return super().place_orders(action, *args, **kwargs)

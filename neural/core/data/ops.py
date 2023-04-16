@@ -77,6 +77,13 @@ class DataFetcher():
                 raise ValueError(
                     f'Symbol {symbol} is not an active symbol.')
 
+            if not self.client._AlpacaMetaClient__symbols[symbol].fractionable:
+                logger.warning(
+                    f'Symbol {symbol} is not a fractionable symbol.')
+            
+
+            
+
         asset_classes = set(self.client._AlpacaMetaClient__symbols[
             symbol].asset_class for symbol in symbols)
 
