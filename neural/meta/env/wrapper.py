@@ -88,7 +88,7 @@ def unwrapped_is_not(wrapper_in_constructor, constrained_type):
 
     return unwrapped_env
 
-def encloses(wrapper_in_constructor, constrained_type):
+def wraps(wrapper_in_constructor, constrained_type):
 
     if  hasattr(wrapper_in_constructor, 'env'):
 
@@ -98,9 +98,9 @@ def encloses(wrapper_in_constructor, constrained_type):
 
     return wrapper_in_constructor
 
-def first_of(wrapper_at_constructor, constrained_type):
+def before(wrapper_at_constructor, constrained_type):
 
-    def first_of_helper(wrapper, wrapper_at_constructor):
+    def before_helper(wrapper, wrapper_at_constructor):
 
         if hasattr(wrapper, 'env'):
             if isinstance(wrapper.env, constrained_type):
@@ -110,9 +110,9 @@ def first_of(wrapper_at_constructor, constrained_type):
                     f'is applied before enclosing constrained wrapper {wrapper_at_constructor}.'
                 )
             else:
-                return first_of_helper(wrapper_at_constructor.env, wrapper_at_constructor)
+                return before_helper(wrapper_at_constructor.env, wrapper_at_constructor)
 
-    return first_of_helper(wrapper_at_constructor, wrapper_at_constructor)
+    return before_helper(wrapper_at_constructor, wrapper_at_constructor)
 
 
 
@@ -180,6 +180,7 @@ class AbstractMarketEnvMetadataWrapper(Wrapper, ABC):
         return observation, reward, done, info
 
 
+
 @constraint(unwrapped_is, TrainMarketEnv, 'market_env')
 class TrainMarketEnvMetadataWrapper(AbstractMarketEnvMetadataWrapper):
     # wraps a market env to track env metadata
@@ -223,7 +224,7 @@ class TrainMarketEnvMetadataWrapper(AbstractMarketEnvMetadataWrapper):
         return None
 
 
-@constraint(requires, TradeMarketEnv, 'market_env')
+@constraint(unwrapped_is, TradeMarketEnv, 'market_env')
 class AlpacaTradeEnvMetadataWrapper(AbstractMarketEnvMetadataWrapper):
 
     def __init__(self, env: Env) -> None:
@@ -271,8 +272,72 @@ class AlpacaTradeEnvMetadataWrapper(AbstractMarketEnvMetadataWrapper):
         return None
     
 
+@constraint(requires, TrainMarketEnvMetadataWrapper, 'market_metadata_env')
+@constraint(unwrapped_is, AbstractMarketEnv, 'market_env')
+class ConsoleTearsheetRenderWrapper:
 
-@constraint(first_of, ActionWrapper)
+    def __init__(
+        self, env: Env,
+        verbosity: int = 20
+        ) -> None:
+
+        super().__init__(env)
+        self.verbosity = verbosity
+        self.index = None
+
+        if isinstance(self.market_env, TrainMarketEnv):
+            self.render_every = self.market_env.n_steps//self.verbosity
+        elif isinstance(self.market_env, TradeMarketEnv):
+            self.render_every = 1 # every step
+
+
+    def reset(self):
+
+        observation = self.env.reset()
+        self.index = 0
+        logger.info(
+            f'n_symbols: {self.market_env.n_symbols}, '
+            f'n_features: {self.market_env.n_features}')
+
+        return observation
+    
+    def step(self, action):
+
+        observation, reward, done, info = self.env.step(action)
+        self.index += 1
+
+        if self.index % self.render_every == 0 or done:
+            self.render(done)
+
+        return observation, reward, done, info
+
+    def render(self, done):
+       
+        progress = self.market_metadata_env.progress
+        return_ = self.market_metadata_env.return_
+        sharpe = self.market_metadata_env.sharpe
+        net_worth = self.market_metadata_env.net_worth
+        positions = self.market_metadata_env.positions
+        cash = self.market_metadata_env.cash
+        profit = self.market_metadata_env.profit
+        longs = self.market_metadata_env.longs
+        shorts = self.market_metadata_env.shorts
+
+        metrics = [f'{progress:.0%}', f'{return_:.2%}', f'{sharpe:.4f}',
+                    f'${net_worth:,.2f}', f'${positions:,.2f}', f'${cash:,.2f}',
+                    f'${profit:,.2f}', f'${longs:,.2f}', f'${shorts:,.2f}']
+
+        if self.index == self.render_every:
+            title = ['Progress', 'Return', 'Sharpe ratio',
+                'Assets', 'Positions', 'Cash']
+            print(tabular_print(title, header=True))
+
+        # add performance metrics to tear sheet
+        print(tabular_print(metrics))
+
+
+
+@constraint(before, ActionWrapper)
 class MinTradeSizeActionWrapper(ActionWrapper):
     
     # ensures no action wrapper exists after this wrapper
@@ -440,7 +505,7 @@ class IntegerAssetQuantityActionWrapper(ActionWrapper):
         return action
 
 
-@constraint(first_of, ObservationWrapper)
+@constraint(before, ObservationWrapper)
 @constraint(requires, AbstractMarketEnvMetadataWrapper, 'market_metadata_env')
 class PositionsFeatureEngineeringWrapper(ObservationWrapper):
     # augments observations such that instead of number shares held
@@ -478,7 +543,7 @@ class PositionsFeatureEngineeringWrapper(ObservationWrapper):
     
 
 
-@constraint(encloses, PositionsFeatureEngineeringWrapper)
+@constraint(wraps, PositionsFeatureEngineeringWrapper)
 @constraint(requires, AbstractMarketEnvMetadataWrapper, 'market_metadata_env')
 class WealthAgnosticFeatureEngineeringWrapper(ObservationWrapper):
     # Augment observations so that 
@@ -523,6 +588,20 @@ class WealthAgnosticFeatureEngineeringWrapper(ObservationWrapper):
 
 
 @constraint(unwrapped_is, AbstractMarketEnv, 'market_env')
+class ObservationBufferWrapper(ObservationWrapper):
+
+    # augments observations by stacking them
+    # usefull to encode memory in env observation
+    pass
+
+
+
+class RunningMeanSTD:
+    pass
+
+
+@constraint(wraps, ObservationBufferWrapper)
+@constraint(unwrapped_is, AbstractMarketEnv, 'market_env')
 class RunningIndicatorsObsWrapper(ObservationWrapper):
 
     # computes running indicators
@@ -530,20 +609,10 @@ class RunningIndicatorsObsWrapper(ObservationWrapper):
         return None
 
 
-@constraint(unwrapped_is, AbstractMarketEnv, 'market_env')
-class ObservationStackerObsWrapper(ObservationWrapper):
 
-    # augments observations by stacking them
-    # usefull to encode memory in env observation
+class NormalizeObservationsWrapper(ObservationWrapper):
     pass
 
-
-class NormalizeEnv:
-    pass
-
-
-class RunningMeanSTD:
-    pass
 
 
 @constraint(unwrapped_is, AbstractMarketEnv, 'market_env')

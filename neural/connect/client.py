@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 from typing import Optional
 
 from alpaca.trading.enums import AccountStatus, AssetExchange, AssetClass
@@ -7,7 +8,6 @@ from alpaca.trading import TradingClient
 from neural.common.log import logger
 from neural.common.constants import API_KEY, API_SECRET
 from neural.tools.ops import objects_to_df
-from abc import ABC, abstractmethod
 
 
 
@@ -21,7 +21,6 @@ class AbstractClient(ABC):
     @abstractmethod
     def check_connection(self, *args, **kwargs):
         raise NotImplementedError
-
 
 
 
@@ -135,6 +134,6 @@ class AlpacaMetaClient(AbstractClient):
 
         return None
     
-    def check_connection(self, *args, **kwargs):
+    def check_connection(self):
 
         return True if self.account.status == AccountStatus.ACTIVE else False

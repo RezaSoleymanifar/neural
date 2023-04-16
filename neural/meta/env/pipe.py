@@ -53,8 +53,8 @@ class NoShortNoMarginPipe(AbstractPipe):
 
     def pipe(self, env):
         env = self.metadata_wrapper(env)
-        env = self.position_sizing(env, trade_ratio = 0.3)
-        env = self.margin_sizing()
-        env = self.short_sizing()
+        env = self.margin_sizing(initial_margin = 1) # equivalent to no margin
+        env = self.short_sizing(short_ratio = 0) # equivalent to no short
+        env = self.position_sizing(env, trade_ratio=0.02)
         env = self.render(env, verbosity = 20)
         return env
