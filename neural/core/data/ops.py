@@ -41,57 +41,57 @@ class DataFetcher():
         return None
 
     def _validate_resolution(self, resolution):
+
         accepted_resolutions = {'1Min', '5Min', '15Min', '30Min'}
 
         if resolution not in accepted_resolutions:
             raise ValueError(f'Accepted resolutions: {accepted_resolutions}.')
         
+        return
+        
         
     def _validate_symbols(self, symbols: List[str]):
+
 
         if len(symbols) == 0:
             raise ValueError('symbols argument cannot be an empty sequence.')
 
-
-        duplicate_symbols = list(set([
-            symbol for symbol in symbols if symbols.count(symbol) > 1]))
+        duplicate_symbols = [
+            symbol for symbol in set(symbols) if symbols.count(symbol) > 1]
         
         if duplicate_symbols:
-            raise ValueError(
-                f'Symbols {duplicate_symbols} have duplicate values.')
-
+            raise ValueError(f'Symbols {duplicate_symbols} have duplicate values.')
 
 
         for symbol in symbols:
 
-            if symbol not in self.client._AlpacaMetaClient__symbols:
-                raise ValueError(
-                    f'Symbol {symbol} is not a known symbol.')
+            symbol_data = self.client._AlpacaMetaClient__symbols.get(symbol)
 
-            if not self.client._AlpacaMetaClient__symbols[symbol].tradable:
-                raise ValueError(
-                    f'Symbol {symbol} is not a tradable symbol.')
-        
-            if not self.client._AlpacaMetaClient__symbols[
-                symbol].status == AssetStatus.ACTIVE:
-                raise ValueError(
-                    f'Symbol {symbol} is not an active symbol.')
+            if symbol_data is None:
+                raise ValueError(f'Symbol {symbol} is not a known symbol.')
 
-            if not self.client._AlpacaMetaClient__symbols[symbol].fractionable:
+            if not symbol_data.tradable:
+                raise ValueError(f'Symbol {symbol} is not a tradable symbol.')
+
+            if symbol_data.status != AssetStatus.ACTIVE:
+                raise ValueError(f'Symbol {symbol} is not an active symbol.')
+
+            if not symbol_data.fractionable:
+                logger.warning(f'Symbol {symbol} is not a fractionable symbol.')
+
+            if not symbol_data.easy_to_borrow:
                 logger.warning(
-                    f'Symbol {symbol} is not a fractionable symbol.')
-            
+                    f'Symbol {symbol} is not easy to borrow (ETB).')
 
-            
-
-        asset_classes = set(self.client._AlpacaMetaClient__symbols[
-            symbol].asset_class for symbol in symbols)
+        asset_classes = set(
+            self.client._AlpacaMetaClient__symbols.get(
+            symbol).asset_class for symbol in symbols)
 
 
         # checks if symbols have the same asset class
         if len(asset_classes) != 1:
-            raise ValueError(
-                'Symbols are not of the same asset class.')
+            raise ValueError('Symbols are not of the same asset class.')
+        
         asset_class = asset_classes.pop()
 
         return asset_class
@@ -103,49 +103,28 @@ class DataFetcher():
         ) -> Tuple[Any, Any]:
         
 
-        if asset_class == AssetClass.US_EQUITY:
-            client = self.client.clients['stocks']
-            
-        elif asset_class == AssetClass.CRYPTO:
-            client = self.client.clients['crypto']
+        client_map = {
+            AssetClass.US_EQUITY: self.client.clients['stocks'],
+            AssetClass.CRYPTO: self.client.clients['crypto']}
+
+        client = client_map[asset_class]
 
 
+        downloader_request_map = {
+            DatasetType.BAR: {
+                AssetClass.US_EQUITY: (client.get_stock_bars, StockBarsRequest),
+                AssetClass.CRYPTO: (client.get_crypto_bars, CryptoBarsRequest)},
 
-        if dataset_type == DatasetType.BAR:
+            DatasetType.QUOTE: {
+                AssetClass.US_EQUITY: (client.get_stock_quotes, StockQuotesRequest),
+                AssetClass.CRYPTO: (client.get_crypto_quotes, CryptoQuotesRequest)},
 
-            if asset_class == AssetClass.US_EQUITY:
-
-                downloader = client.get_stock_bars
-                request = StockBarsRequest
-                
-            elif asset_class == AssetClass.CRYPTO:
-
-                downloader = client.get_crypto_bars
-                request = CryptoBarsRequest
-
-
-
-        elif dataset_type == DatasetType.QUOTE:
-
-            if asset_class == AssetClass.US_EQUITY:
-                downloader = client.get_stock_quotes
-                request = StockQuotesRequest
-            
-            elif asset_class == AssetClass.CRYPTO:
-                downloader = client.get_crypto_quotes
-                request = CryptoQuotesRequest
+            DatasetType.TRADE: {
+                AssetClass.US_EQUITY: (client.get_stock_trades, StockTradesRequest),
+                AssetClass.CRYPTO: (client.get_crypto_trades, CryptoTradesRequest)}}
 
 
-
-        elif dataset_type == DatasetType.TRADE:
-
-            if asset_class == AssetClass.US_EQUITY:
-                downloader = client.get_stock_trades
-                request = StockTradesRequest
-            
-            elif asset_class == AssetClass.CRYPTO:
-                downloader = client.get_crypto_trades
-                request = CryptoTradesRequest
+        downloader, request = downloader_request_map[dataset_type][asset_class]
                 
         return downloader, request
 
@@ -231,7 +210,7 @@ class DataFetcher():
             dataset_symbols = raw_dataset.index.get_level_values('symbol').unique().tolist()
             missing_symbols = set(dataset_symbols) ^ set(symbols)
 
-            if len(missing_symbols) != 0:
+            if missing_symbols:
                 raise ValueError(
                 f'No data for symbols {missing_symbols} in {market_open}, {market_close} time range.')
 
@@ -246,7 +225,6 @@ class DataFetcher():
             raw_dataset = raw_dataset.reset_index(level=0, names='symbol')      
 
 
-            # add resample method here for trades and quotes
 
             processed_groups = list()
             # raw data is processed symbol by symbol

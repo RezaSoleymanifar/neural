@@ -1,9 +1,10 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
 from torch import nn
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List
 
 from neural.common.constants import PATTERN_DAY_TRADER_MINIMUM_NET_WORTH
+from neural.common.exceptions import TradeConstraintViolationError
 from neural.connect.client import AlpacaMetaClient, AbstractClient
 from neural.core.data.enums import DatasetMetadata
 from neural.meta.env.pipe import AbstractPipe
@@ -132,17 +133,14 @@ class AlpacaTraderTemplate(AbstractTrader):
         asset_quantities = []
 
         for symbol in symbols:
-            # check if symbol is present in dataframe
-            if symbol in positions['symbol'].values:
+            row = positions[positions['symbol'] == symbol]
 
-                # calculate quantity * sign
-                row = positions[positions['symbol'] == symbol].iloc[0]
-                if row['side'] == 'long':
-                    quantity = row['qty']
-                elif row['side'] == 'short':
-                    quantity = -1 * row['qty']
+            if not row.empty:
+                row_data = row.iloc[0]
+                quantity = (row_data['qty'] 
+                    if row_data['side'] == 'long' 
+                    else - 1 * row_data['qty'])
             else:
-                # set quantity to 0 if symbol is missing
                 quantity = 0
 
             asset_quantities.append(quantity)
@@ -150,30 +148,28 @@ class AlpacaTraderTemplate(AbstractTrader):
 
 
     @property
-    def positions(self):
+    def positions(self) -> List[float]:
 
         symbols = self.dataset_metadata.symbols
         positions = self.client.positions
         positions = []
 
         for symbol in symbols:
+            row = positions[positions['symbol'] == symbol]
 
-            # check if symbol is present in dataframe
-            if symbol in positions['symbol'].values:
-
-                # calculate quantity * sign
-                row = positions[positions['symbol'] == symbol].iloc[0]
-                if row['side'] == 'long':
-                    position = row['market_value']
-                elif row['side'] == 'short':
-                    position = -1 * row['qty']
-
+            if not row.empty:
+                row_data = row.iloc[0]
+                position = (row_data['market_value'] 
+                    if row_data['side'] == 'long' 
+                    else - 1 * row_data['market_value'])
             else:
-                # set position to 0 if symbol is missing
                 position = 0
 
             positions.append(position)
+
         return positions
+
+
 
     @property
     def net_worth(self):
@@ -200,7 +196,8 @@ class AlpacaTraderTemplate(AbstractTrader):
 
 
     def place_orders(self, action, *args, **kwargs):
-        raise NotImplemented
+        # IOC order 
+        raise NotImplementedError
 
 
     def check_trade_constraints(self, *args, **kwargs):
@@ -212,13 +209,22 @@ class AlpacaTraderTemplate(AbstractTrader):
         pattern_day_trader_constraint = True if not patttern_day_trader \
             else net_worth > PATTERN_DAY_TRADER_MINIMUM_NET_WORTH
 
+        if not pattern_day_trader_constraint:
+            raise TradeConstraintViolationError(
+                'Pattern day trader constraint violated.')
+
+
         # margin trading
         margin = abs(self.cash) if self.cash < 0 else 0
         maintenance_margin = 1.00
 
         margin_constraint = margin * maintenance_margin <= self.porftfolio_value
 
-        return pattern_day_trader_constraint and margin_constraint
+        if not margin_constraint:
+            raise TradeConstraintViolationError(
+                'Margin constraint violated.')
+
+        return None
 
 
     def trade(self):
@@ -232,6 +238,7 @@ class AlpacaTraderTemplate(AbstractTrader):
 
             action = self.model(observation)
             observation, reward, done, info = piped_trade_env.step(action)
+
 
 
 class CustomAlpacaTrader(AlpacaTraderTemplate):
@@ -251,11 +258,15 @@ class CustomAlpacaTrader(AlpacaTraderTemplate):
     
 
     def apply_rules(self, *args, **kwargs):
-        # any user
+
+        # hard rules like min trade size
+        # integer asset quantity
+        # no short etc. are applied here.
+
         raise NotImplementedError
     
 
-    def customize_place_orders(self, place_order_func):
+    def custom(self, place_order_func):
 
         def custom_place_order(action):
 
@@ -269,7 +280,7 @@ class CustomAlpacaTrader(AlpacaTraderTemplate):
         return custom_place_order
     
 
-    @customize_place_orders
+    @custom
     def place_orders(self, action, *args, **kwargs):
 
         return super().place_orders(action, *args, **kwargs)

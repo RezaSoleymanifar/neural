@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Tuple, Dict, TYPE_CHECKING
+from typing import Tuple, Dict, TYPE_CHECKING, Optional
 
 import numpy as np
 from gym import spaces, Env
@@ -13,32 +13,43 @@ if TYPE_CHECKING:
     from neural.core.trade.ops import AbstractTrader
 
 
+
 class AbstractMarketEnv(Env, ABC):
 
+    # abstract class for market envs.
 
     @abstractmethod
     def update_env(self):
 
         raise NotImplementedError
     
+
     @abstractmethod
     def construct_observation(self):
 
         raise NotImplementedError
 
 
+    @abstractmethod
+    def place_orders(self, actions):
+
+        raise NotImplementedError
+
+
 
 class TrainMarketEnv(AbstractMarketEnv):
+
     # bare metal market environment with no market logic
-    # allows short/margin by default 
-    # natively allowes cash and asset_quantities to be negative.
-    # use action wrappers to enforce no margin, no short or neither
+    # natively allowes cash and asset_quantities to be negative
+    # allowing short/margin trading by default. Use actions wrappers
+    # to impose market logic.
+
     def __init__(
         self, 
         market_data_feeder: StaticDataFeeder,
         initial_cash: float = 1e6,
+        initial_asset_quantities: Optional[np.ndarray] = None
         ) -> None:
-        
 
         self.data_feeder = market_data_feeder
         self.dataset_metadata = self.data_feeder.dataset_metadata
@@ -50,10 +61,11 @@ class TrainMarketEnv(AbstractMarketEnv):
 
         self.index = None
         self.initial_cash = initial_cash
+        self.initial_asset_quantities = initial_asset_quantities
         self.cash = None
-        self.net_worth = None # cash + assets (stock/crypto)
-        self.asset_quantities = None # quantity of each assetheld
-        self.holds = None # steps asset did not have trades
+        self.net_worth = None
+        self.asset_quantities = None
+        self.holds = None # steps asset was held
         self.features = None
         self.asset_prices = None
         self.info = None
@@ -72,11 +84,13 @@ class TrainMarketEnv(AbstractMarketEnv):
 
             'holds': spaces.Box(
             low=0, high=np.inf, shape = (
-            self.n_symbols,), dtype=np.int32),
+            self.n_symbols,), dtype=np.float32),
             
             'features': spaces.Box(
             low=-np.inf, high=np.inf, shape = (
             self.n_features,), dtype=np.float32)})
+        
+        return None
     
 
     def update_env(self) -> np.ndarray:
@@ -84,7 +98,12 @@ class TrainMarketEnv(AbstractMarketEnv):
         self.features = next(self.row_generator)
         self.asset_prices = self.features[self.asset_price_mask]
 
+        self.index += 1
+        self.holds[self.asset_quantities != 0] += 1
+        self.net_worth = self.cash + self.asset_quantities @ self.asset_prices
+
         return None
+
 
     def construct_observation(self) -> np.ndarray:
         
@@ -97,62 +116,54 @@ class TrainMarketEnv(AbstractMarketEnv):
         
         return observation
 
-    def reset(
-            self
-            ) -> Dict:
+
+    def place_orders(self, actions) -> None:
+
+        for asset, action in enumerate(actions):
+
+            if action == 0:
+                continue
+
+            quantity = action/self.asset_prices[asset]
+
+            self.asset_quantities[asset] += quantity
+            self.cash -= action
+            self.holds[asset] = 0
+        
+        return None
+        
+
+    def reset(self) -> Dict:
                 
-        # resetting input state
         self.row_generator = self.data_feeder.reset()
 
-        self.update_env()
-
-        self.index = 0
+        self.index = -1
         self.holds = np.zeros((self.n_symbols,), dtype=np.int32)
 
         self.cash = self.initial_cash
-        self.asset_quantities = np.zeros((self.n_symbols,), dtype=np.float32)
-        self.net_worth = self.cash
 
-        self.observation = self.construct_observation()
+        self.asset_quantities = (
+            np.zeros((self.n_symbols,), dtype=np.float32)
+            if self.initial_asset_quantities is None
+            else self.initial_asset_quantities)
 
-        return self.observation
+        self.update_env()
+
+        observation = self.construct_observation()
+
+        return observation
+
 
     def step(
         self, 
         actions
         ) -> Tuple[Dict, np.float32, bool, Dict]:
-
-        # iterates over actions
-        for asset, action in enumerate(actions):
-
-            if action > 0: # buy
-                
-                buy = action
-                quantity = buy/self.asset_prices[asset]
-
-                self.asset_quantities[asset] += quantity
-                self.cash -= buy
-
-            elif action < 0:
-                
-                sell = abs(action)
-                quantity = sell/self.asset_prices[asset]
-
-                self.asset_quantities[asset] -= quantity
-                self.cash += sell
-                self.holds[asset] = 0
-
-        self.update_env()
-
-        self.index += 1
-        self.holds[self.asset_quantities != 0] += 1
-
-        # new asset value
-        new_net_worth = self.cash + self.asset_quantities @ self.asset_prices
-        reward = new_net_worth - self.net_worth
-        self.net_worth = new_net_worth
         
-        # returns states using env vars
+        net_worth_ = self.net_worth
+        self.place_orders(actions)
+        self.update_env()
+        
+        reward = self.net_worth - net_worth_
         self.observation = self.construct_observation()
 
         # report terminal state
@@ -175,14 +186,15 @@ class TradeMarketEnv(AbstractMarketEnv):
 
         self.column_schema = self.dataset_metadata.column_schema
         self.asset_price_mask = self.dataset_metadata.column_schema[ColumnType.CLOSE]
+        self.n_steps = float('inf')
         self.n_features = self.dataset_metadata.n_columns
         self.n_symbols = len(self.dataset_metadata.symbols)
 
         self.initial_cash = self.trader.initial_cash
         self.cash = None
-        self.net_worth = None # cash + assets (stock/crypto)
-        self.asset_quantities = None # quantity of each assetheld
-        self.holds = None # steps asset did not have trades
+        self.net_worth = None
+        self.asset_quantities = None
+        self.holds = None
         self.features = None
         self.info = None
 
@@ -200,23 +212,29 @@ class TradeMarketEnv(AbstractMarketEnv):
 
             'holds': spaces.Box(
             low=0, high=np.inf, shape = (
-            self.n_symbols,), dtype=np.int32),
+            self.n_symbols,), dtype=np.float32),
             
             'features': spaces.Box(
             low=-np.inf, high=np.inf, shape = (
             self.n_features,), dtype=np.float32)})
+        
+        return None
             
-    def update_env(self):
 
-        # this step is delayed to aggregate stream data
+    def update_env(self) -> None:
+
+        # this step will take time equal to dataset resolution to aggregate data stream
         self.features = next(self.row_generator)
+        self.holds[self.asset_quantities != 0] += 1
+
         self.cash = self.trader.cash
         self.asset_quantities = self.trader.asset_quantities
         self.net_worth = self.trader.net_worth
 
         return None
 
-    def construct_observation(self) -> np.ndarray:
+
+    def construct_observation(self) -> Dict:
 
         observation = {
             'cash': self.cash,
@@ -228,17 +246,22 @@ class TradeMarketEnv(AbstractMarketEnv):
         return observation
     
 
-    def reset(
-        self
-        ) -> Dict:
+    def place_orders(self, actions) -> None:
+
+        self.trader.place_orders(actions)
+
+        return None
+
+
+    def reset(self) -> Dict:
 
         # resetting input state
         self.row_generator = self.data_feeder.reset()
 
-        self.update_env()
-
         self.holds = np.zeros(
             (self.n_symbols,), dtype=np.int32)
+        
+        self.update_env()
 
         # compute state
         self.observation = self.construct_observation()
@@ -252,15 +275,11 @@ class TradeMarketEnv(AbstractMarketEnv):
         ) -> Tuple[Dict, np.float32, bool, Dict]:
 
 
-        previous_net_worth = self.net_worth
-        self.trader.place_orders(actions)
-
-        # takes time equal to trading resolution
+        net_worth_ = self.net_worth
+        self.place_orders(actions)
         self.update_env()
 
-        self.holds[self.asset_quantities != 0] += 1
-
-        reward = self.net_worth - previous_net_worth
+        reward = self.net_worth - net_worth_
 
         # returns states using env vars
         self.observation = self.construct_observation()

@@ -3,6 +3,8 @@ from neural.tools.enums import CalendarType
 import pandas_market_calendars as market_calendars
 import pandas as pd
 
+
+
 class Calendar:
 
     def __init__(
@@ -13,23 +15,21 @@ class Calendar:
         self.asset_class = asset_class
         self.calendar = None
 
+
     def _get_calendar(
         self
         ) -> market_calendars.MarketCalendar:
 
-        if self.asset_class == AssetClass.US_EQUITY:
+        asset_class_to_calendar_type = {
+            AssetClass.US_EQUITY: CalendarType.US_EQUITY,
+            AssetClass.CRYPTO: CalendarType.CRYPTO}
 
-            calendar_type = CalendarType.US_EQUITY
-        
-        elif self.asset_type == AssetClass.CRYPTO:
-
-            calendar_type = CalendarType.CRYPTO
-
+        calendar_type = asset_class_to_calendar_type.get(self.asset_class)
         calendar = market_calendars.get_calendar(calendar_type.value)
 
         return calendar
 
-    # get core hours of calendar
+
     def get_schedule(
             self, 
             start_date, 
@@ -44,13 +44,16 @@ class Calendar:
 
         return schedule
 
+
     def get_local_time_zone(self) -> str:
 
-        if self.calendar_type == CalendarType.CRYPTO:
-            time_zone = 'UTC'
+        calendar_type_to_time_zone = {
+            CalendarType.CRYPTO: 'UTC',
+            CalendarType.US_EQUITY: 'America/New_York'}
 
-        elif self.calendar_type == CalendarType.US_EQUITY:
-            time_zone = 'America/New_York'
-
+        time_zone = calendar_type_to_time_zone.get(self.calendar_type)
         return time_zone
     
+
+class RunningMeanSTD:
+    pass

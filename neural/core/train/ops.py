@@ -9,3 +9,7 @@ class AbstractTrainer(ABC):
     def train(self, *args, **kwargs):
 
         raise NotImplementedError
+
+
+class AbstractRewardShaper(ABC):
+    pass

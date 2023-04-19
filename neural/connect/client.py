@@ -31,7 +31,7 @@ class AlpacaMetaClient(AbstractClient):
         secret: Optional[str] = None,
         ) -> None:
         super.__init__
-        # if sandbox = True tries connecting to paper account endpoint
+
         self.key = key if key is not None else API_KEY
         self.secret = secret if secret is not None else API_SECRET
 
@@ -44,6 +44,7 @@ class AlpacaMetaClient(AbstractClient):
         self._exchanges = None
 
         return None
+
 
     @property
     def __symbols(self):
@@ -58,6 +59,7 @@ class AlpacaMetaClient(AbstractClient):
 
         return self._symbols
 
+
     @property
     def assets(self):
 
@@ -67,6 +69,7 @@ class AlpacaMetaClient(AbstractClient):
 
         return objects_to_df(self._assets)
 
+
     @property
     def exchanges(self):
 
@@ -75,6 +78,7 @@ class AlpacaMetaClient(AbstractClient):
 
         return [item.value for item in self._exchanges]
 
+
     @property
     def asset_classes(self):
 
@@ -82,6 +86,7 @@ class AlpacaMetaClient(AbstractClient):
             self._asset_classes = [item for item in AssetClass]
 
         return [item.value for item in self._asset_classes]
+
 
     @property
     def positions(self):
@@ -120,6 +125,7 @@ class AlpacaMetaClient(AbstractClient):
 
         return None
 
+
     def set_credentials(
         self, 
         key: str, 
@@ -134,6 +140,7 @@ class AlpacaMetaClient(AbstractClient):
 
         return None
     
+
     def check_connection(self):
 
         return True if self.account.status == AccountStatus.ACTIVE else False

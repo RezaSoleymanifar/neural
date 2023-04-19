@@ -9,6 +9,7 @@ from tqdm import tqdm
 from alpaca.data.timeframe import TimeFrame, TimeFrameUnit
 from neural.core.data.enums import ColumnType
 
+
 def validate_path(
     file_path: str | os.PathLike
     ) -> None:
@@ -26,6 +27,8 @@ def validate_path(
         
     return None
 
+
+
 def create_column_schema(data: pd.DataFrame):
 
     column_schema = dict()
@@ -36,6 +39,8 @@ def create_column_schema(data: pd.DataFrame):
         column_schema[column_type] = mask
 
     return column_schema
+
+
 
 def to_datetime(date: str):
 
@@ -49,6 +54,7 @@ def to_datetime(date: str):
             )
 
     return date_time_
+
 
 
 def to_timeframe(time_frame: str):
@@ -73,9 +79,11 @@ def to_timeframe(time_frame: str):
         raise ValueError(
             "Invalid timeframe. Valid examples: 59Min, 23Hour, 1Day, 1Week, 12Month")
 
+
+
 def tabular_print(
-        entries: List, style='banner',
-        align='left', width = 15, header = False) -> None:
+    entries: List, style='banner',
+    align='left', width = 15, header = False) -> None:
     
     # helper method to tabulate performance metrics.
     if header:
@@ -88,19 +96,24 @@ def tabular_print(
 
     return row
 
+
+
 def progress_bar(total: Iterable):
     bar_format = '{l_bar}{bar}| {n_fmt}/{total_fmt} | {elapsed}<{remaining}'
     bar = tqdm(total = total, bar_format = bar_format)
     return bar
 
 
-def sharpe(assets_hist: List[float], base=0):
 
-    hist = pd.Series(assets_hist)
+def get_sharpe_ratio(net_worth_hist: List[float], base=0):
+    
+    hist = pd.Series(net_worth_hist)
     returns = hist.pct_change().dropna()
     val = (returns.mean()-base)/returns.std()
 
     return val
+
+
 
 # converts collection of enum objects dataframe.
 def objects_to_df(
