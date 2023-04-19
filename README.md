@@ -14,8 +14,8 @@
 <h1>neuralHFT: <span style="font-size: 70%;">deep reinforcement learning for high frequency trading.</span></h1>
 
 
-neuralHFT is a pythonic libarary that is written and optimized for high-frequency stocks and crypto trading. neuralHFT offers seamless integration with [Alpaca API](https://alpaca.markets/) allowing end-to-end support from development to deployment of DRL algorithms.
+neuralHFT is a pythonic libarary that is written and optimized for high-frequency stocks and crypto trading. Available market environments are fully compatible with stable versions of state of the art DRL algorithms implemented in [stable-baselines3](https://stable-baselines3.readthedocs.io/en/master/) and [PyTorch](https://pytorch.org/) with no boilerplate code required. neuralHFT by default offers seamless integration with [Alpaca API](https://alpaca.markets/) allowing standalone and end-to-end support from training and launching HFT algorithms in live market environment.
 
-The Alpaca API provides low-latency, commission-free trading of stocks and crypto assets, making it an ideal platform for high-frequency trading strategies. Our library provides end-to-end support from data collection to feature engineering, model design, training, back-testing and final implementation in market environment. 
+The Alpaca API provides low-latency, commission-free trading of stocks and crypto assets, making it an ideal platform for high-frequency trading strategies. 
 
-neuralHFT supports a host of state of the art DRL algorithms implemented in [stable-baselines3](https://stable-baselines3.readthedocs.io/en/master/) and [PyTorch](https://pytorch.org/). Data retrieval, model training and inference operations are highly optimized thanks to [HDF5](https://en.wikipedia.org/wiki/Hierarchical_Data_Format) file format, GPU processing support, and C-level implementation in training bottlenecks, leading to drastic speed-up of model prototyping.
+This comprehensive support through a pythonic interface allows users to efficiently develop, test, and deploy high-frequency trading strategies in a standalone manner, without the need for additional tools and services.
