@@ -1,9 +1,14 @@
 import os
 
-
+# Load the API key and secret from environment variables
 API_KEY = os.environ.get('API_KEY', None)
 API_SECRET = os.environ.get('API_SECRET', None)
 
+# Set the default maximum number of rows for HDF5 storage
+HDF5_DEFAULT_MAX_ROWS = 2_000_000
+
+
+# Set the minimum net worth for a pattern day trader
 PATTERN_DAY_TRADER_MINIMUM_NET_WORTH = 25_000
 
 DOW_JONES_SYMBOLS = ['AAPL', 'AXP', 'BA', 'CAT', 'CSCO', 'CVX',
@@ -23,4 +28,3 @@ CUSTOM_SYMBOLS = ['AAPL', 'ABBV', 'ABT', 'ACN', 'ADBE', 'AMZN',
     'NEE', 'NFLX', 'NKE', 'NVDA', 'ORCL', 'PEP', 'PFE', 'PG', 'PYPL',
     'SBUX', 'T', 'TSLA', 'UNH', 'UPS', 'V', 'VZ', 'WMT', 'XOM']
 
-HDF5_DEFAULT_MAX_ROWS = 2_000_000

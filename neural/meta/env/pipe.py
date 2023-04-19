@@ -18,12 +18,18 @@ from neural.meta.env.base import AbstractMarketEnv
 
 class AbstractPipe(ABC):   
 
+    """
+    Abstract class for environment pipes, which add functionality to an existing
+    environment by applying wrappers successively.
+    """
+
 
     @abstractmethod
     def pipe(self, env):
-
-        # abstract method for piping an environment. Wrappers
-        # are addedd successively akin to layers in PyTorch.
+        """
+        Abstract method for piping an environment. Wrappers
+        are added successively akin to layers in PyTorch.
+        """
 
         raise NotImplementedError
 
@@ -33,10 +39,17 @@ class AbstractPipe(ABC):
             env: AbstractMarketEnv,
             n_episodes: Optional[int] = None
             ) -> None:
+        """
+        Runs environment with random actions. Useful for tuning
+        parameters of normalizer wrappers that depend on having seen observations.
         
-        # runs env with random actions. Useful for tuning
-        # parameters of normalizer wrappers that depend
-        # on having seen observations.
+        Args:
+        - env: AbstractMarketEnv object to warm up.
+        - n_episodes: Number of episodes to run. If None, runs until env is done.
+
+        Returns:
+        None
+        """
 
         piped_env = self.pipe(env)
 
@@ -57,10 +70,12 @@ class AbstractPipe(ABC):
 
 class NetWorthRelativeShortMarginPipe(AbstractPipe):
 
-    # A pipe is a stack of market wrappers applied in a non-conflicting way.
-    # User wrappers to customize the base market env, manipulate actions
-    # and observations, impose trading logic,  etc. according to your
-    # specific needs.
+
+    """
+    A pipe is a stack of market wrappers applied in a non-conflicting way. Use
+    wrappers to customize the base market env, manipulate actions and
+    observations, impose trading logic, etc. according to your specific needs.
+    """
 
     def __init__(
             self,
@@ -72,6 +87,18 @@ class NetWorthRelativeShortMarginPipe(AbstractPipe):
             verbosity: int = 20,
             ) -> None:
         
+        """
+        Args:
+        - min_action (float): minimum trade size.
+        - integer (bool): whether the asset quantities must be integers.
+        - initial_margin (float): the initial leverage allowed by the trader.
+        - short_ratio (float): the percentage of the net worth that can be
+        shorted.
+        - trade_ratio (float): the percentage of the net worth that is traded
+        at each trade.
+        - verbosity (int): the level of detail of the output of the market env.
+        """
+
         self.min_action = min_action
         self.integer = integer
         self.initial_margin = initial_margin
@@ -92,7 +119,18 @@ class NetWorthRelativeShortMarginPipe(AbstractPipe):
         return None
 
     def pipe(self, env):
-        
+
+        """
+        Applies a stack of market wrappers successively to an environment.
+        Wrappers are addedd successively akin to layers in PyTorch.
+
+        Args:
+        - env (AbstractMarketEnv): the environment to be wrapped.
+
+        Returns:
+        - env (AbstractMarketEnv): the wrapped environment.
+        """
+
         env = self.metadata_wrapper(env)
         env = self.min_trade(env, min_action=self.min_action)
         env = self.integer_sizing(env, self.integer)

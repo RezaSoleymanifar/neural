@@ -42,6 +42,19 @@ class DataFetcher():
 
     def _validate_resolution(self, resolution):
 
+        """
+        Validates the resolution of the dataset.
+
+        Parameters:
+        resolution (str): The resolution of the dataset.
+
+        Returns:
+        None.
+
+        Raises:
+        ValueError: If the resolution is not one of the accepted resolutions.
+        """
+
         accepted_resolutions = {'1Min', '5Min', '15Min', '30Min'}
 
         if resolution not in accepted_resolutions:
@@ -52,6 +65,25 @@ class DataFetcher():
         
     def _validate_symbols(self, symbols: List[str]):
 
+        """
+        Validates the list of symbols.
+
+        Args:
+        - symbols (List[str]): The list of symbols to validate.
+
+        Returns:
+        - str: The asset class of the symbols.
+
+        Raises:
+        - ValueError: If the symbols argument is an empty sequence.
+                      If any symbols have duplicate values.
+                      If any symbol is not a known symbol.
+                      If any symbol is not a tradable symbol.
+                      If any symbol is not an active symbol.
+                      (warning only) if any symbol is not a fractionable symbol.
+                      (warning only) if any symbol is not easy to borrow (ETB).
+                      If the symbols are not of the same asset class.
+        """
 
         if len(symbols) == 0:
             raise ValueError('symbols argument cannot be an empty sequence.')
@@ -103,6 +135,23 @@ class DataFetcher():
         ) -> Tuple[Any, Any]:
         
 
+        """
+        Returns the appropriate data downloader and request object based on the provided dataset type
+        and asset class.
+
+        Parameters:
+        -----------
+        dataset_type: DatasetType
+            The type of dataset being downloaded, one of ['BAR', 'QUOTE', 'TRADE'].
+        asset_class: AssetClass, optional
+            The asset class being downloaded, defaults to `AssetClass.US_EQUITY`.
+
+        Returns:
+        --------
+        Tuple[Any, Any]
+            A tuple containing the appropriate downloader and request objects.
+        """
+
         client_map = {
             AssetClass.US_EQUITY: self.client.clients['stocks'],
             AssetClass.CRYPTO: self.client.clients['crypto']}
@@ -138,7 +187,22 @@ class DataFetcher():
         start: datetime,
         end: datetime,
         ) -> None:
-                
+
+        """
+        Downloads raw dataset from the Alpaca API.
+
+        Args:
+            dataset_type (DatasetType): The type of dataset to download (bar, quote, or trade).
+            symbols (List[str]): A list of symbols to download.
+            asset_class (AssetClass): The asset class to download.
+            resolution (str): The resolution of the dataset to download (e.g., "1Min").
+            start (datetime): The start date and time of the dataset to download.
+            end (datetime): The end date and time of the dataset to download.
+
+        Returns:
+            pd.DataFrame: The downloaded dataset as a pandas DataFrame.
+        """                
+
         resolution = to_timeframe(resolution)
 
         data_fetcher = DataFetcher(self.client)
@@ -172,6 +236,23 @@ class DataFetcher():
         end_date: str | datetime
         ) -> DatasetMetadata:
 
+        """
+        Downloads financial features data for the given symbols and saves it in an HDF5 file format.
+        
+        Args:
+            file_path (str | os.PathLike): The file path of the HDF5 file to save the data.
+            target_dataset_name (str): The name of the dataset to create in the HDF5 file.
+            dataset_type (DatasetType): The type of dataset to download. Either 'BAR', 'TRADE', or 'QUOTE'.
+            symbols (List[str]): The list of symbol names to download features data for.
+            resolution (str): The frequency at which to sample the data. One of '1Min', '5Min', '15Min', or '30Min'.
+            start_date (str | datetime): The start date to download data for, inclusive. If a string, it should be in
+                the format 'YYYY-MM-DD'.
+            end_date (str | datetime): The end date to download data for, inclusive. If a string, it should be in
+                the format 'YYYY-MM-DD'.
+                
+        Returns:
+            metadata (DatasetMetadata): The metadata of the saved dataset.
+        """
 
         validate_path(file_path=file_path)
 
@@ -292,6 +373,22 @@ class DataProcessor:
             close: datetime, 
             resolution: str):
 
+        """
+        Reindexes and forward-fills missing rows in the given DataFrame in the [open, close) range based on the given
+        resolution. Returns the processed DataFrame.
+
+        :param data: The DataFrame to be processed.
+        :type data: pd.DataFrame
+        :param open: The open time of the market data interval to process.
+        :type open: datetime
+        :param close: The close time of the market data interval to process.
+        :type close: datetime
+        :param resolution: The frequency of the time intervals in the processed data.
+        :type resolution: str
+        :return: The processed DataFrame.
+        :rtype: pd.DataFrame
+        """
+
         # resamples and forward fills missing rows in [open, close) range
         index = pd.date_range(
             start=open, end=close, freq=resolution, inclusive='left')
@@ -327,6 +424,18 @@ class DatasetIO:
         metadata: DatasetMetadata, 
         target_dataset_name: str):
 
+        """Write data to an HDF5 file and update metadata.
+
+        Args:
+            file_path (str | os.PathLike): The file path of the HDF5 file.
+            data_to_write (np.ndarray): The data to write to the HDF5 file.
+            metadata (DatasetMetadata): The metadata of the dataset being written.
+            target_dataset_name (str): The name of the dataset to write to in the HDF5 file.
+
+        Returns:
+            None
+        """
+
         validate_path(file_path=file_path)
         
         with h5.File(file_path, 'a') as hdf5:
@@ -348,9 +457,11 @@ class DatasetIO:
                 
                 # Append the new data to the dataset and update metadata
                 new_metadata = target_dataset_metadata + metadata
-                target_dataset.resize((new_metadata.n_rows, new_metadata.n_columns))
+                target_dataset.resize(
+                    (new_metadata.n_rows, new_metadata.n_columns))
                 
-                target_dataset[target_dataset_metadata.n_rows : new_metadata.n_rows, :] = data_to_write
+                target_dataset[
+                    target_dataset_metadata.n_rows : new_metadata.n_rows, :] = data_to_write
                 serialized_new_metadata = pickle.dumps(new_metadata, protocol=0)
                 target_dataset.attrs['metadata'] = serialized_new_metadata
         
@@ -360,6 +471,23 @@ class DatasetIO:
         hdf5: h5.File,
         target_dataset_name: str
         ) -> Tuple[DatasetMetadata, h5.Dataset]:
+
+
+        """
+        Extracts a target dataset and its metadata from an HDF5 file.
+
+        Args:
+            hdf5 (h5.File): The HDF5 file object to extract the dataset from.
+            target_dataset_name (str): The name of the target dataset to extract.
+
+        Returns:
+            Tuple[DatasetMetadata, h5.Dataset]: A tuple containing the metadata object for the
+                target dataset and the target dataset object as a h5py dataset object.
+
+        Raises:
+            CorruptDataError: If the number of rows or columns specified in the metadata object
+                does not match the actual number of rows or columns in the target dataset.
+        """
 
         target_dataset = hdf5[target_dataset_name]
         serialized_metadata = target_dataset.attrs['metadata']
@@ -382,6 +510,28 @@ class DatasetIO:
         file_path: str | os.PathLike, 
         target_dataset_name: Optional[str] = None
         ) -> Tuple[DatasetMetadata, List[h5.Dataset]]:
+
+
+        """
+        Loads one or more datasets from an HDF5 file and returns a tuple containing their metadata
+        and the datasets themselves as h5py dataset objects.
+
+        Args:
+            file_path (str | os.PathLike): The path to the HDF5 file to load the dataset(s) from.
+            target_dataset_name (Optional[str]): The name of the target dataset to load. If not
+                provided, all datasets in the file will be loaded.
+
+        Returns:
+            Tuple[DatasetMetadata, List[h5.Dataset]]: A tuple containing the metadata object for the
+                loaded dataset(s) and the loaded dataset(s) as h5py dataset objects.
+
+        Raises:
+            CorruptDataError: If the number of rows or columns specified in the metadata object
+                does not match the actual number of rows or columns in the target dataset.
+            FileNotFoundError: If the file_path does not exist.
+            ValueError: If the file_path is not a valid HDF5 file.
+
+        """
 
         validate_path(file_path= file_path)
         
@@ -416,18 +566,39 @@ class DatasetIO:
     def merge_datasets(self):
 
         # merges all datasets into one contiguous dataset
-        raise NotImplemented(
+        raise NotImplementedError(
             'method not implemented yet.'
         )
 
 
 class AbstractStaticDataFeeder(ABC):
+
+    """
+    Abstract base class for defining a static data feeder that can reset and split the data.
+    """
+
     @abstractmethod
     def reset(self):
+
+        """
+        Resets the internal state of the data feeder.
+        
+        Raises:
+            NotImplementedError: This method must be implemented by a subclass.
+        """
+
         raise NotImplementedError
     
     @abstractmethod
     def split(self):
+
+        """
+        Returns the split indices of the data for training and validation.
+        
+        Raises:
+            NotImplementedError: This method must be implemented by a subclass.
+        """
+
         raise NotImplementedError
 
     # @abstractmethod
@@ -437,18 +608,39 @@ class AbstractStaticDataFeeder(ABC):
 
 class AbstractAsyncDataFeeder(ABC):
 
+    """
+    Abstract base class for defining an asynchronous data feeder that can be used with async iterators.
+
+    Methods:
+        __aiter__(): Abstract asynchronous method that returns an async iterator for the data.
+        
+    Raises:
+        NotImplementedError: If the __aiter__() method is not implemented by a subclass.
+    """
+
     @abstractmethod
     async def __aiter__(self):
         pass
 
 
 class AsyncDataFeeder(AbstractAsyncDataFeeder):
-    # to stream and iteratively aggregate live data
+    """
+    Subclass of AbstractAsyncDataFeeder that streams and iteratively aggregates live data.
+
+    Methods:
+        __aiter__(): Asynchronous method that returns an async iterator for the live data.
+
+    """
     pass
 
 
 class StaticDataFeeder(AbstractStaticDataFeeder):
-    # to iteratively return data required for environment from a static source.
+
+    """
+    Subclass of AbstractStaticDataFeeder that iteratively returns data required for 
+    the environment from a static source.
+    """
+    
     def __init__(
         self, 
         dataset_metadata: DatasetMetadata, 
@@ -456,6 +648,19 @@ class StaticDataFeeder(AbstractStaticDataFeeder):
         start_index: int = 0,
         end_index : Optional[int] = None,
         n_chunks : Optional[int] = 1) -> None:
+
+        """
+        Initializes a StaticDataFeeder object.
+
+        Args:
+            dataset_metadata (DatasetMetadata): Metadata for the dataset being loaded.
+            datasets (List[h5.Dataset | np.ndarray]): The actual dataset(s) being loaded.
+            start_index (int): The starting index to load the data from. Defaults to 0.
+            end_index (Optional[int]): The ending index to load the data from. If not 
+                provided, defaults to the number of rows specified in the metadata object.
+            n_chunks (Optional[int]): The number of chunks to break the dataset into for 
+                efficient loading. Defaults to 1.
+        """
 
         self.dataset_metadata = dataset_metadata
         self.datasets = datasets
@@ -465,9 +670,17 @@ class StaticDataFeeder(AbstractStaticDataFeeder):
         self.n_columns = self.dataset_metadata.n_columns
         self.n_chunks = n_chunks
 
+        return None
 
     def reset(self):
-        
+
+        """
+        Resets the internal state of the data feeder.
+
+        Yields:
+            numpy.ndarray: The data row by row from the specified dataset chunk(s).
+        """        
+
         chunk_edge_indices =  np.linspace(
             start = self.start_index, 
             stop = self.end_index,
@@ -486,8 +699,16 @@ class StaticDataFeeder(AbstractStaticDataFeeder):
 
     
     def split(self, n: int):
-        # multiplies into nonoverlapping contiguous sub-feeders that span dataset.
-        # facilitates parallelizing training.
+        
+        """
+        Splits the dataset into multiple non-overlapping contiguous sub-feeders that span the dataset.
+
+        Args:
+            n (int): The number of sub-feeders to split the dataset into.
+
+        Returns:
+            List[StaticDataFeeder]: A list of StaticDataFeeder objects.
+        """
 
         assert n > 0, "n must be a positive integer"
         static_data_feeders = list()

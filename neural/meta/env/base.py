@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Tuple, Dict, TYPE_CHECKING, Optional
+from typing import Tuple, Dict, TYPE_CHECKING, Optional, Iterable
 
 import numpy as np
 from gym import spaces, Env
@@ -16,10 +16,28 @@ if TYPE_CHECKING:
 
 class AbstractMarketEnv(Env, ABC):
 
-    # abstract class for market envs.
+    """
+    Abstract base class for market environments.
+
+    Subclasses should implement the following abstract methods:
+        - update_env(): update the state of the environment after taking actions.
+        - construct_observation(): construct a new observation of the environment state.
+        - place_orders(actions): execute orders in the environment based on given actions.
+
+    Note:
+    ----
+    Market environments should be designed to interact with trading algorithms or other agents
+    in order to simulate the behavior of a real-world market. This base class defines the minimum
+    interface required for an environment to be used for algorithmic trading. 
+    """
 
     @abstractmethod
     def update_env(self):
+
+        """
+        Abstract method for updating the market environment.
+        Should be implemented by subclasses.
+        """
 
         raise NotImplementedError
     
@@ -27,11 +45,21 @@ class AbstractMarketEnv(Env, ABC):
     @abstractmethod
     def construct_observation(self):
 
+        """
+        Abstract method for constructing the market observation.
+        Should be implemented by subclasses.
+        """
+
         raise NotImplementedError
 
 
     @abstractmethod
     def place_orders(self, actions):
+
+        """
+        Abstract method for placing orders in the market environment.
+        Should be implemented by subclasses.
+        """
 
         raise NotImplementedError
 
@@ -39,10 +67,59 @@ class AbstractMarketEnv(Env, ABC):
 
 class TrainMarketEnv(AbstractMarketEnv):
 
-    # bare metal market environment with no market logic
-    # natively allowes cash and asset_quantities to be negative
-    # allowing short/margin trading by default. Use actions wrappers
-    # to impose market logic.
+    """A bare metal market environment with no market logic. Natively allowes cash and asset quantities to be negative, 
+    accommodating short/margin trading by default. Use action wrappers to impose market logic.
+
+    Parameters:
+    -----------
+    market_data_feeder: StaticDataFeeder
+        The StaticDataFeeder instance providing the data to the environment
+    initial_cash: float, optional
+        The initial amount of cash to allocate to the environment. Default is 1e6.
+    initial_asset_quantities: np.ndarray, optional
+        The initial quantity of assets to allocate to the environment. Default is None.
+
+    Attributes:
+    -----------
+    action_space: gym.spaces.Box
+        The action space for the environment
+    observation_space: gym.spaces.Dict
+        The observation space for the environment
+    data_feeder: StaticDataFeeder
+        The StaticDataFeeder instance providing the data to the environment
+    dataset_metadata: DatasetMetadata
+        The metadata object describing the dataset
+    column_schema: Dict[ColumnType, List[str]]
+        A dictionary mapping column types to a list of column names
+    asset_price_mask: List[str]
+        A list of column names for the asset price data
+    n_steps: int
+        The number of timesteps in the dataset
+    n_features: int
+        The number of features in the dataset
+    n_symbols: int
+        The number of symbols in the dataset
+    index: int
+        The current index in the dataset
+    initial_cash: float
+        The initial amount of cash allocated to the environment
+    initial_asset_quantities: np.ndarray
+        The initial quantity of assets allocated to the environment
+    cash: float
+        The current amount of cash in the environment
+    net_worth: float
+        The current net worth of the environment
+    asset_quantities: np.ndarray
+        The current quantity of assets in the environment
+    holds: np.ndarray
+        The number of timesteps each asset has been held
+    features: np.ndarray
+        The current features in the environment
+    asset_prices: np.ndarray
+        The current asset prices in the environment
+    info: Dict
+        Additional information about the environment
+    """
 
     def __init__(
         self, 
@@ -93,7 +170,15 @@ class TrainMarketEnv(AbstractMarketEnv):
         return None
     
 
-    def update_env(self) -> np.ndarray:
+    def update_env(self) -> None:
+
+        """
+        Updates the environment state by moving to the next time step and updating 
+        the environment variables such as features, asset prices, holds, and net worth.
+
+        Returns:
+            None
+        """
 
         self.features = next(self.row_generator)
         self.asset_prices = self.features[self.asset_price_mask]
@@ -105,8 +190,19 @@ class TrainMarketEnv(AbstractMarketEnv):
         return None
 
 
-    def construct_observation(self) -> np.ndarray:
+    def construct_observation(self) -> Dict:
+
+        """
+        Constructs the current observation from the environment's state variables.
+        The observation includes the current cash balance, asset quantities, holds (time steps an asset has been held),
+        and features of the current time step.
         
+        Returns:
+        -------
+        observation: dict
+            The observation dictionary containing the current cash balance, asset quantities, holds, and features.
+        """
+
         observation = {
             'cash': self.cash,
             'asset_quantities': self.asset_quantities,
@@ -117,7 +213,20 @@ class TrainMarketEnv(AbstractMarketEnv):
         return observation
 
 
-    def place_orders(self, actions) -> None:
+    def place_orders(self, actions: Iterable[float]) -> None:
+
+        """
+        Places orders on the assets based on the given actions.
+        
+        Args:
+        - actions: Iterable containing the actions to take for each asset.
+        
+        Returns:
+        - None
+        
+        Action values correspond to the amount of asset to buy or sell. A zero value means no action is taken.
+        Buys are represented as positive values, while sells are represented as negative values.
+        """
 
         for asset, action in enumerate(actions):
 
@@ -133,8 +242,20 @@ class TrainMarketEnv(AbstractMarketEnv):
         return None
         
 
+
     def reset(self) -> Dict:
-                
+
+        """
+        Resets the market environment to its initial state.
+
+        Returns:
+            observation (Dict): The initial observation space of the market environment containing:
+                - 'cash': the available cash in the account.
+                - 'asset_quantities': the quantities of assets held.
+                - 'holds': the number of consecutive steps an asset has been held.
+                - 'features': the current features of the environment.
+        """
+
         self.row_generator = self.data_feeder.reset()
 
         self.index = -1
@@ -156,9 +277,23 @@ class TrainMarketEnv(AbstractMarketEnv):
 
     def step(
         self, 
-        actions
+        actions: Iterable[float]
         ) -> Tuple[Dict, np.float32, bool, Dict]:
+
+        """
+        Execute a step in the trading environment.
+
+        Args:
+        - actions (numpy.ndarray): The actions to be taken for each asset in the current step.
         
+        Returns:
+        - observation (Dict): A dictionary containing the current observation.
+        - reward (numpy.float32): The reward achieved in the current step.
+        - done (bool): A boolean value indicating whether the current episode is finished.
+        - info (Dict): Additional information related to the current step.
+
+        """
+
         net_worth_ = self.net_worth
         self.place_orders(actions)
         self.update_env()
@@ -174,6 +309,35 @@ class TrainMarketEnv(AbstractMarketEnv):
 
 
 class TradeMarketEnv(AbstractMarketEnv):
+
+    """
+    A market environment used for trading. Inherits from AbstractMarketEnv.
+
+    Attributes:
+    - trader (AbstractTrader): The trader that will be using this environment
+    - dataset_metadata (DatasetMetadata): Metadata about the dataset used
+    - data_feeder (AsyncDataFeeder): The data feeder used to feed the environment
+    - column_schema (Dict[ColumnType, List[str]]): A dictionary mapping column types to their column names
+    - asset_price_mask (List[str]): A list of column names representing the asset prices
+    - n_steps (float): The number of steps in the environment (set to infinity)
+    - n_features (int): The number of features in the dataset
+    - n_symbols (int): The number of symbols in the dataset
+    - initial_cash (float): The initial amount of cash for the trader
+    - cash (float): The current amount of cash for the trader
+    - net_worth (float): The current net worth of the trader
+    - asset_quantities (np.ndarray): An array representing the quantities of each asset held by the trader
+    - holds (np.ndarray): An array representing the number of steps each asset has been held by the trader
+    - features (np.ndarray): An array representing the current features of the environment
+    - info (dict): A dictionary for storing additional information (unused)
+
+    Methods:
+    - __init__(self, trader: AbstractTrader): Initializes the TradeMarketEnv object
+    - update_env(self) -> None: Updates the environment
+    - construct_observation(self) -> Dict: Constructs an observation of the current environment state
+    - place_orders(self, actions) -> None: Places orders based on the given actions
+    - reset(self) -> Dict: Resets the environment to its initial state and returns an initial observation
+    - step(self, actions) -> Tuple[Dict, np.float32, bool, Dict]: Performs a step in the environment given the given actions and returns an observation, reward, done flag, and additional information
+    """
 
     def __init__(
         self,
@@ -223,6 +387,17 @@ class TradeMarketEnv(AbstractMarketEnv):
 
     def update_env(self) -> None:
 
+        """
+        Updates the environment with the latest information from the trader.
+
+        This method updates the environment's cash, asset quantities, net worth, and
+        holds to match those of the trader's. The features of the environment are
+        also updated with the latest market data from the trader's dataset.
+
+        Returns:
+            None
+        """
+
         # this step will take time equal to dataset resolution to aggregate data stream
         self.features = next(self.row_generator)
         self.holds[self.asset_quantities != 0] += 1
@@ -236,6 +411,18 @@ class TradeMarketEnv(AbstractMarketEnv):
 
     def construct_observation(self) -> Dict:
 
+        """
+        Construct the observation space for the trading environment.
+        The observation space is a dictionary containing the following key-value pairs:
+        - 'cash': The amount of cash available to the trader.
+        - 'asset_quantities': The quantities of assets currently held by the trader.
+        - 'holds': The number of time steps for which the assets have been held by the trader.
+        - 'features': The current features of the market data stream.
+        
+        Returns:
+        observation (Dict): A dictionary containing the current observation space.
+        """
+
         observation = {
             'cash': self.cash,
             'asset_quantities': self.asset_quantities,
@@ -246,7 +433,17 @@ class TradeMarketEnv(AbstractMarketEnv):
         return observation
     
 
-    def place_orders(self, actions) -> None:
+    def place_orders(self, actions: Iterable[float]) -> None:
+
+        """
+        Places orders through the connected trader instance based on the provided actions.
+
+        Args:
+            actions (np.ndarray): An array of actions to be taken for each asset in the environment.
+
+        Returns:
+            None
+        """
 
         self.trader.place_orders(actions)
 
@@ -254,6 +451,18 @@ class TradeMarketEnv(AbstractMarketEnv):
 
 
     def reset(self) -> Dict:
+
+        """
+        Resets the market environment to the initial state and returns the observation.
+
+        Returns:
+            A dictionary containing the following items:
+                * 'cash': A float representing the available cash in the market environment.
+                * 'asset_quantities': A numpy array representing the number of assets held by the agent.
+                * 'holds': A numpy array representing the number of consecutive steps for which each asset has been held.
+                * 'features': A numpy array representing the market data used as features in the observation.
+
+        """
 
         # resetting input state
         self.row_generator = self.data_feeder.reset()
@@ -271,10 +480,22 @@ class TradeMarketEnv(AbstractMarketEnv):
 
     def step(
         self,
-        actions: np.ndarray
+        actions: Iterable[float]
         ) -> Tuple[Dict, np.float32, bool, Dict]:
 
+        """
+        Advances the environment one step by applying the given actions to the current state.
 
+        Args:
+        - actions (Iterable[float]): an iterable containing actions for each asset in the environment.
+
+        Returns:
+        - observation (Dict): a dictionary containing the current observation of the environment.
+        - reward (float): the reward received from the last action.
+        - done (bool): whether the episode has ended or not (always False for trading environments).
+        - info (Dict): a dictionary containing additional information about the step.
+        """
+        
         net_worth_ = self.net_worth
         self.place_orders(actions)
         self.update_env()

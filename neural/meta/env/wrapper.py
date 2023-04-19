@@ -1,6 +1,6 @@
 from collections import defaultdict
 from abc import abstractmethod, ABC
-from typing import Type, Callable, Optional
+from typing import Type, Callable, Optional, Iterable
 from datetime import datetime
 
 import numpy as np
@@ -28,17 +28,53 @@ def market(wrapper_class: Type[Wrapper]):
 
     class MarketEnvDependentWrapper(wrapper_class):
 
+        """
+        A wrapper that creates a pointer to the base market environment and checks
+        if the unwrapped base env is a market env. If the check fails, an error is raised.
+
+        Args:
+            env (gym.Env): The environment being wrapped.
+
+        Raises:
+            IncompatibleWrapperError: If the unwrapped base environment is not of 
+            type AbstractMarketEnv.
+        """
+
         def __init__(self, env: Env, *args, **kwargs) -> None:
+
+            """
+            Initializes the MarketEnvDependentWrapper instance.
+
+            Args:
+                env (gym.Env): The environment being wrapped.
+                *args: Optional arguments to pass to the wrapper.
+                **kwargs: Optional keyword arguments to pass to the wrapper.
+            """
 
             self.market_env = self.check_unwrapped(env)
             super().__init__(env, *args, **kwargs)
 
         def check_unwrapped(self, env):
 
+            """
+            Checks if the unwrapped base env is a market env.
+
+            Args:
+                env (gym.Env): The environment being wrapped.
+
+            Raises:
+                IncompatibleWrapperError: If the unwrapped base environment is 
+                not of type AbstractMarketEnv.
+
+            Returns:
+                AbstractMarketEnv: The unwrapped market env.
+            """
+
             if not isinstance(env.unwrapped, AbstractMarketEnv):
 
                 raise IncompatibleWrapperError(
-                    f'{wrapper_class} requires unwrapped env to be of type {AbstractMarketEnv}.')
+                    f'{wrapper_class} requires unwrapped env '
+                    f'to be of type {AbstractMarketEnv}.')
             
             return env.unwrapped
         
@@ -48,9 +84,16 @@ def market(wrapper_class: Type[Wrapper]):
 
 def metadata(wrapper_class: Type[Wrapper]):
 
-    # augments a wrapper class so that it recursively checks for a metadata wrapper
-    # in enclosed wrappers and creates a pointer to it. If search fails an error
-    # is raised.
+    """
+    Augments a wrapper class so that it checks if the unwrapped base env
+    is a market env and creates a pointer to it. If the search fails, an error is raised.
+
+    Args:
+        wrapper_class (Type[Wrapper]): The wrapper class to be augmented.
+
+    Returns:
+        MarketEnvDependentWrapper: The augmented wrapper class.
+    """
 
     if not issubclass(wrapper_class, Wrapper):
 
@@ -59,7 +102,30 @@ def metadata(wrapper_class: Type[Wrapper]):
 
     class MarketMetadataWrapperDependentWrapper(wrapper_class):
 
+        """
+        A class for checking if an unwrapped environment is a market environment 
+        and creating a pointer to it.
+
+        Args:
+            env (Env): The environment to wrap.
+
+        Raises:
+            IncompatibleWrapperError: If the unwrapped environment is not a market environment.
+
+        Attributes:
+            market_env (AbstractMarketEnv): A pointer to the underlying market environment.
+        """
+
         def __init__(self, env: Env, *args, **kwargs) -> None:
+
+            """
+            Initializes the MarketEnvMetadataWrapper dependent wrapper class.
+
+            Args:
+                env (gym.Env): The environment to be wrapped.
+                *args: Variable length argument list to be passed to the wrapper.
+                **kwargs: Arbitrary keyword arguments to be passed to the wrapper.
+            """
 
             self.market_metadata_wrapper = self.find_metadata_wrapper(env)
             super().__init__(env, *args, **kwargs)
@@ -68,6 +134,27 @@ def metadata(wrapper_class: Type[Wrapper]):
 
 
         def find_metadata_wrapper(self, env):
+
+            """
+            Recursively searches through wrapped environment to find the first instance
+            of an AbstractMarketEnvMetadataWrapper in the wrapper stack.
+
+            Parameters
+            ----------
+            env : gym.Env
+                The environment to search through.
+
+            Returns
+            -------
+            AbstractMarketEnvMetadataWrapper
+                The first instance of AbstractMarketEnvMetadataWrapper found in the
+                wrapper stack.
+            
+            Raises
+            ------
+            IncompatibleWrapperError
+                If an AbstractMarketEnvMetadataWrapper is not found in the wrapper stack.
+            """
 
             if isinstance(env, AbstractMarketEnvMetadataWrapper):
                 return env
@@ -85,9 +172,105 @@ def metadata(wrapper_class: Type[Wrapper]):
 
 
 
+def validate_actions(wrapper_class: Type[Wrapper]):
+
+    # Augments a wrapper class so that it checks if an action is in the action space
+    # before calling the step function of the base class.
+
+    if not issubclass(wrapper_class, Wrapper):
+        raise TypeError(f"{wrapper_class} must be a subclass of {Wrapper}")
+
+
+    class ActionSpaceCheckerWrapper(wrapper_class):
+
+        """
+        A wrapper that checks if an action is in the action space before calling
+        the step function of the base class.
+
+        Args:
+            env (gym.Env): The environment being wrapped.
+
+        Raises:
+            IncompatibleWrapperError: If the action is not in the action space.
+        """
+
+        def __init__(self, env: Env, *args, **kwargs) -> None:
+            """
+            Initializes the ActionSpaceCheckerWrapper instance.
+
+            Args:
+                env (gym.Env): The environment being wrapped.
+                *args: Optional arguments to pass to the wrapper.
+                **kwargs: Optional keyword arguments to pass to the wrapper.
+            """
+
+            super().__init__(env, *args, **kwargs)
+
+            if not hasattr(self, 'action_space'):
+
+                raise IncompatibleWrapperError(
+                    f"Applying {validate_actions} decorator to{wrapper_class} "
+                    f"requires an action space to be defined first.")
+            
+
+        def step(self, actions: Iterable):
+            """
+            Checks if the action is in the action space before calling the step function
+            of the base class.
+
+            Args:
+                action: The action to take.
+
+            Raises:
+                IncompatibleWrapperError: If the action is not in the action space.
+
+            Returns:
+                The result of calling the step function of the base class.
+            """
+
+            if not self.action_space.contains(actions):
+                raise IncompatibleWrapperError(
+                    f"Wrapper {wrapper_class} is receiving actions "
+                    f"that are not in it's action space.")
+
+            return super().step(actions)
+
+    return ActionSpaceCheckerWrapper
+
+
+
 class AbstractMarketEnvMetadataWrapper(Wrapper, ABC):
 
-    # a blueprint class for market metadata wrappers.
+    """
+    A blueprint class for market metadata wrappers.
+
+    This class is designed to be subclassed for creating custom metadata wrappers
+    for market environments. Metadata wrappers are used to keep track of additional
+    information about the environment during an episode, such as cash balance, asset
+    quantities, net worth, and more.
+
+    Attributes:
+        history (defaultdict): A defaultdict object for storing metadata during an episode.
+        initial_cash (float): The initial amount of cash available in the environment.
+        n_symbols (int): The number of symbols available for trading in the environment.
+        cash (float): The current amount of cash available in the environment.
+        asset_quantities (np.ndarray): An array of asset quantities held in the environment.
+        positions (np.ndarray): An array of total asset positions in the environment.
+        net_wroth (float): The current net worth of the portfolio in the environment.
+        portfolio_value (float): The total value of the portfolio in the environment.
+        longs (float): The total value of long positions in the portfolio.
+        shorts (float): The total value of short positions in the portfolio.
+        profit (float): The profit or loss made in the current episode.
+        return_ (float): The rate of return made in the current episode.
+        progress (int): A counter for tracking the number of episodes completed.
+
+    Methods:
+        update_metadata: An abstract method for updating metadata.
+        _cache_metadata_history: An abstract method for caching metadata.
+        reset: Resets the environment and updates metadata.
+        step: Advances the environment by one step and updates metadata.
+
+    """
 
     def __init__(self, env: Env) -> None:
         super().__init__(env)
@@ -110,16 +293,43 @@ class AbstractMarketEnvMetadataWrapper(Wrapper, ABC):
     @abstractmethod
     def update_metadata(self, *args, **kwargs):
 
+
+        """
+        An abstract method for updating metadata.
+
+        This method should be implemented by subclasses to update metadata as necessary
+        during an episode. The method takes an arbitrary number of arguments and keyword
+        arguments, depending on the specific metadata that needs to be updated.
+        """
+
         raise NotImplementedError
         
 
     @abstractmethod
-    def _cache_hist(self, *args, **kwargs):
+    def _cache_metadata_history(self, *args, **kwargs):
+
+        """
+        An abstract method for caching metadata.
+
+        This method should be implemented by subclasses to cache metadata as necessary
+        during an episode. The method takes an arbitrary number of arguments and keyword
+        arguments, depending on the specific metadata that needs to be cached.
+        """
 
         raise NotImplementedError
 
 
     def reset(self):
+
+        """
+        Resets the environment and updates metadata.
+
+        This method resets the environment and updates the metadata stored in the
+        wrapper. It returns the initial observation from the environment.
+
+        Returns:
+            observation (object): The initial observation from the environment.
+        """
 
         observation = self.env.reset()
         self.update_metadata()
@@ -127,7 +337,19 @@ class AbstractMarketEnvMetadataWrapper(Wrapper, ABC):
         return observation
 
 
-    def step(self, action):
+    def step(self, action: Iterable[float]):
+
+        """
+        Performs a step in the environment.
+
+        Args:
+            action (any): The action to be taken by the agent.
+
+        Returns:
+            Tuple: A tuple containing the new observation, the reward obtained,
+            a boolean indicating whether the episode has ended, and a dictionary
+            containing additional information.
+        """
 
         observation, reward, done, info = self.env.step(action)
         self.update_metadata()
@@ -192,18 +414,13 @@ class MarketEnvMetadataWrapper(AbstractMarketEnvMetadataWrapper):
 
         elif isinstance(self.market_env, TradeMarketEnv):
             self._update_trade_env_metadata()
-        
 
-        # common between trade and train market envs.
-        self.profit = self.net_worth - self.initial_cash
-        self.return_ = (self.net_worth - self.initial_cash)/self.initial_cash
-
-        self._cache_hist()
+        self._cache_metadata_history()
 
         return None
 
 
-    def _cache_hist(self):
+    def _cache_metadata_history(self):
 
         self.history['net_worth'].append(self.net_worth)
 
@@ -215,7 +432,14 @@ class MarketEnvMetadataWrapper(AbstractMarketEnvMetadataWrapper):
 @metadata
 class ConsoleTearsheetRenderWrapper(Wrapper):
 
-    # prints a tear sheet to console showing trading metadata.
+
+    """A wrapper that prints a tear sheet to console showing trading metadata.
+
+    Args:
+    env (gym.Env): The environment to wrap.
+    verbosity (int, optional): Controls the frequency at which the tear sheet is printed. Defaults to 20.
+
+    """
 
     def __init__(
         self, env: Env,
@@ -231,9 +455,15 @@ class ConsoleTearsheetRenderWrapper(Wrapper):
 
         elif isinstance(self.market_env, TradeMarketEnv):
             self.render_every = 1 # every step
+        
+        return None
 
 
     def reset(self):
+
+        """
+        Reset the environment and the tear sheet index.
+        """
 
         observation = self.env.reset()
         self.index = 0
@@ -253,9 +483,11 @@ class ConsoleTearsheetRenderWrapper(Wrapper):
         return observation
     
 
-    def step(self, action):
+    def step(self, actions: Iterable):
 
-        observation, reward, done, info = self.env.step(action)
+        """Take a step in the environment and update the tear sheet if necessary."""
+
+        observation, reward, done, info = self.env.step(actions)
         self.index += 1
 
         if self.index % self.render_every == 0 or done:
@@ -266,10 +498,8 @@ class ConsoleTearsheetRenderWrapper(Wrapper):
 
     def render(self, mode='human'):
 
+        initial_cash = self.market_metadata_wrapper.initial_cash
         progress = self.market_metadata_wrapper.progress
-        return_ = self.market_metadata_wrapper.return_
-        sharpe = get_sharpe_ratio(self.market_metadata_wrapper.history['net_worth'])
-
         net_worth = self.market_metadata_wrapper.net_worth
         portfolio_value = sum(self.market_metadata_wrapper.positions)
         cash = self.market_metadata_wrapper.cash
@@ -278,16 +508,35 @@ class ConsoleTearsheetRenderWrapper(Wrapper):
         shorts = self.market_metadata_wrapper.shorts
 
 
+        # financial metrics
+        profit = net_worth - initial_cash
+        return_ = (net_worth - initial_cash)/initial_cash
+        sharpe = get_sharpe_ratio(
+            self.market_metadata_wrapper.history['net_worth'])
 
-        metrics = [f'{progress:.0%}', f'{return_:.2%}', f'{sharpe:.4f}',
-            f'${profit:,.0f}', f'${net_worth:,.0f}', f'${cash:,.0f}',
-            f'${portfolio_value:,.0f}',  f'${longs:,.0f}', f'${shorts:,.0f}']
+        metrics = [
+            f'{progress:.0%}',
+            f'{return_:.2%}',
+            f'{sharpe:.4f}',
+            f'${profit:,.0f}',
+            f'${net_worth:,.0f}',
+            f'${cash:,.0f}',
+            f'${portfolio_value:,.0f}',
+            f'${longs:,.0f}',
+            f'${shorts:,.0f}']
 
         if self.index == 0:
 
-            title = ['Progress', 'Return', 'Sharpe ratio',
-                'Profit', 'Net worth', 'Cash',
-                'Portfolio value', 'Longs', 'Shorts']
+            title = [
+                'Progress',
+                'Return',
+                'Sharpe ratio',
+                'Profit',
+                'Net worth',
+                'Cash',
+                'Portfolio value',
+                'Longs',
+                'Shorts']
             
             print(tabular_print(title, header=True))
 
@@ -296,21 +545,31 @@ class ConsoleTearsheetRenderWrapper(Wrapper):
         return None
 
 
-
+@validate_actions
 class MinTradeSizeActionWrapper(ActionWrapper):
     
-    # ensures action wrappers before this would not modify 
-    # actions of this wrapper.
+
+    """
+    A wrapper that limits the minimum trade size for all actions in the environment. 
+    If the absolute value of any action is below min_action, it will be replaced with 0.
+    Actions received are notional (USD) asset values.
+
+    Args:
+    env (gym.Env): The environment to wrap.
+    min_action (float): The minimum trade size allowed in the environment. Default is 1.
+
+    """
 
     def __init__(self, env: Env, min_action = 1) -> None:
 
         super().__init__(env)
         self.min_action = min_action
+        self.action_space = spaces.Box(-np.inf, np.inf, shape=None)
 
         return None
 
 
-    def action(self, actions):
+    def action(self, actions: Iterable[float]):
 
         new_action = [
             action if abs(action) >= self.min_action 
@@ -319,19 +578,40 @@ class MinTradeSizeActionWrapper(ActionWrapper):
         return new_action
 
 
-
+@validate_actions
 class ActionClipperWrapper(ActionWrapper):
 
-    # clips actions to expected range of downstream position
-    # sizing wrappers.
+
+    """A wrapper that clips actions to expected range of downstream position sizing wrappers.
+    Actions received are usually immediate output of model. Serves as an upstream action
+    wrapper that enforces action values to be in a certain range for downstream trade sizing
+    wrappers.
+
+    Args:
+    env (gym.Env): The environment to wrap.
+    low (float, optional): The minimum value for the actions. Defaults to -1.
+    high (float, optional): The maximum value for the actions. Defaults to 1.
+
+    """
 
     def __init__(self, env: Env, low=-1, high = 1) -> None:
 
         super().__init__(env)
         self.low = low
         self.high = high
+        self.action_space = spaces.Box(-np.inf, np.inf, shape= None)
 
-    def action(self, actions):
+    def action(self, actions: Iterable[float]):
+
+        """Clip the actions to be within the given low and high values.
+        
+        Args:
+        actions (np.ndarray): The array of actions to clip.
+        
+        Returns:
+        list: The clipped array of actions.
+        
+        """
 
         new_actions = np.clip(
             actions, self.low, self.high).tolist()
@@ -339,18 +619,42 @@ class ActionClipperWrapper(ActionWrapper):
         return new_actions
 
 
-
+@validate_actions
 @metadata
 class NetWorthRelativeUniformPositionSizing(ActionWrapper):
 
-    # ensures positions taken at each step is a maximum fixed percentage of net worth.
-    # maps actions in (-1, 1) to buy/sell/hold using fixed zones for each action type.
-    # trade_ratio = 0.02 means max of 2% of net_worth is traded at each step.
-    # max_trade is max notional trade value for each asset at each step.
-    # action in (-threshold, threshold) is parsed as hold.
-    # action outside this range is linearly projected to (0, max_trade)
+
+    """An action wrapper that ensures positions taken at each step is a maximum fixed percentage
+    of net worth. It maps actions in the range (-1, 1) to buy/sell/hold using fixed zones for each
+    action type. The trade_ratio parameter controls the maximum percentage of net worth that 
+    can be traded at each step. The hold_threshold parameter defines the threshold
+    for holding the current positions. The action in the range (-threshold, threshold)
+    is parsed as hold. The action outside this range is linearly projected to (0, max_trade).
+    """
 
     def __init__(self, env: Env, trade_ratio = 0.02, hold_threshold = 0.15):
+
+        """
+        Initializes a new instance of the action wrapper with the given environment, 
+        trade ratio, and hold threshold.
+
+        Args:
+            env (Env): The environment to wrap.
+            trade_ratio (float, optional): The maximum percentage of net worth that can be 
+            traded at each step. Defaults to 0.02.
+            hold_threshold (float, optional): The threshold for holding the current positions. 
+            Defaults to 0.15.
+
+        Attributes:
+            trade_ratio (float): The maximum percentage of net worth that can be traded at each step.
+            hold_threshold (float): The threshold for holding the current positions.
+            _max_trade_per_asset (float): The maximum trade that can be made for each asset. 
+            Initialized to None.
+            action_space (Box): The action space of the wrapped environment.
+
+        Returns:
+            None.
+        """
 
         super().__init__(env)
         self.trade_ratio = trade_ratio
@@ -358,16 +662,29 @@ class NetWorthRelativeUniformPositionSizing(ActionWrapper):
         self._max_trade_per_asset = None
 
         self.action_space = spaces.Box(
-            low = -1, high = 1, shape = (self.n_symbols, ))
+            low = -1, high = 1, shape = None)
         
         return None
-        
 
     def _set_max_trade_per_asset(self, trade_ratio: float) -> float:
 
-        # sets value for self.max_trade
-        # Recommended initial_cash >= n_stocks/trade_ratio. 
-        # Trades bellow $1 is clipped to 1 (API constraint).
+
+        """
+        Sets the value for the maximum trade that can be made for each asset based on the 
+        given trade ratio.
+
+        Args:
+            trade_ratio(float): The maximum percentage of net worth that can be traded at each step.
+
+        Returns:
+            float: The maximum trade that can be made for each asset.
+
+        Notes:
+            The recommended value for initial_cash is >= n_symbols/trade_ratio. 
+            In Alpaca API trades with notional value below $1 is not allowed thus if above
+            guideline is not followed it is possible that (0, 1) overlaps (0, max_trade)
+            to an extent that most, and sometimes all actions end up being no executed.
+        """
 
         self._max_trade_per_asset = (
             trade_ratio * self.market_metadata_wrapper.net_worth)/self.n_symbols
@@ -375,24 +692,53 @@ class NetWorthRelativeUniformPositionSizing(ActionWrapper):
         return None
 
 
-    def parse_action(self, action_: float) -> float:
+    def parse_action(self, action: float) -> float:
 
-        # action value in (-threshold, +threshold) is parsed as hold
-        fraction = (abs(action_) - self.hold_threshold)/(
-            1- self.hold_threshold)
+        """
+        Parses the given action value as buy, sell, or hold based on the hold threshold 
+        and maximum trade per asset.
 
-        parsed_action =  fraction * self._max_trade_per_asset * np.sign(action_
-            ) if fraction > 0 else 0
+        Args:
+            action_ (float): The action value to parse.
+
+        Returns:
+            float: The parsed action value.
+
+        Notes:
+            Actions within the range (-hold_threshold, hold_threshold) are parsed as hold. 
+            Actions outside this range are linearly projected to the range (0, max_trade_per_asset)
+        """
+
+        fraction = (
+            abs(action) - self.hold_threshold)/(1- self.hold_threshold)
+
+        parsed_action =  (
+            fraction * self._max_trade_per_asset * np.sign(action) 
+            if fraction > 0 else 0)
         
         return parsed_action
 
 
-    def action(self, action):
+    def action(self, actions):
+
+        """
+        Limits the maximum percentage of net worth that can be traded at each step and
+        maps actions to buy, sell, or hold positions.
+
+        Args:
+            actions (list): The actions to perform.
+
+        Returns:
+            list: The parsed actions.
+
+        Notes:
+            This method sets the maximum trade per asset based on the trade ratio and
+            parses each action value as buy, sell, or hold using the parse_action method.
+        """
 
         self._set_max_trade_per_asset(self.trade_ratio)
 
-        new_actions = [self.parse_action(
-            action) for action in action]
+        new_actions = [self.parse_action(action)for action in actions]
         
         return new_actions
 
@@ -401,24 +747,52 @@ class NetWorthRelativeUniformPositionSizing(ActionWrapper):
 @metadata
 class NetWorthRelativeMaximumShortSizing(ActionWrapper):
 
-    # class for sizing max shorts amount relative to net worth.
-    # short_ratio = 0 means no shorting. short_ratio = 0.2 means 
-    # shorts at maximum can be 20% of net_worth.
-    # actions are partially fulfilled to the extent that short_ratio
-    # is not violated. Must be applied ``before`` a position sizing wrapper.
-    # ensure enclosed wrappers do not increase sell amount to 
-    # guarantee adherence to short to net worth ratio.
+
+    """
+    This class is designed to size the maximum short amount relative to net worth, ensuring
+    that the short to net worth ratio is not violated. Takes notional asset value to buy/sell
+    as actions. It must be applied before a position sizing wrapper and should not be combined
+    with wrappers that increase the sell amount.
+
+    The short_ratio parameter determines the maximum allowed short position as a percentage
+    of the net worth. For example, a short_ratio of 0.2 means the maximum short position can
+    be 20% of the net worth. Actions are partially fulfilled to the extent that the short_ratio
+    is not violated.
+
+    Attributes:
+        short_ratio (float): Represents the maximum short ratio allowed. A value of 0 means no shorting,
+                            while a value of 0.2 means the maximum short position can be 20% of net worth.
+                            
+    Methods:
+        __init__(self, env: Env, short_ratio: float = 0.2) -> None: Constructor for the class.
+        _set_short_budget(self) -> None: Sets the short budget based on net worth and short_ratio.
+        action(self, actions) -> np.array: Processes and modifies actions to respect short sizing limits.
+    """
+
 
     def __init__(self, env: Env, short_ratio = 0.2) -> None:
+
+        """
+        Initializes the NetWorthRelativeMaximumShortSizing class with the given environment and short_ratio.
+        
+        Args:
+            env (Env): The trading environment.
+            short_ratio (float): The maximum short ratio allowed. Default is 0.2 (20% of net worth).
+        """
 
         super().__init__(env)
         self.short_ratio = short_ratio
         self.short_budget = None
+        self.action_space = spaces.Box(-np.inf, np.inf, shape= None)
 
         return None
     
 
-    def _set_short_budget(self):
+    def _set_short_budget(self) -> None:
+
+        """
+        Sets the short budget based on the net worth and short_ratio.
+        """
 
         max_short_size = self.short_ratio * max(self.market_metadata_wrapper.net_worth, 0)
         self.short_budget = max(max_short_size - abs(self.market_metadata_wrapper.shorts), 0)
@@ -426,10 +800,18 @@ class NetWorthRelativeMaximumShortSizing(ActionWrapper):
         return None
     
 
-    def action(self, actions):
+    def action(self, actions:Iterable[float]) -> Iterable[float]:
 
-        # performs actions without applying the effects and modifies actions
-        # that would lead to short sizing limit violation.
+        """
+        Processes the given actions without applying the effects, and modifies actions that would lead to
+        short sizing limit violations.
+        
+        Args:
+            actions (Iterable[float]): The actions to process.
+        
+        Returns:
+            Iterable[float]: The modified actions respecting the short sizing limits.
+        """
 
         positions = self.market_metadata_wrapper.positions
 
@@ -464,19 +846,39 @@ class NetWorthRelativeMaximumShortSizing(ActionWrapper):
 
 
 
+@validate_actions
 @metadata
 class FixedMarginActionWrapper(ActionWrapper):
 
-    # Class for sizing maximum margin amount relative to net worth
-    # Margin trading allows buying more than available cash using leverage. Positive cash is required
-    # thus margin trading can only happen one asset at a time since orders are submitted asset by asset.
-    # Initial_margin = 1 means no margin, namely entire purchase should me made with available cash only.
-    # leverage = 1/inital_margin. initial_margin = 0.1 means only 10% of purchase value needs to be present
-    # in account as cash thus maximum of 1/0.1 = 10 times cash, worth of assets can be purchased.
-    # overall margin will have nominal effect on portfolio performance unless large purchase
-    # of a single asset is involved.
+    """
+    Class for sizing maximum margin amount relative to net worth.
+    Margin trading allows buying more than available cash using leverage. Positive cash is required
+    thus margin trading can only happen one asset at a time since orders are submitted asset by asset.
+    Initial_margin = 1 means no margin, namely entire purchase should me made with available cash only.
+    leverage = 1/inital_margin. initial_margin = 0.1 means only 10% of purchase value needs to be present
+    in account as cash thus maximum of 1/0.1 = 10 times cash, worth of assets can be purchased.
+    overall margin will have nominal effect on portfolio performance unless large purchase
+    of a single asset is involved.
+
+    Attributes:
+        short_ratio (float): Represents the maximum short ratio allowed. A value of 0 means no shorting,
+                            while a value of 0.2 means the maximum short position can be 20% of net worth.
+                            
+    Methods:
+        __init__(self, env: Env, short_ratio: float = 0.2) -> None: Constructor for the class.
+        _set_short_budget(self) -> None: Sets the short budget based on net worth and short_ratio.
+        action(self, actions) -> np.array: Processes and modifies actions to respect short sizing limits.
+    """
+
 
     def __init__(self, env: Env, initial_margin= 1) -> None:
+
+        """
+        Initializes the class with the given trading environment and initial_margin.
+        Args:
+            env (Env): The trading environment.
+            initial_margin (float): The initial margin required for each trade. Default is 1.
+        """
 
         super().__init__(env)
         self.initial_margin = initial_margin
@@ -486,14 +888,28 @@ class FixedMarginActionWrapper(ActionWrapper):
 
     def action(self, actions):
 
-        # performs actions without applying the effects and proactively modifies actions
-        # that would lead to short sizing limit violation.
+        """
+        Processes the given actions without applying the effects, and proactively modifies actions that
+        would lead to short sizing limit violations. It considers the available cash and the initial_margin
+        to calculate the maximum amount that can be bought on margin.
+
+        Args:
+            actions (np.array): The actions to process.
+
+        Returns:
+            np.array: The modified actions respecting the margin requirements.
+
+        Comments:
+            1. Margin requires available cash. No cash means no margin.
+            2. Sell actions are ignored due to having no effect on margin.        
+        """
+
+
+
         cash = self.market_metadata_wrapper.cash
 
         for asset, action in enumerate(actions):
             
-            # margin requires available cash. No cash means no margin.
-            # sell actions are ignored due to having no effect on margin.
             if action <= 0:
                 continue
 
