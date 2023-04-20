@@ -14,6 +14,18 @@ def validate_path(
     file_path: str | os.PathLike
     ) -> None:
 
+    """
+    Validates a file path by checking if it is a directory and if the parent directory exists.
+    Args:
+        file_path (str | os.PathLike): The file path to be validated.
+
+    Raises:
+        ValueError: If the specified path is a directory or if the parent directory does not exist.
+
+    Returns:
+        None
+    """
+
     if os.path.isdir(file_path):
         raise ValueError(
             "The specified path is a directory, not a file.")
@@ -30,6 +42,15 @@ def validate_path(
 
 
 def create_column_schema(data: pd.DataFrame):
+
+    """
+    Creates a column schema dictionary for a given DataFrame, with ColumnType as keys and boolean masks as values.
+    Args:
+        data (pd.DataFrame): The input DataFrame for which the column schema is to be created.
+
+    Returns:
+        Dict[ColumnType, pd.Series]: A dictionary containing ColumnType keys and boolean masks for each column in the input DataFrame.
+    """
 
     column_schema = dict()
 
@@ -59,6 +80,19 @@ def to_datetime(date: str):
 
 def to_timeframe(time_frame: str):
 
+    """
+    Converts a string representation of a date to a datetime object.
+
+    Args:
+        date (str): The input date string to be converted to a datetime object. Must be in the format "dd/mm/yyyy".
+
+    Raises:
+        ValueError: If the input date string is not in the correct format.
+
+    Returns:
+        datetime: A datetime object corresponding to the input date string.
+    """
+
     match = re.search(r'(\d+)(\w+)', time_frame)
 
     if match:
@@ -84,7 +118,21 @@ def to_timeframe(time_frame: str):
 def tabular_print(
     entries: List, style='banner',
     align='left', width = 15, header = False) -> None:
-    
+
+    """
+    Prints a list of entries in a tabular format.
+
+    Args:
+        entries (List): The list of entries to be printed in a tabular format.
+        style (str, optional): The style of the table border. Defaults to 'banner'.
+        align (str, optional): The alignment of the text in the table cells. Defaults to 'left'.
+        width (int, optional): The width of each cell in the table. Defaults to 15.
+        header (bool, optional): Whether the current row should be formatted as a header row. Defaults to False.
+
+    Returns:
+        None
+    """
+
     # helper method to tabulate performance metrics.
     if header:
         row = tableprint.header(
@@ -99,6 +147,16 @@ def tabular_print(
 
 
 def progress_bar(total: Iterable):
+
+    """
+    Creates a progress bar using the tqdm library.
+    Args:
+        total (Iterable): The total number of iterations for the progress bar.
+
+    Returns:
+        tqdm: The progress bar object.
+    """
+
     bar_format = '{l_bar}{bar}| {n_fmt}/{total_fmt} | {elapsed}<{remaining}'
     bar = tqdm(total = total, bar_format = bar_format)
     return bar
@@ -106,7 +164,18 @@ def progress_bar(total: Iterable):
 
 
 def get_sharpe_ratio(net_worth_hist: List[float], base=0):
-    
+
+    """
+    Calculates the Sharpe ratio of a given net worth history list.
+
+    Args:
+        net_worth_hist (List[float]): A list of net worth values.
+        base (int, optional): The risk-free rate. Defaults to 0.
+
+    Returns:
+        float: The calculated Sharpe ratio value.
+    """
+
     hist = pd.Series(net_worth_hist)
     returns = hist.pct_change().dropna()
     val = (returns.mean()-base)/returns.std()
@@ -115,11 +184,21 @@ def get_sharpe_ratio(net_worth_hist: List[float], base=0):
 
 
 
-# converts collection of enum objects dataframe.
 def objects_to_df(
     object_collection: Iterable[Dict[str, str]]
     ) -> pd.DataFrame:
-    
+
+    """
+    Converts a collection of enum objects into a pandas DataFrame.
+
+    Args:
+        object_collection (Iterable[Dict[str, str]]): A collection of enum objects, 
+        where each object is a dictionary containing key-value pairs.
+
+    Returns:
+        pd.DataFrame: A DataFrame containing the converted objects.
+    """
+
     objects_collection_ = object_collection.copy()
     for index, object in enumerate(objects_collection_):
         object_dict = dict(object)

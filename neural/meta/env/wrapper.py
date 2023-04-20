@@ -1,13 +1,15 @@
 from collections import defaultdict
 from abc import abstractmethod, ABC
-from typing import Type, Callable, Optional, Iterable
+from typing import Type, Optional, Iterable
 from datetime import datetime
+from collections import deque
 
 import numpy as np
 from gym import (ActionWrapper, Env, Wrapper, 
     ObservationWrapper, RewardWrapper, spaces)
 
 from neural.common.log import logger
+from neural.tools.misc import FillDeque
 from neural.common.exceptions import IncompatibleWrapperError
 from neural.meta.env.base import AbstractMarketEnv, TrainMarketEnv, TradeMarketEnv
 
@@ -171,6 +173,68 @@ def metadata(wrapper_class: Type[Wrapper]):
     return MarketMetadataWrapperDependentWrapper
 
 
+def buffer(wrapper_class: Type[Wrapper]):
+
+    if not issubclass(wrapper_class, Wrapper):
+        raise TypeError(
+            f"{wrapper_class} must be a subclass of {Wrapper}")
+
+    class ObservationBufferDependentWrapper(wrapper_class):
+
+        """
+        A wrapper that searches recursively through enclosed wrappers for an
+        observation buffer and creates a pointer to it. If search fails, an error
+        is raised.
+
+        Args:
+            env (gym.Env): The environment being wrapped.
+
+        Raises:
+            IncompatibleWrapperError: If no observation buffer is found in
+            any of the enclosed wrappers.
+        """
+
+        def __init__(self, env: Env, *args, **kwargs) -> None:
+            """
+            Initializes the ObservationBufferDependentWrapper instance.
+
+            Args:
+                env (gym.Env): The environment being wrapped.
+                *args: Optional arguments to pass to the wrapper.
+                **kwargs: Optional keyword arguments to pass to the wrapper.
+            """
+
+            self.buffer = self.find_buffer_wrapper(env)
+            super().__init__(env, *args, **kwargs)
+
+        def find_buffer_wrapper(self, env):
+            """
+            Searches recursively for an observation buffer in enclosed wrappers.
+
+            Args:
+                env (gym.Env): The environment being wrapped.
+
+            Raises:
+                IncompatibleWrapperError: If no observation buffer is found in
+                any of the enclosed wrappers.
+
+            Returns:
+                ObservationBuffer: The first observation buffer found.
+            """
+
+            if isinstance(env, ObservationBufferWrapper):
+                return env
+
+            if hasattr(env, 'env'):
+                return self.find_buffer_wrapper(env.env)
+
+            else:
+                raise IncompatibleWrapperError(
+                    f'{wrapper_class} requires an observation buffer in one of '
+                    f'the enclosed wrappers.')
+
+    return ObservationBufferDependentWrapper
+
 
 def validate_actions(wrapper_class: Type[Wrapper]):
 
@@ -236,6 +300,70 @@ def validate_actions(wrapper_class: Type[Wrapper]):
             return super().step(actions)
 
     return ActionSpaceCheckerWrapper
+
+
+
+def validate_observations(wrapper_class: Type[Wrapper]):
+
+    # Augments a wrapper class so that it checks if an observation is in the observation space
+    # before returning the observation from the reset and step functions.
+
+    if not issubclass(wrapper_class, Wrapper):
+        raise TypeError(f"{wrapper_class} must be a subclass of {Wrapper}")
+
+
+    class ObservationSpaceCheckerWrapper(wrapper_class):
+
+        """
+        A wrapper that checks if an observation is in the observation space before returning it
+        from the reset and step functions.
+
+        Args:
+            env (gym.Env): The environment being wrapped.
+
+        Raises:
+            IncompatibleWrapperError: If the observation is not in the observation space.
+        """
+
+        def __init__(self, env: Env, *args, **kwargs) -> None:
+            """
+            Initializes the ObservationSpaceCheckerWrapper instance.
+
+            Args:
+                env (gym.Env): The environment being wrapped.
+                *args: Optional arguments to pass to the wrapper.
+                **kwargs: Optional keyword arguments to pass to the wrapper.
+            """
+
+            super().__init__(env, *args, **kwargs)
+
+            if not hasattr(self, 'observation_space'):
+
+                raise IncompatibleWrapperError(
+                    f"Applying {validate_observations} decorator to {wrapper_class} "
+                    f"requires an observation space to be defined first.")
+            
+        def observation(self, observation):
+            """
+            Checks if the observation is in the observation space before returning it
+            from the observation method of the base class.
+
+            Raises:
+                IncompatibleWrapperError: If the observation is not in the observation space.
+
+            Returns:
+                The result of calling the observation method of the base class.
+            """
+
+            if not self.observation_space.contains(observation):
+                raise IncompatibleWrapperError(
+                    f"Wrapper {wrapper_class} is receiving an observation "
+                    f"that is not in it's observation space.")
+
+            return super().observation(observation)
+
+
+    return ObservationSpaceCheckerWrapper
 
 
 
@@ -544,7 +672,7 @@ class ConsoleTearsheetRenderWrapper(Wrapper):
 
         return None
 
-
+@metadata
 @validate_actions
 class MinTradeSizeActionWrapper(ActionWrapper):
     
@@ -563,8 +691,11 @@ class MinTradeSizeActionWrapper(ActionWrapper):
     def __init__(self, env: Env, min_action = 1) -> None:
 
         super().__init__(env)
+
         self.min_action = min_action
-        self.action_space = spaces.Box(-np.inf, np.inf, shape=None)
+        self.n_symbols = self.market_metadata_wrapper.n_symbols
+        self.action_space = (
+            spaces.Box(-np.inf, np.inf, shape=(self.n_symbols,)))
 
         return None
 
@@ -578,6 +709,7 @@ class MinTradeSizeActionWrapper(ActionWrapper):
         return new_action
 
 
+@metadata
 @validate_actions
 class ActionClipperWrapper(ActionWrapper):
 
@@ -597,9 +729,14 @@ class ActionClipperWrapper(ActionWrapper):
     def __init__(self, env: Env, low=-1, high = 1) -> None:
 
         super().__init__(env)
+
         self.low = low
         self.high = high
-        self.action_space = spaces.Box(-np.inf, np.inf, shape= None)
+        self.n_symbols = self.market_metadata_wrapper.n_symbols
+        self.action_space = (
+            spaces.Box(-np.inf, np.inf, shape= (self.n_symbols,)))
+
+        return None
 
     def action(self, actions: Iterable[float]):
 
@@ -617,6 +754,7 @@ class ActionClipperWrapper(ActionWrapper):
             actions, self.low, self.high).tolist()
 
         return new_actions
+
 
 
 @validate_actions
@@ -660,11 +798,13 @@ class NetWorthRelativeUniformPositionSizing(ActionWrapper):
         self.trade_ratio = trade_ratio
         self.hold_threshold = hold_threshold
         self._max_trade_per_asset = None
+        self.n_symbols = self.market_metadata_wrapper.n_symbols
 
         self.action_space = spaces.Box(
-            low = -1, high = 1, shape = None)
+            low = -1, high = 1, shape = (self.n_symbols,))
         
         return None
+
 
     def _set_max_trade_per_asset(self, trade_ratio: float) -> float:
 
@@ -743,7 +883,7 @@ class NetWorthRelativeUniformPositionSizing(ActionWrapper):
         return new_actions
 
 
-
+@validate_actions
 @metadata
 class NetWorthRelativeMaximumShortSizing(ActionWrapper):
 
@@ -783,7 +923,8 @@ class NetWorthRelativeMaximumShortSizing(ActionWrapper):
         super().__init__(env)
         self.short_ratio = short_ratio
         self.short_budget = None
-        self.action_space = spaces.Box(-np.inf, np.inf, shape= None)
+        self.n_symbols = self.market_metadata_wrapper.n_symbols
+        self.action_space = spaces.Box(-np.inf, np.inf, shape= (self.n_symbols,))
 
         return None
     
@@ -882,6 +1023,8 @@ class FixedMarginActionWrapper(ActionWrapper):
 
         super().__init__(env)
         self.initial_margin = initial_margin
+        self.n_symbols = self.market_metadata_wrapper.n_symbols
+        self.action_space = spaces.Box(-np.inf, np.inf, shape= (self.n_symbols,))
 
         return None
 
@@ -922,48 +1065,112 @@ class FixedMarginActionWrapper(ActionWrapper):
         return actions
 
 
-
+@validate_actions
 @metadata
 class IntegerAssetQuantityActionWrapper(ActionWrapper):
 
+    """
+    A wrapper for OpenAI Gym trading environments that modifies the agent's actions to ensure they correspond to an integer
+    number of shares for each asset.
+
+    This class should be used with caution, as the modification of the agent's actions to enforce integer quantities may not
+    be valid in some trading environments due to price slippage. Ensure other action wrappers applied before this would not modify
+    the actions in a way that asset quantities are not integer anymore.
+
+    Attributes:
+    -----------
+    env : Env
+        The trading environment to be wrapped.
+    integer : bool
+        A flag that indicates whether to enforce integer asset quantities or not.
+    asset_prices : ndarray or None
+        An array containing the current prices of each asset in the environment, or None if the prices have not been set yet.
+    """
+
     # modifies actions to amount to integer number of shares
     # would not be valid in trade market env due to price
-    # slippage. Ensure other action wrappers
-    # applied before this would not modify the actions in a way that
-    # asset quantities are not integer anymore.
+    # slippage. 
 
     def __init__(self, env: Env, integer = True) -> None:
+
+        """
+        Initializes a new instance of the IntegerAssetQuantityActionWrapper class.
+
+        Parameters:
+        -----------
+        env : Env
+            The trading environment to be wrapped.
+        integer : bool, optional
+            A flag that indicates whether to enforce integer asset quantities or not. Defaults to True.
+        """
 
         super().__init__(env)
         self.integer = integer
         self.asset_prices = None
-
+        self.n_symbols = self.market_metadata_wrapper.n_symbols
+        self.action_space = (
+            spaces.Box(-np.inf,np.inf, shape=(self.n_symbols,)))
         return None
 
 
-    def action(self, actions):
+    def action(self, actions: Iterable[float]):
+
+        """
+        Modifies the agent's actions to ensure they correspond to an integer number of shares for each asset.
+
+        Parameters:
+        -----------
+        actions : ndarray
+            An array containing the agent's original actions.
+
+        Returns:
+        --------
+        ndarray
+            An array containing the modified actions, where each asset quantity is an integer multiple of its price.
+        """
 
         if self.integer:
         
             asset_prices = self.market_metadata_wrapper.asset_prices
 
             for asset , action in enumerate(actions):
-                asset_price = asset_prices[asset]
-                action = (action // asset_price) * asset_price
+
+                action = (
+                    action // asset_prices[asset]) * asset_prices[asset]
                 actions[asset] = action
         
         return actions
 
 
-
+@validate_observations
 @metadata
 class PositionsFeatureEngineeringWrapper(ObservationWrapper):
 
-    # augments observations such that instead of asset quantities held
-    # USD value of assets (positions) is used. Useful to reflect value of 
-    # investements in each asset.
+    """
+    A wrapper for OpenAI Gym trading environments that augments observations such that,
+    instead of asset quantities held, the notional USD value of assets (positions) is 
+    used. This is useful to reflect the value of investments in each asset.
+
+    Attributes:
+    -----------
+    env : Env
+        The trading environment to be wrapped.
+    n_symbols : int
+        The number of assets in the environment.
+    n_features : int
+        The number of additional features included in each observation after augmentation.
+    """
 
     def __init__(self, env: Env) -> None:
+
+        """
+        Initializes a new instance of the PositionsFeatureEngineeringWrapper class.
+
+        Parameters:
+        -----------
+        env : Env
+            The trading environment to be wrapped.
+        """
 
         super().__init__(env)
         self.n_symbols = self.market_metadata_wrapper.n_symbols
@@ -990,6 +1197,20 @@ class PositionsFeatureEngineeringWrapper(ObservationWrapper):
 
     def observation(self, observation):
 
+        """
+        Augments the observation such that, instead of asset quantities held, the USD value of assets (positions) is used.
+
+        Parameters:
+        -----------
+        observation : dict
+            A dictionary containing the original observation.
+
+        Returns:
+        --------
+        dict
+            A dictionary containing the augmented observation, where the 'positions' key contains the USD value of each asset.
+        """
+
         asset_prices= self.market_metadata_wrapper.asset_prices
         asset_quantities = observation.pop('asset_quantities')
 
@@ -998,15 +1219,37 @@ class PositionsFeatureEngineeringWrapper(ObservationWrapper):
         return observation
     
 
-
+@validate_observations
 @metadata
 class WealthAgnosticFeatureEngineeringWrapper(ObservationWrapper):
 
-    # Augment observations so that net worth sensitive features
-    # are now independent of net_worth. Apply immediately after
-    # PositionsEngineeringWrapper.
+    """
+    A wrapper for OpenAI Gym trading environments that augments observations 
+    such that net worth sensitive features are now independent of net worth. 
+    This wrapper should be applied immediately after the PositionsFeatureEngineeringWrapper.
+
+    Attributes:
+    -----------
+    env : Env
+        The trading environment to be wrapped.
+    initial_cash : float
+        The initial amount of cash in the environment.
+    n_symbols : int
+        The number of assets in the environment.
+    n_features : int
+        The number of additional features included in each observation after augmentation.
+    """
 
     def __init__(self, env: Env) -> None:
+
+        """
+        Initializes a new instance of the WealthAgnosticFeatureEngineeringWrapper class.
+
+        Parameters:
+        -----------
+        env : Env
+            The trading environment to be wrapped.
+        """
 
         super().__init__(env)
         self.initial_cash = self.market_metadata_wrapper.initial_cash
@@ -1037,10 +1280,23 @@ class WealthAgnosticFeatureEngineeringWrapper(ObservationWrapper):
 
     def observation(self, observation):
 
-        net_worth = self.market_metadata_wrapper.net_worth
+        """
+        Augments the observation such that net worth sensitive 
+        features are now independent of net worth.
 
-        # these features now relative to net_worth making the range
-        # of values they take independent from net_worth.
+        Parameters:
+        -----------
+        observation : dict
+            A dictionary containing the original observation.
+
+        Returns:
+        --------
+        dict
+            A dictionary containing the augmented observation, where the 
+            'features' key contains net worth sensitive features that are now independent of net worth.
+        """
+
+        net_worth = self.market_metadata_wrapper.net_worth
 
         observation['positions'] /= net_worth
         observation['cash'] /= net_worth
@@ -1052,36 +1308,124 @@ class WealthAgnosticFeatureEngineeringWrapper(ObservationWrapper):
 
 class ObservationBufferWrapper(ObservationWrapper):
 
-    # a temporary buffer of observations for subsequent wrappers
-    # that require this form of information.
+    """
+    A wrapper for OpenAI Gym trading environments that provides a temporary buffer of observations for subsequent wrappers 
+    that require this form of information.
+
+    Attributes:
+    -----------
+    env : Env
+        The trading environment to be wrapped.
+    buffer_size : int
+        The maximum number of observations to be stored in the buffer.
+    observation_buffer : deque
+        A deque object that stores the last n observations, where n is equal to the buffer_size.
+    """
+
 
     def __init__(self, env: Env, buffer_size = 10) -> None:
 
+        """
+        Initializes a new instance of the ObservationBufferWrapper class.
+
+        Parameters:
+        -----------
+        env : Env
+            The trading environment to be wrapped.
+        buffer_size : int, optional
+            The maximum number of observations to be stored in the buffer. Defaults to 10.
+        """
+
         super().__init__(env)
+        self.buffer_size = buffer_size
+        self.observation_buffer = FillDeque(buffer_size==buffer_size)
 
         return None
 
 
+    def reset(self):
 
-class FlattenDictToNumpyObservationWrapper(ObservationWrapper):
+        """
+        Resets the environment and clears the observation buffer.
+        """
 
-    # flattens dictionary of observations to numpy array.
+        observation = self.env.reset()
+        self.observation_buffer.clear()
+        self.observation_buffer.append(observation)
 
-    def __init__(self, env: Env) -> None:
-
-        super().__init__(env)
-
-        return None
-
+        return observation
+    
 
     def observation(self, observation):
+        """
+        Adds the observation to the buffer and returns the buffer as the new observation.
 
-        observation = np.concatenate(list(observation.values()), axis=None)
+        Parameters:
+        -----------
+        observation : dict
+            A dictionary containing the current observation.
+
+        Returns:
+        --------
+        deque
+            A deque object containing the last n observations, where n is equal to the buffer_size.
+        """
+        self.observation_buffer.append(observation)
 
         return observation
     
 
 
+class FlattenDictToNumpyObservationWrapper(ObservationWrapper):
+
+    """
+    A wrapper for OpenAI Gym trading environments that flattens a dictionary of observations to a numpy array.
+
+    Attributes:
+    -----------
+    env : Env
+        The trading environment to be wrapped.
+    """
+
+    def __init__(self, env: Env) -> None:
+
+        """
+        Initializes a new instance of the FlattenDictToNumpyObservationWrapper class.
+
+        Parameters:
+        -----------
+        env : Env
+            The trading environment to be wrapped.
+        """
+
+        super().__init__(env)
+
+        return None
+
+
+    def observation(self, observation: dict):
+
+        """
+        Flattens the dictionary of observations to a numpy array.
+
+        Parameters:
+        -----------
+        observation : dict
+            A dictionary containing the current observation.
+
+        Returns:
+        --------
+        ndarray
+            A flattened numpy array of the observations
+        """
+
+        assert isinstance(observation, dict), "The observation must be a dictionary."
+        observation = np.concatenate(list(observation.values()), axis=None)
+
+        return observation
+    
+
+@buffer
 class RunningIndicatorsObsWrapper(ObservationWrapper):
 
     # computes running financial indicators such as CCI, MACD
@@ -1093,8 +1437,14 @@ class RunningIndicatorsObsWrapper(ObservationWrapper):
 
 
 
+@buffer
+class ObservationStackerWrapper(ObservationWrapper):
+    pass
+
+
 class NormalizeObservationsWrapper(ObservationWrapper):
     pass
+
 
 
 
@@ -1117,7 +1467,8 @@ class ExperienceRecorderWrapper(Wrapper):
 
 class RewardShaperWrapper(Wrapper):
     
-    # highly useful for pretraining an agent with multiple degrees of freedom 
-    # in actions. Apply relevant reward shaping wrappers to 
+    # highly useful for pretraining an agent with many degrees of freedom 
+    # in actions. Apply relevant reward shaping wrappers to def ine and restrict unwanted
+    # actions.
 
     pass
