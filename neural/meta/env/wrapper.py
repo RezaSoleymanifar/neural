@@ -161,7 +161,7 @@ def metadata(wrapper_class: Type[Wrapper]):
             if isinstance(env, AbstractMarketEnvMetadataWrapper):
                 return env
 
-            if hasattr(env, 'env'):
+            elif hasattr(env, 'env'):
                 return self.find_metadata_wrapper(env.env)
             
             else:
@@ -1219,6 +1219,7 @@ class PositionsFeatureEngineeringWrapper(ObservationWrapper):
         return observation
     
 
+
 @validate_observations
 @metadata
 class WealthAgnosticFeatureEngineeringWrapper(ObservationWrapper):
@@ -1282,7 +1283,7 @@ class WealthAgnosticFeatureEngineeringWrapper(ObservationWrapper):
 
         """
         Augments the observation such that net worth sensitive 
-        features are now independent of net worth.
+        features now have net worth independent values.
 
         Parameters:
         -----------
@@ -1472,6 +1473,3 @@ class RewardShaperWrapper(Wrapper):
     # actions.
 
     pass
-
-
-from stable_baselines3 import

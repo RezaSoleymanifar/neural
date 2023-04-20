@@ -21,19 +21,21 @@ class StreamType(Enum):
     TRADE = 'TRADE'
     QUOTE = 'QUOTE'
     ORDER_BOOK = 'ORDER_BOOK'
-    
+
+
 class DatasetType(Enum):
 
     """
     Enumeration class that defines constants for the different types of datasets.
 
     Attributes:
-        BAR (str): The type of dataset for aggregated trade stream data.
-        QUOTE (str): The type of dataset for quote data.
-        ORDER_BOOK (str): The type of dataset for order book data.
+        BAR (str): The type of dataset for aggregated trade stream data. Also known as bars data.
+        TRADE (str): The type of dataset for non aggregated trade stream data.
+        QUOTE (str): The type of dataset for aggregated quote stream.
+        ORDER_BOOK (str): The type of dataset for aggregated order book data.
     """
-
-    BAR = 'BAR' # bar is aggregated trade stream
+    BAR = 'BAR'
+    TRADE = 'TRADE'
     QUOTE = 'QUOTE'
     ORDER_BOOK = 'ORDER_BOOK'
 
@@ -50,7 +52,7 @@ class ColumnType(Enum):
         BID (str): The type of column for bid price data.
         ASK (str): The type of column for ask price data.
         SENTIMENT (str): The type of column for sentiment data.
-        EMBEDDING (str): The type of column for embedding data.
+        EMBEDDING (str): The type of column for word embedding data.
     """
 
     OPEN = 'OPEN'
@@ -59,8 +61,8 @@ class ColumnType(Enum):
     CLOSE = 'CLOSE'
     BID = 'BID'
     ASK = 'ASK'
-    SENTIMENT = 'SENTIMENT'
     EMBEDDING = 'EMBEDDING'
+
 
 @dataclass
 class StreamMetaData:
@@ -85,6 +87,7 @@ class StreamMetaData:
     symbols: Tuple[str]
     resolution: str
     n_columns: int
+
 
 @dataclass
 class DatasetMetadata:

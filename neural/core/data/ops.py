@@ -30,7 +30,7 @@ from neural.tools.ops import (progress_bar, to_timeframe,
 from neural.tools.misc import Calendar
 from neural.common.constants import HDF5_DEFAULT_MAX_ROWS
     
-class DataFetcher():
+class AlpacaDataFetcher():
     def __init__(
         self,
         client: AlpacaMetaClient
@@ -159,22 +159,28 @@ class DataFetcher():
         client = client_map[asset_class]
 
 
+        def safe_method_call(client, method_name):
+            if hasattr(client, method_name):
+                return getattr(client, method_name)
+            else:
+                raise AttributeError(f"Client does not have method '{method_name}'")
+
+
         downloader_request_map = {
             DatasetType.BAR: {
-                AssetClass.US_EQUITY: (client.get_stock_bars, StockBarsRequest),
-                AssetClass.CRYPTO: (client.get_crypto_bars, CryptoBarsRequest)},
-
+                AssetClass.US_EQUITY: ('get_stock_bars', StockBarsRequest),
+                AssetClass.CRYPTO: ('get_crypto_bars', CryptoBarsRequest)},
             DatasetType.QUOTE: {
-                AssetClass.US_EQUITY: (client.get_stock_quotes, StockQuotesRequest),
-                AssetClass.CRYPTO: (client.get_crypto_quotes, CryptoQuotesRequest)},
-
+                AssetClass.US_EQUITY: ('get_stock_quotes', StockQuotesRequest),
+                AssetClass.CRYPTO: ('get_crypto_quotes', CryptoQuotesRequest)},
             DatasetType.TRADE: {
-                AssetClass.US_EQUITY: (client.get_stock_trades, StockTradesRequest),
-                AssetClass.CRYPTO: (client.get_crypto_trades, CryptoTradesRequest)}}
+                AssetClass.US_EQUITY: ('get_stock_trades', StockTradesRequest),
+                AssetClass.CRYPTO: ('get_crypto_trades', CryptoTradesRequest)}}
+        
 
+        downloader_method_name, request = downloader_request_map[dataset_type][asset_class]
+        downloader = safe_method_call(client = client, method_name=downloader_method_name)   
 
-        downloader, request = downloader_request_map[dataset_type][asset_class]
-                
         return downloader, request
 
 
@@ -205,7 +211,7 @@ class DataFetcher():
 
         resolution = to_timeframe(resolution)
 
-        data_fetcher = DataFetcher(self.client)
+        data_fetcher = AlpacaDataFetcher(self.client)
 
         downloader, request = data_fetcher.get_downloader_and_request(
             dataset_type=dataset_type, 

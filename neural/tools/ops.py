@@ -28,14 +28,14 @@ def validate_path(
 
     if os.path.isdir(file_path):
         raise ValueError(
-            "The specified path is a directory, not a file.")
+            f"The specified path {file_path} is a directory, not a file.")
     
     else:
         dir_path = os.path.dirname(file_path)
 
         if not os.path.isdir(dir_path):
             raise ValueError(
-                "The directory leading to the specified file does not exist.")
+                f"Directory {dir_path} leading to the specified file does not exist.")
         
     return None
 

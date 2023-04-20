@@ -4,13 +4,14 @@ import unittest
 import sys
 import os
 from base import BaseConnectionTest
-from alpaca.trading.enums import AssetClass
+from alpaca.trading.enums import AssetClass, AssetStatus
 
 
 sys.path.insert(0, os.path.abspath(
     os.path.join(os.path.dirname(__file__), '..')))
 
-from neural.core.data.ops import DataFetcher
+from neural.core.data.ops import AlpacaDataFetcher
+from neural.core.data.enums import DatasetType
 from neural.common.constants import DOW_JONES_SYMBOLS
 from neural.tools.ops import to_timeframe
 
@@ -20,24 +21,26 @@ class TestData(BaseConnectionTest):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-    
+
+
+    def setUp(self):
+        self.data_fetcher = AlpacaDataFetcher(client=self.client)
+
 
     def test_validate_symbols(self):
-
-        self.data_fetcher = DataFetcher(client=self.client)
+        
         self.assets = self.client.assets
-
 
         # empty sequence
         with self.assertRaises(ValueError) as cm:
             SYMBOLS = []
             self.data_fetcher._validate_symbols(SYMBOLS)
 
+
         logger.info(cm.exception)
         self.assertEqual(
             str(cm.exception),
             'symbols argument cannot be an empty sequence.')
-
 
 
         # duplicate values
@@ -51,11 +54,11 @@ class TestData(BaseConnectionTest):
             f'Symbols {list(set(SYMBOLS))} have duplicate values.')
 
 
-
         # valid name
         with self.assertRaises(ValueError) as cm:
-            SYMBOLS = ['???????']
+            SYMBOLS = ['NOT_A_SYMBOL']
             self.data_fetcher._validate_symbols(SYMBOLS)
+
 
         logger.info(cm.exception)
         self.assertEqual(
@@ -132,12 +135,45 @@ class TestData(BaseConnectionTest):
         logger.info('Symbol validation test: SUCCESSFUL.')
 
 
-    def test_get_downloader_and_request(self):
-        symbols = ['BTC/USD']
-        resolution = to_timeframe('30Min')
-        market_open = datetime(2023, 3, 6, 9, 30)
-        market_close = datetime(2023, 3, 6, 16, 0)
+    def test_dataset_download(self):
+                
+        resolution = '1Min'
+        start_date = '02/03/2023'
+        end_date = '03/03/2023'
 
+        symbols = ['WMT', 'GOOGL', 'AAPL', 'AXP']
+
+        raw_dataset = self.data_fetcher.download_features_to_hdf5(
+            file_path='../storage/test.hdf5',
+            target_dataset_name='init',
+            dataset_type=DatasetType.BAR,
+            symbols=symbols,
+            resolution=resolution,
+            start_date=start_date,
+            end_date=end_date
+        )
+
+        with self.assertRaises(ValueError) as cm:
+            start_date = '02/10/2023'
+            end_date = '04/03/2023'
+
+            raw_dataset = self.data_fetcher.download_features_to_hdf5(
+                file_path='../storage/test.hdf5',
+                target_dataset_name='init',
+                dataset_type=DatasetType.BAR,
+                symbols=symbols,
+                resolution=resolution,
+                start_date=start_date,
+                end_date=end_date
+            )
+
+        logger.info(cm.exception)
+        self.assertEqual(
+            str(cm.exception),
+            'Current end time: 2023-03-03 21:00:00+00:00, and appended dataset '
+            'start time 2023-02-10 14:30:00+00:00 overlap.')
+
+        logger.info('dataset download test: SUCCESSFUL.')
 
 if __name__ == '__main__':
     unittest.main()
