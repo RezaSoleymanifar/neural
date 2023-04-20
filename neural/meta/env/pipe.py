@@ -70,7 +70,6 @@ class AbstractPipe(ABC):
 
 class NetWorthRelativeShortMarginPipe(AbstractPipe):
 
-
     """
     A pipe is a stack of market wrappers applied in a non-conflicting way. Use
     wrappers to customize the base market env, manipulate actions and

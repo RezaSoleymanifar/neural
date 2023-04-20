@@ -1338,7 +1338,7 @@ class ObservationBufferWrapper(ObservationWrapper):
 
         super().__init__(env)
         self.buffer_size = buffer_size
-        self.observation_buffer = FillDeque(buffer_size==buffer_size)
+        self.observation_buffer = FillDeque(buffer_size=buffer_size)
 
         return None
 
@@ -1472,3 +1472,6 @@ class RewardShaperWrapper(Wrapper):
     # actions.
 
     pass
+
+
+from stable_baselines3 import
