@@ -1,1 +1,1 @@
-from neural.connect.client import AlpacaMetaClient
+from neural.connect.client import AlpacaClient

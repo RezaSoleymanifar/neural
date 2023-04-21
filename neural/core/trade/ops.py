@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, List
 
 from neural.common.constants import PATTERN_DAY_TRADER_MINIMUM_NET_WORTH
 from neural.common.exceptions import TradeConstraintViolationError
-from neural.connect.client import AlpacaMetaClient, AbstractClient
+from neural.connect.client import AlpacaClient, AbstractClient
 from neural.core.data.enums import DatasetMetadata
 from neural.meta.env.pipe import AbstractPipe
 
@@ -181,7 +181,7 @@ class AlpacaTraderTemplate(AbstractTrader):
 
 
     def __init__(self,
-        client: AlpacaMetaClient,
+        client: AlpacaClient,
         model: nn.Module,
         pipe: AbstractPipe,
         dataset_metadata: DatasetMetadata):
@@ -427,7 +427,7 @@ class CustomAlpacaTrader(AlpacaTraderTemplate):
     """
 
     def __init__(self, 
-        client: AlpacaMetaClient, 
+        client: AlpacaClient, 
         model : nn.Module, 
         pipe: AbstractPipe, 
         dataset_metadata: DatasetMetadata):

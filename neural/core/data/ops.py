@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import (List, Optional, Tuple, Any)
+from typing import (List, Optional, Tuple, Any, Iterable)
 from functools import reduce
 import os
 from abc import ABC, abstractmethod
@@ -24,17 +24,37 @@ from alpaca.data.requests import (
 from neural.common import logger
 from neural.common.exceptions import CorruptDataError
 from neural.core.data.enums import DatasetType, DatasetMetadata
-from neural.connect.client import AlpacaMetaClient
+from neural.connect.client import AlpacaClient
 from neural.tools.ops import (progress_bar, to_timeframe, 
     create_column_schema, validate_path)
 from neural.tools.misc import Calendar
 from neural.common.constants import HDF5_DEFAULT_MAX_ROWS
     
 class AlpacaDataFetcher():
+
+    """
+    A class to download and process financial data using the Alpaca API.
+
+    The AlpacaDataFetcher class handles validation of symbols and resolutions,
+    data downloading, and data processing tasks. It works in conjunction with
+    the AlpacaMetaClient class to fetch the required data from the Alpaca API
+    and process it for further use.
+    """
+
     def __init__(
         self,
-        client: AlpacaMetaClient
+        client: AlpacaClient
         ) -> None:
+
+        """
+        Initializes the AlpacaDataFetcher class.
+
+        Args:
+            client (AlpacaMetaClient): An instance of the AlpacaMetaClient class.
+
+        Returns:
+            None
+        """
 
         self.client = client
 
@@ -571,7 +591,7 @@ class DatasetIO:
             
     def merge_datasets(self):
 
-        # merges all datasets into one contiguous dataset
+        # vertically join all datasets into one contiguous dataset
         raise NotImplementedError(
             'method not implemented yet.'
         )
@@ -580,14 +600,15 @@ class DatasetIO:
 class AbstractStaticDataFeeder(ABC):
 
     """
-    Abstract base class for defining a static data feeder that can reset and split the data.
+    Abstract base class for defining a static data feeder that is responsible for feeding
+    market information to market environment, iteratively.
     """
 
     @abstractmethod
-    def reset(self):
+    def reset(self, *args, **kwargs):
 
         """
-        Resets the internal state of the data feeder.
+        Returns a generator object that can be used to for iterative market simulation.
         
         Raises:
             NotImplementedError: This method must be implemented by a subclass.
@@ -596,10 +617,10 @@ class AbstractStaticDataFeeder(ABC):
         raise NotImplementedError
     
     @abstractmethod
-    def split(self):
+    def split(self, *args, **kwargs):
 
         """
-        Returns the split indices of the data for training and validation.
+        Returns instances of iteself each initialized with a slice of source data.
         
         Raises:
             NotImplementedError: This method must be implemented by a subclass.
@@ -659,13 +680,14 @@ class StaticDataFeeder(AbstractStaticDataFeeder):
         Initializes a StaticDataFeeder object.
 
         Args:
-            dataset_metadata (DatasetMetadata): Metadata for the dataset being loaded.
-            datasets (List[h5.Dataset | np.ndarray]): The actual dataset(s) being loaded.
-            start_index (int): The starting index to load the data from. Defaults to 0.
-            end_index (Optional[int]): The ending index to load the data from. If not 
-                provided, defaults to the number of rows specified in the metadata object.
-            n_chunks (Optional[int]): The number of chunks to break the dataset into for 
-                efficient loading. Defaults to 1.
+        dataset_metadata (DatasetMetadata): Contains metadata for the dataset being loaded.
+        datasets (List[h5.Dataset | np.ndarray]): Represents the actual dataset(s) to be loaded.
+        start_index (int, optional): Specifies the starting index to load the data from. Default is 0.
+        end_index (int, optional): Specifies the ending index to load the data from. If not provided,
+        defaults to the number of rows indicated in the metadata object. Default is None.
+        n_chunks (int, optional): Indicates the number of chunks to divide the dataset into for
+        loading. Loads one chunk at a time. Useful if datasets do not fit in memory or to
+        allocate more memory for the training process. Default is 1.
         """
 
         self.dataset_metadata = dataset_metadata
@@ -678,13 +700,13 @@ class StaticDataFeeder(AbstractStaticDataFeeder):
 
         return None
 
-    def reset(self):
+    def reset(self) -> Iterable[np.ndarray]:
 
         """
         Resets the internal state of the data feeder.
 
         Yields:
-            numpy.ndarray: The data row by row from the specified dataset chunk(s).
+            Iterable[np.ndarray]: a generator object returning features as numpy array.
         """        
 
         chunk_edge_indices =  np.linspace(
@@ -704,29 +726,43 @@ class StaticDataFeeder(AbstractStaticDataFeeder):
                 yield row
 
     
-    def split(self, n: int):
+    def split(self, n: int | float):
         
         """
         Splits the dataset into multiple non-overlapping contiguous sub-feeders that span the dataset.
+        Common use case is it use in stable baselines vector env to parallelize running multiple
+        trading environments, leading to significant speedup of training process.
 
         Args:
-            n (int): The number of sub-feeders to split the dataset into.
+            n (int | float): if int, number of sub-feeders to split the dataset into. if float (0, 1)
+            yields two sub-feeders performing n, 1-n train test split
 
         Returns:
             List[StaticDataFeeder]: A list of StaticDataFeeder objects.
         """
 
-        assert n > 0, "n must be a positive integer"
+        if isinstance(n, int):
+
+            assert n > 0, "n must be a positive integer"
+
+            edge_indices = np.linspace(
+                start=self.start_index,
+                stop=self.end_index,
+                num=self.n+1,
+                dtype=int,
+                endpoint=True)
+
+        elif isinstance(n, float):
+
+            assert 0 < n < 1, "n must be a float between 0 and 1"
+
+            edge_indices = np.array([
+                self.start_index,
+                int(self.start_index + n * (self.end_index - self.start_index)),
+                self.end_index
+            ], dtype=int)
+
         static_data_feeders = list()
-
-
-        edge_indices = np.linspace(
-            start=self.start_index,
-            stop=self.end_index,
-            num=self.n+1,
-            dtype=int,
-            endpoint=True)
-
 
         for start, end in zip(edge_indices[:-1], edge_indices[1:]):
 
@@ -740,8 +776,3 @@ class StaticDataFeeder(AbstractStaticDataFeeder):
             static_data_feeders.append(static_data_feeder)
 
         return static_data_feeders
-
-    # def __del__(self):
-    #     for dataset in self.datasets:
-    #         if dataset:
-    #             dataset.file.close()

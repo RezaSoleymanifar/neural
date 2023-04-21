@@ -56,10 +56,10 @@ class AbstractClient(ABC):
 
 
 
-class AlpacaMetaClient(AbstractClient):
+class AlpacaClient(AbstractClient):
 
     """
-    AlpacaMetaClient is a concrete implementation of the AbstractClient class.
+    AlpacaClient is a concrete implementation of the AbstractClient class.
     It provides access to the Alpaca API for trading, stocks, and crypto data,
     as well as account and asset management.
     """
@@ -216,7 +216,6 @@ class AlpacaMetaClient(AbstractClient):
         :param key: API key for the Alpaca API.
         :param secret: Secret key for the Alpaca API.
         """
-
 
         self.key = key
         self.secret = secret
