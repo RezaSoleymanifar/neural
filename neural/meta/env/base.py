@@ -204,11 +204,11 @@ class TrainMarketEnv(AbstractMarketEnv):
         """
 
         observation = {
-            'cash': self.cash,
+            'cash': np.array([self.cash], dtype=np.float32),
             'asset_quantities': self.asset_quantities,
             'holds': self.holds,
             'features': self.features
-            }
+        }
         
         return observation
 
@@ -259,7 +259,7 @@ class TrainMarketEnv(AbstractMarketEnv):
         self.row_generator = self.data_feeder.reset()
 
         self.index = -1
-        self.holds = np.zeros((self.n_symbols,), dtype=np.int32)
+        self.holds = np.zeros((self.n_symbols,), dtype=np.float32)
 
         self.cash = self.initial_cash
 
@@ -296,6 +296,12 @@ class TrainMarketEnv(AbstractMarketEnv):
 
         net_worth_ = self.net_worth
         self.place_orders(actions)
+
+
+        short_ratio = self.asset_prices[self.asset_quantities < 0] @ self.asset_quantities[self.asset_quantities < 0] / self.net_worth
+
+
+
         self.update_env()
         
         reward = self.net_worth - net_worth_
@@ -424,7 +430,7 @@ class TradeMarketEnv(AbstractMarketEnv):
         """
 
         observation = {
-            'cash': self.cash,
+            'cash': np.array([self.cash], dtype= np.float32),
             'asset_quantities': self.asset_quantities,
             'holds': self.holds,
             'features': self.features
@@ -468,7 +474,7 @@ class TradeMarketEnv(AbstractMarketEnv):
         self.row_generator = self.data_feeder.reset()
 
         self.holds = np.zeros(
-            (self.n_symbols,), dtype=np.int32)
+            (self.n_symbols,), dtype=np.float32)
         
         self.update_env()
 

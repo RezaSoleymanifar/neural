@@ -1,12 +1,12 @@
 from collections import defaultdict
 from abc import abstractmethod, ABC
-from typing import Type, Optional, Iterable
+from typing import Type, Iterable, Dict, Optional
 from datetime import datetime
-from collections import deque
 
 import numpy as np
 from gym import (ActionWrapper, Env, Wrapper, 
     ObservationWrapper, RewardWrapper, spaces)
+from gym.wrappers.normalize import RunningMeanStd
 
 from neural.common.log import logger
 from neural.tools.misc import FillDeque
@@ -26,7 +26,7 @@ def market(wrapper_class: Type[Wrapper]):
     if not issubclass(wrapper_class, Wrapper):
 
         raise TypeError(
-            f"{wrapper_class} must be a subclass of {Wrapper}")
+            f"{wrapper_class.__name__} must be a subclass of {Wrapper}")
 
     class MarketEnvDependentWrapper(wrapper_class):
 
@@ -75,8 +75,8 @@ def market(wrapper_class: Type[Wrapper]):
             if not isinstance(env.unwrapped, AbstractMarketEnv):
 
                 raise IncompatibleWrapperError(
-                    f'{wrapper_class} requires unwrapped env '
-                    f'to be of type {AbstractMarketEnv}.')
+                    f'{wrapper_class.__name__} requires unwrapped env '
+                    'to be of type {AbstractMarketEnv}.')
             
             return env.unwrapped
         
@@ -100,7 +100,7 @@ def metadata(wrapper_class: Type[Wrapper]):
     if not issubclass(wrapper_class, Wrapper):
 
         raise TypeError(
-            f"{wrapper_class} must be a subclass of {Wrapper}")
+            f"{wrapper_class.__name__} must be a subclass of {Wrapper}")
 
     class MarketMetadataWrapperDependentWrapper(wrapper_class):
 
@@ -166,7 +166,7 @@ def metadata(wrapper_class: Type[Wrapper]):
             
             else:
                 raise IncompatibleWrapperError(
-                f'{wrapper_class} requires a wrapper of type '
+                f'{wrapper_class.__name__} requires a wrapper of type '
                 f'{AbstractMarketEnvMetadataWrapper} in enclosed wrappers.')
 
 
@@ -177,7 +177,7 @@ def buffer(wrapper_class: Type[Wrapper]):
 
     if not issubclass(wrapper_class, Wrapper):
         raise TypeError(
-            f"{wrapper_class} must be a subclass of {Wrapper}")
+            f"{wrapper_class.__name__} must be a subclass of {Wrapper}")
 
     class ObservationBufferDependentWrapper(wrapper_class):
 
@@ -204,10 +204,10 @@ def buffer(wrapper_class: Type[Wrapper]):
                 **kwargs: Optional keyword arguments to pass to the wrapper.
             """
 
-            self.buffer = self.find_buffer_wrapper(env)
+            self.observation_buffer_wrapper = self.find_observation_buffer_wrapper(env)
             super().__init__(env, *args, **kwargs)
 
-        def find_buffer_wrapper(self, env):
+        def find_observation_buffer_wrapper(self, env):
             """
             Searches recursively for an observation buffer in enclosed wrappers.
 
@@ -226,12 +226,12 @@ def buffer(wrapper_class: Type[Wrapper]):
                 return env
 
             if hasattr(env, 'env'):
-                return self.find_buffer_wrapper(env.env)
+                return self.find_observation_buffer_wrapper(env.env)
 
             else:
                 raise IncompatibleWrapperError(
-                    f'{wrapper_class} requires an observation buffer in one of '
-                    f'the enclosed wrappers.')
+                    f'{wrapper_class.__name__} requires an observation buffer in one of '
+                    'the enclosed wrappers.')
 
     return ObservationBufferDependentWrapper
 
@@ -242,7 +242,7 @@ def validate_actions(wrapper_class: Type[Wrapper]):
     # before calling the step function of the base class.
 
     if not issubclass(wrapper_class, Wrapper):
-        raise TypeError(f"{wrapper_class} must be a subclass of {Wrapper}")
+        raise TypeError(f"{wrapper_class.__name__} must be a subclass of {Wrapper}")
 
 
     class ActionSpaceCheckerWrapper(wrapper_class):
@@ -273,8 +273,8 @@ def validate_actions(wrapper_class: Type[Wrapper]):
             if not hasattr(self, 'action_space'):
 
                 raise IncompatibleWrapperError(
-                    f"Applying {validate_actions} decorator to{wrapper_class} "
-                    f"requires an action space to be defined first.")
+                    f"Applying {validate_actions} decorator to{wrapper_class.__name__} "
+                    "requires an action space to be defined first.")
             
 
         def step(self, actions: Iterable):
@@ -294,8 +294,8 @@ def validate_actions(wrapper_class: Type[Wrapper]):
 
             if not self.action_space.contains(actions):
                 raise IncompatibleWrapperError(
-                    f"Wrapper {wrapper_class} is receiving actions "
-                    f"that are not in it's action space.")
+                    f"Wrapper {wrapper_class.__name__} is receiving actions "
+                    "that are not in it's action space.")
 
             return super().step(actions)
 
@@ -309,7 +309,7 @@ def validate_observations(wrapper_class: Type[Wrapper]):
     # before returning the observation from the reset and step functions.
 
     if not issubclass(wrapper_class, Wrapper):
-        raise TypeError(f"{wrapper_class} must be a subclass of {Wrapper}")
+        raise TypeError(f"{wrapper_class.__name__} must be a subclass of {Wrapper}")
 
 
     class ObservationSpaceCheckerWrapper(wrapper_class):
@@ -340,10 +340,12 @@ def validate_observations(wrapper_class: Type[Wrapper]):
             if not hasattr(self, 'observation_space'):
 
                 raise IncompatibleWrapperError(
-                    f"Applying {validate_observations} decorator to {wrapper_class} "
-                    f"requires an observation space to be defined first.")
+                    f"Applying {validate_observations} decorator to {wrapper_class.__name__} "
+                    "requires an observation space to be defined first.")
             
+
         def observation(self, observation):
+
             """
             Checks if the observation is in the observation space before returning it
             from the observation method of the base class.
@@ -355,10 +357,18 @@ def validate_observations(wrapper_class: Type[Wrapper]):
                 The result of calling the observation method of the base class.
             """
 
-            if not self.observation_space.contains(observation):
+            if isinstance(self.expected_observation_space, spaces.Box):
+                if not self.expected_observation_space.contains(observation):
+
+                    raise IncompatibleWrapperError(
+                        f'Wrapper {type(self).__name__} received an observation that is not '
+                        'in the expected observation space {self.expected_observation_space}.')
+
+
+            if not any(isinstance(observation, observation_type) for observation_type in self.expected_observation_space):
                 raise IncompatibleWrapperError(
-                    f"Wrapper {wrapper_class} is receiving an observation "
-                    f"that is not in it's observation space.")
+                    f"Wrapper {type(self).__name__} received an observation of type {type(observation)}, "
+                    f"which is not in the expected observation space {self.expected_observation_space}.")
 
             return super().observation(observation)
 
@@ -489,10 +499,40 @@ class AbstractMarketEnvMetadataWrapper(Wrapper, ABC):
 @market
 class MarketEnvMetadataWrapper(AbstractMarketEnvMetadataWrapper):
 
-    # Wraps a market env to track env metadata
-    # enclosing wrappers can utilize this metadata
+    """
+    A wrapper for market environments that tracks and stores environment metadata.
+    Enclosing wrappers can utilize this metadata for various purposes, such as
+    position sizing, risk management, and performance analysis.
+
+    The wrapper supports both TrainMarketEnv and TradeMarketEnv instances and
+    updates metadata accordingly.
+
+    Attributes:
+    asset_quantities (np.ndarray): The quantities of assets held by the trader.
+    asset_prices (np.ndarray): The current asset prices in the market.
+    net_worth (float): The current net worth of the trader.
+    initial_cash (float): The initial cash amount when the environment started.
+    cash (float): The current cash amount held by the trader.
+    positions (np.ndarray): The current market value of all asset positions.
+    longs (np.ndarray): The current market value of long asset positions.
+    shorts (np.ndarray): The current market value of short asset positions.
+    progress (float or str): The progress of the environment, either as a fraction
+                              of steps for TrainMarketEnv or as a timestamp for
+                              TradeMarketEnv.
+    history (defaultdict): A dictionary containing the historical values of the
+                           metadata attributes.
+
+    """
 
     def __init__(self, env: Env) -> None:
+
+        """
+        Initializes the MarketEnvMetadataWrapper instance.
+
+        Args:
+        env (Env): The environment to wrap.
+        """
+
         super().__init__(env)
 
         if isinstance(self.market_env, TradeMarketEnv):
@@ -500,6 +540,10 @@ class MarketEnvMetadataWrapper(AbstractMarketEnvMetadataWrapper):
 
 
     def _upadate_train_env_metadata(self):
+
+        """
+        Updates the metadata attributes for TrainMarketEnv instances.
+        """
 
         self.asset_quantities = self.market_env.asset_quantities
         self.asset_prices = self.market_env.asset_prices
@@ -520,22 +564,31 @@ class MarketEnvMetadataWrapper(AbstractMarketEnvMetadataWrapper):
 
 
     def _update_trade_env_metadata(self):
-            
-            self.history = defaultdict(list)
-            self.asset_quantities = self.trader.asset_quantities
-            self.net_worth = self.trader.net_worth
-            self.initial_cash = self.market_env.initial_cash
-            self.cash = self.trader.cash
 
-            self.positions = self.trader.positions
-            self.longs = self.trader.longs
-            self.shorts = self.trader.shorts
+        """
+        Updates the metadata attributes for TradeMarketEnv instances.
+        """
 
-            now = datetime.now()
-            self.progress = now.strftime("%Y-%m-%d %H:%M")
+        self.history = defaultdict(list)
+        self.asset_quantities = self.trader.asset_quantities
+        self.net_worth = self.trader.net_worth
+        self.initial_cash = self.market_env.initial_cash
+        self.cash = self.trader.cash
+
+        self.positions = self.trader.positions
+        self.longs = self.trader.longs
+        self.shorts = self.trader.shorts
+
+        now = datetime.now()
+        self.progress = now.strftime("%Y-%m-%d %H:%M")
 
 
     def update_metadata(self):
+
+        """
+        Updates the metadata attributes based on the type of market environment
+        (TrainMarketEnv or TradeMarketEnv), and caches the history.
+        """
 
         if isinstance(self.market_env, TrainMarketEnv):
             self._upadate_train_env_metadata()
@@ -549,6 +602,10 @@ class MarketEnvMetadataWrapper(AbstractMarketEnvMetadataWrapper):
 
 
     def _cache_metadata_history(self):
+
+        """
+        Caches the historical values of the metadata attributes.
+        """
 
         self.history['net_worth'].append(self.net_worth)
 
@@ -566,7 +623,7 @@ class ConsoleTearsheetRenderWrapper(Wrapper):
     Args:
     env (gym.Env): The environment to wrap.
     verbosity (int, optional): Controls the frequency at which the tear sheet is printed. Defaults to 20.
-
+    Set to 1 if you want to only show the final performance in episode.
     """
 
     def __init__(
@@ -651,7 +708,8 @@ class ConsoleTearsheetRenderWrapper(Wrapper):
             f'${cash:,.0f}',
             f'${portfolio_value:,.0f}',
             f'${longs:,.0f}',
-            f'${shorts:,.0f}']
+            f'${shorts:,.0f} ' 
+            f'{abs(shorts/net_worth):.0%}']
 
         if self.index == 0:
 
@@ -671,6 +729,8 @@ class ConsoleTearsheetRenderWrapper(Wrapper):
         print(tabular_print(metrics))
 
         return None
+
+
 
 @metadata
 @validate_actions
@@ -700,60 +760,273 @@ class MinTradeSizeActionWrapper(ActionWrapper):
         return None
 
 
-    def action(self, actions: Iterable[float]):
+    def action(self, actions: np.ndarray[np.float32]) -> np.ndarray[np.float32]:
 
-        new_action = [
-            action if abs(action) >= self.min_action 
-            else 0 for action in actions]
+        new_action = np.array([
+            action if abs(action) >= self.min_action else 0 
+            for action in actions], dtype = np.float32)
     
         return new_action
 
 
-@metadata
+
 @validate_actions
-class ActionClipperWrapper(ActionWrapper):
-
-
-    """A wrapper that clips actions to expected range of downstream position sizing wrappers.
-    Actions received are usually immediate output of model. Serves as an upstream action
-    wrapper that enforces action values to be in a certain range for downstream trade sizing
-    wrappers.
-
-    Args:
-    env (gym.Env): The environment to wrap.
-    low (float, optional): The minimum value for the actions. Defaults to -1.
-    high (float, optional): The maximum value for the actions. Defaults to 1.
+@metadata
+class IntegerAssetQuantityActionWrapper(ActionWrapper):
 
     """
+    A wrapper for OpenAI Gym trading environments that modifies the agent's actions to ensure they correspond to an integer
+    number of shares for each asset.
 
-    def __init__(self, env: Env, low=-1, high = 1) -> None:
+    This class should be used with caution, as the modification of the agent's actions to enforce integer quantities may not
+    be valid in some trading environments due to price slippage. Ensure other action wrappers applied before this would not modify
+    the actions in a way that asset quantities are not integer anymore.
+
+    Attributes:
+    -----------
+    env : Env
+        The trading environment to be wrapped.
+    integer : bool
+        A flag that indicates whether to enforce integer asset quantities or not.
+    asset_prices : ndarray or None
+        An array containing the current prices of each asset in the environment, or None if the prices have not been set yet.
+    """
+
+    # modifies actions to amount to integer number of shares
+    # would not be valid in trade market env due to price
+    # slippage.
+
+    def __init__(self, env: Env, integer=True) -> None:
+        """
+        Initializes a new instance of the IntegerAssetQuantityActionWrapper class.
+
+        Parameters:
+        -----------
+        env : Env
+            The trading environment to be wrapped.
+        integer : bool, optional
+            A flag that indicates whether to enforce integer asset quantities or not. Defaults to True.
+        """
 
         super().__init__(env)
-
-        self.low = low
-        self.high = high
+        self.integer = integer
+        self.asset_prices = None
         self.n_symbols = self.market_metadata_wrapper.n_symbols
         self.action_space = (
-            spaces.Box(-np.inf, np.inf, shape= (self.n_symbols,)))
+            spaces.Box(-np.inf, np.inf, shape=(self.n_symbols,)))
+        return None
+
+    def action(self, actions: np.ndarray[np.float32]) -> np.ndarray[np.float32]:
+        """
+        Modifies the agent's actions to ensure they correspond to an integer number of shares for each asset.
+
+        Parameters:
+        -----------
+        actions : ndarray
+            An array containing the agent's original actions.
+
+        Returns:
+        --------
+        ndarray
+            An array containing the modified actions, where each asset quantity is an integer multiple of its price.
+        """
+
+        if self.integer:
+
+            asset_prices = self.market_metadata_wrapper.asset_prices
+
+            for asset, action in enumerate(actions):
+
+                action = (
+                    action // asset_prices[asset]) * asset_prices[asset]
+                actions[asset] = action
+
+        return actions
+    
+
+
+@validate_actions
+@metadata
+class NetWorthRelativeMaximumShortSizing(ActionWrapper):
+
+    """
+    This class is designed to size the maximum short amount relative to net worth, ensuring
+    that the short to net worth ratio is not violated. Takes notional asset value to buy/sell
+    as actions. It must be applied before a position sizing wrapper and should not be combined
+    with wrappers that increase the sell amount.
+
+    The short_ratio parameter determines the maximum allowed short position as a percentage
+    of the net worth. For example, a short_ratio of 0.2 means the maximum short position can
+    be 20% of the net worth. Actions are partially fulfilled to the extent that the short_ratio
+    is not violated. Adherence to this ratio at the time orders are placed is guaranteed. 
+    Note that since metadata wrapper updates after prices change, short ratio
+    observed in render wrappers may occasionally seem to slightly deviate from the short_raio specified.
+    This is due to the fact that metadata observed is not calculated at the previous price point.
+
+    Attributes:
+        short_ratio (float): Represents the maximum short ratio allowed. A value of 0 means no shorting,
+                            while a value of 0.2 means the maximum short position can be 20% of net worth.
+                            
+    Methods:
+        __init__(self, env: Env, short_ratio: float = 0.2) -> None: Constructor for the class.
+        _set_short_budget(self) -> None: Sets the short budget based on net worth and short_ratio.
+        action(self, actions) -> np.array: Processes and modifies actions to respect short sizing limits.
+    """
+
+    def __init__(self, env: Env, short_ratio = 0.2) -> None:
+
+        """
+        Initializes the NetWorthRelativeMaximumShortSizing class with the given environment and short_ratio.
+        
+        Args:
+            env (Env): The trading environment.
+            short_ratio (float): The maximum short ratio allowed. Default is 0.2 (20% of net worth).
+        """
+
+        super().__init__(env)
+        self.short_ratio = short_ratio
+        self.short_budget = None
+        self.n_symbols = self.market_metadata_wrapper.n_symbols
+        self.action_space = spaces.Box(
+            -np.inf, np.inf, shape= (self.n_symbols,), dtype= np.float32)
+
+        return None
+    
+
+    def _set_short_budget(self) -> None:
+
+        """
+        Sets the short budget based on the net worth and short_ratio.
+        """
+
+        max_short_size = self.short_ratio * max(self.market_metadata_wrapper.net_worth, 0)
+        self.short_budget = max(max_short_size - abs(self.market_metadata_wrapper.shorts), 0)
+
+        return None
+    
+
+    def action(self, actions: np.ndarray[np.float32]) -> np.ndarray[np.float32]:
+
+        """
+        Processes the given actions without applying the effects, and modifies actions that would lead to
+        short sizing limit violations.
+        
+        Args:
+            actions (np.ndarray): The actions to process.
+        
+        Returns:
+            np.ndarray: The modified actions respecting the short sizing limits.
+        """
+
+        positions = self.market_metadata_wrapper.positions
+
+        self._set_short_budget()
+
+        for asset, action in enumerate(actions):
+            
+            if action > 0:
+                continue
+
+            # if short budget is zero and there is no owned assets ignore action
+            if self.short_budget == 0 and positions[asset] <= 0:
+                actions[asset] = 0
+                continue
+
+            
+            sell = abs(action)
+
+            # if sell amount exceeds current asset portfolio value shorting occurs
+            new_short = abs(min(positions[asset] - sell, 0)) if positions[asset] >=0 else sell
+
+            # modify sell amount if short excess over budget exists.          
+            excess = max(new_short - self.short_budget, 0)
+            sell -= excess
+            new_short -= excess
+            
+            self.short_budget -= new_short
+            actions[asset] = -sell
+           
+        return actions
+
+
+
+@validate_actions
+@metadata
+class FixedMarginActionWrapper(ActionWrapper):
+
+    """
+    Class for sizing maximum margin amount relative to net worth.
+    Margin trading allows buying more than available cash using leverage. Positive cash is required
+    thus margin trading can only happen one asset at a time since orders are submitted asset by asset.
+    Initial_margin = 1 means no margin, namely entire purchase should me made with available cash only.
+    leverage = 1/inital_margin. initial_margin = 0.1 means only 10% of purchase value needs to be present
+    in account as cash thus maximum of 1/0.1 = 10 times cash, worth of assets can be purchased.
+    overall margin will have nominal effect on portfolio performance unless large purchase
+    of a single asset is involved.
+
+    Attributes:
+        short_ratio (float): Represents the maximum short ratio allowed. A value of 0 means no shorting,
+                            while a value of 0.2 means the maximum short position can be 20% of net worth.
+                            
+    Methods:
+        __init__(self, env: Env, short_ratio: float = 0.2) -> None: Constructor for the class.
+        _set_short_budget(self) -> None: Sets the short budget based on net worth and short_ratio.
+        action(self, actions) -> np.array: Processes and modifies actions to respect short sizing limits.
+    """
+
+
+    def __init__(self, env: Env, initial_margin= 1) -> None:
+
+        """
+        Initializes the class with the given trading environment and initial_margin.
+        Args:
+            env (Env): The trading environment.
+            initial_margin (float): The initial margin required for each trade. Default is 1.
+        """
+
+        super().__init__(env)
+        self.initial_margin = initial_margin
+        self.n_symbols = self.market_metadata_wrapper.n_symbols
+        self.action_space = spaces.Box(
+            -np.inf, np.inf, shape= (self.n_symbols,), dtype= np.float32)
 
         return None
 
-    def action(self, actions: Iterable[float]):
 
-        """Clip the actions to be within the given low and high values.
-        
+    def action(self, actions: np.ndarray[np.float32]) -> np.ndarray[np.float32]:
+
+        """
+        Processes the given actions without applying the effects, and proactively modifies actions that
+        would lead to short sizing limit violations. It considers the available cash and the initial_margin
+        to calculate the maximum amount that can be bought on margin.
+
         Args:
-        actions (np.ndarray): The array of actions to clip.
-        
+            actions (np.array): The actions to process.
+
         Returns:
-        list: The clipped array of actions.
-        
+            np.array: The modified actions respecting the margin requirements.
+
+        Comments:
+            1. Margin requires available cash. No cash means no margin.
+            2. Sell actions are ignored due to having no effect on margin.        
         """
 
-        new_actions = np.clip(
-            actions, self.low, self.high).tolist()
 
-        return new_actions
+
+        cash = self.market_metadata_wrapper.cash
+
+        for asset, action in enumerate(actions):
+            
+            if action <= 0:
+                continue
+
+            leverage = 1/self.initial_margin
+            
+            buy = min(action, leverage * cash)
+            cash -= buy
+            actions[asset] = buy
+
+        return actions
 
 
 
@@ -801,7 +1074,7 @@ class NetWorthRelativeUniformPositionSizing(ActionWrapper):
         self.n_symbols = self.market_metadata_wrapper.n_symbols
 
         self.action_space = spaces.Box(
-            low = -1, high = 1, shape = (self.n_symbols,))
+            low = -1, high = 1, shape = (self.n_symbols,), dtype= np.float32)
         
         return None
 
@@ -858,8 +1131,7 @@ class NetWorthRelativeUniformPositionSizing(ActionWrapper):
         
         return parsed_action
 
-
-    def action(self, actions):
+    def action(self, actions: np.ndarray[np.float32]) -> np.ndarray[np.float32]:
 
         """
         Limits the maximum percentage of net worth that can be traded at each step and
@@ -878,269 +1150,100 @@ class NetWorthRelativeUniformPositionSizing(ActionWrapper):
 
         self._set_max_trade_per_asset(self.trade_ratio)
 
-        new_actions = [self.parse_action(action)for action in actions]
+        new_actions = np.array([self.parse_action(action) 
+            for action in actions], dtype= np.float32)
         
         return new_actions
 
 
-@validate_actions
 @metadata
-class NetWorthRelativeMaximumShortSizing(ActionWrapper):
+class DirectionalTradeActionWrapper(ActionWrapper):
 
+    """A wrapper that enforces directional trading by zeroing either positive action values (no long) or negative values (no short).
+    Serves as an upstream action wrapper that modifies the actions for downstream trade sizing wrappers.
+
+    Args:
+    env (gym.Env): The environment to wrap.
+    long (bool): if True only long is allowed, otherwise only short.
 
     """
-    This class is designed to size the maximum short amount relative to net worth, ensuring
-    that the short to net worth ratio is not violated. Takes notional asset value to buy/sell
-    as actions. It must be applied before a position sizing wrapper and should not be combined
-    with wrappers that increase the sell amount.
 
-    The short_ratio parameter determines the maximum allowed short position as a percentage
-    of the net worth. For example, a short_ratio of 0.2 means the maximum short position can
-    be 20% of the net worth. Actions are partially fulfilled to the extent that the short_ratio
-    is not violated.
-
-    Attributes:
-        short_ratio (float): Represents the maximum short ratio allowed. A value of 0 means no shorting,
-                            while a value of 0.2 means the maximum short position can be 20% of net worth.
-                            
-    Methods:
-        __init__(self, env: Env, short_ratio: float = 0.2) -> None: Constructor for the class.
-        _set_short_budget(self) -> None: Sets the short budget based on net worth and short_ratio.
-        action(self, actions) -> np.array: Processes and modifies actions to respect short sizing limits.
-    """
-
-
-    def __init__(self, env: Env, short_ratio = 0.2) -> None:
-
-        """
-        Initializes the NetWorthRelativeMaximumShortSizing class with the given environment and short_ratio.
-        
-        Args:
-            env (Env): The trading environment.
-            short_ratio (float): The maximum short ratio allowed. Default is 0.2 (20% of net worth).
-        """
+    def __init__(self, env: Env, long: bool = True) -> None:
 
         super().__init__(env)
-        self.short_ratio = short_ratio
-        self.short_budget = None
+
+        self.long = long
         self.n_symbols = self.market_metadata_wrapper.n_symbols
-        self.action_space = spaces.Box(-np.inf, np.inf, shape= (self.n_symbols,))
+        self.action_space = spaces.Box(-np.inf,
+                                       np.inf, shape=(self.n_symbols,))
 
         return None
-    
 
-    def _set_short_budget(self) -> None:
-
-        """
-        Sets the short budget based on the net worth and short_ratio.
-        """
-
-        max_short_size = self.short_ratio * max(self.market_metadata_wrapper.net_worth, 0)
-        self.short_budget = max(max_short_size - abs(self.market_metadata_wrapper.shorts), 0)
-
-        return None
-    
-
-    def action(self, actions:Iterable[float]) -> Iterable[float]:
-
-        """
-        Processes the given actions without applying the effects, and modifies actions that would lead to
-        short sizing limit violations.
+    def action(self, actions: np.ndarray[np.float32]) -> np.ndarray[np.float32]:
+        """Modify the actions to enforce directional trading.
         
         Args:
-            actions (Iterable[float]): The actions to process.
+        actions (np.ndarray): The array of actions to enforce directional trading.
         
         Returns:
-            Iterable[float]: The modified actions respecting the short sizing limits.
+        list: The modified array of actions.
+        
         """
-
-        positions = self.market_metadata_wrapper.positions
-
-        self._set_short_budget()
-
-        for asset, action in enumerate(actions):
-            
-            if action > 0:
-                continue
-
-            # if short budget is zero and there is no owned assets ignore action
-            if self.short_budget == 0 and positions[asset] <= 0:
-                actions[asset] = 0
-                continue
-
-            # if sell amount exceeds current asset portfolio value shorting occurs
-            sell = abs(action)
-
-            new_short = abs(min(positions[asset] - sell, 0)) if positions[asset] >=0 else sell
-
-
-            # modify sell amount if short excess over budget exists.          
-            excess = max(new_short - self.short_budget, 0)
-            sell -= excess
-            new_short -= excess
-            
-            self.short_budget -= new_short
-            actions[asset] = -sell
-
-           
-        return actions
-
-
-
-@validate_actions
-@metadata
-class FixedMarginActionWrapper(ActionWrapper):
-
-    """
-    Class for sizing maximum margin amount relative to net worth.
-    Margin trading allows buying more than available cash using leverage. Positive cash is required
-    thus margin trading can only happen one asset at a time since orders are submitted asset by asset.
-    Initial_margin = 1 means no margin, namely entire purchase should me made with available cash only.
-    leverage = 1/inital_margin. initial_margin = 0.1 means only 10% of purchase value needs to be present
-    in account as cash thus maximum of 1/0.1 = 10 times cash, worth of assets can be purchased.
-    overall margin will have nominal effect on portfolio performance unless large purchase
-    of a single asset is involved.
-
-    Attributes:
-        short_ratio (float): Represents the maximum short ratio allowed. A value of 0 means no shorting,
-                            while a value of 0.2 means the maximum short position can be 20% of net worth.
-                            
-    Methods:
-        __init__(self, env: Env, short_ratio: float = 0.2) -> None: Constructor for the class.
-        _set_short_budget(self) -> None: Sets the short budget based on net worth and short_ratio.
-        action(self, actions) -> np.array: Processes and modifies actions to respect short sizing limits.
-    """
-
-
-    def __init__(self, env: Env, initial_margin= 1) -> None:
-
-        """
-        Initializes the class with the given trading environment and initial_margin.
-        Args:
-            env (Env): The trading environment.
-            initial_margin (float): The initial margin required for each trade. Default is 1.
-        """
-
-        super().__init__(env)
-        self.initial_margin = initial_margin
-        self.n_symbols = self.market_metadata_wrapper.n_symbols
-        self.action_space = spaces.Box(-np.inf, np.inf, shape= (self.n_symbols,))
-
-        return None
-
-
-    def action(self, actions):
-
-        """
-        Processes the given actions without applying the effects, and proactively modifies actions that
-        would lead to short sizing limit violations. It considers the available cash and the initial_margin
-        to calculate the maximum amount that can be bought on margin.
-
-        Args:
-            actions (np.array): The actions to process.
-
-        Returns:
-            np.array: The modified actions respecting the margin requirements.
-
-        Comments:
-            1. Margin requires available cash. No cash means no margin.
-            2. Sell actions are ignored due to having no effect on margin.        
-        """
-
-
-
-        cash = self.market_metadata_wrapper.cash
-
-        for asset, action in enumerate(actions):
-            
-            if action <= 0:
-                continue
-
-            leverage = 1/self.initial_margin
-            
-            buy = min(action, leverage * cash)
-            cash -= buy
-            actions[asset] = buy
+        if self.long:
+            actions[actions < 0] = 0
+        else:
+            actions[actions > 0] = 0
 
         return actions
+    
 
 
-@validate_actions
 @metadata
-class IntegerAssetQuantityActionWrapper(ActionWrapper):
+@validate_actions
+class ActionClipperWrapper(ActionWrapper):
+
+
+    """A wrapper that clips actions to expected range of downstream position sizing wrappers.
+    Actions received are usually immediate output of model. Serves as an upstream action
+    wrapper that enforces action values to be in a certain range for downstream trade sizing
+    wrappers.
+
+    Args:
+    env (gym.Env): The environment to wrap.
+    low (float, optional): The minimum value for the actions. Defaults to -1.
+    high (float, optional): The maximum value for the actions. Defaults to 1.
 
     """
-    A wrapper for OpenAI Gym trading environments that modifies the agent's actions to ensure they correspond to an integer
-    number of shares for each asset.
 
-    This class should be used with caution, as the modification of the agent's actions to enforce integer quantities may not
-    be valid in some trading environments due to price slippage. Ensure other action wrappers applied before this would not modify
-    the actions in a way that asset quantities are not integer anymore.
-
-    Attributes:
-    -----------
-    env : Env
-        The trading environment to be wrapped.
-    integer : bool
-        A flag that indicates whether to enforce integer asset quantities or not.
-    asset_prices : ndarray or None
-        An array containing the current prices of each asset in the environment, or None if the prices have not been set yet.
-    """
-
-    # modifies actions to amount to integer number of shares
-    # would not be valid in trade market env due to price
-    # slippage. 
-
-    def __init__(self, env: Env, integer = True) -> None:
-
-        """
-        Initializes a new instance of the IntegerAssetQuantityActionWrapper class.
-
-        Parameters:
-        -----------
-        env : Env
-            The trading environment to be wrapped.
-        integer : bool, optional
-            A flag that indicates whether to enforce integer asset quantities or not. Defaults to True.
-        """
+    def __init__(self, env: Env, low=-1, high = 1) -> None:
 
         super().__init__(env)
-        self.integer = integer
-        self.asset_prices = None
+
+        self.low = low
+        self.high = high
         self.n_symbols = self.market_metadata_wrapper.n_symbols
         self.action_space = (
-            spaces.Box(-np.inf,np.inf, shape=(self.n_symbols,)))
+            spaces.Box(self.low, self.high, shape= (self.n_symbols,)))
+
         return None
 
+    def action(self, actions: np.ndarray[np.float32]) -> np.ndarray[np.float32]:
 
-    def action(self, actions: Iterable[float]):
-
-        """
-        Modifies the agent's actions to ensure they correspond to an integer number of shares for each asset.
-
-        Parameters:
-        -----------
-        actions : ndarray
-            An array containing the agent's original actions.
-
+        """Clip the actions to be within the given low and high values.
+        
+        Args:
+        actions (np.ndarray): The array of actions to clip.
+        
         Returns:
-        --------
-        ndarray
-            An array containing the modified actions, where each asset quantity is an integer multiple of its price.
+        list: The clipped array of actions.
+        
         """
 
-        if self.integer:
-        
-            asset_prices = self.market_metadata_wrapper.asset_prices
+        new_actions = np.clip(
+            np.array(actions), self.low, self.high)
 
-            for asset , action in enumerate(actions):
-
-                action = (
-                    action // asset_prices[asset]) * asset_prices[asset]
-                actions[asset] = action
-        
-        return actions
-
+        return new_actions
+    
 
 @validate_observations
 @metadata
@@ -1174,7 +1277,25 @@ class PositionsFeatureEngineeringWrapper(ObservationWrapper):
 
         super().__init__(env)
         self.n_symbols = self.market_metadata_wrapper.n_symbols
+        self.n_features = self.market_metadata_wrapper.n_features
+        self.expected_observation_space = spaces.Dict({
 
+            'cash': spaces.Box(
+                low=-np.inf, high=np.inf, shape=(1,), dtype=np.float32),
+
+            'asset_quantities': spaces.Box(
+                low=-np.inf, high=np.inf, shape=(
+                    self.n_symbols,), dtype=np.float32),
+
+            'holds': spaces.Box(
+                low=0, high=np.inf, shape=(
+                    self.n_symbols,), dtype=np.int32),
+
+            'features': spaces.Box(
+                low=-np.inf, high=np.inf, shape=(
+                    self.n_features,), dtype=np.float32)})
+
+        
         self.observation_space = spaces.Dict({
 
             'cash': spaces.Box(
@@ -1255,6 +1376,24 @@ class WealthAgnosticFeatureEngineeringWrapper(ObservationWrapper):
         super().__init__(env)
         self.initial_cash = self.market_metadata_wrapper.initial_cash
         self.n_symbols = self.market_metadata_wrapper.n_symbols
+        self.n_features = self.market_metadata_wrapper.n_features
+
+        self.expected_observation_space = spaces.Dict({
+
+            'cash':spaces.Box(
+            low=-np.inf, high=np.inf, shape = (1,), dtype=np.float32),
+
+            'positions': spaces.Box(
+            low=-np.inf, high=np.inf, shape = (
+            self.n_symbols,), dtype=np.float32),
+
+            'holds': spaces.Box(
+            low=0, high=np.inf, shape = (
+            self.n_symbols,), dtype=np.int32),
+            
+            'features': spaces.Box(
+            low=-np.inf, high=np.inf, shape = (
+            self.n_features,), dtype=np.float32)})
 
         self.observation_space = spaces.Dict({
 
@@ -1306,8 +1445,7 @@ class WealthAgnosticFeatureEngineeringWrapper(ObservationWrapper):
         return observation
 
 
-
-class ObservationBufferWrapper(ObservationWrapper):
+class ObservationBufferWrapper(Wrapper):
 
     """
     A wrapper for OpenAI Gym trading environments that provides a temporary buffer of observations for subsequent wrappers 
@@ -1371,16 +1509,18 @@ class ObservationBufferWrapper(ObservationWrapper):
         deque
             A deque object containing the last n observations, where n is equal to the buffer_size.
         """
+
         self.observation_buffer.append(observation)
 
         return observation
     
 
 
-class FlattenDictToNumpyObservationWrapper(ObservationWrapper):
+@validate_observations
+class FlattenToNUmpyObservationWrapper(ObservationWrapper):
 
     """
-    A wrapper for OpenAI Gym trading environments that flattens a dictionary of observations to a numpy array.
+    A wrapper for OpenAI Gym trading environments that flattens the observation space to a 1D numpy array.
 
     Attributes:
     -----------
@@ -1391,7 +1531,7 @@ class FlattenDictToNumpyObservationWrapper(ObservationWrapper):
     def __init__(self, env: Env) -> None:
 
         """
-        Initializes a new instance of the FlattenDictToNumpyObservationWrapper class.
+        Initializes a new instance of the FlattenToNUmpyObservationWrapper class.
 
         Parameters:
         -----------
@@ -1400,31 +1540,155 @@ class FlattenDictToNumpyObservationWrapper(ObservationWrapper):
         """
 
         super().__init__(env)
+        self.expected_observation_space = [dict, np.ndarray]
+        self.observation_space = self.flattened_observation_space(env)
+
 
         return None
 
-
-    def observation(self, observation: dict):
+    def flattened_observation_space(self, env):
 
         """
-        Flattens the dictionary of observations to a numpy array.
+        Returns a flattened observation space.
 
         Parameters:
         -----------
-        observation : dict
-            A dictionary containing the current observation.
+        env : Env
+            The trading environment.
+
+        Returns:
+        --------
+        spaces.Box
+            The flattened observation space.
+        """        
+
+        # self.observation_space is by default equal to of self.env.observation_space
+        # i.e. observation_spcae of enclosed wrapper due to inheritance from ObservationWrapper
+        if isinstance(self.observation_space, spaces.Box):
+
+            shape = self.observation_space.shape
+            flattened_size = int(np.prod(shape))
+
+            return spaces.Box(
+                low=self.observation_space.low.flatten(),
+                high=self.observation_space.high.flatten(),
+                shape=(flattened_size,), 
+                dtype=np.float32)
+
+        flattened_size = 0
+        for space in env.observation_space.spaces.values():
+            flattened_size += int(np.prod(space.shape))
+
+        low = np.zeros(flattened_size)
+        high = np.zeros(flattened_size)
+
+        index = 0
+        for space in env.observation_space.spaces.values():
+            size = int(np.prod(space.shape))
+            low[index:index+size] = space.low.flatten()
+            high[index:index+size] = space.high.flatten()
+            index += size
+
+        return spaces.Box(low=low, high=high, shape=(flattened_size,), dtype=np.float32)
+
+    def observation(self, observation):
+
+        """
+        Flattens the observation space to a 1D numpy array.
+
+        Parameters:
+        -----------
+        observation : dict or ndarray
+            The observation space.
 
         Returns:
         --------
         ndarray
-            A flattened numpy array of the observations
+            The flattened observation space.
         """
 
-        assert isinstance(observation, dict), "The observation must be a dictionary."
-        observation = np.concatenate(list(observation.values()), axis=None)
+        if isinstance(observation, dict):
+            observation = np.concatenate([
+                obs.flatten() for obs in observation.values()])
+            
+        elif isinstance(observation, np.ndarray):
+            observation = observation.flatten()
 
         return observation
-    
+
+
+
+@buffer
+class ObservationStackerWrapper(ObservationWrapper):
+
+    """
+    A wrapper for OpenAI Gym trading environments that stacks the last n observations in the buffer.
+
+    Attributes:
+    -----------
+    env : Env
+        The trading environment to be wrapped.
+    stack_size : int
+        The number of observations to be concatenated.
+    """
+
+    def __init__(self, env: Env, stack_size: Optional[int] = None) -> None:
+
+        """
+        Initializes a new instance of the ObservationStackerWrapper class.
+
+        Parameters:
+        -----------
+        env : Env
+            The trading environment to be wrapped.
+        stack_size : int, optional
+            The number of observations to be concatenated. Defaults to 4.
+        """
+
+        super().__init__(env)
+        self.stack_size = (
+            stack_size if stack_size is not None 
+            else self.observation_buffer_wrapper.buffer_size)
+
+
+    def observation(self, observation: Dict[str, np.ndarray] | np.ndarray):
+        """
+        Returns the last n stacked observations in the buffer.
+
+        Parameters:
+        -----------
+        observation : dict or ndarray
+            A dictionary or ndarray containing the current observation.
+
+        Returns:
+        --------
+        ndarray or dict of ndarrays
+            An ndarray or dict of ndarrays containing the stacked observations.
+        """
+        stack = self.observation_buffer_wrapper.observation_buffer[-self.stack_size:]
+
+        # Check if the observations are ndarrays or dictionaries of ndarrays
+        if isinstance(stack[0], np.ndarray):
+            stacked_observation = np.stack(stack, axis=0)
+
+        elif isinstance(stack[0], dict):
+            stacked_observation = {}
+            for key in stack[0].keys():
+                key_stack = [observation[key] for observation in stack]
+                key_stack = np.stack(key_stack, axis=0)
+                stacked_observation[key] = key_stack
+        
+        observation = stacked_observation
+
+        return observation
+
+
+class RunningMeanStandardDeviation:
+
+    def __init__(self, epsilon=1e-8, shape=None):
+        super().__init__(epsilon, shape)
+
+
 
 @buffer
 class RunningIndicatorsObsWrapper(ObservationWrapper):
@@ -1437,15 +1701,8 @@ class RunningIndicatorsObsWrapper(ObservationWrapper):
         return None
 
 
-
-@buffer
-class ObservationStackerWrapper(ObservationWrapper):
-    pass
-
-
 class NormalizeObservationsWrapper(ObservationWrapper):
     pass
-
 
 
 

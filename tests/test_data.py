@@ -164,8 +164,7 @@ class TestData(BaseConnectionTest):
                 symbols=symbols,
                 resolution=resolution,
                 start_date=start_date,
-                end_date=end_date
-            )
+                end_date=end_date)
 
         logger.info(cm.exception)
         self.assertEqual(

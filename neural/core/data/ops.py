@@ -37,7 +37,7 @@ class AlpacaDataFetcher():
 
     The AlpacaDataFetcher class handles validation of symbols and resolutions,
     data downloading, and data processing tasks. It works in conjunction with
-    the AlpacaMetaClient class to fetch the required data from the Alpaca API
+    the AlpacaClient class to fetch the required data from the Alpaca API
     and process it for further use.
     """
 
@@ -50,7 +50,7 @@ class AlpacaDataFetcher():
         Initializes the AlpacaDataFetcher class.
 
         Args:
-            client (AlpacaMetaClient): An instance of the AlpacaMetaClient class.
+            client (AlpacaClient): An instance of the AlpacaClient class.
 
         Returns:
             None
@@ -117,7 +117,7 @@ class AlpacaDataFetcher():
 
         for symbol in symbols:
 
-            symbol_data = self.client._AlpacaMetaClient__symbols.get(symbol)
+            symbol_data = self.client._AlpacaClient__symbols.get(symbol)
 
             if symbol_data is None:
                 raise ValueError(f'Symbol {symbol} is not a known symbol.')
@@ -136,7 +136,7 @@ class AlpacaDataFetcher():
                     f'Symbol {symbol} is not easy to borrow (ETB).')
 
         asset_classes = set(
-            self.client._AlpacaMetaClient__symbols.get(
+            self.client._AlpacaClient__symbols.get(
             symbol).asset_class for symbol in symbols)
 
 

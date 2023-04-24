@@ -134,16 +134,37 @@ class FillDeque:
         else:
             self.buffer.append(item)
 
-    def to_list(self):
+
+    def __iter__(self):
+        return iter(self.buffer)
+
+
+    def __getitem__(self, index):
         """
-        Returns the current deque buffer as a list.
+        Returns a slice of the buffer as a list.
+
+        Args:
+            index (int, slice): The index or slice to retrieve.
 
         Returns:
-            list: The current buffer as a list.
+            list: A list of items from the buffer.
         """
-        return list(self.buffer)
+        if isinstance(index, int):
+            return self.buffer[index]
+        elif isinstance(index, slice):
+            return list(self.buffer)[index]
+        else:
+            raise TypeError("Invalid argument type")
 
+    def __str__(self):
+        """
+        Returns a string representation of the buffer.
 
-
-class RunningMeanSTD:
-    pass
+        Returns:
+            str: A string representation of the buffer.
+        """
+        return str(list(self.buffer))
+    
+    def clear(self):
+        self.buffer.clear()
+        return None

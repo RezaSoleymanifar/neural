@@ -2,6 +2,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from torch import nn
 from typing import TYPE_CHECKING, List
+import numpy as np
 
 from neural.common.constants import PATTERN_DAY_TRADER_MINIMUM_NET_WORTH
 from neural.common.exceptions import TradeConstraintViolationError
@@ -259,6 +260,8 @@ class AlpacaTraderTemplate(AbstractTrader):
                 quantity = 0
 
             asset_quantities.append(quantity)
+        asset_quantities = np.array(asset_quantities, dtype= np.float32)
+        
         return asset_quantities
 
 
@@ -471,8 +474,6 @@ class CustomAlpacaTrader(AlpacaTraderTemplate):
             self.apply_rules()
 
             place_order_func(action)
-
-            return None
 
         return custom_place_order
     
