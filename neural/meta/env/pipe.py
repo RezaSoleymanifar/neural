@@ -119,6 +119,7 @@ class NetWorthRelativeShortMarginPipe(AbstractPipe):
         self.short_sizing = NetWorthRelativeMaximumShortSizing
         self.position_sizing = NetWorthRelativeUniformPositionSizing
         self.clip = ActionClipperWrapper
+        
         self.flatten = FlattenToNUmpyObservationWrapper
         self.buffer = ObservationBufferWrapper
         self.stacker = ObservationStackerWrapper

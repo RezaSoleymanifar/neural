@@ -209,6 +209,7 @@ class TrainMarketEnv(AbstractMarketEnv):
             'holds': self.holds,
             'features': self.features
         }
+        print(observation)
         
         return observation
 

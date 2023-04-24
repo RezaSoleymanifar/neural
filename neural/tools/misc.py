@@ -2,6 +2,7 @@ from collections import deque
 
 import pandas_market_calendars as market_calendars
 import pandas as pd
+import numpy as np
 
 from alpaca.trading.enums import AssetClass
 from neural.tools.enums import CalendarType
@@ -102,7 +103,8 @@ class Calendar:
 
 
 
-class FillDeque:
+class FillDeque(deque):
+
     """
     A custom deque implementation that fills itself with the first item it receives 
     when it's empty until it reaches the specified buffer size. After that, it behaves 
@@ -110,16 +112,22 @@ class FillDeque:
     """
 
     def __init__(self, buffer_size):
+        
         """
         Initializes the FillDeque instance with the specified buffer size.
 
         Args:
             buffer_size (int): The maximum size of the deque.
         """
+
         self.buffer_size = buffer_size
-        self.buffer = deque(maxlen=buffer_size)
+        self.buffer = deque(maxlen=self.buffer_size)
+
+        return None
+
 
     def append(self, item):
+
         """
         Appends the item to the deque. If the deque is empty, it fills the deque with
         the first item received until it reaches the maximum buffer size.
@@ -133,13 +141,17 @@ class FillDeque:
                 self.buffer.append(item)
         else:
             self.buffer.append(item)
+        
+        return None
 
 
     def __iter__(self):
+
         return iter(self.buffer)
 
 
     def __getitem__(self, index):
+
         """
         Returns a slice of the buffer as a list.
 
@@ -149,22 +161,44 @@ class FillDeque:
         Returns:
             list: A list of items from the buffer.
         """
+
         if isinstance(index, int):
             return self.buffer[index]
+        
         elif isinstance(index, slice):
             return list(self.buffer)[index]
+        
         else:
             raise TypeError("Invalid argument type")
-
-    def __str__(self):
-        """
-        Returns a string representation of the buffer.
-
-        Returns:
-            str: A string representation of the buffer.
-        """
-        return str(list(self.buffer))
+        
     
     def clear(self):
+
+        """
+        Removes all elements from the deque buffer.
+        """
         self.buffer.clear()
+
         return None
+
+
+class RunningMeanStd:
+
+    def __init__(self, shape=(), epsilon=1e-4):
+
+        self.mean = np.zeros(shape, dtype=np.float32)
+        self.var = np.ones(shape, dtype=np.float32)
+        self.count = epsilon
+
+    def update(self, x):
+
+        delta = x - self.mean
+        self.mean += delta / self.count
+        self.var += delta * (x - self.mean)
+        self.count += 1
+
+    def get_mean_std(self):
+        
+        mean = self.mean
+        std = np.sqrt(self.var / (self.count - 1))
+        return mean, std

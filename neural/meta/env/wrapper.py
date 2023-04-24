@@ -364,11 +364,24 @@ def validate_observations(wrapper_class: Type[Wrapper]):
                         f'Wrapper {type(self).__name__} received an observation that is not '
                         'in the expected observation space {self.expected_observation_space}.')
 
+            valid_observation = False
+            for expected_type in self.expected_observation_space:
+                if isinstance(observation, expected_type):
+                    if isinstance(observation, dict):
+                        if all(isinstance(
+                            observation[key], np.ndarray) for key in observation):
+                            valid_observation = True
+                            break
+                    else:
+                        valid_observation = True
+                        break
 
-            if not any(isinstance(observation, observation_type) for observation_type in self.expected_observation_space):
+            if not valid_observation:
                 raise IncompatibleWrapperError(
                     f"Wrapper {type(self).__name__} received an observation of type {type(observation)}, "
                     f"which is not in the expected observation space {self.expected_observation_space}.")
+
+
 
             return super().observation(observation)
 
@@ -1445,7 +1458,7 @@ class WealthAgnosticFeatureEngineeringWrapper(ObservationWrapper):
         return observation
 
 
-class ObservationBufferWrapper(Wrapper):
+class ObservationBufferWrapper(ObservationWrapper):
 
     """
     A wrapper for OpenAI Gym trading environments that provides a temporary buffer of observations for subsequent wrappers 
@@ -1496,6 +1509,7 @@ class ObservationBufferWrapper(Wrapper):
     
 
     def observation(self, observation):
+
         """
         Adds the observation to the buffer and returns the buffer as the new observation.
 
@@ -1683,11 +1697,8 @@ class ObservationStackerWrapper(ObservationWrapper):
         return observation
 
 
-class RunningMeanStandardDeviation:
-
-    def __init__(self, epsilon=1e-8, shape=None):
-        super().__init__(epsilon, shape)
-
+class RunningMeanSandardDeviationObservationWrapper(ObservationWrapper):
+    pass
 
 
 @buffer
@@ -1699,6 +1710,7 @@ class RunningIndicatorsObsWrapper(ObservationWrapper):
 
     def observation(self, observation):
         return None
+
 
 
 class NormalizeObservationsWrapper(ObservationWrapper):
