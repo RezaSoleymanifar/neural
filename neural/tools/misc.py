@@ -182,23 +182,63 @@ class FillDeque(deque):
         return None
 
 
-class RunningMeanStd:
 
-    def __init__(self, shape=(), epsilon=1e-4):
+class RunningMeanStandardDeviation:
+
+    """
+    A class for computing the running mean and standard deviation of a series of data.
+
+    Implements the Welford online algorithm for computing the standard deviation.
+
+    https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Welford's_online_algorithm
+
+    Args:
+        shape (tuple): The shape of the data to be computed.
+    """
+
+    def __init__(self, shape=()):
+
+        """
+        Initializes the RunningMeanStandardDeviation object.
+
+        Args:
+            shape (tuple): The shape of the data to be computed.
+        """
 
         self.mean = np.zeros(shape, dtype=np.float32)
-        self.var = np.ones(shape, dtype=np.float32)
-        self.count = epsilon
+        self.M2 = np.zeros(shape, dtype=np.float32)
+        self.count = 0
 
-    def update(self, x):
+    def update(self, x: np.ndarray):
 
+        """
+        Updates the RunningMeanStandardDeviation object with new data.
+
+        Args:
+            x (np.ndarray): The new data to be added to the RunningMeanStandardDeviation object.
+        """
+
+        self.count += 1
         delta = x - self.mean
         self.mean += delta / self.count
-        self.var += delta * (x - self.mean)
-        self.count += 1
+        delta2 = x - self.mean
+        self.M2 += delta * delta2
 
-    def get_mean_std(self):
-        
-        mean = self.mean
-        std = np.sqrt(self.var / (self.count - 1))
-        return mean, std
+    @property
+    def mean(self):
+        """
+        Computes and returns the mean of the data stored in the RunningMeanStandardDeviation object.
+        """
+        return self._mean
+
+    @property
+    def std(self):
+
+        """
+        Computes and returns the standard deviation of the data stored in the RunningMeanStandardDeviation object.
+        """
+
+        variance = self._M2 / (self._count - 1) if self._count > 1 else np.zeros_like(self._M2)
+        std = np.sqrt(variance)
+
+        return std

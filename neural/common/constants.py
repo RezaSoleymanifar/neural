@@ -1,4 +1,7 @@
 import os
+from gym import Space
+import numpy as np
+
 
 # Load the API key and secret from environment variables
 API_KEY = os.environ.get('API_KEY', None)
@@ -10,6 +13,7 @@ HDF5_DEFAULT_MAX_ROWS = 2_000_000
 
 # Set the minimum net worth for a pattern day trader
 PATTERN_DAY_TRADER_MINIMUM_NET_WORTH = 25_000
+
 
 DOW_JONES_SYMBOLS = ['AAPL', 'AXP', 'BA', 'CAT', 'CSCO', 'CVX',
     'DD', 'DIS', 'GE', 'GS', 'HD', 'IBM', 'INTC', 'JNJ',
@@ -28,3 +32,6 @@ CUSTOM_SYMBOLS = ['AAPL', 'ABBV', 'ABT', 'ACN', 'ADBE', 'AMZN',
     'NEE', 'NFLX', 'NKE', 'NVDA', 'ORCL', 'PEP', 'PFE', 'PG', 'PYPL',
     'SBUX', 'T', 'TSLA', 'UNH', 'UPS', 'V', 'VZ', 'WMT', 'XOM']
 
+
+# dictionaries are expected to be dict of numpy arrays.
+ACCEPTED_OBSERVATION_TYPES = {np.ndarray, dict}

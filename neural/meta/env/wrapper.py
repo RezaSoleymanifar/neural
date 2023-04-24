@@ -5,11 +5,11 @@ from datetime import datetime
 
 import numpy as np
 from gym import (ActionWrapper, Env, Wrapper, 
-    ObservationWrapper, RewardWrapper, spaces)
-from gym.wrappers.normalize import RunningMeanStd
+    ObservationWrapper, RewardWrapper, spaces, Space)
 
 from neural.common.log import logger
-from neural.tools.misc import FillDeque
+from neural.common.constants import ACCEPTED_OBSERVATION_TYPES
+from neural.tools.misc import FillDeque, RunningMeanStandardDeviation
 from neural.common.exceptions import IncompatibleWrapperError
 from neural.meta.env.base import AbstractMarketEnv, TrainMarketEnv, TradeMarketEnv
 
@@ -17,11 +17,21 @@ from neural.tools.ops import get_sharpe_ratio, tabular_print
 
 
 
-def market(wrapper_class: Type[Wrapper]):
+def market(wrapper_class: Type[Wrapper]) -> Type[Wrapper]:
 
-    # augments a wrapper class so that it checks if unwrapped base env
-    # is a market env and creates a pointer to it. If search fails an error
-    # is raised.
+    """
+    A decorator that augments an existing Gym wrapper class by adding a
+    pointer to the underlying market environment, if the base environment
+    is a market environment.
+
+    :param wrapper_class: The base Gym wrapper class to be augmented.
+                        This should be a subclass of `gym.Wrapper`.
+    :type wrapper_class: type[gym.Wrapper]
+
+    :return: A new wrapper class that augments the input wrapper class with
+            a pointer to the underlying market environment, if applicable.
+    :rtype: type[gym.Wrapper]
+    """
 
     if not issubclass(wrapper_class, Wrapper):
 
@@ -84,10 +94,10 @@ def market(wrapper_class: Type[Wrapper]):
 
 
 
-def metadata(wrapper_class: Type[Wrapper]):
+def metadata(wrapper_class: Type[Wrapper]) -> Type[Wrapper]:
 
     """
-    Augments a wrapper class so that it checks if the unwrapped base env
+    a wrapper decorator that augments a wrapper class so that it checks if the unwrapped base env
     is a market env and creates a pointer to it. If the search fails, an error is raised.
 
     Args:
@@ -173,7 +183,23 @@ def metadata(wrapper_class: Type[Wrapper]):
     return MarketMetadataWrapperDependentWrapper
 
 
-def buffer(wrapper_class: Type[Wrapper]):
+
+def buffer(wrapper_class: Type[Wrapper]) -> Type[Wrapper]:
+
+    """
+    A decorator that augments an existing Gym wrapper class by recursively
+    searching through enclosed wrappers for an observation buffer and creating
+    a pointer to it, if available.
+
+    :param wrapper_class: The base Gym wrapper class to be augmented. This
+                          should be a subclass of `gym.Wrapper`.
+    :type wrapper_class: type[gym.Wrapper]
+
+    :return: A new wrapper class that augments the input wrapper class by
+             creating a pointer to any observation buffer found in the enclosed
+             wrappers, if applicable.
+    :rtype: type[gym.Wrapper]
+    """
 
     if not issubclass(wrapper_class, Wrapper):
         raise TypeError(
@@ -195,6 +221,7 @@ def buffer(wrapper_class: Type[Wrapper]):
         """
 
         def __init__(self, env: Env, *args, **kwargs) -> None:
+
             """
             Initializes the ObservationBufferDependentWrapper instance.
 
@@ -209,7 +236,7 @@ def buffer(wrapper_class: Type[Wrapper]):
 
         def find_observation_buffer_wrapper(self, env):
             """
-            Searches recursively for an observation buffer in enclosed wrappers.
+            Searches recursively for an observation buffer wrapper in enclosed wrappers.
 
             Args:
                 env (gym.Env): The environment being wrapped.
@@ -236,10 +263,23 @@ def buffer(wrapper_class: Type[Wrapper]):
     return ObservationBufferDependentWrapper
 
 
-def validate_actions(wrapper_class: Type[Wrapper]):
+def action(wrapper_class: Type[Wrapper]) -> Type[Wrapper]:
 
-    # Augments a wrapper class so that it checks if an action is in the action space
-    # before calling the step function of the base class.
+    """
+    A decorator that augments an existing Gym wrapper to 
+    sanity check the actions being passed to it.
+
+    :param wrapper_class: The base Gym wrapper class to be augmented. This
+                          should be a subclass of `gym.Wrapper`.
+    :type wrapper_class: type[gym.Wrapper]
+
+    :raises TypeError: If the `wrapper_class` argument is not a subclass of
+                       `gym.Wrapper`.
+
+    :return: A new wrapper class that checks if an action is in the action space
+             before calling the step function of the base class.
+    :rtype: type[gym.Wrapper]
+    """
 
     if not issubclass(wrapper_class, Wrapper):
         raise TypeError(f"{wrapper_class.__name__} must be a subclass of {Wrapper}")
@@ -270,12 +310,32 @@ def validate_actions(wrapper_class: Type[Wrapper]):
 
             super().__init__(env, *args, **kwargs)
 
-            if not hasattr(self, 'action_space'):
+            if not hasattr(self, 'action_space') or self.action_space is None:
+                
+                raise IncompatibleWrapperError(
+                    f"Applying {action} decorator to{wrapper_class.__name__} "
+                    "requires a non None action space to be defined first.")
+
+            if not isinstance(self.action_space, Space):
+                
+                raise IncompatibleWrapperError(
+                    f'Wrapper {type(self).__name__} is defining an action space of type {type(self.action_space)}, '
+                    'which is not equal to the expected type {Space}.')
+
+            return None
+
+
+        def _validate_actions(self, actions: np.ndarray[np.float32] | Dict[str, np.ndarray]) -> None:
+            
+            if not self.action_space.contains(actions):
 
                 raise IncompatibleWrapperError(
-                    f"Applying {validate_actions} decorator to{wrapper_class.__name__} "
-                    "requires an action space to be defined first.")
+                f'Wrapper {type(self).__name__} received an action of type {type(actions)}, '
+                'which is not in the expected action space {self.action_space}.')
             
+            return None
+        
+
 
         def step(self, actions: Iterable):
             """
@@ -292,10 +352,7 @@ def validate_actions(wrapper_class: Type[Wrapper]):
                 The result of calling the step function of the base class.
             """
 
-            if not self.action_space.contains(actions):
-                raise IncompatibleWrapperError(
-                    f"Wrapper {wrapper_class.__name__} is receiving actions "
-                    "that are not in it's action space.")
+            self._validate_actions(actions)
 
             return super().step(actions)
 
@@ -303,10 +360,27 @@ def validate_actions(wrapper_class: Type[Wrapper]):
 
 
 
-def validate_observations(wrapper_class: Type[Wrapper]):
+def observation(wrapper_class: Type[Wrapper]) -> Type[Wrapper]:
 
-    # Augments a wrapper class so that it checks if an observation is in the observation space
-    # before returning the observation from the reset and step functions.
+    """
+    A decorator that augments an existing Gym wrapper class by checking if an
+    observation is in it's expected observation space before returning it from the reset
+    and step functions.
+
+    :param wrapper_class: The base Gym wrapper class to be augmented. This should
+                          be a subclass of `gym.Wrapper`.
+    :type wrapper_class: type[gym.Wrapper]
+
+    :raises TypeError: If the `wrapper_class` argument is not a subclass of
+                       `gym.Wrapper`.
+    :raises IncompatibleWrapperError: If the observation space is not defined in
+                                      the enclosed environment, or if the expected
+                                      observation type is not valid.
+
+    :return: A new wrapper class that checks if an observation is in the observation
+             space before returning it from the reset and step functions.
+    :rtype: type[gym.Wrapper]
+    """
 
     if not issubclass(wrapper_class, Wrapper):
         raise TypeError(f"{wrapper_class.__name__} must be a subclass of {Wrapper}")
@@ -326,6 +400,7 @@ def validate_observations(wrapper_class: Type[Wrapper]):
         """
 
         def __init__(self, env: Env, *args, **kwargs) -> None:
+
             """
             Initializes the ObservationSpaceCheckerWrapper instance.
 
@@ -335,14 +410,63 @@ def validate_observations(wrapper_class: Type[Wrapper]):
                 **kwargs: Optional keyword arguments to pass to the wrapper.
             """
 
-            super().__init__(env, *args, **kwargs)
-
-            if not hasattr(self, 'observation_space'):
+            if not hasattr(
+                env, 'observation_space') or not isinstance(env.observation_space, Space):
 
                 raise IncompatibleWrapperError(
-                    f"Applying {validate_observations} decorator to {wrapper_class.__name__} "
-                    "requires an observation space to be defined first.")
+                    f'Wrapper {type(self).__name__} requires a non None observation '
+                    f'space of type {Space} to be defined in the enclosed environment {type(env).__name__}.')
             
+            super().__init__(env, *args, **kwargs)
+            
+            if not hasattr(self, 'expected_observation_type') or self.expected_observation_type is None:
+
+                raise IncompatibleWrapperError(
+                    f'Wrapper {type(self).__name__} needs to have a non None expected observation type '
+                    f'defined before applying {observation} decorator.')
+            
+            self._validate_expected_observation_type()
+
+
+        def _validate_expected_observation_type(self):
+            
+            valid = False
+            if isinstance(self.expected_observation_type, Space):
+                valid = True
+
+            elif isinstance(self.expected_observation_type, list
+                ) and set(self.expected_observation_type).issubset(ACCEPTED_OBSERVATION_TYPES):
+                valid = True
+            
+            if not valid:
+
+                raise IncompatibleWrapperError(
+                f'Wrapper {type(self).__name__} is defining an exptected observation type '
+                f'of type {type(self.expected_observation_type)}, which is not in the accepted '
+                'observation types {ACCEPTED_OBSERVATION_TYPES}.')
+
+
+        def _validate_observation(self, observation: np.ndarray[np.float32] | Dict[str, np.ndarray]) -> None:
+            
+            valid = False
+            if isinstance(self.expected_observation_type, Space) and self.expected_observation_type.contains(observation):
+                valid = True
+
+            for accepted_observation_type in self.expected_observation_type:
+                if isinstance(observation, accepted_observation_type):
+                    if isinstance(observation, dict):
+                        all(isinstance(observation[key], np.ndarray) for key in observation)
+                        valid = True
+                    elif isinstance(observation, np.ndarray):
+                        valid = True
+            
+            if not valid:
+                raise IncompatibleWrapperError(
+                f'Wrapper {type(self).__name__} received an observation of type {type(observation)}, '
+                'which is not in the expected observation space {self.observation_space}.')
+            
+            return None
+
 
         def observation(self, observation):
 
@@ -357,31 +481,7 @@ def validate_observations(wrapper_class: Type[Wrapper]):
                 The result of calling the observation method of the base class.
             """
 
-            if isinstance(self.expected_observation_space, spaces.Box):
-                if not self.expected_observation_space.contains(observation):
-
-                    raise IncompatibleWrapperError(
-                        f'Wrapper {type(self).__name__} received an observation that is not '
-                        'in the expected observation space {self.expected_observation_space}.')
-
-            valid_observation = False
-            for expected_type in self.expected_observation_space:
-                if isinstance(observation, expected_type):
-                    if isinstance(observation, dict):
-                        if all(isinstance(
-                            observation[key], np.ndarray) for key in observation):
-                            valid_observation = True
-                            break
-                    else:
-                        valid_observation = True
-                        break
-
-            if not valid_observation:
-                raise IncompatibleWrapperError(
-                    f"Wrapper {type(self).__name__} received an observation of type {type(observation)}, "
-                    f"which is not in the expected observation space {self.expected_observation_space}.")
-
-
+            self._validate_observation(observation)
 
             return super().observation(observation)
 
@@ -746,7 +846,7 @@ class ConsoleTearsheetRenderWrapper(Wrapper):
 
 
 @metadata
-@validate_actions
+@action
 class MinTradeSizeActionWrapper(ActionWrapper):
     
 
@@ -783,7 +883,7 @@ class MinTradeSizeActionWrapper(ActionWrapper):
 
 
 
-@validate_actions
+@action
 @metadata
 class IntegerAssetQuantityActionWrapper(ActionWrapper):
 
@@ -858,7 +958,7 @@ class IntegerAssetQuantityActionWrapper(ActionWrapper):
     
 
 
-@validate_actions
+@action
 @metadata
 class NetWorthRelativeMaximumShortSizing(ActionWrapper):
 
@@ -963,7 +1063,7 @@ class NetWorthRelativeMaximumShortSizing(ActionWrapper):
 
 
 
-@validate_actions
+@action
 @metadata
 class FixedMarginActionWrapper(ActionWrapper):
 
@@ -1043,7 +1143,7 @@ class FixedMarginActionWrapper(ActionWrapper):
 
 
 
-@validate_actions
+@action
 @metadata
 class NetWorthRelativeUniformPositionSizing(ActionWrapper):
 
@@ -1212,7 +1312,7 @@ class DirectionalTradeActionWrapper(ActionWrapper):
 
 
 @metadata
-@validate_actions
+@action
 class ActionClipperWrapper(ActionWrapper):
 
 
@@ -1258,7 +1358,7 @@ class ActionClipperWrapper(ActionWrapper):
         return new_actions
     
 
-@validate_observations
+@observation
 @metadata
 class PositionsFeatureEngineeringWrapper(ObservationWrapper):
 
@@ -1354,7 +1454,7 @@ class PositionsFeatureEngineeringWrapper(ObservationWrapper):
     
 
 
-@validate_observations
+@observation
 @metadata
 class WealthAgnosticFeatureEngineeringWrapper(ObservationWrapper):
 
@@ -1530,7 +1630,7 @@ class ObservationBufferWrapper(ObservationWrapper):
     
 
 
-@validate_observations
+@observation
 class FlattenToNUmpyObservationWrapper(ObservationWrapper):
 
     """
@@ -1697,8 +1797,56 @@ class ObservationStackerWrapper(ObservationWrapper):
         return observation
 
 
+@observation
 class RunningMeanSandardDeviationObservationWrapper(ObservationWrapper):
-    pass
+
+    """
+    Gym environment wrapper that tracks the running mean and standard deviation
+    of the observations using the RunningMeanStandardDeviation class.
+    """
+
+    def __init__(self, env):
+        super().__init__(env)
+        self.expected_observation_space = [dict, np.ndarray]
+        self.observation_rms = self.initialize_observation_rms(self.observation_space.sample())
+
+
+    def initialize_observation_rms(self, observation: np.ndarray[np.float32] | Dict[str, np.ndarray]):
+
+        if isinstance(observation, np.ndarray):
+            self.observation_rms = RunningMeanStandardDeviation(observation.shape)
+
+        elif isinstance(observation, dict):
+
+            self.observation_rms = {}
+            for key, value in observation.items():
+                self.observation_rms[key] = RunningMeanStandardDeviation(value.shape)
+            
+        return None
+    
+
+    def update_observation_rms(self, observation: np.ndarray[np.float32] | Dict[str, np.ndarray]):
+        
+        if isinstance(observation, np.ndarray):
+            self.observation_rms.update(observation)
+
+        elif isinstance(observation, dict):
+            for key, value in observation.items():
+                self.observation_rms[key].update(value)
+
+        return None
+    
+    def observation(self, observation: np.ndarray[np.float32] | Dict[str, np.ndarray]):
+        
+        if self.observation_rms is None:
+            self.initialize_observation_rms(observation)
+
+        self.observation_rms.update(observation)
+
+        return observation
+    
+
+
 
 
 @buffer
