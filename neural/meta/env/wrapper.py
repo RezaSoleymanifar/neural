@@ -478,10 +478,6 @@ def observation(wrapper_class: Type[Wrapper]) -> Type[Wrapper]:
                 **kwargs: Optional keyword arguments to pass to the wrapper.
             """
 
-            super().__init__(env, *args, **kwargs)
-
-            self._validate_expected_observation_type()
-            
             # Bellow also automatically guarantees that valid observation space is defined
             # due to inheritance from gym.Wrapper
             if not hasattr(
@@ -492,6 +488,9 @@ def observation(wrapper_class: Type[Wrapper]) -> Type[Wrapper]:
                     f'space of type {Space} to be defined in the enclosed environment '
                     f'{type(env).__name__}.')
             
+            super().__init__(env, *args, **kwargs)
+
+            self._validate_expected_observation_type()
             self._validate_observation_in_expected_observation_type(
                 env.observation_space.sample())
 
@@ -1801,7 +1800,7 @@ class FlattenToNUmpyObservationWrapper(ObservationWrapper):
 
         super().__init__(env)
         self.expected_observation_type = [dict, np.ndarray]
-        self.observation_space = None
+        self.observation_space = self.flattened_space(env.observation_space)
 
 
         return None
@@ -1868,6 +1867,7 @@ class FlattenToNUmpyObservationWrapper(ObservationWrapper):
                 shape=flattened_shape, 
                 dtype=GLOBAL_DATA_TYPE)
 
+
     def observation(self, observation):
 
         """
@@ -1883,9 +1883,6 @@ class FlattenToNUmpyObservationWrapper(ObservationWrapper):
         ndarray
             The flattened observation space.
         """
-
-        if self.observation_space is None:
-            self.observation_space = self.flattened_space()
 
         if isinstance(observation, dict):
             observation = np.concatenate([
@@ -1930,27 +1927,35 @@ class ObservationStackerWrapper(ObservationWrapper):
         super().__init__(env)
 
         buffer_size = self.observation_buffer_wrapper.buffer_size
-        self.expected_observation_type = [dict, np.ndarray]
         self.stack_size = (
             stack_size if stack_size is not None else buffer_size)
         
         assert (self.stack_size <= buffer_size, 
             f"Stack size {self.stack_size} cannot exceed buffer size {buffer_size}.")
 
-        self.observation_space = self.stacked_observation_space()
+        self.observation_space = None
 
         return None
     
 
-    def infer_stacked_obervation_space(self, observation_space: Space):
+    def infer_stacked_observation_space(
+        self, 
+        observation_space: spaces.Box
+        ) -> spaces.Box:
+
+        # TODO: Add support for other observation spaces
+        assert isinstance(observation_space, spaces.Box), (
+            f"currently {ObservationStackerWrapper.__name__} only supports Box observation spaces")
 
         observation = observation_space.sample()
         stacked_shape = np.stack([observation] * self.stack_size).shape
 
-        stacked_low = (observation_space.low if np.isscalar(observation_space.low) 
+        stacked_low = (np.full(stacked_shape, observation_space.low) 
+            if np.isscalar(observation_space.low) 
             else np.stack(self.stack_size * [observation_space.low]))
         
-        stacked_high = (observation_space.high if np.isscalar(observation_space.high) 
+        stacked_high = (np.full(stacked_shape, observation_space.high) 
+            if np.isscalar(observation_space.high) 
             else np.stack(self.stack_size * [observation_space.high]))
 
         return spaces.Box(
@@ -1980,14 +1985,14 @@ class ObservationStackerWrapper(ObservationWrapper):
         # i.e. observation_spcae of enclosed wrapper due to inheritance from ObservationWrapper
 
         buffer_observation_space = self.observation_buffer_wrapper.observation_space
-        
-        if isinstance(buffer_observation_space.sample(), np.ndarray):
-            stacked_observation_space =  self.infer_stacked_obervation_space(buffer_observation_space)
+
+        if isinstance(buffer_observation_space, spaces.Box):
+            stacked_observation_space =  self.infer_stacked_observation_space(buffer_observation_space)
         
         elif isinstance(buffer_observation_space, dict):
             stacked_observation_space = dict()
             for key, space in buffer_observation_space.items():
-                stacked_observation_space[key] = self.infer_stacked_obervation_space(space)
+                stacked_observation_space[key] = self.infer_stacked_observation_space(space)
 
         return stacked_observation_space
         
@@ -1995,7 +2000,10 @@ class ObservationStackerWrapper(ObservationWrapper):
     def observation(self, observation: Dict[str, np.ndarray[float]] | np.ndarray[float]):
 
         """
-        Returns the last n stacked observations in the buffer.
+        Returns the last n stacked observations in the buffer. Note observation in argument
+        is discarded and only elemetns in buffer are used, thus if observation is changed
+        between buffer and stacker, all changes will be lost as this wrapper's point of
+        reference is the buffer.
 
         Parameters:
         -----------
@@ -2009,21 +2017,20 @@ class ObservationStackerWrapper(ObservationWrapper):
         """
 
         stack = self.observation_buffer_wrapper.observation_buffer[-self.stack_size:]
-
+        
         # Check if the observations are ndarrays or dictionaries of ndarrays
         if isinstance(stack[0], np.ndarray):
-            stacked_observation = np.stack(stack, axis=0)
+            stacked_observation = np.stack(stack) # default axis=0
 
         elif isinstance(stack[0], dict):
             stacked_observation = {}
             for key in stack[0].keys():
                 key_stack = [observation[key] for observation in stack]
-                key_stack = np.stack(key_stack, axis=0)
+                key_stack = np.stack(key_stack)
                 stacked_observation[key] = key_stack
         
-        observation = stacked_observation
+        return stacked_observation
 
-        return observation
 
 
 @observation
@@ -2040,7 +2047,8 @@ class RunningMeanSandardDeviationObservationWrapper(ObservationWrapper):
     def __init__(self, env: Env):
         super().__init__(env)
         self.expected_observation_type = [dict, np.ndarray]
-        self.observation_rms = None
+        self.observation_rms = self.initialize_observation_rms(
+            env.observation_space.sample())
 
 
     def initialize_observation_rms(
@@ -2059,7 +2067,10 @@ class RunningMeanSandardDeviationObservationWrapper(ObservationWrapper):
         return observation_rms
     
 
-    def update(self, observation: np.ndarray[float] | Dict[str, np.ndarray[float]]):
+    def update(
+        self, 
+        observation: np.ndarray[float] | Dict[str, np.ndarray[float]]
+        ) -> None:
         
         if isinstance(observation, np.ndarray):
             self.observation_rms.update(observation)
@@ -2072,10 +2083,7 @@ class RunningMeanSandardDeviationObservationWrapper(ObservationWrapper):
     
     def observation(self, observation: np.ndarray[float] | Dict[str, np.ndarray[float]]):
         
-        if self.observation_rms is None:
-            self.initialize_observation_rms(observation)
-
-        self.observation_rms.update(observation)
+        self.update(observation)
 
         return observation
 
@@ -2089,29 +2097,105 @@ class NormalizeObservationWrapper(RunningMeanSandardDeviationObservationWrapper)
     tracked by the RunningMeanStandardDeviation class.
     """
 
-    def __init__(self, env: Env):
+    def __init__(self, env: Env, epsilon: float = 1e-8, clip: float = 10) -> None:
         super().__init__(env)
+        self.epsilon = epsilon
+        self.clip = clip
+    
 
-        self.expected_observation_type = [dict, np.ndarray]
-        self.observation_rms = None
-        
     def observation(
         self, observation: np.ndarray[float] | Dict[str, np.ndarray[float]]
         ) -> np.ndarray[float] | Dict[str, np.ndarray[float]]:
 
-        super().observation(observation)
+        observation = super().observation(observation)
 
         if isinstance(observation, np.ndarray):
-            observation = (observation - self.observation_rms.mean) / self.observation_rms.std
+            observation = self.observation_rms.normalize(
+                observation, self.epsilon, self.clip).astype(GLOBAL_DATA_TYPE)
 
         elif isinstance(observation, dict):
+
             observation = dict()
             
             for key, rms in self.observation_rms.items():
-                observation[key] = (observation[key] - rms.mean) / rms.std
+                observation[key] = rms.normalize(
+                    observation, self.epsilon, self.clip).astype(GLOBAL_DATA_TYPE)
 
         return observation
-    
+
+
+
+class NormalizeReward(RewardWrapper):
+
+    """
+    This wrapper will normalize immediate rewards. 
+    Usage:
+        env = NormalizeReward(env, epsilon=1e-8, clip_threshold=10)
+    Note:
+        The scaling depends on past trajectories and rewards will not be scaled correctly if the wrapper was newly
+        instantiated or the policy was changed recently.
+    Methods:
+        reward(reward: float) -> float
+            Normalize the reward.
+    """
+
+    def __init__(
+        self,
+        env: Env,
+        epsilon: float = 1e-8,
+        clip_threshold: float = np.inf,
+        ) -> None:
+
+        """
+        This wrapper normalizes immediate rewards so that rewards have mean 0 and standard deviation 1.
+
+        Args:
+            env (Env): The environment to apply the wrapper.
+            epsilon (float, optional): A small constant to avoid divide-by-zero errors when normalizing data. Defaults to 1e-8.
+            clip_threshold (float, optional): A value to clip normalized data to, to prevent outliers 
+            from dominating the statistics. Defaults to np.inf.
+        """
+
+        super().__init__(env)
+
+        self.reward_rms = RunningMeanStandardDeviation()
+        self.epsilon = epsilon
+        self.clip_threshold = clip_threshold
+
+
+    def reward(self, reward: float) -> float:
+
+        """Normalize the reward.
+
+        Args:
+            reward (float): The immediate reward to normalize.
+
+        Returns:
+            float: The normalized reward.
+        """
+
+        self.reward_rms.update(reward)
+        normalized_reward = self.reward_rms.normalize(reward, self.epsilon, self.clip_threshold)
+
+        return normalized_reward
+
+
+
+class AbstractRewardShaperWrapper(Wrapper, ABC):
+
+    # highly useful for pretraining an agent with many degrees of freedom
+    # in actions. Apply relevant reward shaping wrappers to def ine and restrict unwanted
+    # actions.
+
+    pass
+
+class PenalizeShortRatioRewardWrapper(RewardWrapper):
+    pass
+
+class PenalizeCashRatioRewardWrapper(RewardWrapper):
+    pass
+
+
 
 @buffer
 class FinancialIndicatorsWrapper(ObservationWrapper):
@@ -2125,32 +2209,9 @@ class FinancialIndicatorsWrapper(ObservationWrapper):
 
 
 
-class NormalizeObservationsWrapper(ObservationWrapper):
-    pass
-
-
-
-class NormalizeRewardsWrapper(RewardWrapper):
-
-    # normalizes rewards of an episode
-
-    pass
-
-
-
 class ExperienceRecorderWrapper(Wrapper):
 
     # saves experiences in buffer and writes to hdf5 when 
     # buffer reaches a certain size.
-
-    pass
-
-
-
-class RewardShaperWrapper(Wrapper):
-    
-    # highly useful for pretraining an agent with many degrees of freedom 
-    # in actions. Apply relevant reward shaping wrappers to def ine and restrict unwanted
-    # actions.
 
     pass

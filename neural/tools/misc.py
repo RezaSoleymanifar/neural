@@ -188,49 +188,57 @@ class RunningMeanStandardDeviation:
 
     """
     A class for computing the running mean and standard deviation of a series of data.
+    Can be used to normalize data to a mean of 0 and standard deviation of 1 in an online
+    fashion.
 
     Implements the Welford online algorithm for computing the standard deviation.
 
     https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Welford's_online_algorithm
 
+    Usage:
+        rms = RunningMeanStandardDeviation()
+        rms.update(array)
+        mean = rms.mean
+        std = rms.std
+        normalized_array = rms.normalize(array)
+
     Args:
-        shape (tuple): The shape of the data to be computed.
+        epsilon (float): A small constant to avoid divide-by-zero errors when normalizing data.
+        clip (float): A value to clip normalized data to, to prevent outliers from dominating the statistics.
     """
 
-    def __init__(self, shape=()):
+    def __init__(self, epsilon=1e-8, clip_threshold: float = np.inf):
 
         """
         Initializes the RunningMeanStandardDeviation object.
-
-        Args:
-            shape (tuple): The shape of the data to be computed.
         """
 
-        self.mean = np.empty(shape, dtype=GLOBAL_DATA_TYPE)
-        self.M2 = np.empty(shape, dtype=GLOBAL_DATA_TYPE)
-        self.count = 0
+        assert clip_threshold > 0, "Clip threshold must be greater than 0"
+        assert epsilon > 0, "Epsilon value must be greater than 0"
 
-    def update(self, x: np.ndarray):
+        self.epsilon = epsilon
+        self.clip = clip_threshold
 
-        """
-        Updates the RunningMeanStandardDeviation object with new data.
+        self.shape = None
+        self._mean = None
+        self._std = None
+        self.M2 = None
+        self.count = None
 
-        Args:
-            x (np.ndarray): The new data to be added to the RunningMeanStandardDeviation object.
-        """
-
-        self.count += 1
-        delta = x - self.mean
-        self.mean += delta / self.count
-        delta2 = x - self.mean
-        self.M2 += delta * delta2
+        return None
+    
 
     @property
     def mean(self):
+
         """
         Computes and returns the mean of the data stored in the RunningMeanStandardDeviation object.
         """
+
+        assert self.count, "Must have at least one data point to compute mean"
+
         return self._mean
+
 
     @property
     def std(self):
@@ -239,7 +247,56 @@ class RunningMeanStandardDeviation:
         Computes and returns the standard deviation of the data stored in the RunningMeanStandardDeviation object.
         """
 
-        variance = self._M2 / (self._count - 1) if self._count > 1 else np.zeros_like(self._M2)
-        std = np.sqrt(variance)
+        assert self.count, "Must have at least one data point to compute standard deviation"
 
-        return std
+        variance = self.M2 / (self.count - 1) if self.count > 1 else np.zeros_like(self.M2)
+        self._std = np.sqrt(variance)
+
+        return self._std
+
+
+    def initialize_rms(self, array: np.ndarray):
+
+        """
+        Initializes the RunningMeanStandardDeviation object with data.
+
+        Args:
+            x (np.ndarray): The data to initialize the RunningMeanStandardDeviation object with.
+        """
+
+        self.shape = array.shape
+        self._mean = np.zeros(self.shape)
+        self.M2 = np.zeros(self.shape)
+        self.count = 0
+
+        return None
+
+
+    def update(self, array: np.ndarray):
+
+        """
+        Updates the RunningMeanStandardDeviation object with new data.
+
+        Args:
+            x (np.ndarray): The new data to be added to the RunningMeanStandardDeviation object.
+        """
+
+        if self.shape is None:
+            self.initialize_rms(array)
+
+        assert self.shape == array.shape, "Shape of data has changed during update."
+
+        self.count += 1
+        delta = array - self._mean
+        self._mean += delta / self.count
+        delta2 = array - self._mean
+        self.M2 += delta * delta2
+
+        return None
+    
+    def normalize(self, array: np.ndarray):
+        # Normalize the array using the running mean and standard deviation
+        normalized_array = np.clip(
+            (array - self.mean) / (self.std + self.epsilon), -self.clip, self.clip)
+        
+        return normalized_array
