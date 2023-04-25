@@ -6,6 +6,7 @@ import numpy as np
 
 from alpaca.trading.enums import AssetClass
 from neural.tools.enums import CalendarType
+from neural.common.constants import GLOBAL_DATA_TYPE
 
 
 class Calendar:
@@ -205,8 +206,8 @@ class RunningMeanStandardDeviation:
             shape (tuple): The shape of the data to be computed.
         """
 
-        self.mean = np.zeros(shape, dtype=np.float32)
-        self.M2 = np.zeros(shape, dtype=np.float32)
+        self.mean = np.empty(shape, dtype=GLOBAL_DATA_TYPE)
+        self.M2 = np.empty(shape, dtype=GLOBAL_DATA_TYPE)
         self.count = 0
 
     def update(self, x: np.ndarray):

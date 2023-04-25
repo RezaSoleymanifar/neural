@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 from typing import Tuple, Dict, TYPE_CHECKING, Optional, Iterable
+from abc import ABC, abstractmethod
 
 import numpy as np
 from gym import spaces, Env
 
-from abc import ABC, abstractmethod
+from neural.common.constants import GLOBAL_DATA_TYPE
 from neural.core.data.ops import StaticDataFeeder, AsyncDataFeeder
 from neural.core.data.enums import ColumnType
 
@@ -149,23 +150,23 @@ class TrainMarketEnv(AbstractMarketEnv):
 
         self.action_space = spaces.Box(
             low=-np.inf, high=np.inf, shape=(
-            self.n_symbols,), dtype=np.float32)
+            self.n_symbols,), dtype=GLOBAL_DATA_TYPE)
         
         self.observation_space = spaces.Dict({
             'cash':spaces.Box(
-            low=-np.inf, high=np.inf, shape = (1,), dtype=np.float32),
+            low=-np.inf, high=np.inf, shape = (1,), dtype=GLOBAL_DATA_TYPE),
 
             'asset_quantities': spaces.Box(
             low=-np.inf, high=np.inf, shape = (
-            self.n_symbols,), dtype=np.float32),
+            self.n_symbols,), dtype=GLOBAL_DATA_TYPE),
 
             'holds': spaces.Box(
             low=0, high=np.inf, shape = (
-            self.n_symbols,), dtype=np.float32),
+            self.n_symbols,), dtype=GLOBAL_DATA_TYPE),
             
             'features': spaces.Box(
             low=-np.inf, high=np.inf, shape = (
-            self.n_features,), dtype=np.float32)})
+            self.n_features,), dtype=GLOBAL_DATA_TYPE)})
         
         return None
     
@@ -204,7 +205,7 @@ class TrainMarketEnv(AbstractMarketEnv):
         """
 
         observation = {
-            'cash': np.array([self.cash], dtype=np.float32),
+            'cash': np.array([self.cash], dtype=GLOBAL_DATA_TYPE),
             'asset_quantities': self.asset_quantities,
             'holds': self.holds,
             'features': self.features
@@ -259,12 +260,12 @@ class TrainMarketEnv(AbstractMarketEnv):
         self.row_generator = self.data_feeder.reset()
 
         self.index = -1
-        self.holds = np.zeros((self.n_symbols,), dtype=np.float32)
+        self.holds = np.zeros((self.n_symbols,), dtype=GLOBAL_DATA_TYPE)
 
         self.cash = self.initial_cash
 
         self.asset_quantities = (
-            np.zeros((self.n_symbols,), dtype=np.float32)
+            np.zeros((self.n_symbols,), dtype=GLOBAL_DATA_TYPE)
             if self.initial_asset_quantities is None
             else self.initial_asset_quantities)
 
@@ -278,7 +279,7 @@ class TrainMarketEnv(AbstractMarketEnv):
     def step(
         self, 
         actions: Iterable[float]
-        ) -> Tuple[Dict, np.float32, bool, Dict]:
+        ) -> Tuple[Dict, float, bool, Dict]:
 
         """
         Execute a step in the trading environment.
@@ -342,7 +343,8 @@ class TradeMarketEnv(AbstractMarketEnv):
     - construct_observation(self) -> Dict: Constructs an observation of the current environment state
     - place_orders(self, actions) -> None: Places orders based on the given actions
     - reset(self) -> Dict: Resets the environment to its initial state and returns an initial observation
-    - step(self, actions) -> Tuple[Dict, np.float32, bool, Dict]: Performs a step in the environment given the given actions and returns an observation, reward, done flag, and additional information
+    - step(self, actions) -> Tuple[Dict, float, bool, Dict]: Performs a step in the environment given the given
+      actions and returns an observation, reward, done flag, and additional information
     """
 
     def __init__(
@@ -370,23 +372,23 @@ class TradeMarketEnv(AbstractMarketEnv):
 
         self.action_space = spaces.Box(
             low=-np.inf, high=np.inf, shape=(
-            self.n_symbols,), dtype=np.float32)
+            self.n_symbols,), dtype=GLOBAL_DATA_TYPE)
         
         self.observation_space = spaces.Dict({
             'cash':spaces.Box(
-            low=0, high=np.inf, shape = (1,), dtype=np.float32),
+            low=0, high=np.inf, shape=(1,), dtype=GLOBAL_DATA_TYPE),
 
             'asset_quantities': spaces.Box(
             low=0, high=np.inf, shape = (
-            self.n_symbols,), dtype=np.float32),
+            self.n_symbols,), dtype=GLOBAL_DATA_TYPE),
 
             'holds': spaces.Box(
             low=0, high=np.inf, shape = (
-            self.n_symbols,), dtype=np.float32),
+            self.n_symbols,), dtype=GLOBAL_DATA_TYPE),
             
             'features': spaces.Box(
             low=-np.inf, high=np.inf, shape = (
-            self.n_features,), dtype=np.float32)})
+            self.n_features,), dtype=GLOBAL_DATA_TYPE)})
         
         return None
             
@@ -430,7 +432,7 @@ class TradeMarketEnv(AbstractMarketEnv):
         """
 
         observation = {
-            'cash': np.array([self.cash], dtype= np.float32),
+            'cash': np.array([self.cash], dtype=GLOBAL_DATA_TYPE),
             'asset_quantities': self.asset_quantities,
             'holds': self.holds,
             'features': self.features
@@ -474,7 +476,7 @@ class TradeMarketEnv(AbstractMarketEnv):
         self.row_generator = self.data_feeder.reset()
 
         self.holds = np.zeros(
-            (self.n_symbols,), dtype=np.float32)
+            (self.n_symbols,), dtype=GLOBAL_DATA_TYPE)
         
         self.update_env()
 
@@ -487,7 +489,7 @@ class TradeMarketEnv(AbstractMarketEnv):
     def step(
         self,
         actions: Iterable[float]
-        ) -> Tuple[Dict, np.float32, bool, Dict]:
+        ) -> Tuple[Dict, float, bool, Dict]:
 
         """
         Advances the environment one step by applying the given actions to the current state.

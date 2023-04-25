@@ -1,6 +1,6 @@
 from collections import defaultdict
 from abc import abstractmethod, ABC
-from typing import Type, Iterable, Dict, Optional
+from typing import Type, Dict, Optional, Tuple
 from datetime import datetime
 
 import numpy as np
@@ -8,13 +8,81 @@ from gym import (ActionWrapper, Env, Wrapper,
     ObservationWrapper, RewardWrapper, spaces, Space)
 
 from neural.common.log import logger
-from neural.common.constants import ACCEPTED_OBSERVATION_TYPES
+from neural.common.constants import ACCEPTED_OBSERVATION_TYPES, ACCEPTED_ACTION_TYPES, GLOBAL_DATA_TYPE
 from neural.tools.misc import FillDeque, RunningMeanStandardDeviation
 from neural.common.exceptions import IncompatibleWrapperError
 from neural.meta.env.base import AbstractMarketEnv, TrainMarketEnv, TradeMarketEnv
 
 from neural.tools.ops import get_sharpe_ratio, tabular_print
 
+
+
+def validate_observation(wrapper: Wrapper, observation: np.ndarray | Dict[str, np.ndarray]) -> None:
+
+    """
+    Validate the observation type against a list of accepted types.
+    
+    Parameters:
+    -----------
+    observation : np.ndarray[float] | Dict[str, np.ndarray[float]]
+        The observation to validate.
+    accepted_types : List[type]
+        A list of accepted types.
+        
+    Returns:
+    --------
+    bool
+        True if the observation type is accepted, False otherwise.
+    """
+
+
+    if isinstance(observation, dict):
+        if all(isinstance(observation[key], np.ndarray) for key in observation):
+            valid = True
+
+    elif isinstance(observation, np.ndarray):
+        valid = True
+
+    if not valid:
+        raise IncompatibleWrapperError(
+            f'Wrapper {type(wrapper).__name__} received an observation of type {type(observation)}, '
+            F'which is not in the accepted observation types {ACCEPTED_OBSERVATION_TYPES}.')
+    
+    return False
+
+
+def validate_actions(wrapper: Wrapper, actions: np.ndarray | Dict[str, np.ndarray]) -> None:
+    """
+    Validate the observation type against a list of accepted types.
+    
+    Parameters:
+    -----------
+    observation : np.ndarray[float] | Dict[str, np.ndarray[float]]
+        The observation to validate.
+    accepted_types : List[type]
+        A list of accepted types.
+        
+    Returns:
+    --------
+    bool
+        True if the observation type is accepted, False otherwise.
+    """
+
+    valid = False
+
+    if isinstance(actions, dict):
+        if all(isinstance(actions[key], np.ndarray) for key in actions):
+            valid = True
+
+    elif isinstance(actions, np.ndarray):
+        valid = True
+
+    if not valid:
+        raise IncompatibleWrapperError(
+            f'Wrapper {type(wrapper).__name__} received an action of type {type(actions)}, '
+            F'which is not in the accepted action types {ACCEPTED_ACTION_TYPES}.')
+
+    return False
 
 
 def market(wrapper_class: Type[Wrapper]) -> Type[Wrapper]:
@@ -66,7 +134,7 @@ def market(wrapper_class: Type[Wrapper]) -> Type[Wrapper]:
             self.market_env = self.check_unwrapped(env)
             super().__init__(env, *args, **kwargs)
 
-        def check_unwrapped(self, env):
+        def check_unwrapped(self, env: Env) -> AbstractMarketEnv:
 
             """
             Checks if the unwrapped base env is a market env.
@@ -145,7 +213,7 @@ def metadata(wrapper_class: Type[Wrapper]) -> Type[Wrapper]:
             return None
 
 
-        def find_metadata_wrapper(self, env):
+        def find_metadata_wrapper(self, env: Env) -> AbstractMarketEnvMetadataWrapper:
 
             """
             Recursively searches through wrapped environment to find the first instance
@@ -234,7 +302,8 @@ def buffer(wrapper_class: Type[Wrapper]) -> Type[Wrapper]:
             self.observation_buffer_wrapper = self.find_observation_buffer_wrapper(env)
             super().__init__(env, *args, **kwargs)
 
-        def find_observation_buffer_wrapper(self, env):
+
+        def find_observation_buffer_wrapper(self, env: Env) -> ObservationBufferWrapper:
             """
             Searches recursively for an observation buffer wrapper in enclosed wrappers.
 
@@ -310,34 +379,34 @@ def action(wrapper_class: Type[Wrapper]) -> Type[Wrapper]:
 
             super().__init__(env, *args, **kwargs)
 
-            if not hasattr(self, 'action_space') or self.action_space is None:
+            if not hasattr(self, 'action_space') or not isinstance(self.action_space, Space):
                 
                 raise IncompatibleWrapperError(
-                    f"Applying {action} decorator to{wrapper_class.__name__} "
-                    "requires a non None action space to be defined first.")
+                    f"Applying {observation} decorator to{wrapper_class.__name__} "
+                    "requires a non None action space of type {Space} to be defined first.")
 
-            if not isinstance(self.action_space, Space):
-                
-                raise IncompatibleWrapperError(
-                    f'Wrapper {type(self).__name__} is defining an action space of type {type(self.action_space)}, '
-                    'which is not equal to the expected type {Space}.')
+            self._validate_actions(self.action_space.sample())
 
             return None
 
 
-        def _validate_actions(self, actions: np.ndarray[np.float32] | Dict[str, np.ndarray]) -> None:
-            
+        def _validate_actions(
+            self, 
+            actions: np.ndarray[float] | Dict[str, np.ndarray[float]]
+            ) -> None:
+
+            validate_actions(self, actions)
             if not self.action_space.contains(actions):
 
                 raise IncompatibleWrapperError(
-                f'Wrapper {type(self).__name__} received an action of type {type(actions)}, '
-                'which is not in the expected action space {self.action_space}.')
-            
+                    f'Wrapper {type(self).__name__} received an action of type {type(actions)}, '
+                    'which is not in the expected action space {self.action_space}.')
+
             return None
         
 
+        def step(self, actions: np.ndarray[float]):
 
-        def step(self, actions: Iterable):
             """
             Checks if the action is in the action space before calling the step function
             of the base class.
@@ -353,7 +422,6 @@ def action(wrapper_class: Type[Wrapper]) -> Type[Wrapper]:
             """
 
             self._validate_actions(actions)
-
             return super().step(actions)
 
     return ActionSpaceCheckerWrapper
@@ -410,27 +478,38 @@ def observation(wrapper_class: Type[Wrapper]) -> Type[Wrapper]:
                 **kwargs: Optional keyword arguments to pass to the wrapper.
             """
 
+            super().__init__(env, *args, **kwargs)
+
+            self._validate_expected_observation_type()
+            
+            # Bellow also automatically guarantees that valid observation space is defined
+            # due to inheritance from gym.Wrapper
             if not hasattr(
                 env, 'observation_space') or not isinstance(env.observation_space, Space):
 
                 raise IncompatibleWrapperError(
                     f'Wrapper {type(self).__name__} requires a non None observation '
-                    f'space of type {Space} to be defined in the enclosed environment {type(env).__name__}.')
+                    f'space of type {Space} to be defined in the enclosed environment '
+                    f'{type(env).__name__}.')
             
-            super().__init__(env, *args, **kwargs)
-            
-            if not hasattr(self, 'expected_observation_type') or self.expected_observation_type is None:
+            self._validate_observation_in_expected_observation_type(
+                env.observation_space.sample())
 
-                raise IncompatibleWrapperError(
-                    f'Wrapper {type(self).__name__} needs to have a non None expected observation type '
-                    f'defined before applying {observation} decorator.')
-            
-            self._validate_expected_observation_type()
-
+            return None
+        
 
         def _validate_expected_observation_type(self):
+
+            if (not hasattr(self, 'expected_observation_type') or
+                    self.expected_observation_type is None):
+
+                raise IncompatibleWrapperError(
+                    f'Wrapper {type(self).__name__} needs to have a '
+                    f'non None expected observation type '
+                    f'defined before applying {observation} decorator.')
             
             valid = False
+            # expected observation type is Space or subset list of [np.ndarray, dict]
             if isinstance(self.expected_observation_type, Space):
                 valid = True
 
@@ -446,29 +525,51 @@ def observation(wrapper_class: Type[Wrapper]) -> Type[Wrapper]:
                 'observation types {ACCEPTED_OBSERVATION_TYPES}.')
 
 
-        def _validate_observation(self, observation: np.ndarray[np.float32] | Dict[str, np.ndarray]) -> None:
+        def _validate_observation_in_expected_observation_type(
+            self, 
+            observation: np.ndarray[float] | Dict[str, np.ndarray[float]]
+            ) -> None:
             
-            valid = False
-            if isinstance(self.expected_observation_type, Space) and self.expected_observation_type.contains(observation):
-                valid = True
+            validate_observation(self, observation)
+            # when expected observation type is Space
+            if isinstance(self.expected_observation_type, Space
+                ) and not self.expected_observation_type.contains(observation):
 
-            for accepted_observation_type in self.expected_observation_type:
-                if isinstance(observation, accepted_observation_type):
-                    if isinstance(observation, dict):
-                        all(isinstance(observation[key], np.ndarray) for key in observation)
-                        valid = True
-                    elif isinstance(observation, np.ndarray):
-                        valid = True
-            
-            if not valid:
                 raise IncompatibleWrapperError(
                 f'Wrapper {type(self).__name__} received an observation of type {type(observation)}, '
-                'which is not in the expected observation space {self.observation_space}.')
+                'which is not in the expected observation space {self.exptected_observation_space}.')
             
             return None
 
 
-        def observation(self, observation):
+        def _validate_observation_in_observation_space(
+            self,
+            observation: np.ndarray[float] | Dict[str, np.ndarray[float]]
+            ) -> None:
+
+            """
+            Checks if the observation is in the observation space.
+
+            Args:
+                observation: The observation to check.
+
+            Returns:
+                True if the observation is in the observation space, False otherwise.
+            """
+
+            validate_observation(self, observation)
+            if not self.self.observation_space.contains(observation):
+
+                raise IncompatibleWrapperError(f'Wrapper {type(self).__name__} outputs an observation '
+                    f'that is not in its defined observation space {self.exptected_observation_space}.')
+            
+            return None
+
+
+        def observation(
+            self, 
+            observation: np.ndarray[float] | Dict[str, np.ndarray[float]]
+            ) -> np.ndarray[float] | Dict[str, np.ndarray[float]]:
 
             """
             Checks if the observation is in the observation space before returning it
@@ -481,9 +582,11 @@ def observation(wrapper_class: Type[Wrapper]) -> Type[Wrapper]:
                 The result of calling the observation method of the base class.
             """
 
-            self._validate_observation(observation)
+            self._validate_observation_in_expected_observation_type(observation)
+            observation = super().observation(observation)
+            self._validate_observation_in_observation_space(observation)
 
-            return super().observation(observation)
+            return 
 
 
     return ObservationSpaceCheckerWrapper
@@ -570,7 +673,7 @@ class AbstractMarketEnvMetadataWrapper(Wrapper, ABC):
         raise NotImplementedError
 
 
-    def reset(self):
+    def reset(self) -> np.ndarray[float] | Dict[str, np.ndarray[float]]:
 
         """
         Resets the environment and updates metadata.
@@ -588,7 +691,7 @@ class AbstractMarketEnvMetadataWrapper(Wrapper, ABC):
         return observation
 
 
-    def step(self, action: Iterable[float]):
+    def step(self, action: np.ndarray[float] | Dict[str, np.ndarray[float]]):
 
         """
         Performs a step in the environment.
@@ -650,9 +753,11 @@ class MarketEnvMetadataWrapper(AbstractMarketEnvMetadataWrapper):
 
         if isinstance(self.market_env, TradeMarketEnv):
             self.trader = self.market_env.trader
+        
+        return None
 
 
-    def _upadate_train_env_metadata(self):
+    def _upadate_train_env_metadata(self) -> None:
 
         """
         Updates the metadata attributes for TrainMarketEnv instances.
@@ -675,8 +780,10 @@ class MarketEnvMetadataWrapper(AbstractMarketEnvMetadataWrapper):
         
         self.progress = self.market_env.index/self.market_env.n_steps
 
+        return None
 
-    def _update_trade_env_metadata(self):
+
+    def _update_trade_env_metadata(self) -> None:
 
         """
         Updates the metadata attributes for TradeMarketEnv instances.
@@ -695,8 +802,10 @@ class MarketEnvMetadataWrapper(AbstractMarketEnvMetadataWrapper):
         now = datetime.now()
         self.progress = now.strftime("%Y-%m-%d %H:%M")
 
+        return None
 
-    def update_metadata(self):
+
+    def update_metadata(self) -> None:
 
         """
         Updates the metadata attributes based on the type of market environment
@@ -714,7 +823,7 @@ class MarketEnvMetadataWrapper(AbstractMarketEnvMetadataWrapper):
         return None
 
 
-    def _cache_metadata_history(self):
+    def _cache_metadata_history(self) -> None:
 
         """
         Caches the historical values of the metadata attributes.
@@ -757,7 +866,7 @@ class ConsoleTearsheetRenderWrapper(Wrapper):
         return None
 
 
-    def reset(self):
+    def reset(self) -> np.ndarray[float] | Dict[str, np.ndarray[float]]:    
 
         """
         Reset the environment and the tear sheet index.
@@ -781,7 +890,11 @@ class ConsoleTearsheetRenderWrapper(Wrapper):
         return observation
     
 
-    def step(self, actions: Iterable):
+    def step(
+        self, 
+        actions: np.ndarray[float] | Dict[str, np.ndarray[float]]
+        ) -> Tuple[np.ndarray[float] | Dict[str, np.ndarray[float]],
+            float, bool, dict()]:
 
         """Take a step in the environment and update the tear sheet if necessary."""
 
@@ -794,7 +907,7 @@ class ConsoleTearsheetRenderWrapper(Wrapper):
         return observation, reward, done, info
 
 
-    def render(self, mode='human'):
+    def render(self, mode='human') -> None:
 
         initial_cash = self.market_metadata_wrapper.initial_cash
         progress = self.market_metadata_wrapper.progress
@@ -846,7 +959,7 @@ class ConsoleTearsheetRenderWrapper(Wrapper):
 
 
 @metadata
-@action
+@observation
 class MinTradeSizeActionWrapper(ActionWrapper):
     
 
@@ -861,38 +974,45 @@ class MinTradeSizeActionWrapper(ActionWrapper):
 
     """
 
-    def __init__(self, env: Env, min_action = 1) -> None:
+    def __init__(self, env: Env, min_trade = 1) -> None:
 
         super().__init__(env)
 
-        self.min_action = min_action
+        assert min_trade >= 0, 'min_trade must be greater than or equal to 0'
+
+        self.min_trade = min_trade
         self.n_symbols = self.market_metadata_wrapper.n_symbols
         self.action_space = (
-            spaces.Box(-np.inf, np.inf, shape=(self.n_symbols,)))
+            spaces.Box(-np.inf, np.inf, shape=(self.n_symbols,), dtype= GLOBAL_DATA_TYPE))
 
         return None
 
 
-    def action(self, actions: np.ndarray[np.float32]) -> np.ndarray[np.float32]:
+    def action(
+        self, 
+        actions: np.ndarray[float]) -> np.ndarray[np.float]:
 
-        new_action = np.array([
-            action if abs(action) >= self.min_action else 0 
-            for action in actions], dtype = np.float32)
+        for asset, action in actions:
+            if abs(action) < self.min_trade:
+                actions[asset] = 0
     
-        return new_action
+        return actions
 
 
 
-@action
+@observation
 @metadata
 class IntegerAssetQuantityActionWrapper(ActionWrapper):
 
     """
-    A wrapper for OpenAI Gym trading environments that modifies the agent's actions to ensure they correspond to an integer
+    A wrapper for OpenAI Gym trading environments that modifies the 
+    agent's actions to ensure they correspond to an integer
     number of shares for each asset.
 
-    This class should be used with caution, as the modification of the agent's actions to enforce integer quantities may not
-    be valid in some trading environments due to price slippage. Ensure other action wrappers applied before this would not modify
+    This class should be used with caution, as the modification of the 
+    agent's actions to enforce integer quantities may not
+    be valid in some trading environments due to price slippage. Ensure other 
+    action wrappers applied before this would not modify
     the actions in a way that asset quantities are not integer anymore.
 
     Attributes:
@@ -902,14 +1022,15 @@ class IntegerAssetQuantityActionWrapper(ActionWrapper):
     integer : bool
         A flag that indicates whether to enforce integer asset quantities or not.
     asset_prices : ndarray or None
-        An array containing the current prices of each asset in the environment, or None if the prices have not been set yet.
+        An array containing the current prices of each asset in the environment, 
+        or None if the prices have not been set yet.
     """
 
     # modifies actions to amount to integer number of shares
     # would not be valid in trade market env due to price
     # slippage.
 
-    def __init__(self, env: Env, integer=True) -> None:
+    def __init__(self, env: Env, integer: bool=True) -> None:
         """
         Initializes a new instance of the IntegerAssetQuantityActionWrapper class.
 
@@ -918,7 +1039,8 @@ class IntegerAssetQuantityActionWrapper(ActionWrapper):
         env : Env
             The trading environment to be wrapped.
         integer : bool, optional
-            A flag that indicates whether to enforce integer asset quantities or not. Defaults to True.
+            A flag that indicates whether to enforce integer asset quantities or not. 
+            Defaults to True.
         """
 
         super().__init__(env)
@@ -926,12 +1048,14 @@ class IntegerAssetQuantityActionWrapper(ActionWrapper):
         self.asset_prices = None
         self.n_symbols = self.market_metadata_wrapper.n_symbols
         self.action_space = (
-            spaces.Box(-np.inf, np.inf, shape=(self.n_symbols,)))
+            spaces.Box(-np.inf, np.inf, shape=(self.n_symbols,), dtype=GLOBAL_DATA_TYPE))
         return None
 
-    def action(self, actions: np.ndarray[np.float32]) -> np.ndarray[np.float32]:
+    def action(self, actions: np.ndarray[float]) -> np.ndarray[float]:
+
         """
-        Modifies the agent's actions to ensure they correspond to an integer number of shares for each asset.
+        Modifies the agent's actions to ensure they correspond to an integer number of 
+        shares for each asset.
 
         Parameters:
         -----------
@@ -941,7 +1065,8 @@ class IntegerAssetQuantityActionWrapper(ActionWrapper):
         Returns:
         --------
         ndarray
-            An array containing the modified actions, where each asset quantity is an integer multiple of its price.
+            An array containing the modified actions, where each asset quantity 
+            is an integer multiple of its price.
         """
 
         if self.integer:
@@ -958,7 +1083,7 @@ class IntegerAssetQuantityActionWrapper(ActionWrapper):
     
 
 
-@action
+@observation
 @metadata
 class NetWorthRelativeMaximumShortSizing(ActionWrapper):
 
@@ -986,7 +1111,7 @@ class NetWorthRelativeMaximumShortSizing(ActionWrapper):
         action(self, actions) -> np.array: Processes and modifies actions to respect short sizing limits.
     """
 
-    def __init__(self, env: Env, short_ratio = 0.2) -> None:
+    def __init__(self, env: Env, short_ratio: float = 0.2) -> None:
 
         """
         Initializes the NetWorthRelativeMaximumShortSizing class with the given environment and short_ratio.
@@ -997,11 +1122,14 @@ class NetWorthRelativeMaximumShortSizing(ActionWrapper):
         """
 
         super().__init__(env)
+        
+        assert short_ratio >= 0, "short_ratio must be non-negative"
+
         self.short_ratio = short_ratio
         self.short_budget = None
         self.n_symbols = self.market_metadata_wrapper.n_symbols
         self.action_space = spaces.Box(
-            -np.inf, np.inf, shape= (self.n_symbols,), dtype= np.float32)
+            -np.inf, np.inf, shape= (self.n_symbols,), dtype= GLOBAL_DATA_TYPE)
 
         return None
     
@@ -1018,11 +1146,11 @@ class NetWorthRelativeMaximumShortSizing(ActionWrapper):
         return None
     
 
-    def action(self, actions: np.ndarray[np.float32]) -> np.ndarray[np.float32]:
+    def action(self, actions: np.ndarray[float]) -> np.ndarray[float]:
 
         """
-        Processes the given actions without applying the effects, and modifies actions that would lead to
-        short sizing limit violations.
+        Processes the given actions without applying the effects, and modifies actions 
+        that would lead to short sizing limit violations.
         
         Args:
             actions (np.ndarray): The actions to process.
@@ -1044,7 +1172,6 @@ class NetWorthRelativeMaximumShortSizing(ActionWrapper):
             if self.short_budget == 0 and positions[asset] <= 0:
                 actions[asset] = 0
                 continue
-
             
             sell = abs(action)
 
@@ -1063,7 +1190,7 @@ class NetWorthRelativeMaximumShortSizing(ActionWrapper):
 
 
 
-@action
+@observation
 @metadata
 class FixedMarginActionWrapper(ActionWrapper):
 
@@ -1088,7 +1215,7 @@ class FixedMarginActionWrapper(ActionWrapper):
     """
 
 
-    def __init__(self, env: Env, initial_margin= 1) -> None:
+    def __init__(self, env: Env, initial_margin: float = 1) -> None:
 
         """
         Initializes the class with the given trading environment and initial_margin.
@@ -1098,15 +1225,18 @@ class FixedMarginActionWrapper(ActionWrapper):
         """
 
         super().__init__(env)
+
+        assert 0 < initial_margin <= 1, "Initial margin must be a float in (0, 1]."
+
         self.initial_margin = initial_margin
         self.n_symbols = self.market_metadata_wrapper.n_symbols
         self.action_space = spaces.Box(
-            -np.inf, np.inf, shape= (self.n_symbols,), dtype= np.float32)
+            -np.inf, np.inf, shape= (self.n_symbols,), dtype= GLOBAL_DATA_TYPE)
 
         return None
 
 
-    def action(self, actions: np.ndarray[np.float32]) -> np.ndarray[np.float32]:
+    def action(self, actions: np.ndarray[float]) -> np.ndarray[float]:
 
         """
         Processes the given actions without applying the effects, and proactively modifies actions that
@@ -1143,7 +1273,7 @@ class FixedMarginActionWrapper(ActionWrapper):
 
 
 
-@action
+@observation
 @metadata
 class NetWorthRelativeUniformPositionSizing(ActionWrapper):
 
@@ -1181,19 +1311,22 @@ class NetWorthRelativeUniformPositionSizing(ActionWrapper):
         """
 
         super().__init__(env)
+
+        assert 0 <= trade_ratio <= 1, "Trade ratio must be a float in [0, 1]."
+        assert 0 < hold_threshold < 1, "Hold threshold must be a float in (0, 1)."
+
         self.trade_ratio = trade_ratio
         self.hold_threshold = hold_threshold
         self._max_trade_per_asset = None
         self.n_symbols = self.market_metadata_wrapper.n_symbols
 
         self.action_space = spaces.Box(
-            low = -1, high = 1, shape = (self.n_symbols,), dtype= np.float32)
+            low = -1, high = 1, shape = (self.n_symbols,), dtype= GLOBAL_DATA_TYPE)
         
         return None
 
 
-    def _set_max_trade_per_asset(self, trade_ratio: float) -> float:
-
+    def _set_max_trade_per_asset(self, trade_ratio: float) -> None:
 
         """
         Sets the value for the maximum trade that can be made for each asset based on the 
@@ -1244,7 +1377,7 @@ class NetWorthRelativeUniformPositionSizing(ActionWrapper):
         
         return parsed_action
 
-    def action(self, actions: np.ndarray[np.float32]) -> np.ndarray[np.float32]:
+    def action(self, actions: np.ndarray[float]) -> np.ndarray[float]:
 
         """
         Limits the maximum percentage of net worth that can be traded at each step and
@@ -1263,17 +1396,19 @@ class NetWorthRelativeUniformPositionSizing(ActionWrapper):
 
         self._set_max_trade_per_asset(self.trade_ratio)
 
-        new_actions = np.array([self.parse_action(action) 
-            for action in actions], dtype= np.float32)
+        for asset, action in actions:
+            actions[asset] = self.parse_action(action)
         
-        return new_actions
+        return actions
 
 
 @metadata
 class DirectionalTradeActionWrapper(ActionWrapper):
 
-    """A wrapper that enforces directional trading by zeroing either positive action values (no long) or negative values (no short).
-    Serves as an upstream action wrapper that modifies the actions for downstream trade sizing wrappers.
+    """A wrapper that enforces directional trading by zeroing either positive 
+    action values (no long) or negative values (no short).
+    Serves as an upstream action wrapper that modifies the actions 
+    for downstream trade sizing wrappers.
 
     Args:
     env (gym.Env): The environment to wrap.
@@ -1292,7 +1427,8 @@ class DirectionalTradeActionWrapper(ActionWrapper):
 
         return None
 
-    def action(self, actions: np.ndarray[np.float32]) -> np.ndarray[np.float32]:
+    def action(self, actions: np.ndarray[float]) -> np.ndarray[float]:
+
         """Modify the actions to enforce directional trading.
         
         Args:
@@ -1312,7 +1448,7 @@ class DirectionalTradeActionWrapper(ActionWrapper):
 
 
 @metadata
-@action
+@observation
 class ActionClipperWrapper(ActionWrapper):
 
 
@@ -1328,7 +1464,7 @@ class ActionClipperWrapper(ActionWrapper):
 
     """
 
-    def __init__(self, env: Env, low=-1, high = 1) -> None:
+    def __init__(self, env: Env, low: float=-1, high: float = 1) -> None:
 
         super().__init__(env)
 
@@ -1336,11 +1472,12 @@ class ActionClipperWrapper(ActionWrapper):
         self.high = high
         self.n_symbols = self.market_metadata_wrapper.n_symbols
         self.action_space = (
-            spaces.Box(self.low, self.high, shape= (self.n_symbols,)))
+            spaces.Box(self.low, self.high, shape= (self.n_symbols,), dtype= GLOBAL_DATA_TYPE))
 
         return None
 
-    def action(self, actions: np.ndarray[np.float32]) -> np.ndarray[np.float32]:
+
+    def action(self, actions: np.ndarray[float]) -> np.ndarray[float]:
 
         """Clip the actions to be within the given low and high values.
         
@@ -1352,10 +1489,10 @@ class ActionClipperWrapper(ActionWrapper):
         
         """
 
-        new_actions = np.clip(
-            np.array(actions), self.low, self.high)
+        for asset, action in actions:
+            actions[asset] = np.clip(action, self.low, self.high)
 
-        return new_actions
+        return actions
     
 
 @observation
@@ -1391,7 +1528,7 @@ class PositionsFeatureEngineeringWrapper(ObservationWrapper):
         super().__init__(env)
         self.n_symbols = self.market_metadata_wrapper.n_symbols
         self.n_features = self.market_metadata_wrapper.n_features
-        self.expected_observation_space = spaces.Dict({
+        self.expected_observation_type = spaces.Dict({
 
             'cash': spaces.Box(
                 low=-np.inf, high=np.inf, shape=(1,), dtype=np.float32),
@@ -1429,7 +1566,10 @@ class PositionsFeatureEngineeringWrapper(ObservationWrapper):
         return None
         
 
-    def observation(self, observation):
+    def observation(
+        self, 
+        observation: Dict[str, np.ndarray[float]]
+        ) -> Dict[str, np.ndarray[float]]:
 
         """
         Augments the observation such that, instead of asset quantities held, the USD value of assets (positions) is used.
@@ -1487,11 +1627,12 @@ class WealthAgnosticFeatureEngineeringWrapper(ObservationWrapper):
         """
 
         super().__init__(env)
+
         self.initial_cash = self.market_metadata_wrapper.initial_cash
         self.n_symbols = self.market_metadata_wrapper.n_symbols
         self.n_features = self.market_metadata_wrapper.n_features
 
-        self.expected_observation_space = spaces.Dict({
+        self.expected_observation_type = spaces.Dict({
 
             'cash':spaces.Box(
             low=-np.inf, high=np.inf, shape = (1,), dtype=np.float32),
@@ -1531,7 +1672,7 @@ class WealthAgnosticFeatureEngineeringWrapper(ObservationWrapper):
         return None
     
 
-    def observation(self, observation):
+    def observation(self, observation: Dict[str, np.ndarray[float]]) -> Dict[str, np.ndarray[float]]:
 
         """
         Augments the observation such that net worth sensitive 
@@ -1558,11 +1699,13 @@ class WealthAgnosticFeatureEngineeringWrapper(ObservationWrapper):
         return observation
 
 
+
 class ObservationBufferWrapper(ObservationWrapper):
 
     """
     A wrapper for OpenAI Gym trading environments that provides a temporary buffer of observations for subsequent wrappers 
-    that require this form of information.
+    that require this form of information. Autofills itself with the first observation received from the environment to 
+    maintain a constant buffer size at all times.
 
     Attributes:
     -----------
@@ -1575,7 +1718,7 @@ class ObservationBufferWrapper(ObservationWrapper):
     """
 
 
-    def __init__(self, env: Env, buffer_size = 10) -> None:
+    def __init__(self, env: Env, buffer_size: int = 10) -> None:
 
         """
         Initializes a new instance of the ObservationBufferWrapper class.
@@ -1589,6 +1732,9 @@ class ObservationBufferWrapper(ObservationWrapper):
         """
 
         super().__init__(env)
+        
+        assert buffer_size > 0, "The buffer size must be greater than 0."
+
         self.buffer_size = buffer_size
         self.observation_buffer = FillDeque(buffer_size=buffer_size)
 
@@ -1654,13 +1800,14 @@ class FlattenToNUmpyObservationWrapper(ObservationWrapper):
         """
 
         super().__init__(env)
-        self.expected_observation_space = [dict, np.ndarray]
-        self.observation_space = self.flattened_observation_space(env)
+        self.expected_observation_type = [dict, np.ndarray]
+        self.observation_space = None
 
 
         return None
 
-    def flattened_observation_space(self, env):
+
+    def flattened_space(self, space: Space) -> spaces.Box:
 
         """
         Returns a flattened observation space.
@@ -1676,34 +1823,50 @@ class FlattenToNUmpyObservationWrapper(ObservationWrapper):
             The flattened observation space.
         """        
 
-        # self.observation_space is by default equal to of self.env.observation_space
+        # self.observation_space at constructor is set equal to of self.env.observation_space
         # i.e. observation_spcae of enclosed wrapper due to inheritance from ObservationWrapper
-        if isinstance(self.observation_space, spaces.Box):
+        sample_observation = space.sample()
 
-            shape = self.observation_space.shape
-            flattened_size = int(np.prod(shape))
+        if isinstance(sample_observation, np.ndarray):
+            
+            flattened_shape = sample_observation.flatten().shape
+            flattened_low = space.low.flatten() if not np.isscalar(
+                space.low) else np.full(flattened_shape, space.low)
+            flattened_high = space.high.flatten() if not np.isscalar(
+                space.high) else np.full(flattened_shape, space.high)
+
+            flattened_observation_space = spaces.Box(
+                low=flattened_low,
+                high=flattened_high,
+                shape=flattened_shape, 
+                dtype=GLOBAL_DATA_TYPE)
+            
+            return flattened_observation_space
+
+        elif isinstance(sample_observation, dict):
+
+            flattened_size = 0
+            flattened_observation_space  = dict()
+            
+            for key, space in space.items():
+                flattened_observation_space[key] = self.flattened_space(space)
+
+            flattened_low = np.concatenate(
+                [flattened_observation_space[key].low for key in flattened_observation_space])
+
+            flattened_high = np.concatenate(
+                [flattened_observation_space[key].high for key in flattened_observation_space])
+            
+            flattened_size = sum(
+                shape[0] for shape in flattened_observation_space.values())
+            
+            flattened_shape = (flattened_size, )
 
             return spaces.Box(
-                low=self.observation_space.low.flatten(),
-                high=self.observation_space.high.flatten(),
-                shape=(flattened_size,), 
-                dtype=np.float32)
-
-        flattened_size = 0
-        for space in env.observation_space.spaces.values():
-            flattened_size += int(np.prod(space.shape))
-
-        low = np.zeros(flattened_size)
-        high = np.zeros(flattened_size)
-
-        index = 0
-        for space in env.observation_space.spaces.values():
-            size = int(np.prod(space.shape))
-            low[index:index+size] = space.low.flatten()
-            high[index:index+size] = space.high.flatten()
-            index += size
-
-        return spaces.Box(low=low, high=high, shape=(flattened_size,), dtype=np.float32)
+                low=flattened_low, 
+                high=flattened_high, 
+                shape=flattened_shape, 
+                dtype=GLOBAL_DATA_TYPE)
 
     def observation(self, observation):
 
@@ -1721,9 +1884,12 @@ class FlattenToNUmpyObservationWrapper(ObservationWrapper):
             The flattened observation space.
         """
 
+        if self.observation_space is None:
+            self.observation_space = self.flattened_space()
+
         if isinstance(observation, dict):
             observation = np.concatenate([
-                obs.flatten() for obs in observation.values()])
+                array.flatten() for array in observation.values()])
             
         elif isinstance(observation, np.ndarray):
             observation = observation.flatten()
@@ -1737,6 +1903,8 @@ class ObservationStackerWrapper(ObservationWrapper):
 
     """
     A wrapper for OpenAI Gym trading environments that stacks the last n observations in the buffer.
+    If observation is changed between buffer and stacker, all changes will be lost as this wrapper's
+    point of reference is the buffer.
 
     Attributes:
     -----------
@@ -1760,12 +1928,72 @@ class ObservationStackerWrapper(ObservationWrapper):
         """
 
         super().__init__(env)
+
+        buffer_size = self.observation_buffer_wrapper.buffer_size
+        self.expected_observation_type = [dict, np.ndarray]
         self.stack_size = (
-            stack_size if stack_size is not None 
-            else self.observation_buffer_wrapper.buffer_size)
+            stack_size if stack_size is not None else buffer_size)
+        
+        assert (self.stack_size <= buffer_size, 
+            f"Stack size {self.stack_size} cannot exceed buffer size {buffer_size}.")
 
+        self.observation_space = self.stacked_observation_space()
 
-    def observation(self, observation: Dict[str, np.ndarray] | np.ndarray):
+        return None
+    
+
+    def infer_stacked_obervation_space(self, observation_space: Space):
+
+        observation = observation_space.sample()
+        stacked_shape = np.stack([observation] * self.stack_size).shape
+
+        stacked_low = (observation_space.low if np.isscalar(observation_space.low) 
+            else np.stack(self.stack_size * [observation_space.low]))
+        
+        stacked_high = (observation_space.high if np.isscalar(observation_space.high) 
+            else np.stack(self.stack_size * [observation_space.high]))
+
+        return spaces.Box(
+            low=stacked_low,
+            high=stacked_high,
+            shape=stacked_shape, 
+            dtype=GLOBAL_DATA_TYPE)
+        
+
+    def stacked_observation_space(self) -> Space:
+
+        """
+        Returns a flattened observation space.
+
+        Parameters:
+        -----------
+        env : Env
+            The trading environment.
+
+        Returns:
+        --------
+        spaces.Box
+            The flattened observation space.
+        """        
+
+        # self.observation_space at constructor is set equal to of self.env.observation_space
+        # i.e. observation_spcae of enclosed wrapper due to inheritance from ObservationWrapper
+
+        buffer_observation_space = self.observation_buffer_wrapper.observation_space
+        
+        if isinstance(buffer_observation_space.sample(), np.ndarray):
+            stacked_observation_space =  self.infer_stacked_obervation_space(buffer_observation_space)
+        
+        elif isinstance(buffer_observation_space, dict):
+            stacked_observation_space = dict()
+            for key, space in buffer_observation_space.items():
+                stacked_observation_space[key] = self.infer_stacked_obervation_space(space)
+
+        return stacked_observation_space
+        
+
+    def observation(self, observation: Dict[str, np.ndarray[float]] | np.ndarray[float]):
+
         """
         Returns the last n stacked observations in the buffer.
 
@@ -1779,6 +2007,7 @@ class ObservationStackerWrapper(ObservationWrapper):
         ndarray or dict of ndarrays
             An ndarray or dict of ndarrays containing the stacked observations.
         """
+
         stack = self.observation_buffer_wrapper.observation_buffer[-self.stack_size:]
 
         # Check if the observations are ndarrays or dictionaries of ndarrays
@@ -1803,40 +2032,45 @@ class RunningMeanSandardDeviationObservationWrapper(ObservationWrapper):
     """
     Gym environment wrapper that tracks the running mean and standard deviation
     of the observations using the RunningMeanStandardDeviation class.
+
+    Parameters:
+        env: The environment to wrap.
     """
 
-    def __init__(self, env):
+    def __init__(self, env: Env):
         super().__init__(env)
-        self.expected_observation_space = [dict, np.ndarray]
-        self.observation_rms = self.initialize_observation_rms(self.observation_space.sample())
+        self.expected_observation_type = [dict, np.ndarray]
+        self.observation_rms = None
 
 
-    def initialize_observation_rms(self, observation: np.ndarray[np.float32] | Dict[str, np.ndarray]):
+    def initialize_observation_rms(
+        self, observation: np.ndarray[float] | Dict[str, np.ndarray[float]]
+        )-> RunningMeanStandardDeviation | Dict[str, RunningMeanStandardDeviation]: 
 
         if isinstance(observation, np.ndarray):
-            self.observation_rms = RunningMeanStandardDeviation(observation.shape)
+            observation_rms = RunningMeanStandardDeviation(observation.shape)
 
         elif isinstance(observation, dict):
 
-            self.observation_rms = {}
-            for key, value in observation.items():
-                self.observation_rms[key] = RunningMeanStandardDeviation(value.shape)
+            observation_rms = dict()
+            for key, array in observation.items():
+                observation_rms[key] = RunningMeanStandardDeviation(array.shape)
             
-        return None
+        return observation_rms
     
 
-    def update_observation_rms(self, observation: np.ndarray[np.float32] | Dict[str, np.ndarray]):
+    def update(self, observation: np.ndarray[float] | Dict[str, np.ndarray[float]]):
         
         if isinstance(observation, np.ndarray):
             self.observation_rms.update(observation)
 
         elif isinstance(observation, dict):
-            for key, value in observation.items():
-                self.observation_rms[key].update(value)
+            for key, array in observation.items():
+                self.observation_rms[key].update(array)
 
         return None
     
-    def observation(self, observation: np.ndarray[np.float32] | Dict[str, np.ndarray]):
+    def observation(self, observation: np.ndarray[float] | Dict[str, np.ndarray[float]]):
         
         if self.observation_rms is None:
             self.initialize_observation_rms(observation)
@@ -1844,13 +2078,43 @@ class RunningMeanSandardDeviationObservationWrapper(ObservationWrapper):
         self.observation_rms.update(observation)
 
         return observation
+
+
+
+@observation
+class NormalizeObservationWrapper(RunningMeanSandardDeviationObservationWrapper):
+
+    """
+    Gym environment wrapper that normalizes observations using the running mean and standard deviation
+    tracked by the RunningMeanStandardDeviation class.
+    """
+
+    def __init__(self, env: Env):
+        super().__init__(env)
+
+        self.expected_observation_type = [dict, np.ndarray]
+        self.observation_rms = None
+        
+    def observation(
+        self, observation: np.ndarray[float] | Dict[str, np.ndarray[float]]
+        ) -> np.ndarray[float] | Dict[str, np.ndarray[float]]:
+
+        super().observation(observation)
+
+        if isinstance(observation, np.ndarray):
+            observation = (observation - self.observation_rms.mean) / self.observation_rms.std
+
+        elif isinstance(observation, dict):
+            observation = dict()
+            
+            for key, rms in self.observation_rms.items():
+                observation[key] = (observation[key] - rms.mean) / rms.std
+
+        return observation
     
 
-
-
-
 @buffer
-class RunningIndicatorsObsWrapper(ObservationWrapper):
+class FinancialIndicatorsWrapper(ObservationWrapper):
 
     # computes running financial indicators such as CCI, MACD
     # etc. Requires an observations buffer containing a window 
@@ -1876,7 +2140,7 @@ class NormalizeRewardsWrapper(RewardWrapper):
 
 class ExperienceRecorderWrapper(Wrapper):
 
-    # saves experiences in bufferand writes to hdf5 when 
+    # saves experiences in buffer and writes to hdf5 when 
     # buffer reaches a certain size.
 
     pass
