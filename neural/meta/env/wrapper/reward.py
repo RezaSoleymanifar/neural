@@ -35,7 +35,14 @@ class NormalizeReward(RewardWrapper):
             epsilon (float, optional): A small constant to avoid divide-by-zero errors when normalizing data. Defaults to 1e-8.
             clip_threshold (float, optional): A value to clip normalized data to, to prevent outliers 
             from dominating the statistics. Defaults to np.inf.
-        """
+
+    Example
+    -------
+    >>> from neural.meta.env.base import TrainMarketEnv
+    >>> from neural.meta.env.wrapper.reward import NormalizeReward
+    >>> env = TrainMarketEnv(...)
+    >>> env = NormalizeReward(env)
+    """
 
         super().__init__(env)
 
@@ -44,6 +51,7 @@ class NormalizeReward(RewardWrapper):
         self.clip_threshold = clip_threshold
 
     def reward(self, reward: float) -> float:
+        
         """Normalize the reward.
 
         Args:

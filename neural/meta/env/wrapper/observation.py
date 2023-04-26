@@ -476,11 +476,11 @@ class PositionsFeatureEngineeringWrapper(ObservationWrapper):
         self.expected_observation_type = spaces.Dict({
 
             'cash': spaces.Box(
-                low=-np.inf, high=np.inf, shape=(1,), dtype=np.float32),
+                low=-np.inf, high=np.inf, shape=(1,), dtype=GLOBAL_DATA_TYPE),
 
             'asset_quantities': spaces.Box(
                 low=-np.inf, high=np.inf, shape=(
-                    self.n_symbols,), dtype=np.float32),
+                    self.n_symbols,), dtype=GLOBAL_DATA_TYPE),
 
             'holds': spaces.Box(
                 low=0, high=np.inf, shape=(
@@ -488,16 +488,16 @@ class PositionsFeatureEngineeringWrapper(ObservationWrapper):
 
             'features': spaces.Box(
                 low=-np.inf, high=np.inf, shape=(
-                    self.n_features,), dtype=np.float32)})
+                    self.n_features,), dtype=GLOBAL_DATA_TYPE)})
 
         self.observation_space = spaces.Dict({
 
             'cash': spaces.Box(
-                low=-np.inf, high=np.inf, shape=(1,), dtype=np.float32),
+                low=-np.inf, high=np.inf, shape=(1,), dtype=GLOBAL_DATA_TYPE),
 
             'positions': spaces.Box(
                 low=-np.inf, high=np.inf, shape=(
-                    self.n_symbols,), dtype=np.float32),
+                    self.n_symbols,), dtype=GLOBAL_DATA_TYPE),
 
             'holds': spaces.Box(
                 low=0, high=np.inf, shape=(
@@ -505,7 +505,7 @@ class PositionsFeatureEngineeringWrapper(ObservationWrapper):
 
             'features': spaces.Box(
                 low=-np.inf, high=np.inf, shape=(
-                    self.n_features,), dtype=np.float32)})
+                    self.n_features,), dtype=GLOBAL_DATA_TYPE)})
 
         return None
 
@@ -593,11 +593,11 @@ class WealthAgnosticFeatureEngineeringWrapper(ObservationWrapper):
         self.expected_observation_type = spaces.Dict({
 
             'cash': spaces.Box(
-                low=-np.inf, high=np.inf, shape=(1,), dtype=np.float32),
+                low=-np.inf, high=np.inf, shape=(1,), dtype=GLOBAL_DATA_TYPE),
 
             'positions': spaces.Box(
                 low=-np.inf, high=np.inf, shape=(
-                    self.n_symbols,), dtype=np.float32),
+                    self.n_symbols,), dtype=GLOBAL_DATA_TYPE),
 
             'holds': spaces.Box(
                 low=0, high=np.inf, shape=(
@@ -605,16 +605,16 @@ class WealthAgnosticFeatureEngineeringWrapper(ObservationWrapper):
 
             'features': spaces.Box(
                 low=-np.inf, high=np.inf, shape=(
-                    self.n_features,), dtype=np.float32)})
+                    self.n_features,), dtype=GLOBAL_DATA_TYPE)})
 
         self.observation_space = spaces.Dict({
 
             'cash': spaces.Box(
-                low=-np.inf, high=np.inf, shape=(1,), dtype=np.float32),
+                low=-np.inf, high=np.inf, shape=(1,), dtype=GLOBAL_DATA_TYPE),
 
             'positions': spaces.Box(
                 low=-np.inf, high=np.inf, shape=(
-                    self.n_symbols,), dtype=np.float32),
+                    self.n_symbols,), dtype=GLOBAL_DATA_TYPE),
 
             'holds': spaces.Box(
                 low=0, high=np.inf, shape=(
@@ -622,10 +622,10 @@ class WealthAgnosticFeatureEngineeringWrapper(ObservationWrapper):
 
             'features': spaces.Box(
                 low=-np.inf, high=np.inf, shape=(
-                    self.n_features,), dtype=np.float32),
+                    self.n_features,), dtype=GLOBAL_DATA_TYPE),
 
             'return': spaces.Box(
-                low=-np.inf, high=np.inf, shape=(1,), dtype=np.float32), })
+                low=-np.inf, high=np.inf, shape=(1,), dtype=GLOBAL_DATA_TYPE), })
 
         return None
 
