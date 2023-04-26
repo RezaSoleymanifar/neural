@@ -9,7 +9,7 @@ from neural.meta.env.wrapper.base import metadata
 
 
 
-def validate_actions(wrapper: Wrapper, actions: np.ndarray | Dict[str, np.ndarray]) -> None:
+def validate_actions(wrapper: Wrapper, actions: np.ndarray[float] | Dict[str, np.ndarray[float]]) -> None:
     
     """
     Validates the type of the given action against a list of accepted types.
@@ -43,7 +43,7 @@ def validate_actions(wrapper: Wrapper, actions: np.ndarray | Dict[str, np.ndarra
 
 
 
-def action(wrapper_class: Type[Wrapper]) -> Type[Wrapper]:
+def action(wrapper_class: Type[ActionWrapper]) -> Type[ActionWrapper]:
  
     """
     A decorator that augments an existing Gym wrapper to sanity check the
