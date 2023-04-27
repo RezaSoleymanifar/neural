@@ -7,7 +7,7 @@ import tableprint, re, os
 from tqdm import tqdm
 
 from alpaca.data.timeframe import TimeFrame, TimeFrameUnit
-from neural.core.data.enums import ColumnType
+from neural.data.enums import ColumnType
 
 
 def validate_path(

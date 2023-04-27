@@ -1,6 +1,6 @@
 import os
 import numpy as np
-
+import logging
 
 
 # =====================================CONNECTION=========================================
@@ -23,6 +23,12 @@ MAX_LOG_SIZE = 10_000_000  # 10 MB
 # value, the oldest log file will be deleted.
 LOG_BACKUP_COUNT = 10
 
+# Set the logging level for the logger/file/console handler
+# lower level = more messages, i.e. messages at lower
+# levels are filtered out.
+# CRITICAL > ERROR > WARNING > INFO > DEBUG > NOTSET
+
+LOG_LEVEL = logging.INFO
 
 
 # =====================================DATA=========================================

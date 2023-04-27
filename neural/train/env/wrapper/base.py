@@ -10,7 +10,7 @@ from neural.common.log import logger
 from neural.common.exceptions import IncompatibleWrapperError
 from neural.meta.env.base import AbstractMarketEnv, TrainMarketEnv, TradeMarketEnv
 
-from neural.tools.ops import get_sharpe_ratio, tabular_print
+from neural.tools.base import get_sharpe_ratio, tabular_print
 
 
 

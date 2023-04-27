@@ -6,7 +6,7 @@ import numpy as np
 
 from neural.common.constants import PATTERN_DAY_TRADER_MINIMUM_NET_WORTH
 from neural.common.exceptions import TradeConstraintViolationError
-from neural.client.alpaca import AlpacaClient, AbstractClient
+from neural.client.alpaca import AlpacaClient, AbstractTradeClient
 from neural.core.data.enums import DatasetMetadata
 from neural.meta.env.pipe import AbstractPipe
 
@@ -22,7 +22,7 @@ class AbstractTrader(ABC):
     """
 
     def __init__(self,
-        client: AbstractClient,
+        client: AbstractTradeClient,
         model: nn.Module,
         pipe: AbstractPipe,
         dataset_metadata: DatasetMetadata):

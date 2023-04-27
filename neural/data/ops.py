@@ -25,7 +25,7 @@ from neural.common import logger
 from neural.common.exceptions import CorruptDataError
 from neural.core.data.enums import DatasetType, DatasetMetadata
 from neural.client.alpaca import AlpacaClient
-from neural.tools.ops import (progress_bar, to_timeframe, 
+from neural.tools.base import (progress_bar, to_timeframe, 
     create_column_schema, validate_path)
 from neural.tools.misc import Calendar
 from neural.common.constants import HDF5_DEFAULT_MAX_ROWS

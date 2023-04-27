@@ -8,12 +8,11 @@ from alpaca.trading import TradingClient
 
 from neural.common.log import logger
 from neural.common.constants import API_KEY, API_SECRET
-from neural.client.base import AbstractClient
-from neural.tools.ops import objects_to_df
+from neural.client.base import AbstractTradeClient
+from neural.tools.base import objects_to_df
 
 
-class AlpacaClient(AbstractClient):
-
+class AlpacaClient(AbstractTradeClient):
 
     """
     AlpacaClient is a Python class that allows you to connect to the Alpaca API to trade, 
@@ -52,7 +51,7 @@ class AlpacaClient(AbstractClient):
     >>> assets = client.assets()
     >>> positions = client.positions()
 
-    Option 2: Instantiate an instance of the AlpacaClient class without your API key and secret.
+    Option 2: Instantiate an instance of the AlpacaClient by passing values to constants.
 
     >>> from neural.connect.alpaca import AlpacaClient
     >>> from neural.common.constants import API_KEY, API_SECRET
@@ -63,14 +62,14 @@ class AlpacaClient(AbstractClient):
     Option 3: Instantiate an instance of the AlpacaClient class with environment variables.
 
     # Set the environment variables for API key and secret
-    export API_KEY=your_api_key
-    export API_SECRET=your_secret_key
+    # on Unix-like operating systems (Linux, macOS, etc.):
+    BASH: export API_KEY=your_api_key
+    BASH: export API_SECRET=your_secret_key
 
     # Instantiate an instance of the AlpacaClient class
-    python
     >>> from neural.connect.alpaca import AlpacaClient
     >>> import os
-    >>> client = AlpacaClient(key=os.environ['API_KEY'], secret=os.environ['API_SECRET'])
+    >>> client = AlpacaClient()
     """
 
     def __init__(
@@ -79,6 +78,17 @@ class AlpacaClient(AbstractClient):
         secret: Optional[str] = None,
         ) -> None:
         super.__init__
+
+        """
+        Initializes a new instance of the AlpacaClient class with the specified API key and secret.
+
+        Args:
+            key (str, optional): The API key for the Alpaca account. Defaults to None.
+            secret (str, optional): The API secret for the Alpaca account. Defaults to None.
+
+        Returns:
+            None.
+        """
 
         self.key = key if key is not None else API_KEY
         self.secret = secret if secret is not None else API_SECRET
@@ -112,8 +122,7 @@ class AlpacaClient(AbstractClient):
             self.assets
 
         if self._symbols is None:
-            self._symbols = {
-                asset.symbol: asset for asset in self._assets}
+            self._symbols = {asset.symbol: asset for asset in self._assets}
 
         return self._symbols
 
@@ -131,7 +140,9 @@ class AlpacaClient(AbstractClient):
         if self._assets is None:
             self._assets = self.clients['trading'].get_all_assets()
 
-        return objects_to_df(self._assets)
+        assets_dataframe =  objects_to_df(self._assets)
+        
+        return assets_dataframe
 
 
 
@@ -239,13 +250,13 @@ class AlpacaClient(AbstractClient):
         return True if self.account.status == AccountStatus.ACTIVE else False
 
 
-    def submit_order(
+    def place_order(
         self, 
         symbol: str, 
         qty: int, 
-        side, 
-        type, 
-        time_in_force, 
+        side: str, 
+        type: str, 
+        time_in_force: str, 
         limit_price=None, 
         stop_price=None, 
         client_order_id=None

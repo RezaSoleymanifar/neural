@@ -5,7 +5,7 @@ from gym import (Env, Wrapper, ObservationWrapper, spaces, Space)
 
 from neural.common.constants import ACCEPTED_OBSERVATION_TYPES, GLOBAL_DATA_TYPE
 from neural.common.exceptions import IncompatibleWrapperError
-from neural.meta.env.wrapper.base import metadata
+from neural.train.env.wrapper.base import metadata
 from neural.tools.misc import FillDeque, RunningMeanStandardDeviation
 
 

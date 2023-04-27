@@ -3,6 +3,12 @@ from abc import ABC, abstractmethod
 
 
 class AbstractClient(ABC):
+    pass
+
+
+
+
+class AbstractTradeClient(AbstractClient):
 
     """
     Abstract base class for a client that connects to a trading service or API.
@@ -40,3 +46,8 @@ class AbstractClient(ABC):
         """
 
         raise NotImplementedError
+
+
+
+class AbstractDataClient(AbstractClient):
+    pass

@@ -7,11 +7,11 @@ import numpy as np
 from gym import spaces, Env
 
 from neural.common.constants import GLOBAL_DATA_TYPE
-from neural.core.data.ops import StaticDataFeeder, AsyncDataFeeder
-from neural.core.data.enums import ColumnType
+from neural.data.ops import StaticDataFeeder, AsyncDataFeeder
+from neural.data.enums import ColumnType
 
 if TYPE_CHECKING:
-    from neural.core.trade.ops import AbstractTrader
+    from neural.trade.alpaca import AbstractTrader
 
 
 
