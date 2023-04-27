@@ -220,12 +220,37 @@ class RunningMeanStandardDeviation:
         self.clip = clip_threshold
 
         self.shape = None
+        self._minimum = None
+        self._maximum = None
         self._mean = None
         self._std = None
         self.M2 = None
         self.count = None
 
         return None
+    
+
+    @property
+    def minimum(self):
+            
+        """
+        Returns the minimum value of the data stored in the RunningMeanStandardDeviation object.
+        """
+
+        assert self.count, "Must have at least one data point to compute minimum"
+
+        return self._minimum
+
+
+    @property
+    def maximum(self):
+            
+        """
+        Returns the max value of the data stored in the RunningMeanStandardDeviation object.
+        """
+        assert self.count, "Must have at least one data point to compute maximum"
+
+        return self._minimum
     
 
     @property
@@ -269,6 +294,9 @@ class RunningMeanStandardDeviation:
         self.M2 = np.zeros(self.shape)
         self.count = 0
 
+        self.minimum = np.inf
+        self.maximum = -np.inf
+
         return None
 
 
@@ -292,9 +320,13 @@ class RunningMeanStandardDeviation:
         delta2 = array - self._mean
         self.M2 += delta * delta2
 
+        self.minimum = np.minimum(self.minimum, array)
+        self.maximum = np.maximum(self.maximum, array)
+
         return None
     
     def normalize(self, array: np.ndarray):
+
         # Normalize the array using the running mean and standard deviation
         normalized_array = np.clip(
             (array - self.mean) / (self.std + self.epsilon), -self.clip, self.clip)
