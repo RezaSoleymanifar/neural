@@ -15,12 +15,18 @@ class NormalizeReward(RewardWrapper):
 
     """
     This wrapper will normalize immediate rewards. 
+
     Usage:
+    -------
         env = NormalizeReward(env, epsilon=1e-8, clip_threshold=10)
+
     Note:
+    -------
         The scaling depends on past trajectories and rewards will not be scaled correctly if the wrapper was newly
         instantiated or the policy was changed recently.
+
     Methods:
+    -------
         reward(reward: float) -> float
             Normalize the reward.
     """
@@ -30,23 +36,25 @@ class NormalizeReward(RewardWrapper):
         env: Env,
         epsilon: float = 1e-8,
         clip_threshold: float = np.inf,
-    ) -> None:
+        ) -> None:
+
         """
         This wrapper normalizes immediate rewards so that rewards have mean 0 and standard deviation 1.
 
         Args:
+        -------
             env (Env): The environment to apply the wrapper.
-            epsilon (float, optional): A small constant to avoid divide-by-zero errors when normalizing data. Defaults to 1e-8.
-            clip_threshold (float, optional): A value to clip normalized data to, to prevent outliers 
+            epsilon (float, optional): A small constant to avoid divide-by-zero errors when normalizing data. 
+            Defaults to 1e-8. clip_threshold (float, optional): A value to clip normalized data to, to prevent outliers 
             from dominating the statistics. Defaults to np.inf.
 
-    Example
-    -------
-    >>> from neural.meta.env.base import TrainMarketEnv
-    >>> from neural.meta.env.wrapper.reward import NormalizeReward
-    >>> env = TrainMarketEnv(...)
-    >>> env = NormalizeReward(env)
-    """
+        Example
+        -------
+        >>> from neural.meta.env.base import TrainMarketEnv
+        >>> from neural.meta.env.wrapper.reward import NormalizeReward
+        >>> env = TrainMarketEnv(...)
+        >>> env = NormalizeReward(env)
+        """
 
         super().__init__(env)
 
@@ -56,12 +64,15 @@ class NormalizeReward(RewardWrapper):
 
     def reward(self, reward: float) -> float:
         
-        """Normalize the reward.
+        """
+        Normalize the reward.
 
         Args:
+        --------
             reward (float): The immediate reward to normalize.
 
         Returns:
+        --------
             float: The normalized reward.
         """
 
@@ -516,7 +527,7 @@ class AbstractDynamicRewardShaperWrapper(AbstractRewardShaperWrapper, ABC):
 class FixedPenalizeShortRatioRewardWrapper(AbstractFixedRewardShaperWrapper):
 
     """
-    A reward shaping wrapper that penalizes a short ratio higher than a given threshold.
+    A reward shaping wrapper that penalizes a short ratio lower than a given threshold.
 
     Args:
         env (gym.Env): The environment to wrap.
@@ -595,7 +606,7 @@ class FixedPenalizeShortRatioRewardWrapper(AbstractFixedRewardShaperWrapper):
 class DynamicPenalizeShortRatioRewardWrapper(FixedPenalizeShortRatioRewardWrapper):
 
     """
-    A reward shaping wrapper that penalizes a short ratio higher than a given threshold.
+    A reward shaping wrapper that penalizes a short ratio lower than a given threshold.
 
     This class modifies the reward signal of a market environment by applying a penalty when the short ratio
     exceeds a specified threshold. The penalty is based on the deviation of the short ratio from the threshold.
@@ -733,7 +744,7 @@ class DynamicPenalizeShortRatioRewardWrapper(FixedPenalizeShortRatioRewardWrappe
 class FixedPenalizeCashRatioRewardWrapper(AbstractRewardShaperWrapper):
 
     """
-    A reward shaping wrapper that penalizes a cash ratio higher than a given threshold. The cash ratio is defined
+    A reward shaping wrapper that penalizes a cash ratio lower than a given threshold. The cash ratio is defined
     as the ratio of cash to net worth. This ratio has meaning when both cash and net worth are positive.
 
     This class modifies the reward signal of a market environment by applying a penalty when the cash ratio

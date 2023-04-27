@@ -1,20 +1,28 @@
 import logging
-import os
+from logging.handlers import RotatingFileHandler
+from neural.common.constants import LOG_PATH, MAX_LOG_SIZE, LOG_BACKUP_COUNT
 
-# Get the directory of the current script
-log_dir = os.path.dirname(os.path.abspath(__file__))
 
-# Create a subdirectory named "logs" to store the log files
-log_dir = os.path.join(log_dir, "logs")
-if not os.path.exists(log_dir):
-    os.makedirs(log_dir)
+# Set up a rotating file handler with the specified file name, maximum size, 
+# and backup count
+if LOG_PATH is None:
+    file_handler = logging.NullHandler()
 
-# Define the log file name
-FILE_NAME = 'neural.log'
+else:
+    file_handler = RotatingFileHandler(
+        LOG_PATH,
+        maxBytes=MAX_LOG_SIZE,
+        backupCount=LOG_BACKUP_COUNT)
 
-# Set up the basic logging configuration with the specified file name and logging level
-logging.basicConfig(filename=os.path.join(
-    log_dir, FILE_NAME), level=logging.DEBUG)
+# Set the logging level for the file handler
+file_handler.setLevel(logging.INFO)
+
+# Create a formatter for the file handler
+formatter = logging.Formatter(
+    '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
+# Set the formatter for the file handler
+file_handler.setFormatter(formatter)
 
 # Create a logger named 'neural'
 logger = logging.getLogger('neural')
@@ -22,12 +30,12 @@ logger = logging.getLogger('neural')
 # Log a message indicating that the logger is configured
 logger.info('neural logger configured.')
 
+# Add the file handler to the 'neural' logger
+logger.addHandler(file_handler)
+
 # Create a console handler for logging messages to the console and set its level to INFO
 console_handler = logging.StreamHandler()
 console_handler.setLevel(logging.INFO)
-
-# Create a formatter for the console handler
-formatter = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
 
 # Set the formatter for the console handler
 console_handler.setFormatter(formatter)

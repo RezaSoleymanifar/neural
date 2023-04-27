@@ -24,7 +24,7 @@ from alpaca.data.requests import (
 from neural.common import logger
 from neural.common.exceptions import CorruptDataError
 from neural.core.data.enums import DatasetType, DatasetMetadata
-from neural.connect.client import AlpacaClient
+from neural.client.alpaca import AlpacaClient
 from neural.tools.ops import (progress_bar, to_timeframe, 
     create_column_schema, validate_path)
 from neural.tools.misc import Calendar
