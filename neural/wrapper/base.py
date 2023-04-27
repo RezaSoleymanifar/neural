@@ -8,7 +8,7 @@ from gym import Env, Wrapper
 
 from neural.common.log import logger
 from neural.common.exceptions import IncompatibleWrapperError
-from neural.meta.env.base import AbstractMarketEnv, TrainMarketEnv, TradeMarketEnv
+from neural.train.env.base import AbstractMarketEnv, TrainMarketEnv, TradeMarketEnv
 
 from neural.tools.base import sharpe_ratio, tabular_print
 

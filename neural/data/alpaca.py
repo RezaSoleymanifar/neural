@@ -26,7 +26,7 @@ from neural.tools.base import Calendar
 from neural.common.constants import HDF5_DEFAULT_MAX_ROWS
     
 
-class AlpacaDataFetcher():
+class AlpacaDataDownloader():
 
     """
     A class to download and process financial data using the Alpaca API.
@@ -218,7 +218,7 @@ class AlpacaDataFetcher():
 
         resolution = to_timeframe(resolution)
 
-        data_fetcher = AlpacaDataFetcher(self.client)
+        data_fetcher = AlpacaDataDownloader(self.client)
 
         downloader, request = data_fetcher.get_downloader_and_request(
             dataset_type=dataset_type,
@@ -358,3 +358,7 @@ class AlpacaDataFetcher():
         progress_bar_.close()
 
         return None
+
+
+class AlpacaDataStreamer:
+    pass

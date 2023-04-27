@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-
+import numpy as np
 
 
 class AbstractClient(ABC):
@@ -50,9 +50,6 @@ class AbstractClient(ABC):
 
 
 
-class AbstractDataClient(AbstractClient):
-    pass
-
 
 class AbstractTradeClient(AbstractClient):
 
@@ -60,20 +57,136 @@ class AbstractTradeClient(AbstractClient):
     Abstract base class for a client that connects to a trading service or API.
 
     This class defines the required methods for setting credentials and checking the connection to the service. 
-    Derived classes must implement these methods to provide the necessary functionality for connecting to a specific service.
+    Derived classes must implement these methods to provide the necessary functionality for connecting to 
+    a specific service.
+
+    Attributes:
+    ------------
+        cash (float): The current amount of cash available to the trader.
+        asset_quantities (ndarray[float]): The current quantity of each asset held by the trader.
+        positions (float): The current positions (notional base currency value) of each asset held by the trader.
+        net_worth (float): The current net worth of the trader.
+        longs (float): Sum of current notional value of long positions held by the trader.
+        shorts (float): Sum of current notional value of short positions held by the trader.
 
     Methods:
-        check_connection(*args, **kwargs) -> bool: Check the connection to the service. If the connection is successful, 
-        the method should return True, otherwise False. The Trader class will use this method to check 
-        the connection before executing any trades.
+    ------
+        check_connection(*args, **kwargs) -> bool:
+            Check the connection to the service. If the connection is successful, the method should return True, 
+            otherwise False. The Trader class will use this method to check the connection before executing 
+            any trades.
+        place_order(*args, **kwargs):
+            Abstract method for placing an order for a single asset.
 
     Raises:
+
         NotImplementedError: If the method is not implemented in the derived class.
     """
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+
+    @property
+    @abstractmethod
+    def cash(self) -> float:
+
+        """
+        The current amount of cash available to the trader.
+
+        Raises:
+        --------
+            NotImplementedError: This property must be implemented by a subclass.
+        """
+
+        raise NotImplementedError
+    
+
+    @property
+    @abstractmethod
+    def asset_quantities(self) -> np.ndarray[float]:
+
+        """
+        The current quantity of each asset held by the trader.
+
+        Raises:
+        --------
+            NotImplementedError: This property must be implemented by a subclass.
+        """
+
+        raise NotImplementedError
+
+
+    @property
+    @abstractmethod
+    def positions(self) -> float:
+
+        """
+        The current positions (notional base currency value) of each asset
+        held by the trader.
+
+        Raises:
+        --------
+            NotImplementedError: This property must be implemented by a subclass.
+        """
+
+        raise NotImplementedError    
+
+
+    @property
+    @abstractmethod
+    def net_worth(self) -> float:
+
+        """
+        The current net worth of the trader.
+
+        Raises:
+        --------
+            NotImplementedError: This property must be implemented by a subclass.
+        """
+
+        raise NotImplementedError
+    
+
+    @property
+    @abstractmethod
+    def longs(self) -> float:
+
+        """
+        Sum of current notional value of long positions held by the trader.
+
+        Raises:
+        --------
+            NotImplementedError: This property must be implemented by a subclass.
+        """
+
+        raise NotImplementedError
+    
+
+    @property
+    @abstractmethod
+    def shorts(self) -> float:
+
+        """
+        Sum of current notional value of short positions held by the trader.
+        assumed to be always positive.
+
+        Raises:
+        --------
+            NotImplementedError: This property must be implemented by a subclass.
+        """
+
+        raise NotImplementedError
     
 
     @abstractmethod
     def check_connection(self, *args, **kwargs):
+
+        """
+        check the connection to the service. If the connection is successful,
+        the method should return True, otherwise False. The Trader class will use this method to check
+        the connection before executing any trades.
+        """
 
         raise NotImplementedError
 
@@ -81,4 +194,25 @@ class AbstractTradeClient(AbstractClient):
     @abstractmethod
     def place_order(self, *args, **kwargs):
 
+        """
+        Abstract method for placing an order for a single asset.
+        """
+
         raise NotImplementedError
+
+
+
+class AbstractDataClient(AbstractClient):
+
+    """
+    Abstract base class for a client that connects to a data service or API.
+    This class defines a blueprint for clients that provide data functionality.
+    """
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    
+
+
+
