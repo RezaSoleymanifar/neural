@@ -6,7 +6,7 @@ from typing import Dict
 import numpy as np
 from gym import (Env, RewardWrapper)
 
-from neural.tools.misc import RunningMeanStandardDeviation
+from neural.tools.misc import RunningStatistics
 from neural.meta.env.wrapper.base import metadata
 
 
@@ -58,7 +58,7 @@ class NormalizeReward(RewardWrapper):
 
         super().__init__(env)
 
-        self.reward_rms = RunningMeanStandardDeviation()
+        self.reward_rms = RunningStatistics()
         self.epsilon = epsilon
         self.clip_threshold = clip_threshold
 
@@ -121,7 +121,7 @@ class AbstractRewardShaperWrapper(RewardWrapper, ABC):
         """
 
         super().__init__(env)
-        self.reward_rms = RunningMeanStandardDeviation()
+        self.reward_rms = RunningStatistics()
 
 
     @abstractmethod

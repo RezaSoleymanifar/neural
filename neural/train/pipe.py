@@ -1,7 +1,7 @@
 from abc import abstractmethod, ABC
 from typing import Optional
 
-from neural.meta.env.wrapper import (
+from neural.train.wrapper import (
     MinTradeSizeActionWrapper,
     FixedMarginActionWrapper, 
     NetWorthRelativeMaximumShortSizing,
@@ -14,7 +14,7 @@ from neural.meta.env.wrapper import (
     ObservationStackerWrapper, 
     ObservationBufferWrapper)
 
-from neural.meta.env.base import AbstractMarketEnv
+from neural.train.env.base import AbstractMarketEnv
 
 
 

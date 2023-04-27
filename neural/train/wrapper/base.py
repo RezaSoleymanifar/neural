@@ -10,7 +10,7 @@ from neural.common.log import logger
 from neural.common.exceptions import IncompatibleWrapperError
 from neural.meta.env.base import AbstractMarketEnv, TrainMarketEnv, TradeMarketEnv
 
-from neural.tools.base import get_sharpe_ratio, tabular_print
+from neural.tools.base import sharpe_ratio, tabular_print
 
 
 
@@ -605,7 +605,7 @@ class ConsoleTearsheetRenderWrapper(Wrapper):
         # financial metrics
         profit = net_worth - initial_cash
         return_ = (net_worth - initial_cash)/initial_cash
-        sharpe = get_sharpe_ratio(
+        sharpe = sharpe_ratio(
             self.market_metadata_wrapper.history['net_worth'])
 
         metrics = [

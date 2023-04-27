@@ -1,13 +1,306 @@
-from datetime import datetime
-from typing import List, Iterable, Dict
-from enum import Enum
+from typing import List, Iterable, Any
+from collections import deque
 
 import pandas as pd
-import tableprint, re, os
+import numpy as np
+import pandas_market_calendars as market_calendars
+import tableprint, os
 from tqdm import tqdm
 
-from alpaca.data.timeframe import TimeFrame, TimeFrameUnit
-from neural.data.enums import ColumnType
+from neural.tools.enums import CalendarType
+
+
+
+#==============================================Time====================================================
+
+class Calendar:
+
+    """
+    A class representing a trading calendar for different asset classes.
+
+    Attributes:
+    ---------
+        asset_class (AssetClass): The asset class for which the calendar is created.
+        calendar (market_calendars.MarketCalendar): The trading calendar object for the specified asset class.
+
+    Methods:
+    ---------
+        _get_calendar() -> market_calendars.MarketCalendar: Returns a trading calendar object based on the 
+        asset class. 
+        get_schedule(start_date, end_date) -> pd.DataFrame: Returns a schedule dataframe with
+        trading dates and times.
+        get_local_time_zone() -> str: Returns the local time zone for the specified calendar type.
+    """
+
+    def __init__(self) -> None:
+        
+        """
+        Initializes a new instance of the Calendar class.
+
+        Args:
+            asset_class (AssetClass): The asset class for which the calendar is created.
+        """
+
+        self.calendar = None
+
+        return None
+
+
+    def get_schedule(
+            self,
+            calendar_type: CalendarType,
+            start_date: Any,
+            end_date: Any
+        ) -> pd.DataFrame:
+        
+        """
+        Returns a schedule dataframe with core trading open and close times
+        per day.
+
+        Args:
+        ---------
+            start_date: The start date for the trading schedule.
+            end_date: The end date for the trading schedule.
+
+        Returns:
+        ---------
+            pd.DataFrame: A dataframe with trading dates and times.
+        """
+
+        calendar = market_calendars.get_calendar(calendar_type.value)
+
+        # Time returned is always UTC
+        schedule = calendar.schedule(start_date=start_date, end_date=end_date)
+
+        return schedule
+
+
+        # asset_class_to_calendar_type = {
+        #     AssetClass.US_EQUITY: CalendarType.US_EQUITY,
+        #     AssetClass.CRYPTO: CalendarType.CRYPTO}
+        
+
+
+#================================================Data=====================================================
+
+class FillDeque(deque):
+
+    """
+    A custom deque implementation that fills itself with the first item it receives 
+    when it's empty until it reaches the specified buffer size. After that, it behaves 
+    like a regular deque with a fixed maximum size.
+    """
+
+    def __init__(self, buffer_size):
+        """
+        Initializes the FillDeque instance with the specified buffer size.
+
+        Args:
+            buffer_size (int): The maximum size of the deque.
+        """
+
+        self.buffer_size = buffer_size
+        self.buffer = deque(maxlen=self.buffer_size)
+
+        return None
+
+    def append(self, item):
+        """
+        Appends the item to the deque. If the deque is empty, it fills the deque with
+        the first item received until it reaches the maximum buffer size.
+
+        Args:
+            item: The item to append to the deque.
+        """
+
+        if not self.buffer:
+            for _ in range(self.buffer_size):
+                self.buffer.append(item)
+        else:
+            self.buffer.append(item)
+
+        return None
+
+    def __iter__(self):
+
+        return iter(self.buffer)
+
+    def __getitem__(self, index):
+        """
+        Returns a slice of the buffer as a list.
+
+        Args:
+            index (int, slice): The index or slice to retrieve.
+
+        Returns:
+            list: A list of items from the buffer.
+        """
+
+        if isinstance(index, int):
+            return self.buffer[index]
+
+        elif isinstance(index, slice):
+            return list(self.buffer)[index]
+
+        else:
+            raise TypeError("Invalid argument type")
+
+    def clear(self):
+        """
+        Removes all elements from the deque buffer.
+        """
+        self.buffer.clear()
+
+        return None
+
+
+
+class RunningStatistics:
+
+    """
+    A class for computing the running mean and standard deviation of a series of data.
+    Can be used to normalize data to a mean of 0 and standard deviation of 1 in an online
+    fashion.
+
+    Implements the Welford online algorithm for computing the standard deviation.
+
+    https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Welford's_online_algorithm
+
+    Usage:
+        rms = RunningMeanStandardDeviation()
+        rms.update(array)
+        mean = rms.mean
+        std = rms.std
+        normalized_array = rms.normalize(array)
+
+    Args:
+        epsilon (float): A small constant to avoid divide-by-zero errors when normalizing data.
+        clip (float): A value to clip normalized data to, to prevent outliers from dominating the statistics.
+    """
+
+    def __init__(self, epsilon=1e-8, clip_threshold: float = np.inf):
+
+        """
+        Initializes the RunningMeanStandardDeviation object.
+        """
+
+        assert clip_threshold > 0, "Clip threshold must be greater than 0"
+        assert epsilon > 0, "Epsilon value must be greater than 0"
+
+        self.epsilon = epsilon
+        self.clip = clip_threshold
+
+        self.shape = None
+        self._minimum = None
+        self._maximum = None
+        self._mean = None
+        self._std = None
+        self.M2 = None
+        self.count = None
+
+        return None
+
+
+    @property
+    def minimum(self):
+
+        """
+        Returns the minimum value of the data stored in the RunningMeanStandardDeviation object.
+        """
+
+        assert self.count, "Must have at least one data point to compute minimum"
+
+        return self._minimum
+
+
+    @property
+    def maximum(self):
+        """
+        Returns the max value of the data stored in the RunningMeanStandardDeviation object.
+        """
+        assert self.count, "Must have at least one data point to compute maximum"
+
+        return self._minimum
+
+
+    @property
+    def mean(self):
+        """
+        Computes and returns the mean of the data stored in the RunningMeanStandardDeviation object.
+        """
+
+        assert self.count, "Must have at least one data point to compute mean"
+
+        return self._mean
+
+
+    @property
+    def std(self):
+        """
+        Computes and returns the standard deviation of the data stored in the RunningMeanStandardDeviation object.
+        """
+
+        assert self.count, "Must have at least one data point to compute standard deviation"
+
+        variance = self.M2 / \
+            (self.count - 1) if self.count > 1 else np.zeros_like(self.M2)
+        self._std = np.sqrt(variance)
+
+        return self._std
+
+
+    def initialize_statistics(self, array: np.ndarray):
+        """
+        Initializes the RunningMeanStandardDeviation object with data.
+
+        Args:
+            x (np.ndarray): The data to initialize the RunningMeanStandardDeviation object with.
+        """
+
+        self.shape = array.shape
+        self._mean = np.zeros(self.shape)
+        self.M2 = np.zeros(self.shape)
+        self.count = 0
+
+        self.minimum = np.inf
+        self.maximum = -np.inf
+
+        return None
+
+
+    def update(self, array: np.ndarray):
+        """
+        Updates the RunningMeanStandardDeviation object with new data.
+
+        Args:
+            x (np.ndarray): The new data to be added to the RunningMeanStandardDeviation object.
+        """
+
+        if self.shape is None:
+            self.initialize_statistics(array)
+
+        assert self.shape == array.shape, "Shape of data has changed during update."
+
+        self.count += 1
+        delta = array - self._mean
+        self._mean += delta / self.count
+        delta2 = array - self._mean
+        self.M2 += delta * delta2
+
+        self.minimum = np.minimum(self.minimum, array)
+        self.maximum = np.maximum(self.maximum, array)
+
+        return None
+
+
+    def normalize(self, array: np.ndarray):
+
+        # Normalize the array using the running mean and standard deviation
+        normalized_array = np.clip(
+            (array - self.mean) / (self.std + self.epsilon), -self.clip, self.clip)
+
+        return normalized_array
+
 
 
 def validate_path(
@@ -40,79 +333,7 @@ def validate_path(
     return None
 
 
-
-def create_column_schema(data: pd.DataFrame):
-
-    """
-    Creates a column schema dictionary for a given DataFrame, with ColumnType as keys and boolean masks as values.
-    Args:
-        data (pd.DataFrame): The input DataFrame for which the column schema is to be created.
-
-    Returns:
-        Dict[ColumnType, pd.Series]: A dictionary containing ColumnType keys and boolean masks for each column in the input DataFrame.
-    """
-
-    column_schema = dict()
-
-    for column_type in ColumnType:
-
-        mask = data.columns.str.match(column_type.value.lower())
-        column_schema[column_type] = mask
-
-    return column_schema
-
-
-
-def to_datetime(date: str):
-
-    try:
-        date_format = "%d/%m/%Y"
-        date_time_ = datetime.strptime(date, date_format)
-
-    except:
-        raise ValueError(
-            'Invalid date. Valid examples: 20/03/2018, 01/01/2015'
-            )
-
-    return date_time_
-
-
-
-def to_timeframe(time_frame: str):
-
-    """
-    Converts a string representation of a date to a datetime object.
-
-    Args:
-        date (str): The input date string to be converted to a datetime object. Must be in the format "dd/mm/yyyy".
-
-    Raises:
-        ValueError: If the input date string is not in the correct format.
-
-    Returns:
-        datetime: A datetime object corresponding to the input date string.
-    """
-
-    match = re.search(r'(\d+)(\w+)', time_frame)
-
-    if match:
-
-        amount = int(match.group(1))
-        unit = match.group(2)
-
-        map = {
-            'Min': TimeFrameUnit.Minute,
-            'Hour': TimeFrameUnit.Hour,
-            'Day': TimeFrameUnit.Day,
-            'Week': TimeFrameUnit.Week,
-            'Month': TimeFrameUnit.Month}
-
-        return TimeFrame(amount, map[unit])
-    
-    else:
-        raise ValueError(
-            "Invalid timeframe. Valid examples: 59Min, 23Hour, 1Day, 1Week, 12Month")
-
+#============================Visualization==============================
 
 
 def tabular_print(
@@ -163,7 +384,9 @@ def progress_bar(total: Iterable):
 
 
 
-def get_sharpe_ratio(net_worth_hist: List[float], base=0):
+#============================Financial==============================
+
+def sharpe_ratio(net_worth_history: List[float], base=0):
 
     """
     Calculates the Sharpe ratio of a given net worth history list.
@@ -176,36 +399,8 @@ def get_sharpe_ratio(net_worth_hist: List[float], base=0):
         float: The calculated Sharpe ratio value.
     """
 
-    hist = pd.Series(net_worth_hist)
+    hist = pd.Series(net_worth_history)
     returns = hist.pct_change().dropna()
     val = (returns.mean()-base)/returns.std()
 
     return val
-
-
-
-def objects_to_df(
-    object_collection: Iterable[Dict[str, str]]
-    ) -> pd.DataFrame:
-
-    """
-    Converts a collection of enum objects into a pandas DataFrame.
-
-    Args:
-        object_collection (Iterable[Dict[str, str]]): A collection of enum objects, 
-        where each object is a dictionary containing key-value pairs.
-
-    Returns:
-        pd.DataFrame: A DataFrame containing the converted objects.
-    """
-
-    objects_collection_ = object_collection.copy()
-    for index, object in enumerate(objects_collection_):
-        object_dict = dict(object)
-
-        for key, val in object_dict.items():
-            object_dict[key] = val.value if isinstance(val, Enum) else val
-            objects_collection_[index] = object_dict
-
-    df = pd.DataFrame(objects_collection_)
-    return df

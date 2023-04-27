@@ -6,7 +6,7 @@ from gym import (Env, Wrapper, ObservationWrapper, spaces, Space)
 from neural.common.constants import ACCEPTED_OBSERVATION_TYPES, GLOBAL_DATA_TYPE
 from neural.common.exceptions import IncompatibleWrapperError
 from neural.train.env.wrapper.base import metadata
-from neural.tools.misc import FillDeque, RunningMeanStandardDeviation
+from neural.tools.misc import FillDeque, RunningStatistics
 
 
 def validate_observation(wrapper: Wrapper, observation: np.ndarray | Dict[str, np.ndarray]) -> None:
@@ -1106,7 +1106,7 @@ class RunningMeanSandardDeviationObservationWrapper(ObservationWrapper):
 
     def initialize_observation_rms(
         self, observation: np.ndarray[float] | Dict[str, np.ndarray[float]]
-        ) -> RunningMeanStandardDeviation | Dict[str, RunningMeanStandardDeviation]:
+        ) -> RunningStatistics | Dict[str, RunningStatistics]:
         
         """
         Initializes the running mean standard deviation for the observation.
@@ -1121,13 +1121,13 @@ class RunningMeanSandardDeviationObservationWrapper(ObservationWrapper):
         """
 
         if isinstance(observation, np.ndarray):
-            observation_rms = RunningMeanStandardDeviation()
+            observation_rms = RunningStatistics()
 
         elif isinstance(observation, dict):
 
             observation_rms = dict()
             for key in observation.keys():
-                observation_rms[key] = RunningMeanStandardDeviation()
+                observation_rms[key] = RunningStatistics()
 
         return observation_rms
 
