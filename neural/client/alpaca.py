@@ -3,15 +3,25 @@ from typing import Optional, Dict, List
 import pandas as pd
 import numpy as np
 
-from alpaca.trading.enums import AccountStatus, AssetExchange, AssetClass
+from alpaca.trading.enums import AccountStatus, AssetExchange, AssetClass, AssetStatus
 from alpaca.data.historical import StockHistoricalDataClient, CryptoHistoricalDataClient
 from alpaca.trading import TradingClient, OrderRequest, TimeInForce, OrderClass, OrderType, OrderSide
+
+from alpaca.data.requests import (
+    CryptoBarsRequest,
+    CryptoQuotesRequest,
+    CryptoTradesRequest,
+    StockBarsRequest,
+    StockQuotesRequest,
+    StockTradesRequest
+)
 
 from neural.common.log import logger
 from neural.common.constants import API_KEY, API_SECRET
 from neural.common.constants import PATTERN_DAY_TRADER_MINIMUM_NET_WORTH
 from neural.common.exceptions import TradeConstraintViolationError
 from neural.client.base import AbstractClient, AbstractTradeClient, AbstractDataClient
+from neural.data.enums import AlpacaDataSource
 from neural.tools.base import objects_to_df
 
 
@@ -108,7 +118,13 @@ class AlpacaClient(AbstractClient):
 
 
     @property
-    def __symbols(self) -> Dict:
+    def symbols(self) -> Dict:
+        
+        # TODO: implement this method. More strcuture in symbols here. It will help
+        # to have symbols to carry some data in form of a class or dict to make
+        # certain information self contained. For example asset class,
+        # This should be enforced in the AbstractClient class to make all clients
+        # have this property.
 
         """
         Get the symbols of assets fetched from the Alpaca API.
@@ -223,6 +239,132 @@ class AlpacaClient(AbstractClient):
         return None
 
 
+class AlpacaDataClient(AbstractDataClient):
+
+    def __init__(self, *args, **kwargs):
+
+        super().__init__(*args, **kwargs)
+
+
+    def get_downloader_and_request(
+        self,
+        dataset_type: DatasetType,
+        asset_class=AssetClass
+        ) -> Tuple[Any, Any]:
+
+        """
+        Returns the appropriate data downloader and request object based on the provided dataset type
+        and asset class.
+
+        Parameters:
+        -----------
+        dataset_type: DatasetType
+            The type of dataset being downloaded, one of ['BAR', 'QUOTE', 'TRADE'].
+        asset_class: AssetClass, optional
+            The asset class being downloaded, defaults to `AssetClass.US_EQUITY`.
+
+        Returns:
+        --------
+        Tuple[Any, Any]
+            A tuple containing the appropriate downloader and request objects.
+        """
+
+        client_map = {
+            AssetClass.US_EQUITY: self.client.clients['stocks'],
+            AssetClass.CRYPTO: self.client.clients['crypto']}
+
+        client = client_map[asset_class]
+
+        def safe_method_call(client, method_name):
+            if hasattr(client, method_name):
+                return getattr(client, method_name)
+            else:
+                raise AttributeError(
+                    f"Client does not have method '{method_name}'")
+
+        downloader_request_map = {
+            AlpacaDataSource.DatasetType.TRADE: {
+                AssetClass.US_EQUITY: ('get_stock_bars', StockBarsRequest),
+                AssetClass.CRYPTO: ('get_crypto_bars', CryptoBarsRequest)},
+            AlpacaDataSource.DatasetType.QUOTE: {
+                AssetClass.US_EQUITY: ('get_stock_quotes', StockQuotesRequest),
+                AssetClass.CRYPTO: ('get_crypto_quotes', CryptoQuotesRequest)},
+            AlpacaDataSource.DatasetType.TRADE: {
+                AssetClass.US_EQUITY: ('get_stock_trades', StockTradesRequest),
+                AssetClass.CRYPTO: ('get_crypto_trades', CryptoTradesRequest)}}
+
+        downloader_method_name, request = downloader_request_map[dataset_type][asset_class]
+        downloader = safe_method_call(
+            client=client, method_name=downloader_method_name)
+
+        return downloader, request
+    
+    def _validate_symbols(self, symbols: List[str]):
+
+        """
+        Validates the list of symbols.
+
+        Args:
+        - symbols (List[str]): The list of symbols to validate.
+
+        Returns:
+        - str: The asset class of the symbols.
+
+        Raises:
+        - ValueError: If the symbols argument is an empty sequence.
+                      If any symbols have duplicate values.
+                      If any symbol is not a known symbol.
+                      If any symbol is not a tradable symbol.
+                      If any symbol is not an active symbol.
+                      (warning only) if any symbol is not a fractionable symbol.
+                      (warning only) if any symbol is not easy to borrow (ETB).
+                      If the symbols are not of the same asset class.
+        """
+
+        if len(symbols) == 0:
+            raise ValueError('symbols argument cannot be an empty sequence.')
+
+        duplicate_symbols = [
+            symbol for symbol in set(symbols) if symbols.count(symbol) > 1]
+
+        if duplicate_symbols:
+            raise ValueError(
+                f'Symbols {duplicate_symbols} have duplicate values.')
+
+        for symbol in symbols:
+
+            symbol_data = self.client.symbols[symbol]
+
+            if symbol_data is None:
+                raise ValueError(f'Symbol {symbol} is not a known symbol.')
+
+            if not symbol_data.tradable:
+                raise ValueError(f'Symbol {symbol} is not a tradable symbol.')
+
+            if symbol_data.status != AssetStatus.ACTIVE:
+                raise ValueError(f'Symbol {symbol} is not an active symbol.')
+
+            if not symbol_data.fractionable:
+                logger.warning(
+                    f'Symbol {symbol} is not a fractionable symbol.')
+
+            if not symbol_data.easy_to_borrow:
+                logger.warning(
+                    f'Symbol {symbol} is not easy to borrow (ETB).')
+
+        asset_classes = set(
+            self.client._AlpacaClient__symbols.get(
+                symbol).asset_class for symbol in symbols)
+
+        # checks if symbols have the same asset class
+        if len(asset_classes) != 1:
+            raise ValueError('Symbols are not of the same asset class.')
+
+        asset_class = asset_classes.pop()
+
+        return asset_class
+    
+
 
 class AlpacaTradeClient(AbstractTradeClient):
 
@@ -271,30 +413,6 @@ class AlpacaTradeClient(AbstractTradeClient):
             asset_quantities[symbol] = quantity
 
         return asset_quantities
-
-    @property
-    def asset_quantities(self) -> Dict[str, float]:
-
-        """
-        Returns a dictionary of symbols and notional value for 
-        the trader's current positions.
-
-        Returns:
-            dict: A dictionary mapping symbols to asset quantities.
-        """
-
-        positions = dict()
-
-        positions_dataframe = self.get_positions_dataframe()
-        symbols = positions_dataframe['symbol'].unique()
-
-        for symbol in symbols:
-            row = positions_dataframe.loc[positions_dataframe['symbol'] == symbol].iloc[0]
-            position = (row['market_value'] if row['side'] == 'long' else - 1 * row['market_value'])
-
-            positions[symbol] = position
-
-        return position
 
 
     @property
@@ -436,11 +554,7 @@ class AlpacaTradeClient(AbstractTradeClient):
                 type=type,
                 time_in_force=time_in_force,
                 limit_price=limit_price,
-                stop_price=stop_price,
-                client_order_id=client_order_id)
-
-            logger.info(
-                f'Order submitted successfully: {order}')
+                stop_price=stop_price)
 
             return order.id
 
@@ -450,7 +564,3 @@ class AlpacaTradeClient(AbstractTradeClient):
                 f'Order submission failed: {e}')
 
             return None
-
-
-class AlpacaDataClient(AbstractDataClient):
-    pass

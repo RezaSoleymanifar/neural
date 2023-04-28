@@ -1,3 +1,4 @@
+from abc import abstractmethod, ABC
 from typing import List, Iterable, Any
 from collections import deque
 
@@ -7,78 +8,7 @@ import pandas_market_calendars as market_calendars
 import tableprint, os
 from tqdm import tqdm
 
-from neural.tools.enums import CalendarType
-
-
-
-#==============================================Time====================================================
-
-class Calendar:
-
-    """
-    A class representing a trading calendar for different asset classes.
-
-    Attributes:
-    ---------
-        asset_class (AssetClass): The asset class for which the calendar is created.
-        calendar (market_calendars.MarketCalendar): The trading calendar object for the specified asset class.
-
-    Methods:
-    ---------
-        _get_calendar() -> market_calendars.MarketCalendar: Returns a trading calendar object based on the 
-        asset class. 
-        get_schedule(start_date, end_date) -> pd.DataFrame: Returns a schedule dataframe with
-        trading dates and times.
-        get_local_time_zone() -> str: Returns the local time zone for the specified calendar type.
-    """
-
-    def __init__(self) -> None:
-        
-        """
-        Initializes a new instance of the Calendar class.
-
-        Args:
-            asset_class (AssetClass): The asset class for which the calendar is created.
-        """
-
-        self.calendar = None
-
-        return None
-
-
-    def get_schedule(
-            self,
-            calendar_type: CalendarType,
-            start_date: Any,
-            end_date: Any
-        ) -> pd.DataFrame:
-        
-        """
-        Returns a schedule dataframe with core trading open and close times
-        per day.
-
-        Args:
-        ---------
-            start_date: The start date for the trading schedule.
-            end_date: The end date for the trading schedule.
-
-        Returns:
-        ---------
-            pd.DataFrame: A dataframe with trading dates and times.
-        """
-
-        calendar = market_calendars.get_calendar(calendar_type.value)
-
-        # Time returned is always UTC
-        schedule = calendar.schedule(start_date=start_date, end_date=end_date)
-
-        return schedule
-
-
-        # asset_class_to_calendar_type = {
-        #     AssetClass.US_EQUITY: CalendarType.US_EQUITY,
-        #     AssetClass.CRYPTO: CalendarType.CRYPTO}
-        
+from neural.data.enums import CalendarType
 
 
 #================================================Data=====================================================

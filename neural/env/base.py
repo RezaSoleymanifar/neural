@@ -7,8 +7,8 @@ import numpy as np
 from gym import spaces, Env
 
 from neural.common.constants import GLOBAL_DATA_TYPE
-from neural.data.ops import StaticDataFeeder, AsyncDataFeeder
-from neural.data.enums import ColumnType
+from neural.data.base import StaticDataFeeder, AsyncDataFeeder
+from neural.data.enums import DataType
 
 if TYPE_CHECKING:
     from neural.trade.alpaca import AbstractTrader
@@ -83,8 +83,9 @@ class TrainMarketEnv(AbstractMarketEnv):
 
     Parameters:
     -----------
-    market_data_feeder: StaticDataFeeder
-        The StaticDataFeeder instance providing the data to the environment
+    data_feeder: StaticDataFeeder
+        The StaticDataFeeder instance providing the data to the environment. data feeder produces a row corresponding to the features
+        for the current timestep.
     initial_cash: float, optional
         The initial amount of cash to allocate to the environment. Default is 1e6.
     initial_asset_quantities: np.ndarray, optional
@@ -105,7 +106,9 @@ class TrainMarketEnv(AbstractMarketEnv):
         can be applied to features to extract the corresponding data of
         column type.
     asset_price_mask: List[str]
-        A list of column names for the asset price data
+        A list of column names for the asset price data. When data feeder produces a new row this in terms of simulation
+        corresponds the the data for the previous timestep. The close prices for this row is used to place orders
+        at the start of next interval. 
     n_steps: int
         The number of timesteps in the dataset
     n_features: int
@@ -164,12 +167,12 @@ class TrainMarketEnv(AbstractMarketEnv):
         ...     dataset_metadata=dataset_metadata, datasets=datasets, n_chunks=2)
 
         >>> # Create a TrainMarketEnv object using the StaticDataFeeder
-        >>> market_env = TrainMarketEnv(market_data_feeder=data_feeder)
+        >>> market_env = TrainMarketEnv(data_feeder=data_feeder)
     """
 
     def __init__(
         self, 
-        market_data_feeder: StaticDataFeeder,
+        data_feeder: StaticDataFeeder,
         initial_cash: float = 1e6,
         initial_asset_quantities: Optional[np.ndarray] = None
         ) -> None:
@@ -180,7 +183,7 @@ class TrainMarketEnv(AbstractMarketEnv):
 
         Parameters:
         -----------
-        market_data_feeder: StaticDataFeeder
+        data_feeder: StaticDataFeeder
             The StaticDataFeeder instance providing the data to the environment
         initial_cash: float, optional
             The initial amount of cash to allocate to the environment. Default is 1e6.
@@ -188,13 +191,13 @@ class TrainMarketEnv(AbstractMarketEnv):
             The initial quantity of assets to allocate to the environment. Default is None.
         """
 
-        self.data_feeder = market_data_feeder
-        self.dataset_metadata = self.data_feeder.dataset_metadata
-        self.column_schema = self.dataset_metadata.column_schema
-        self.asset_price_mask = self.dataset_metadata.column_schema[ColumnType.CLOSE]
-        self.n_steps = self.dataset_metadata.n_rows
-        self.n_features = self.dataset_metadata.n_columns
-        self.n_symbols = len(self.dataset_metadata.symbols)
+        self.data_feeder = data_feeder
+        self.data_metadata = self.data_feeder.stream_metadata
+        self.column_schema = self.data_metadata.column_schema
+        self.asset_price_mask = self.data_metadata.column_schema[DataType.ASSET_CLOSE_PRICE]
+        self.n_steps = self.data_metadata.n_rows
+        self.n_features = self.data_metadata.n_columns
+        self.n_symbols = len(self.data_metadata.symbols)
 
         self.index = None
         self.initial_cash = initial_cash
@@ -380,10 +383,6 @@ class TrainMarketEnv(AbstractMarketEnv):
         self.place_orders(actions)
 
 
-        short_ratio = self.asset_prices[self.asset_quantities < 0] @ self.asset_quantities[self.asset_quantities < 0] / self.net_worth
-
-
-
         self.update_env()
         
         reward = self.net_worth - net_worth_
@@ -481,7 +480,7 @@ class TradeMarketEnv(AbstractMarketEnv):
 
     def __init__(
         self,
-        trader: AbstractTrader
+        trader: AbstractTrader,
         ) -> None:
 
         """
@@ -494,14 +493,15 @@ class TradeMarketEnv(AbstractMarketEnv):
         """
 
         self.trader = trader
-        self.dataset_metadata = self.trader.dataset_metadata
-        self.data_feeder = AsyncDataFeeder(self.dataset_metadata)
+        self.client = self.trader.client
+        self.data_metadata = self.trader.stream_metadata
+        self.data_feeder = self.data_feeder
 
-        self.column_schema = self.dataset_metadata.column_schema
-        self.asset_price_mask = self.dataset_metadata.column_schema[ColumnType.CLOSE]
+        self.column_schema = self.data_metadata.column_schema
+        self.asset_price_mask = self.data_metadata.column_schema[DataType.ASSET_CLOSE_PRICE]
         self.n_steps = float('inf')
-        self.n_features = self.dataset_metadata.n_columns
-        self.n_symbols = len(self.dataset_metadata.symbols)
+        self.n_features = self.data_metadata.n_columns
+        self.n_symbols = len(self.data_metadata.symbols)
 
         self.initial_cash = self.trader.initial_cash
         self.cash = None
@@ -551,8 +551,10 @@ class TradeMarketEnv(AbstractMarketEnv):
         self.features = next(self.row_generator)
         self.holds[self.asset_quantities != 0] += 1
 
-        self.cash = self.trader.cash
-        self.asset_quantities = self.trader.asset_quantities
+        self.cash = self.trader.client.cash
+        self.asset_quantities = [
+            self.trader.client.asset_quantities.get(symbol, 0) for symbol in self.symbols]
+
         self.net_worth = self.trader.net_worth
 
         return None

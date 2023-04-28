@@ -1,7 +1,7 @@
 from abc import abstractmethod, ABC
 from typing import Optional
 
-from neural.train.wrapper import (
+from neural.wrapper import (
     MinTradeSizeActionWrapper,
     FixedMarginActionWrapper, 
     NetWorthRelativeMaximumShortSizing,
@@ -14,7 +14,7 @@ from neural.train.wrapper import (
     ObservationStackerWrapper, 
     ObservationBufferWrapper)
 
-from neural.train.env.base import AbstractMarketEnv
+from neural.env.base import AbstractMarketEnv
 
 
 
@@ -35,6 +35,11 @@ class AbstractPipe(ABC):
 
         raise NotImplementedError
 
+    def find_metadata_wrapper(self, env):
+        raise NotImplementedError
+    
+    def find_render_wrapper(self, env):
+        raise NotImplementedError
 
     def warmup(
             self,

@@ -2,6 +2,8 @@ import os
 import numpy as np
 import logging
 
+from neu
+
 
 # =====================================CONNECTION=========================================
 
@@ -10,7 +12,9 @@ API_KEY = os.environ.get('API_KEY', None)
 API_SECRET = os.environ.get('API_SECRET', None)
 
 
+# =====================================CALENDAR=========================================
 
+CALENDAR = 
 # =====================================LOG=========================================
 
 # if not set no log files will be created. If set, the log files will be created
@@ -33,6 +37,8 @@ LOG_LEVEL = logging.INFO
 
 # =====================================DATA=========================================
 
+
+ACCEPTED_DOWNLOAD_RESOLUTIONS = {'1Min', '5Min', '15Min', '30Min'}
 # Set the default maximum number of rows for HDF5 storage.
 # Note hdf5 files occupy a contiguous block of memory and
 # they have size of HDF5_DEFAULT_MAX_ROWS even when empty.

@@ -1,29 +1,20 @@
 from datetime import datetime
-from typing import (List, Tuple, Any)
+from typing import List
 import os
 
-from alpaca.trading.enums import AssetClass, AssetStatus
+from alpaca.trading.enums import AssetClass
 import pandas as pd
 import numpy as np
 
-from alpaca.trading.enums import AssetClass, AssetStatus
+from alpaca.trading.enums import AssetClass
 
-from alpaca.data.requests import (
-    CryptoBarsRequest,
-    CryptoQuotesRequest,
-    CryptoTradesRequest,
-    StockBarsRequest,
-    StockQuotesRequest,
-    StockTradesRequest
-)
-
-from neural.common import logger
-from neural.data.enums import DatasetType, DatasetMetadata
 from neural.client.alpaca import AlpacaClient
+from neural.common import logger
+from neural.common.constants import ACCEPTED_DOWNLOAD_RESOLUTIONS
+from neural.data.enums import DatasetType, DatasetMetadata
 from neural.tools.base import (progress_bar, to_timeframe, 
     create_column_schema, validate_path)
 from neural.tools.base import Calendar
-from neural.common.constants import HDF5_DEFAULT_MAX_ROWS
     
 
 class AlpacaDataDownloader():
@@ -40,7 +31,8 @@ class AlpacaDataDownloader():
     def __init__(
         self,
         client: AlpacaClient
-    ) -> None:
+        ) -> None:
+
         """
         Initializes the AlpacaDataFetcher class.
 
@@ -55,7 +47,9 @@ class AlpacaDataDownloader():
 
         return None
 
+
     def _validate_resolution(self, resolution):
+        
         """
         Validates the resolution of the dataset.
 
@@ -69,128 +63,12 @@ class AlpacaDataDownloader():
         ValueError: If the resolution is not one of the accepted resolutions.
         """
 
-        accepted_resolutions = {'1Min', '5Min', '15Min', '30Min'}
-
-        if resolution not in accepted_resolutions:
-            raise ValueError(f'Accepted resolutions: {accepted_resolutions}.')
+        if resolution not in ACCEPTED_DOWNLOAD_RESOLUTIONS:
+            raise ValueError(f'Accepted resolutions: {ACCEPTED_DOWNLOAD_RESOLUTIONS}.')
 
         return
 
-    def _validate_symbols(self, symbols: List[str]):
-        """
-        Validates the list of symbols.
 
-        Args:
-        - symbols (List[str]): The list of symbols to validate.
-
-        Returns:
-        - str: The asset class of the symbols.
-
-        Raises:
-        - ValueError: If the symbols argument is an empty sequence.
-                      If any symbols have duplicate values.
-                      If any symbol is not a known symbol.
-                      If any symbol is not a tradable symbol.
-                      If any symbol is not an active symbol.
-                      (warning only) if any symbol is not a fractionable symbol.
-                      (warning only) if any symbol is not easy to borrow (ETB).
-                      If the symbols are not of the same asset class.
-        """
-
-        if len(symbols) == 0:
-            raise ValueError('symbols argument cannot be an empty sequence.')
-
-        duplicate_symbols = [
-            symbol for symbol in set(symbols) if symbols.count(symbol) > 1]
-
-        if duplicate_symbols:
-            raise ValueError(
-                f'Symbols {duplicate_symbols} have duplicate values.')
-
-        for symbol in symbols:
-
-            symbol_data = self.client._AlpacaClient__symbols.get(symbol)
-
-            if symbol_data is None:
-                raise ValueError(f'Symbol {symbol} is not a known symbol.')
-
-            if not symbol_data.tradable:
-                raise ValueError(f'Symbol {symbol} is not a tradable symbol.')
-
-            if symbol_data.status != AssetStatus.ACTIVE:
-                raise ValueError(f'Symbol {symbol} is not an active symbol.')
-
-            if not symbol_data.fractionable:
-                logger.warning(
-                    f'Symbol {symbol} is not a fractionable symbol.')
-
-            if not symbol_data.easy_to_borrow:
-                logger.warning(
-                    f'Symbol {symbol} is not easy to borrow (ETB).')
-
-        asset_classes = set(
-            self.client._AlpacaClient__symbols.get(
-                symbol).asset_class for symbol in symbols)
-
-        # checks if symbols have the same asset class
-        if len(asset_classes) != 1:
-            raise ValueError('Symbols are not of the same asset class.')
-
-        asset_class = asset_classes.pop()
-
-        return asset_class
-
-    def get_downloader_and_request(
-        self,
-        dataset_type: DatasetType,
-        asset_class=AssetClass
-    ) -> Tuple[Any, Any]:
-        """
-        Returns the appropriate data downloader and request object based on the provided dataset type
-        and asset class.
-
-        Parameters:
-        -----------
-        dataset_type: DatasetType
-            The type of dataset being downloaded, one of ['BAR', 'QUOTE', 'TRADE'].
-        asset_class: AssetClass, optional
-            The asset class being downloaded, defaults to `AssetClass.US_EQUITY`.
-
-        Returns:
-        --------
-        Tuple[Any, Any]
-            A tuple containing the appropriate downloader and request objects.
-        """
-
-        client_map = {
-            AssetClass.US_EQUITY: self.client.clients['stocks'],
-            AssetClass.CRYPTO: self.client.clients['crypto']}
-
-        client = client_map[asset_class]
-
-        def safe_method_call(client, method_name):
-            if hasattr(client, method_name):
-                return getattr(client, method_name)
-            else:
-                raise AttributeError(
-                    f"Client does not have method '{method_name}'")
-
-        downloader_request_map = {
-            DatasetType.BAR: {
-                AssetClass.US_EQUITY: ('get_stock_bars', StockBarsRequest),
-                AssetClass.CRYPTO: ('get_crypto_bars', CryptoBarsRequest)},
-            DatasetType.QUOTE: {
-                AssetClass.US_EQUITY: ('get_stock_quotes', StockQuotesRequest),
-                AssetClass.CRYPTO: ('get_crypto_quotes', CryptoQuotesRequest)},
-            DatasetType.TRADE: {
-                AssetClass.US_EQUITY: ('get_stock_trades', StockTradesRequest),
-                AssetClass.CRYPTO: ('get_crypto_trades', CryptoTradesRequest)}}
-
-        downloader_method_name, request = downloader_request_map[dataset_type][asset_class]
-        downloader = safe_method_call(
-            client=client, method_name=downloader_method_name)
-
-        return downloader, request
 
     def download_raw_dataset(
         self,
@@ -200,7 +78,7 @@ class AlpacaDataDownloader():
         resolution: str,
         start: datetime,
         end: datetime,
-    ) -> None:
+        ) -> None:
         """
         Downloads raw dataset from the Alpaca API.
 
@@ -272,7 +150,7 @@ class AlpacaDataDownloader():
         self._validate_resolution(resolution=resolution)
 
         calendar = Calendar(asset_class=asset_class)
-        schedule = calendar.get_schedule(
+        schedule = calendar.schedule(
             start_date=start_date, end_date=end_date)
 
         if len(schedule) == 0:
