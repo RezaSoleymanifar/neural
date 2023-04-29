@@ -5,57 +5,16 @@ import os
 import pandas as pd
 import numpy as np
 
-
 from neural.client.alpaca import AlpacaClient, AlpacaDataClient
 from neural.common import logger
-from neural.common.constants import ACCEPTED_DOWNLOAD_RESOLUTIONS
-from neural.data.enums import DatasetMetadata, AbstractDataSource
-from neural.tools.base import progress_bar, validate_path
+from neural.common.constants import ALPACA_ACCEPTED_DOWNLOAD_RESOLUTIONS
+from neural.data.base import DatasetMetadata
+from neural.data.time import Calendar
+from neural.data.enums import AssetType, AlpacaDataSource
+from neural.data.io import DatasetIO
+from neural.tools.base import progress_bar, validate_path, Calendar
 from neural.tools.misc import to_timeframe
-from neural.tools.base import Calendar
-    
 
-class AlpacaDataSource(AbstractDataSource):
-
-    data_client = AlpacaDataClient
-
-    class DatasetType(AbstractDataSource.DatasetType):
-
-        """
-        Enumeration class that defines constants for the different types of datasets.
-
-        Attributes
-        ----------
-        TRADE : str
-            The type of dataset for aggregated trade stream data. Also known as bars data.
-        QUOTE : str
-            The type of dataset for aggregated quote stream.
-        ORDER_BOOK : str
-            The type of dataset for aggregated order book data.
-        """
-
-        TRADE = 'TRADE'
-        QUOTE = 'QUOTE'
-        ORDER_BOOK = 'ORDER_BOOK'
-
-    class StreamType(AbstractDataSource.StreamType):
-
-        """
-        Enumeration class that defines constants for the different types of data streams.
-
-        Attributes
-        ----------
-        QUOTE : str
-            The type of data stream for quotes.
-        TRADE : str
-            The type of data stream for trades.
-        ORDER_BOOK : str
-            The type of data stream for order book data.
-        """
-
-        TRADE = 'TRADE'
-        QUOTE = 'QUOTE'
-        ORDER_BOOK = 'ORDER_BOOK'
 
 
 class AlpacaDataDownloader():
@@ -69,7 +28,7 @@ class AlpacaDataDownloader():
     and process it for further use.
     """
 
-    def __init__(self, client: AlpacaClient) -> None:
+    def __init__(self, data_client: AlpacaClient) -> None:
 
         """
         Initializes the AlpacaDataFetcher class.
@@ -81,7 +40,7 @@ class AlpacaDataDownloader():
             None
         """
 
-        self.client = client
+        self.data_client = data_client
 
         return None
 
@@ -89,7 +48,11 @@ class AlpacaDataDownloader():
     def _validate_resolution(self, resolution):
         
         """
-        Validates the resolution of the dataset.
+        Validates the resolution of the dataset. Resolutions not accepted can
+        potentially lead to incoherencies in the end to end process, due to 
+        irregular aggregation output from the Alpaca API. For example resoluion = 43Min
+        can shift the start and end times of the trading day in a way that
+        is unpredictable and inconsistent with other resoluions.
 
         Parameters:
         resolution (str): The resolution of the dataset.
@@ -101,11 +64,10 @@ class AlpacaDataDownloader():
         ValueError: If the resolution is not one of the accepted resolutions.
         """
 
-        if resolution not in ACCEPTED_DOWNLOAD_RESOLUTIONS:
-            raise ValueError(f'Accepted resolutions: {ACCEPTED_DOWNLOAD_RESOLUTIONS}.')
+        if resolution not in ALPACA_ACCEPTED_DOWNLOAD_RESOLUTIONS:
+            raise ValueError(f'Accepted resolutions: {ALPACA_ACCEPTED_DOWNLOAD_RESOLUTIONS}.')
 
         return
-
 
 
     def download_dataset(
@@ -118,11 +80,15 @@ class AlpacaDataDownloader():
         ) -> None:
 
         """
-        Downloads raw dataset from the Alpaca API.
+        Downloads raw dataset from the Alpaca API. This is a dataframe downloaded
+        from the API. Typically daily data is downloaded in chunks using this method
+        and saved to disk day by day. This is because the Alpaca API has a limit
+        on the number of rows that can be downloaded at once and also to save progress.
 
         Args:
             dataset_type (DatasetType): The type of dataset to download (bar, quote, or trade).
-            symbols (List[str]): A list of symbols to download.
+            symbols (List[str]): A list of symbols to download. Note that API does
+            not preserve the order of the symbols in the output dataframe. 
             asset_class (AssetClass): The asset class to download.
             resolution (str): The resolution of the dataset to download (e.g., "1Min").
             start (datetime): The start date and time of the dataset to download.
@@ -132,12 +98,22 @@ class AlpacaDataDownloader():
             pd.DataFrame: The downloaded dataset as a pandas DataFrame.
         """
 
+        # sanity checking arguments
+        if not symbols:
+            raise ValueError(
+                'symbols argument cannot be an empty sequence.')
+
+        duplicate_symbols = [
+            symbol for symbol in set(symbols) if symbols.count(symbol) > 1]
+        if duplicate_symbols:
+            raise ValueError(f'Duplicate symbols found: {duplicate_symbols}.')
+
         resolution = to_timeframe(resolution)
 
 
-        downloader, request = AlpacaDataClient.get_downloader_and_request(
+        downloader, request = self.data_client.get_downloader_and_request(
             dataset_type=dataset_type,
-            asset_class=asset_class)
+            asset_class=AssetType)
 
         data = downloader(request(
             symbol_or_symbols=symbols,
@@ -146,29 +122,31 @@ class AlpacaDataDownloader():
             end=end))
 
         try:
-            data_df = data.df
+            dataset_dataframe = data.df
 
         except KeyError:
             raise KeyError(f'No data in requested range {start}-{end}')
 
-        return data.df
+        return dataset_dataframe
 
-    def download_features_to_hdf5(
+
+    def download_to_hdf5(
         self,
         file_path: str | os.PathLike,
-        target_dataset_name: str,
-        dataset_type: DatasetType,
+        dataset_name: str,
+        dataset_type: AlpacaDataSource.DatasetType,
         symbols: List[str],
         resolution: str,
         start_date: str | datetime,
         end_date: str | datetime
-    ) -> DatasetMetadata:
+        ) -> DatasetMetadata:
+
         """
         Downloads financial features data for the given symbols and saves it in an HDF5 file format.
         
         Args:
             file_path (str | os.PathLike): The file path of the HDF5 file to save the data.
-            target_dataset_name (str): The name of the dataset to create in the HDF5 file.
+            dataset_name (str): The name of the dataset to create in the HDF5 file.
             dataset_type (DatasetType): The type of dataset to download. Either 'BAR', 'TRADE', or 'QUOTE'.
             symbols (List[str]): The list of symbol names to download features data for.
             resolution (str): The frequency at which to sample the data. One of '1Min', '5Min', '15Min', or '30Min'.
@@ -233,7 +211,7 @@ class AlpacaDataDownloader():
             # raw data is processed symbol by symbol
             for symbol, group in raw_dataset.groupby('symbol'):
 
-                processed_group = DataProcessor.reindex_and_forward_fill(
+                processed_group = AlpacaDataProcessor.reindex_and_forward_fill(
                     data=group, open=market_open,
                     close=market_close, resolution=resolution)
 
@@ -263,10 +241,10 @@ class AlpacaDataDownloader():
                 file_path=file_path,
                 data_to_write=features_np,
                 metadata=metadata,
-                target_dataset_name=target_dataset_name)
+                dataset_name=dataset_name)
 
             progress_bar_.set_description(
-                f"Density: {DataProcessor.running_dataset_density:.0%}")
+                f"Density: {AlpacaDataProcessor.running_dataset_density:.0%}")
 
             progress_bar_.update(1)
 
@@ -278,3 +256,60 @@ class AlpacaDataDownloader():
 class AlpacaDataStreamer:
     def __init__(self, data_client: AlpacaDataClient) -> None:
         pass
+
+
+class AlpacaDataProcessor:
+
+    def __init__(self):
+
+        self.dataset_density = None
+
+    def reindex_and_forward_fill(
+            self,
+            data: pd.DataFrame,
+            open: datetime,
+            close: datetime,
+            resolution: str):
+        """
+        Reindexes and forward-fills missing rows in the given DataFrame in the [open, close) range based on the given
+        resolution. Returns the processed DataFrame.
+
+        :param data: The DataFrame to be processed.
+        :type data: pd.DataFrame
+        :param open: The open time of the market data interval to process.
+        :type open: datetime
+        :param close: The close time of the market data interval to process.
+        :type close: datetime
+        :param resolution: The frequency of the time intervals in the processed data.
+        :type resolution: str
+        :return: The processed DataFrame.
+        :rtype: pd.DataFrame
+        """
+
+        # resamples and forward fills missing rows in [open, close) range, i.e.
+        # time index = open means open <= time < close.
+        index = pd.date_range(
+            start=open, end=close, freq=resolution, inclusive='left')
+
+        # creates rows for missing intervals
+        processed = data.reindex(index)
+
+        # compute fullness of reindexed dataset
+        # drop symbols or move date range if density is low
+        non_nan_count = processed.notna().sum().sum()
+        total_count = processed.size
+        density = non_nan_count/total_count
+
+        AlpacaDataProcessor.dataset_density = (
+            AlpacaDataProcessor.dataset_density + density
+        ) / 2 if AlpacaDataProcessor.dataset_density else density
+
+        # backward fills if first row is nan
+        if processed.isna().any().any():
+            processed = processed.ffill()
+
+        # backward fills if first row is nan
+        if processed.isna().any().any():
+            processed = processed.bfill()
+
+        return processed

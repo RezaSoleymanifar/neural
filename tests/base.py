@@ -15,7 +15,7 @@ class BaseConnectionTest(unittest.TestCase):
     def setUpClass(cls):
 
         cls.client = AlpacaClient()
-        cls.client._connect()
+        cls.client.connect()
         logger.info('Base connection test: SUCCESSFUL')
 
 

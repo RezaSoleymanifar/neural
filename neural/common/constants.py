@@ -11,7 +11,6 @@ from neural.data.time import Calendar
 API_KEY = os.environ.get('API_KEY', None)
 API_SECRET = os.environ.get('API_SECRET', None)
 
-
 # =====================================CALENDAR=========================================
 
 CALENDAR = Calendar
@@ -40,7 +39,7 @@ LOG_LEVEL = logging.INFO
 # =====================================DATA=========================================
 
 
-ACCEPTED_DOWNLOAD_RESOLUTIONS = {'1Min', '5Min', '15Min', '30Min'}
+ALPACA_ACCEPTED_DOWNLOAD_RESOLUTIONS = {'1Min', '5Min', '15Min', '30Min'}
 # Set the default maximum number of rows for HDF5 storage.
 # Note hdf5 files occupy a contiguous block of memory and
 # they have size of HDF5_DEFAULT_MAX_ROWS even when empty.
@@ -65,8 +64,13 @@ GLOBAL_DATA_TYPE = np.float32
 
 #=====================================TRADE=========================================
 
+# Set the minimum net worth required for short and margin trading in Alpaca API.
+ALPACA_MINIMUM_SHORT_MARRGIN_NET_WORTH = 2_000
+
+
 # Set the minimum net worth for a pattern day trader
 PATTERN_DAY_TRADER_MINIMUM_NET_WORTH = 25_000
+
 
 
 # Dow Jones Industrial Average symbols

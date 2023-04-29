@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 import numpy as np
+from neural.data.enums import AbstractDataSource
 
 
 class AbstractClient(ABC):
@@ -40,12 +41,13 @@ class AbstractClient(ABC):
     """
 
     def __init__(self, *args, **kwargs):
-        self._connect(*args, **kwargs)
+        # this can be used post initialization to automaitcally connect to the API
+        self.connect(*args, **kwargs)
 
 
     @abstractmethod
-    def _connect(self, *args, **kwargs):
-
+    def connect(self, *args, **kwargs):
+        # Connect to the API
         raise NotImplementedError
 
 
@@ -185,7 +187,7 @@ class AbstractTradeClient(AbstractClient):
         """
         check the connection to the service. If the connection is successful,
         the method should return True, otherwise False. The Trader class will use this method to check
-        the connection before executing any trades.
+        the connection before execution of trading process.
         """
 
         raise NotImplementedError
@@ -212,7 +214,17 @@ class AbstractDataClient(AbstractClient):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    
+    @property
+    @abstractmethod
+    def data_source(self) -> AbstractDataSource:
+
+        """
+        The name of the data source. Data clients are enforced
+        to have a data source attribute. This helps mapping clients to
+        constituents of stream metadata that specify a data source.
+        """
+
+        raise NotImplementedError
 
 
 

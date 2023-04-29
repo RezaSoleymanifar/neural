@@ -57,20 +57,19 @@ def to_timeframe(time_frame: str):
 
     match = re.search(r'(\d+)(\w+)', time_frame)
 
-    if match:
-
-        amount = int(match.group(1))
-        unit = match.group(2)
-
-        map = {
-            'Min': TimeFrameUnit.Minute,
-            'Hour': TimeFrameUnit.Hour,
-            'Day': TimeFrameUnit.Day,
-            'Week': TimeFrameUnit.Week,
-            'Month': TimeFrameUnit.Month}
-
-        return TimeFrame(amount, map[unit])
-
-    else:
+    if not match:
         raise ValueError(
             "Invalid timeframe. Valid examples: 59Min, 23Hour, 1Day, 1Week, 12Month")
+
+    amount = int(match.group(1))
+    unit = match.group(2)
+
+    map = {
+        'Min': TimeFrameUnit.Minute,
+        'Hour': TimeFrameUnit.Hour,
+        'Day': TimeFrameUnit.Day,
+        'Week': TimeFrameUnit.Week,
+        'Month': TimeFrameUnit.Month}
+
+    return TimeFrame(amount, map[unit])
+

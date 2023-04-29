@@ -3,10 +3,13 @@ from typing import Optional, Dict, List, Callable, Tuple
 import pandas as pd
 
 from alpaca.trading.enums import AccountStatus, AssetExchange, AssetClass, AssetStatus
+from alpaca.common.rest import RESTClient
+from alpaca.common.websocket import BaseStream
 from alpaca.data.historical import StockHistoricalDataClient, CryptoHistoricalDataClient
+from alpaca.data.live import StockDataStream, CryptoDataStream
 from alpaca.trading import TradingClient, MarketOrderRequest
 from alpaca.trading.enums import OrderSide, TimeInForce
-from alpaca.trading.models import Order
+from alpaca.trading.models import Order, TradeAccount, Asset, Position
 from alpaca.data.requests import BaseTimeseriesDataRequest
 
 from alpaca.data.requests import (
@@ -19,57 +22,24 @@ from alpaca.data.requests import (
 )
 
 from neural.common.log import logger
-from neural.common.constants import API_KEY, API_SECRET
-from neural.common.constants import PATTERN_DAY_TRADER_MINIMUM_NET_WORTH
-from neural.common.exceptions import TradeConstraintViolationError
+from neural.common.constants import API_KEY, API_SECRET 
 from neural.client.base import AbstractClient, AbstractTradeClient, AbstractDataClient
-from neural.data.alpaca import AlpacaDataSource
-from neural.tools.base import objects_to_df
+from neural.data.enums import AlpacaDataSource
+from neural.data.base import AssetType
+from neural.tools.misc import objects_to_df
 
 
 
 class AlpacaClient(AbstractClient):
 
     """
-    AlpacaClient is a Python class that allows you to connect to the Alpaca API to trade, 
-    get stock and crypto data, manage your account and assets, and more. To use this class, 
-    you will need to set up an API key and secret, which can be obtained from the Alpaca website. 
-    You can find instructions on how to do this in the Alpaca documentation 
-    [https://alpaca.markets/learn/connect-to-alpaca-api/]. Once you have your API key and secret, 
-    you can instantiate an instance of the AlpacaClient class and begin accessing the API.
-
-    Attributes:
-    ------------
-    key (str): The API key to be used for authentication (optional, defaults to None).
-    secret (str): The secret key to be used for authentication (optional, defaults to None).
-    clients (dict): A dictionary of clients for crypto, stocks, and trading.
-    account (Account): The account information retrieved from the Alpaca API.
-    _assets (list): A list of assets fetched from the Alpaca API.
-    _symbols (dict): A dictionary of symbols mapped to their respective assets.
-    _positions (list): A list of current positions in the account.
-    _asset_classes (list): A list of all supported asset classes.
-    _exchanges (list): A list of all supported exchanges.
-
-    Methods:
-    --------
-    assets() -> pandas.DataFrame: Get all assets available through the Alpaca API.
-    exchanges() -> list: Get a list of all supported exchanges.
-    asset_classes() -> list: Get a list of all supported asset classes.
-    positions() -> pandas.DataFrame: Get all current positions in the account.
-    check_connection() -> bool: Check the connection to the Alpaca API.
-
-    Example:
-    ------------
     Option 1: Instantiate an instance of the AlpacaClient class with your API key and secret.
 
-    >>> from neural.connect.alpaca import AlpacaClient
     >>> client = AlpacaClient(key=..., secret=...)
     >>> assets = client.assets()
-    >>> positions = client.positions()
 
     Option 2: Instantiate an instance of the AlpacaClient by passing values to constants.
 
-    >>> from neural.connect.alpaca import AlpacaClient
     >>> from neural.common.constants import API_KEY, API_SECRET
     >>> API_KEY = ...
     >>> API_SECRET = ...
@@ -79,12 +49,11 @@ class AlpacaClient(AbstractClient):
 
     # Set the environment variables for API key and secret
     # on Unix-like operating systems (Linux, macOS, etc.):
-    BASH: export API_KEY=your_api_key
-    BASH: export API_SECRET=your_secret_key
+    BASH: export API_KEY = <your_api_key>
+    BASH: export API_SECRET = <your_secret_key>
 
     # Instantiate an instance of the AlpacaClient class
     >>> from neural.connect.alpaca import AlpacaClient
-    >>> import os
     >>> client = AlpacaClient()
     """
 
@@ -92,25 +61,19 @@ class AlpacaClient(AbstractClient):
         self,
         key: Optional[str] = None,
         secret: Optional[str] = None,
+        paper: bool = False
         ) -> None:
-        super.__init__
 
-        """
-        Initializes a new instance of the AlpacaClient class with the specified API key and secret.
-
-        Args:
-            key (str, optional): The API key for the Alpaca account. Defaults to None.
-            secret (str, optional): The API secret for the Alpaca account. Defaults to None.
-
-        Returns:
-            None.
-        """
 
         self.key = key if key is not None else API_KEY
         self.secret = secret if secret is not None else API_SECRET
+        self.paper = paper
 
-        self.clients = None
-        self.account = None
+        self._validate_credentials()
+        super().__init__()
+
+        self._clients = None
+        self._account = None
         self._assets = None
         self._symbols = None
         self._asset_classes = None
@@ -119,29 +82,65 @@ class AlpacaClient(AbstractClient):
         return None
 
 
+    def connect(self):
+        # super class runs this method at contructor.
+        self._clients = self._get_clients()
+        self._account = self._get_account()
+
+        return None
+
+
+    def _validate_credentials(self) -> bool:
+
+        if self.key is None or self.secret is None:
+            raise ValueError(
+                'API key and secret are required to connect to Alpaca API.')
+        
+        return None
+    
+    def _get_clients(self) -> RESTClient:
+
+        # crypto does not need key, and secret but will be faster if provided
+        clients = dict()
+
+        clients['crypto'] = CryptoHistoricalDataClient(
+            api_key=self.key, secret_key=self.secret)
+        clients['stocks'] = StockHistoricalDataClient(
+            api_key=self.key, secret_key=self.secret)
+        clients['trade'] = TradingClient(
+            api_key=self.key, secret_key=self.secret, paper=self.paper)
+        
+        return clients
+
+
+    def _get_account(self) -> TradeAccount:
+
+        try:
+            self.account = self.clients['trading'].get_account()
+            if not self.account.status == AccountStatus.ACTIVE:
+
+                logger.warning(
+                    f'Account Status: {self.account.status}')
+
+        except Exception as e:
+            logger.exception(
+                f'Account setup failed: {e}')
+            
+        return None
+    
+
     @property
-    def clients(self) -> None:
+    def clients(self) -> Dict[str: RESTClient]:
 
-        """
-        Get a dictionary of clients for crypto, stocks, and trading.
-
-        :return: A dictionary of clients.
-        """
-
-        if self._clients is None:
-            self._clients = dict()
-
-            # crypto does not need key, and secret but will be faster if provided
-            self._clients['crypto'] = CryptoHistoricalDataClient(
-                api_key=self.key, secret_key=self.secret)
-            self._clients['stocks'] = StockHistoricalDataClient(
-                api_key=self.key, secret_key=self.secret)
-            self._clients['trade'] = TradingClient(
-                api_key=self.key, secret_key=self.secret)
 
         return self._clients
 
 
+    @property
+    def account(self) -> TradeAccount:
+        
+        return self._account
+            
 
     @property
     def assets(self) -> pd.DataFrame:
@@ -162,13 +161,7 @@ class AlpacaClient(AbstractClient):
 
 
     @property
-    def symbols(self) -> Dict:
-        
-        # TODO: implement this method. More strcuture in symbols here. It will help
-        # to have symbols to carry some data in form of a class or dict to make
-        # certain information self contained. For example asset class,
-        # This should be enforced in the AbstractClient class to make all clients
-        # have this property.
+    def symbols(self) -> Dict[str, Asset]:
 
         """
         Get the symbols of assets fetched from the Alpaca API.
@@ -179,11 +172,8 @@ class AlpacaClient(AbstractClient):
             A dictionary of symbols mapped to their respective assets.
         """
 
-        if self._assets is None: # fetch assets first
-            self.assets
-
         if self._symbols is None:
-            self._symbols = {asset.symbol: asset for asset in self._assets}
+            self._symbols = {asset.symbol: asset for asset in self.assets}
 
         return self._symbols
 
@@ -200,8 +190,8 @@ class AlpacaClient(AbstractClient):
         if self._exchanges is None:
             self._exchanges = [item for item in AssetExchange]
 
-        return [item.value for item in self._exchanges]
-
+        exchanges =  [item.value for item in self._exchanges]
+        return exchanges
 
 
     @property
@@ -216,42 +206,9 @@ class AlpacaClient(AbstractClient):
         if self._asset_classes is None:
             self._asset_classes = [item for item in AssetClass]
 
-        printed_asset_classes =  [item.value for item in self._asset_classes]
-        return printed_asset_classes
+        asset_classes =  [item.value for item in self._asset_classes]
+        return asset_classes
 
-
-    def _connect(self) -> None:
-
-        """
-        Set up clients for crypto, stocks, and trading, and retrieve account information.
-
-        :raises Error: If login fails.
-        """
-
-        if self.key is None or self.secret is None:
-            raise ValueError('Key and secret are required for account login.')
-
-        try:
-
-            self.account = self.clients['trading'].get_account()
-
-            logger.info(
-                f'Account setup successful.')
-
-            if self.check_connection():
-
-                logger.info(
-                    f'Account Status: {self.account.status}')
-            else:
-                logger.warning(
-                    f'Account Status: {self.account.status}')
-
-        except Exception as e:
-
-            logger.exception(
-                f'Account setup failed: {e}')
-
-        return None
 
 
 class AlpacaDataClient(AlpacaClient, AbstractDataClient):
@@ -260,12 +217,17 @@ class AlpacaDataClient(AlpacaClient, AbstractDataClient):
 
         super().__init__(*args, **kwargs)
 
+    
+    @property
+    def data_source(self):
+
+        return AlpacaDataSource
 
     def get_downloader_and_request(
         self,
         dataset_type: AlpacaDataSource.DatasetType,
-        asset_class=AssetClass
-        ) -> Tuple[BaseTimeseriesDataRequest, Callable]:
+        asset_class=AssetType
+        ) -> Tuple[Callable, BaseTimeseriesDataRequest]:
 
         """
         Returns the appropriate data downloader and request object based on the provided dataset type
@@ -285,8 +247,8 @@ class AlpacaDataClient(AlpacaClient, AbstractDataClient):
         """
 
         client_map = {
-            AssetClass.US_EQUITY: self.clients['stocks'],
-            AssetClass.CRYPTO: self.clients['crypto']}
+            AssetType.STOCK: self.clients['stocks'],
+            AssetType.CRYPTO: self.clients['crypto']}
 
         client = client_map[asset_class]
 
@@ -315,36 +277,23 @@ class AlpacaDataClient(AlpacaClient, AbstractDataClient):
         return downloader, request
 
 
+    def get_streamer(self, 
+        stream_types: AlpacaDataSource.StreamType,
+        asset_class: AssetType,
+        ) -> BaseStream:
+
+
+        stream_map = {
+            AlpacaDataSource.StreamType,
+            AssetClass.US_EQUITY: StockDataStream,
+            AssetClass.CRYPTO: CryptoDataStream}
+
+        stream = stream_map[asset_class]
+
+        return stream
+
+
     def _validate_symbols(self, symbols: List[str]):
-
-        """
-        Validates the list of symbols.
-
-        Args:
-        - symbols (List[str]): The list of symbols to validate.
-
-        Returns:
-        - str: The asset class of the symbols.
-
-        Raises:
-        - ValueError: If the symbols argument is an empty sequence.
-                      If any symbols have duplicate values.
-                      If any symbol is not a known symbol.
-                      If any symbol is not a tradable symbol.
-                      If any symbol is not an active symbol.
-                      (warning only) if any symbol is not a fractionable symbol.
-                      (warning only) if any symbol is not easy to borrow (ETB).
-                      If the symbols are not of the same asset class.
-        """
-
-        if len(symbols) == 0:
-            raise ValueError('symbols argument cannot be an empty sequence.')
-
-        duplicate_symbols = [symbol for symbol in set(symbols) if symbols.count(symbol) > 1]
-
-        if duplicate_symbols:
-            raise ValueError(
-                f'Symbols {duplicate_symbols} have duplicate values.')
 
 
         for symbol in symbols:
@@ -355,10 +304,10 @@ class AlpacaDataClient(AlpacaClient, AbstractDataClient):
                 raise ValueError(f'Symbol {symbol} is not a known symbol.')
 
             if not symbol_data.tradable:
-                raise ValueError(f'Symbol {symbol} is not a tradable symbol.')
+                logger.warning(f'Symbol {symbol} is not a tradable symbol.')
 
             if symbol_data.status != AssetStatus.ACTIVE:
-                raise ValueError(f'Symbol {symbol} is not an active symbol.')
+                logger.warning(f'Symbol {symbol} is not an active symbol.')
 
             if not symbol_data.fractionable:
                 logger.warning(
@@ -369,8 +318,7 @@ class AlpacaDataClient(AlpacaClient, AbstractDataClient):
                     f'Symbol {symbol} is not easy to borrow (ETB).')
 
         asset_classes = set(
-            self.client._AlpacaClient__symbols.get(
-                symbol).asset_class for symbol in symbols)
+            self.symbols.get(symbol).asset_class for symbol in symbols)
 
         # checks if symbols have the same asset class
         if len(asset_classes) != 1:
@@ -382,7 +330,7 @@ class AlpacaDataClient(AlpacaClient, AbstractDataClient):
     
 
 
-class AlpacaClient(AbstractTradeClient):
+class AlpacaTradeClient(AbstractTradeClient):
 
     def __init__(self, *args, **kwargs):
 

@@ -4,7 +4,7 @@ from typing import Callable
 from neural.client.alpaca import AlpacaClient
 from neural.common.exceptions import TradeConstraintViolationError
 from neural.common.constants import PATTERN_DAY_TRADER_MINIMUM_NET_WORTH
-from neural.data.enums import DatasetMetadata
+from neural.data.base import DatasetMetadata
 from neural.trade.base import AbstractTrader
 from neural.wrapper.pipe import AbstractPipe
 

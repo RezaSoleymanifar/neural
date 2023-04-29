@@ -7,7 +7,7 @@ import torch
 from torch import nn
 
 from neural.client.alpaca import AbstractTradeClient, AbstractDataClient
-from neural.data.enums import DatasetMetadata
+from neural.data.base import DatasetMetadata
 from neural.data.base import AsyncDataFeeder
 from neural.env.base import TradeMarketEnv
 from neural.wrapper.pipe import AbstractPipe

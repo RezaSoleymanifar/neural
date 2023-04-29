@@ -4,7 +4,7 @@ from typing import Any
 import pandas as pd
 import pandas_market_calendars as market_calendars
 
-from neural.data.enums import CalendarType
+from neural.data.base import CalendarType
 
 
 
