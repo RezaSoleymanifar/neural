@@ -5,7 +5,8 @@ import numpy as np
 
 from alpaca.trading.enums import AccountStatus, AssetExchange, AssetClass, AssetStatus
 from alpaca.data.historical import StockHistoricalDataClient, CryptoHistoricalDataClient
-from alpaca.trading import TradingClient, OrderRequest, TimeInForce, OrderClass, OrderType, OrderSide
+from alpaca.trading import TradingClient, MarketOrderRequest
+from alpaca.trading.enums import OrderSide, TimeInForce
 
 from alpaca.data.requests import (
     CryptoBarsRequest,
@@ -26,7 +27,7 @@ from neural.tools.base import objects_to_df
 
 
 
-class AlpacaClient(AbstractClient):
+class AlpacaTradeClient(AbstractClient):
 
     """
     AlpacaClient is a Python class that allows you to connect to the Alpaca API to trade, 
@@ -155,7 +156,7 @@ class AlpacaClient(AbstractClient):
         """
 
         if self._assets is None:
-            self._assets = self.clients['trading'].get_all_assets()
+            self._assets = self.clients['trade'].get_all_assets()
 
         assets_dataframe =  objects_to_df(self._assets)
         
@@ -213,7 +214,7 @@ class AlpacaClient(AbstractClient):
             api_key = self.key, secret_key =self.secret)
         self.clients['stocks'] = StockHistoricalDataClient(
             api_key=self.key, secret_key=self.secret)
-        self.clients['trading'] = TradingClient(
+        self.clients['trade'] = TradingClient(
             api_key=self.key, secret_key=self.secret)
 
         try:
@@ -523,44 +524,22 @@ class AlpacaTradeClient(AbstractTradeClient):
     def place_order(
         self,
         symbol: str,
-        qty: int,
-        side: str,
-        type: str,
+        quantity: float,
         time_in_force: str,
-        limit_price=None,
-        stop_price=None,
         ) -> None:
 
-        """
-        Submit an order to the Alpaca API.
 
-        :param symbol: The symbol of the asset to be traded.
-        :param qty: The quantity of the asset to be traded. If fraction only market orders are allowed.
-        :param side: The side of the order, either 'buy' or 'sell'.
-        :param type: The type of order, either 'market', 'limit', 'stop', or 'stop_limit'.
-        :param time_in_force: The time in force for the order, either 'day', 'gtc', 'opg', 'ioc', or 'fok'.
-        :param limit_price: The limit price for the order (optional, defaults to None).
-        :param stop_price: The stop price for the order (optional, defaults to None).
-        :param client_order_id: The client order ID for the order (optional, defaults to None).
-        :return: The order ID.
-        """
+        assert time_in_force in ['ioc', 'fok'], 'Invalid time in force. options: ioc, fok}'
 
-        try:
+        side = OrderSide.BUY if quantity > 0 else OrderSide.SELL
+        quantity = abs(quantity)
+        time_in_force = TimeInForce(time_in_force)
 
-            order = self.clients['trading'].submit_order(
-                symbol=symbol,
-                qty=qty,
-                side=side,
-                type=type,
-                time_in_force=time_in_force,
-                limit_price=limit_price,
-                stop_price=stop_price)
 
-            return order.id
+        market_order_request = MarketOrderRequest(
+            symbol=symbol,
+            qty=quantity,
+            side=side,
+            time_in_force=TimeInForce.DAY)
 
-        except Exception as e:
-
-            logger.exception(
-                f'Order submission failed: {e}')
-
-            return None
+        market_order = self.clients['trade'].submit_order(order_data=market_order_request)

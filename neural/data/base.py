@@ -11,12 +11,13 @@ import h5py as h5
 
 from neural.common.constants import HDF5_DEFAULT_MAX_ROWS
 from neural.common.exceptions import CorruptDataError
-from neural.data.enums import DatasetMetadata
+from neural.data.enums import DatasetMetadata, StreamMetaData
+from neural.client.base import AbstractDataClient
 from neural.tools.base import validate_path
 
 
 
-class DataFeeder(ABC):
+class AbstractDataFeeder(ABC):
 
     """
     Abstract base class for defining a data feeder that is responsible for feeding
@@ -38,14 +39,6 @@ class DataFeeder(ABC):
 
         raise NotImplementedError
     
-
-class AbstractStaticDataFeeder(ABC):
-
-    """
-    Abstract base class for defining a static data feeder that is responsible for feeding
-    market information to market environment, iteratively.
-    """
-
 
 
     @abstractmethod
@@ -79,17 +72,15 @@ class AbstractAsyncDataFeeder(ABC):
 
 
 class AsyncDataFeeder(AbstractAsyncDataFeeder):
-    """
-    Subclass of AbstractAsyncDataFeeder that streams and iteratively aggregates live data.
-
-    Methods:
-        __aiter__(): Asynchronous method that returns an async iterator for the live data.
-
-    """
-    pass
+    def __init__(
+        self, 
+        stream_metadata: StreamMetaData, 
+        data_clients: List[AbstractDataClient]
+        ) -> None:
 
 
-class StaticDataFeeder(AbstractStaticDataFeeder):
+
+class StaticDataFeeder(AbstractDataFeeder):
 
     """
     Subclass of AbstractStaticDataFeeder that iteratively returns data required for 
@@ -412,21 +403,9 @@ class DataProcessor:
         return processed
 
 
-    def create_column_schema(data: pd.DataFrame):
-        """
-        Creates a column schema dictionary for a given DataFrame, with ColumnType as keys and boolean masks as values.
-        Args:
-            data (pd.DataFrame): The input DataFrame for which the column schema is to be created.
 
-        Returns:
-            Dict[ColumnType, pd.Series]: A dictionary containing ColumnType keys and boolean masks for each column in the input DataFrame.
-        """
-
-        column_schema = dict()
-
-        for column_type in ColumnType:
-
-            mask = data.columns.str.match(column_type.value.lower())
-            column_schema[column_type] = mask
-
-        return column_schema
+class DataStreamer:
+    # responsible for receiving stream metadata and a set of data clients that 
+    # will be used to stream data from the data source.
+    def __init__(self, stream_metadata: StreamMetaData, data_clients = List[AbstractDataClient]) -> None:
+        pass

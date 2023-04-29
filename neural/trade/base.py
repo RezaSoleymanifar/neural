@@ -1,10 +1,12 @@
 from abc import ABC
+from typing import List
 import pickle
 import tarfile
+
 import torch
 from torch import nn
 
-from neural.client.alpaca import AbstractTradeClient
+from neural.client.alpaca import AbstractTradeClient, AbstractDataClient
 from neural.data.enums import DatasetMetadata
 from neural.data.base import AsyncDataFeeder
 from neural.env.base import TradeMarketEnv
@@ -79,7 +81,8 @@ class AbstractTrader(ABC):
     """
 
     def __init__(self,
-        client: AbstractTradeClient,
+        trade_client: AbstractTradeClient,
+        data_clients: List[AbstractDataClient],
         agent: Agent):
 
         """
@@ -92,11 +95,12 @@ class AbstractTrader(ABC):
             dataset_metadata (DatasetMetadata): Metadata for the dataset being used for training and validation.
         """
 
-        self.client = client
+        self.trade_client = trade_client
+        self.data_clients = data_clients
         self.agent = agent
 
         self.stream_metadata = self.agent.dataset_metadata.stream
-        self.datafeeder = AsyncDataFeeder(self.stream_metadata)
+        self.datafeeder = AsyncDataFeeder(self.stream_metadata, self.data_clients)
 
         return None
 
@@ -153,4 +157,4 @@ class AbstractTrader(ABC):
 
         # Loop over the symbols and actions and place orders for each symbol
         for symbol, action in zip(symbols, actions):
-            self.client.place_order(symbol, action, *args, **kwargs)
+            self.trade_client.place_order(symbol, action, *args, **kwargs)

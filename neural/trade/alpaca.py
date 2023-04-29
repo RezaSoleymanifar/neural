@@ -1,7 +1,7 @@
 from torch import nn
 from typing import Callable
 
-from neural.client.alpaca import AlpacaClient
+from neural.client.alpaca import AlpacaTradeClient, AbstractDataClient
 from neural.data.enums import DatasetMetadata
 from neural.trade.base import AbstractTrader
 from neural.wrapper.pipe import AbstractPipe
@@ -16,10 +16,10 @@ class AlpacaTraderTemplate(AbstractTrader):
 
 
     def __init__(self,
-        client: AlpacaClient,
+        trade_client: AlpacaTradeClient,
         model: nn.Module,
         pipe: AbstractPipe,
-        dataset_metadata: DatasetMetadata):
+        dataset_metadata: DatasetMetadata:
 
         """
         Initializes an AlpacaTraderTemplate object.
@@ -32,7 +32,7 @@ class AlpacaTraderTemplate(AbstractTrader):
         """
 
         super().__init__(
-            client,
+            trade_client,
             model,
             pipe,
             dataset_metadata)
@@ -74,7 +74,7 @@ class CustomAlpacaTrader(AlpacaTraderTemplate):
     """
 
     def __init__(self, 
-        client: AlpacaClient, 
+        client: AlpacaTradeClient, 
         model : nn.Module, 
         pipe: AbstractPipe, 
         dataset_metadata: DatasetMetadata):

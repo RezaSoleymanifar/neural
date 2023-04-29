@@ -8,7 +8,7 @@ from gym import spaces, Env
 
 from neural.common.constants import GLOBAL_DATA_TYPE
 from neural.data.base import StaticDataFeeder, AsyncDataFeeder
-from neural.data.enums import DataType
+from neural.data.enums import FeatureType
 
 if TYPE_CHECKING:
     from neural.trade.alpaca import AbstractTrader
@@ -194,7 +194,7 @@ class TrainMarketEnv(AbstractMarketEnv):
         self.data_feeder = data_feeder
         self.data_metadata = self.data_feeder.stream_metadata
         self.column_schema = self.data_metadata.column_schema
-        self.asset_price_mask = self.data_metadata.column_schema[DataType.ASSET_CLOSE_PRICE]
+        self.asset_price_mask = self.data_metadata.column_schema[FeatureType.ASSET_CLOSE_PRICE]
         self.n_steps = self.data_metadata.n_rows
         self.n_features = self.data_metadata.n_columns
         self.n_symbols = len(self.data_metadata.symbols)
@@ -493,12 +493,12 @@ class TradeMarketEnv(AbstractMarketEnv):
         """
 
         self.trader = trader
-        self.client = self.trader.client
+        self.client = self.trader.trade_client
         self.data_metadata = self.trader.stream_metadata
         self.data_feeder = self.data_feeder
 
         self.column_schema = self.data_metadata.column_schema
-        self.asset_price_mask = self.data_metadata.column_schema[DataType.ASSET_CLOSE_PRICE]
+        self.asset_price_mask = self.data_metadata.column_schema[FeatureType.ASSET_CLOSE_PRICE]
         self.n_steps = float('inf')
         self.n_features = self.data_metadata.n_columns
         self.n_symbols = len(self.data_metadata.symbols)
@@ -551,9 +551,9 @@ class TradeMarketEnv(AbstractMarketEnv):
         self.features = next(self.row_generator)
         self.holds[self.asset_quantities != 0] += 1
 
-        self.cash = self.trader.client.cash
+        self.cash = self.trader.trade_client.cash
         self.asset_quantities = [
-            self.trader.client.asset_quantities.get(symbol, 0) for symbol in self.symbols]
+            self.trader.trade_client.asset_quantities.get(symbol, 0) for symbol in self.symbols]
 
         self.net_worth = self.trader.net_worth
 

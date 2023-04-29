@@ -2,7 +2,7 @@ import os
 import numpy as np
 import logging
 
-from neu
+from neural.data.time import Calendar
 
 
 # =====================================CONNECTION=========================================
@@ -14,7 +14,9 @@ API_SECRET = os.environ.get('API_SECRET', None)
 
 # =====================================CALENDAR=========================================
 
-CALENDAR = 
+CALENDAR = Calendar
+
+
 # =====================================LOG=========================================
 
 # if not set no log files will be created. If set, the log files will be created

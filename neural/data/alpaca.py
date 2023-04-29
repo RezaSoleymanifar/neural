@@ -2,20 +2,61 @@ from datetime import datetime
 from typing import List
 import os
 
-from alpaca.trading.enums import AssetClass
 import pandas as pd
 import numpy as np
 
-from alpaca.trading.enums import AssetClass
 
-from neural.client.alpaca import AlpacaClient
+from neural.client.alpaca import AlpacaTradeClient, AlpacaDataClient
 from neural.common import logger
 from neural.common.constants import ACCEPTED_DOWNLOAD_RESOLUTIONS
-from neural.data.enums import DatasetType, DatasetMetadata
-from neural.tools.base import (progress_bar, to_timeframe, 
-    create_column_schema, validate_path)
+from neural.data.enums import DatasetMetadata, AbstractDataSource
+from neural.tools.base import progress_bar, validate_path
+from neural.tools.misc import to_timeframe
 from neural.tools.base import Calendar
     
+
+class AlpacaDataSource(AbstractDataSource):
+
+    data_client = AlpacaDataClient
+
+    class DatasetType(AbstractDataSource.DatasetType):
+
+        """
+        Enumeration class that defines constants for the different types of datasets.
+
+        Attributes
+        ----------
+        TRADE : str
+            The type of dataset for aggregated trade stream data. Also known as bars data.
+        QUOTE : str
+            The type of dataset for aggregated quote stream.
+        ORDER_BOOK : str
+            The type of dataset for aggregated order book data.
+        """
+
+        TRADE = 'TRADE'
+        QUOTE = 'QUOTE'
+        ORDER_BOOK = 'ORDER_BOOK'
+
+    class StreamType(AbstractDataSource.StreamType):
+
+        """
+        Enumeration class that defines constants for the different types of data streams.
+
+        Attributes
+        ----------
+        QUOTE : str
+            The type of data stream for quotes.
+        TRADE : str
+            The type of data stream for trades.
+        ORDER_BOOK : str
+            The type of data stream for order book data.
+        """
+
+        TRADE = 'TRADE'
+        QUOTE = 'QUOTE'
+        ORDER_BOOK = 'ORDER_BOOK'
+
 
 class AlpacaDataDownloader():
 
@@ -28,10 +69,7 @@ class AlpacaDataDownloader():
     and process it for further use.
     """
 
-    def __init__(
-        self,
-        client: AlpacaClient
-        ) -> None:
+    def __init__(self, client: AlpacaTradeClient) -> None:
 
         """
         Initializes the AlpacaDataFetcher class.
@@ -70,15 +108,15 @@ class AlpacaDataDownloader():
 
 
 
-    def download_raw_dataset(
+    def download_dataset(
         self,
-        dataset_type: DatasetType,
+        dataset_type: AlpacaDataSource.DatasetType,
         symbols: List[str],
-        asset_class: AssetClass,
         resolution: str,
         start: datetime,
         end: datetime,
         ) -> None:
+
         """
         Downloads raw dataset from the Alpaca API.
 
@@ -96,9 +134,8 @@ class AlpacaDataDownloader():
 
         resolution = to_timeframe(resolution)
 
-        data_fetcher = AlpacaDataDownloader(self.client)
 
-        downloader, request = data_fetcher.get_downloader_and_request(
+        downloader, request = AlpacaDataClient.get_downloader_and_request(
             dataset_type=dataset_type,
             asset_class=asset_class)
 
@@ -167,7 +204,7 @@ class AlpacaDataDownloader():
         # fetches and saves data on a daily basis
         for market_open, market_close in schedule.values:
 
-            raw_dataset = self.download_raw_dataset(
+            raw_dataset = self.download_dataset(
                 dataset_type=dataset_type,
                 symbols=symbols,
                 asset_class=asset_class,
@@ -239,4 +276,5 @@ class AlpacaDataDownloader():
 
 
 class AlpacaDataStreamer:
-    pass
+    def __init__(self, data_client: AlpacaDataClient) -> None:
+        pass

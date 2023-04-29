@@ -1,14 +1,10 @@
-from abc import abstractmethod, ABC
-from typing import List, Iterable, Any
+from typing import List, Iterable
 from collections import deque
 
 import pandas as pd
 import numpy as np
-import pandas_market_calendars as market_calendars
 import tableprint, os
 from tqdm import tqdm
-
-from neural.data.enums import CalendarType
 
 
 #================================================Data=====================================================
@@ -56,6 +52,7 @@ class FillDeque(deque):
         return iter(self.buffer)
 
     def __getitem__(self, index):
+
         """
         Returns a slice of the buffer as a list.
 
