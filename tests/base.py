@@ -7,14 +7,14 @@ sys.path.insert(0, os.path.abspath(
     os.path.join(os.path.dirname(__file__), '..')))
 
 
-from neural.client.alpaca import AlpacaTradeClient
+from neural.client.alpaca import AlpacaClient
 
 class BaseConnectionTest(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
 
-        cls.client = AlpacaTradeClient()
+        cls.client = AlpacaClient()
         cls.client._connect()
         logger.info('Base connection test: SUCCESSFUL')
 

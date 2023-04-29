@@ -1,7 +1,9 @@
 from torch import nn
 from typing import Callable
 
-from neural.client.alpaca import AlpacaTradeClient, AbstractDataClient
+from neural.client.alpaca import AlpacaClient
+from neural.common.exceptions import TradeConstraintViolationError
+from neural.common.constants import PATTERN_DAY_TRADER_MINIMUM_NET_WORTH
 from neural.data.enums import DatasetMetadata
 from neural.trade.base import AbstractTrader
 from neural.wrapper.pipe import AbstractPipe
@@ -16,10 +18,10 @@ class AlpacaTraderTemplate(AbstractTrader):
 
 
     def __init__(self,
-        trade_client: AlpacaTradeClient,
+        trade_client: AlpacaClient,
         model: nn.Module,
         pipe: AbstractPipe,
-        dataset_metadata: DatasetMetadata:
+        dataset_metadata: DatasetMetadata):
 
         """
         Initializes an AlpacaTraderTemplate object.
@@ -36,7 +38,7 @@ class AlpacaTraderTemplate(AbstractTrader):
             model,
             pipe,
             dataset_metadata)
-    
+
 
     def place_orders(self, action, *args, **kwargs):
         
@@ -51,6 +53,38 @@ class AlpacaTraderTemplate(AbstractTrader):
         """
 
         raise NotImplementedError
+
+
+    def check_trade_constraints(self, *args, **kwargs):
+        """
+        Checks if all trade constraints are met before placing orders.
+
+        Raises:
+            TradeConstraintViolationError: If any trade constraint is violated.
+        """
+
+        # pattern day trader constraint
+        patttern_day_trader = self.client.account.pattern_day_trader
+        net_worth = self.net_worth
+
+        pattern_day_trader_constraint = (
+            True if not patttern_day_trader else net_worth >
+            PATTERN_DAY_TRADER_MINIMUM_NET_WORTH)
+
+        if not pattern_day_trader_constraint:
+            raise TradeConstraintViolationError(
+                'Pattern day trader constraint violated.')
+
+        # margin trading
+        margin = abs(self.cash) if self.cash < 0 else 0
+        maintenance_margin = 1.00
+        margin_constraint = margin * maintenance_margin <= self.porftfolio_value
+
+        if not margin_constraint:
+            raise TradeConstraintViolationError(
+                'Margin constraint violated.')
+
+        return None
 
 
 
@@ -74,7 +108,7 @@ class CustomAlpacaTrader(AlpacaTraderTemplate):
     """
 
     def __init__(self, 
-        client: AlpacaTradeClient, 
+        client: AlpacaClient, 
         model : nn.Module, 
         pipe: AbstractPipe, 
         dataset_metadata: DatasetMetadata):

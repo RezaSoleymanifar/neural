@@ -7,7 +7,7 @@ import numpy as np
 from gym import (Env, RewardWrapper)
 
 from neural.tools.misc import RunningStatistics
-from neural.meta.env.wrapper.base import metadata
+from neural.wrapper.base import metadata
 
 
 

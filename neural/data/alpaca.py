@@ -6,7 +6,7 @@ import pandas as pd
 import numpy as np
 
 
-from neural.client.alpaca import AlpacaTradeClient, AlpacaDataClient
+from neural.client.alpaca import AlpacaClient, AlpacaDataClient
 from neural.common import logger
 from neural.common.constants import ACCEPTED_DOWNLOAD_RESOLUTIONS
 from neural.data.enums import DatasetMetadata, AbstractDataSource
@@ -69,7 +69,7 @@ class AlpacaDataDownloader():
     and process it for further use.
     """
 
-    def __init__(self, client: AlpacaTradeClient) -> None:
+    def __init__(self, client: AlpacaClient) -> None:
 
         """
         Initializes the AlpacaDataFetcher class.

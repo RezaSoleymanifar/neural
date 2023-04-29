@@ -1,12 +1,13 @@
-from typing import Optional, Dict, List
+from typing import Optional, Dict, List, Callable, Tuple
 
 import pandas as pd
-import numpy as np
 
 from alpaca.trading.enums import AccountStatus, AssetExchange, AssetClass, AssetStatus
 from alpaca.data.historical import StockHistoricalDataClient, CryptoHistoricalDataClient
 from alpaca.trading import TradingClient, MarketOrderRequest
 from alpaca.trading.enums import OrderSide, TimeInForce
+from alpaca.trading.models import Order
+from alpaca.data.requests import BaseTimeseriesDataRequest
 
 from alpaca.data.requests import (
     CryptoBarsRequest,
@@ -22,12 +23,12 @@ from neural.common.constants import API_KEY, API_SECRET
 from neural.common.constants import PATTERN_DAY_TRADER_MINIMUM_NET_WORTH
 from neural.common.exceptions import TradeConstraintViolationError
 from neural.client.base import AbstractClient, AbstractTradeClient, AbstractDataClient
-from neural.data.enums import AlpacaDataSource
+from neural.data.alpaca import AlpacaDataSource
 from neural.tools.base import objects_to_df
 
 
 
-class AlpacaTradeClient(AbstractClient):
+class AlpacaClient(AbstractClient):
 
     """
     AlpacaClient is a Python class that allows you to connect to the Alpaca API to trade, 
@@ -119,6 +120,48 @@ class AlpacaTradeClient(AbstractClient):
 
 
     @property
+    def clients(self) -> None:
+
+        """
+        Get a dictionary of clients for crypto, stocks, and trading.
+
+        :return: A dictionary of clients.
+        """
+
+        if self._clients is None:
+            self._clients = dict()
+
+            # crypto does not need key, and secret but will be faster if provided
+            self._clients['crypto'] = CryptoHistoricalDataClient(
+                api_key=self.key, secret_key=self.secret)
+            self._clients['stocks'] = StockHistoricalDataClient(
+                api_key=self.key, secret_key=self.secret)
+            self._clients['trade'] = TradingClient(
+                api_key=self.key, secret_key=self.secret)
+
+        return self._clients
+
+
+
+    @property
+    def assets(self) -> pd.DataFrame:
+
+        """
+        Get all assets available through the Alpaca API.
+
+        :return: A DataFrame containing the assets.
+        """
+
+        if self._assets is None:
+            self._assets = self.clients['trade'].get_all_assets()
+
+        assets_dataframe =  objects_to_df(self._assets)
+        
+        return assets_dataframe
+
+
+
+    @property
     def symbols(self) -> Dict:
         
         # TODO: implement this method. More strcuture in symbols here. It will help
@@ -143,25 +186,6 @@ class AlpacaTradeClient(AbstractClient):
             self._symbols = {asset.symbol: asset for asset in self._assets}
 
         return self._symbols
-
-
-
-    @property
-    def assets(self) -> pd.DataFrame:
-
-        """
-        Get all assets available through the Alpaca API.
-
-        :return: A DataFrame containing the assets.
-        """
-
-        if self._assets is None:
-            self._assets = self.clients['trade'].get_all_assets()
-
-        assets_dataframe =  objects_to_df(self._assets)
-        
-        return assets_dataframe
-
 
 
     @property
@@ -206,16 +230,6 @@ class AlpacaTradeClient(AbstractClient):
 
         if self.key is None or self.secret is None:
             raise ValueError('Key and secret are required for account login.')
-        
-        self.clients = dict()
-
-        # crypto does not need key, and secret but will be faster if provided
-        self.clients['crypto'] = CryptoHistoricalDataClient(
-            api_key = self.key, secret_key =self.secret)
-        self.clients['stocks'] = StockHistoricalDataClient(
-            api_key=self.key, secret_key=self.secret)
-        self.clients['trade'] = TradingClient(
-            api_key=self.key, secret_key=self.secret)
 
         try:
 
@@ -240,7 +254,7 @@ class AlpacaTradeClient(AbstractClient):
         return None
 
 
-class AlpacaDataClient(AbstractDataClient):
+class AlpacaDataClient(AlpacaClient, AbstractDataClient):
 
     def __init__(self, *args, **kwargs):
 
@@ -249,9 +263,9 @@ class AlpacaDataClient(AbstractDataClient):
 
     def get_downloader_and_request(
         self,
-        dataset_type: DatasetType,
+        dataset_type: AlpacaDataSource.DatasetType,
         asset_class=AssetClass
-        ) -> Tuple[Any, Any]:
+        ) -> Tuple[BaseTimeseriesDataRequest, Callable]:
 
         """
         Returns the appropriate data downloader and request object based on the provided dataset type
@@ -271,8 +285,8 @@ class AlpacaDataClient(AbstractDataClient):
         """
 
         client_map = {
-            AssetClass.US_EQUITY: self.client.clients['stocks'],
-            AssetClass.CRYPTO: self.client.clients['crypto']}
+            AssetClass.US_EQUITY: self.clients['stocks'],
+            AssetClass.CRYPTO: self.clients['crypto']}
 
         client = client_map[asset_class]
 
@@ -299,7 +313,8 @@ class AlpacaDataClient(AbstractDataClient):
             client=client, method_name=downloader_method_name)
 
         return downloader, request
-    
+
+
     def _validate_symbols(self, symbols: List[str]):
 
         """
@@ -325,12 +340,12 @@ class AlpacaDataClient(AbstractDataClient):
         if len(symbols) == 0:
             raise ValueError('symbols argument cannot be an empty sequence.')
 
-        duplicate_symbols = [
-            symbol for symbol in set(symbols) if symbols.count(symbol) > 1]
+        duplicate_symbols = [symbol for symbol in set(symbols) if symbols.count(symbol) > 1]
 
         if duplicate_symbols:
             raise ValueError(
                 f'Symbols {duplicate_symbols} have duplicate values.')
+
 
         for symbol in symbols:
 
@@ -367,13 +382,14 @@ class AlpacaDataClient(AbstractDataClient):
     
 
 
-class AlpacaTradeClient(AbstractTradeClient):
+class AlpacaClient(AbstractTradeClient):
 
     def __init__(self, *args, **kwargs):
 
         super().__init__(*args, **kwargs)
         
         self._cash = None
+
 
 
     @property
@@ -388,6 +404,7 @@ class AlpacaTradeClient(AbstractTradeClient):
         """
 
         self._cash = self.client.account.cash
+
         return self._cash
 
     
@@ -484,41 +501,8 @@ class AlpacaTradeClient(AbstractTradeClient):
         :return: True if the account status is active, False otherwise.
         """
 
-        return True if self.account.status == AccountStatus.ACTIVE else False
-       
-
-    def check_trade_constraints(self, *args, **kwargs):
-        
-        """
-        Checks if all trade constraints are met before placing orders.
-
-        Raises:
-            TradeConstraintViolationError: If any trade constraint is violated.
-        """
-
-        # pattern day trader constraint
-        patttern_day_trader = self.client.account.pattern_day_trader
-        net_worth = self.net_worth
-
-        pattern_day_trader_constraint = (
-            True if not patttern_day_trader else net_worth >
-            PATTERN_DAY_TRADER_MINIMUM_NET_WORTH)
-
-        if not pattern_day_trader_constraint:
-            raise TradeConstraintViolationError(
-                'Pattern day trader constraint violated.')
-
-
-        # margin trading
-        margin = abs(self.cash) if self.cash < 0 else 0
-        maintenance_margin = 1.00
-        margin_constraint = margin * maintenance_margin <= self.porftfolio_value
-
-        if not margin_constraint:
-            raise TradeConstraintViolationError(
-                'Margin constraint violated.')
-
-        return None
+        status = True if self.account.status == AccountStatus.ACTIVE else False
+        return status
     
 
     def place_order(
@@ -526,7 +510,7 @@ class AlpacaTradeClient(AbstractTradeClient):
         symbol: str,
         quantity: float,
         time_in_force: str,
-        ) -> None:
+        ) -> Order:
 
 
         assert time_in_force in ['ioc', 'fok'], 'Invalid time in force. options: ioc, fok}'
@@ -543,3 +527,5 @@ class AlpacaTradeClient(AbstractTradeClient):
             time_in_force=TimeInForce.DAY)
 
         market_order = self.clients['trade'].submit_order(order_data=market_order_request)
+
+        return market_order
