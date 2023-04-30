@@ -3,20 +3,19 @@ from typing import Type
 from torch import nn
 
 from neural.data.base import DatasetMetadata
-from neural.env.base import AbstractMarketEnv
 from neural.meta.pipe import AbstractPipe
 from neural.train.base import AbstractTrainer
-
+from neural.trade.base import AbstractTrader
 
 
 class Agent:
 
     def __init__(
-            self,
-            model: nn.Module,
-            pipe: AbstractPipe,
-            dataset_metadata: DatasetMetadata,
-            ):
+        self,
+        model: nn.Module,
+        pipe: AbstractPipe,
+        dataset_metadata: DatasetMetadata,
+        ):
 
         self.model = model
         self.pipe = pipe
@@ -25,29 +24,17 @@ class Agent:
         return None
 
 
-    def train(self, 
-        trainer: Type[AbstractTrainer]
-        ) -> None:
+    def train(self, trainer: AbstractTrainer) -> None:
     
         trained_model = trainer.train(self.agent)
         self.model = trained_model
 
 
-    def trade(self, market_env: AbstractMarketEnv):
+    def test(self, trainer: AbstractTrainer) -> None:
 
-        """
-        Starts the trading process by creating a trading environment and executing
-        actions from the model.
+        trainer.test(self.agent)
+                     
 
-        Raises:
-            NotImplementedError: This method must be implemented by a subclass.
-        """
+    def trade(self, trader: AbstractTrader) -> None:
 
-        market_env = self.pipe.pipe(market_env)
-        observation = market_env.reset()
-
-        while True:
-            action = self.model(observation)
-            observation, reward, done, info  = market_env.step(action)
-            if done:
-                market_env.reset()
+        trader.trade(self.agent)

@@ -1,6 +1,12 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 from abc import ABC, abstractmethod
 import numpy as np
-from neural.data.enums import AbstractDataSource
+
+
+if TYPE_CHECKING:
+    from neural.data.enums import AbstractDataSource
 
 
 class AbstractClient(ABC):
@@ -32,7 +38,7 @@ class AbstractClient(ABC):
     To create a new API client:
 
     >>> class MyClient(AbstractClient):
-    ...     def _connect(self, *args, **kwargs):
+    ...     def connect(self, *args, **kwargs):
     ...         # Connect to the API
     ...         pass
 
@@ -117,22 +123,7 @@ class AbstractTradeClient(AbstractClient):
         """
 
         raise NotImplementedError
-
-
-    @property
-    @abstractmethod
-    def positions(self) -> float:
-
-        """
-        The current positions (notional base currency value) of each asset
-        held by the trader.
-
-        Raises:
-        --------
-            NotImplementedError: This property must be implemented by a subclass.
-        """
-
-        raise NotImplementedError    
+  
 
 
     @property
@@ -150,36 +141,6 @@ class AbstractTradeClient(AbstractClient):
         raise NotImplementedError
     
 
-    @property
-    @abstractmethod
-    def longs(self) -> float:
-
-        """
-        Sum of current notional value of long positions held by the trader.
-
-        Raises:
-        --------
-            NotImplementedError: This property must be implemented by a subclass.
-        """
-
-        raise NotImplementedError
-    
-
-    @property
-    @abstractmethod
-    def shorts(self) -> float:
-
-        """
-        Sum of current notional value of short positions held by the trader.
-        assumed to be always positive.
-
-        Raises:
-        --------
-            NotImplementedError: This property must be implemented by a subclass.
-        """
-
-        raise NotImplementedError
-    
 
     @abstractmethod
     def check_connection(self, *args, **kwargs):

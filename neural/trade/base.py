@@ -1,17 +1,10 @@
 from abc import ABC
-from typing import List
-import pickle
-import tarfile
 
 import numpy as np
-import torch
-from torch import nn
 
 from neural.client.alpaca import AbstractTradeClient, AbstractDataClient
-from neural.data.base import DatasetMetadata
 from neural.data.base import AsyncDataFeeder
-from neural.env.base import TradeMarketEnv, TrainMarketEnv
-from neural.meta.pipe import AbstractPipe
+from neural.env.base import TradeMarketEnv
 from neural.meta.agent import Agent
 
 
@@ -28,8 +21,7 @@ class AbstractTrader(ABC):
     def __init__(self,
         trade_client: AbstractTradeClient,
         data_client: AbstractDataClient,
-        agent: Agent,
-        warmup_env: TrainMarketEnv = None):
+        agent: Agent):
 
         """
         Initializes an AbstractTrader object.
@@ -49,13 +41,6 @@ class AbstractTrader(ABC):
 
         return None
 
-
-    def _get_data_feeder(self):
-
-        stream_metadata = self.agent.dataset_metadata.stream
-        data_feeder = AsyncDataFeeder(stream_metadata, self.data_client)
-
-        return data_feeder
 
 
     def apply_rules(self, *args, **kwargs):
@@ -127,6 +112,14 @@ class AbstractTrader(ABC):
             self.trade_client.place_order(symbol, actions, *args, **kwargs)
 
 
+    def _get_trade_market_env(self, trader):
+        
+        stream_metadata = self.agent.dataset_metadata.stream
+        data_feeder = AsyncDataFeeder(stream_metadata, self.data_client)
+        self._get_data_feeder()
+        self.trade_market_env = TradeMarketEnv(trader=self)
+
+
     def trade(self):
 
         """
@@ -137,8 +130,13 @@ class AbstractTrader(ABC):
             NotImplementedError: This method must be implemented by a subclass.
         """
 
-        self.trade_market_env = TradeMarketEnv(trader=self)
-        self._get_data_feeder()
-        self.agent.trade(self.trade_market_env)
+        
+        self.trade_market_env = self._get_trade_market_env(self)
+        observation = self.trade_market_env.reset()
 
-        return None
+        while True:
+            action = self.model(observation)
+            observation, reward, done, info = self.trade_market_env.step(action)
+            if done:
+                self.trade_market_env.reset()
+

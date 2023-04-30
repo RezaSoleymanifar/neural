@@ -1,14 +1,15 @@
 from functools import reduce
 from datetime import datetime
-from typing import Dict, Tuple
+from typing import Dict, Tuple, Iterable, Optional, List
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 import pickle
 import pandas as pd
+import numpy as np
 
 from neural.utils.time import Calendar
 from neural.data.enums import AbstractDataSource, FeatureType
-
+from neural.client.base import AbstractDataClient
 
 
 @dataclass
@@ -271,6 +272,7 @@ class DatasetMetadata(AbstractDataMetaData):
             stream_types=self.dataset_types)
 
 
+
 class AbstractDataFeeder(ABC):
 
     """
@@ -292,3 +294,122 @@ class AbstractDataFeeder(ABC):
         """
 
         raise NotImplementedError
+
+
+
+class StaticDataFeeder(AbstractDataFeeder):
+
+    """
+    Subclass of AbstractStaticDataFeeder that iteratively returns data required for 
+    the environment from a static source.
+    """
+
+    def __init__(
+            self,
+            dataset_metadata: DatasetMetadata,
+            datasets: List[h5.Dataset | np.ndarray],
+            start_index: int = 0,
+            end_index: Optional[int] = None,
+            n_chunks: Optional[int] = 1) -> None:
+        
+        """
+        Initializes a StaticDataFeeder object.
+        Args:
+        dataset_metadata (DatasetMetadata): Contains metadata for the dataset being loaded.
+        datasets (List[h5.Dataset | np.ndarray]): Represents the actual dataset(s) to be loaded.
+        start_index (int, optional): Specifies the starting index to load the data from. Default is 0.
+        end_index (int, optional): Specifies the ending index to load the data from. If not provided,
+        defaults to the number of rows indicated in the metadata object. Default is None.
+        n_chunks (int, optional): Indicates the number of chunks to divide the dataset into for
+        loading. Loads one chunk at a time. Useful if datasets do not fit in memory or to
+        allocate more memory for the training process. Default is 1.
+        """
+
+        self.dataset_metadata = dataset_metadata
+        self.datasets = datasets
+        self.start_index = start_index
+        self.end_index = end_index if end_index is not None else self.dataset_metadata.n_rows
+        self.n_rows = self.end_index - self.start_index
+        self.n_columns = self.dataset_metadata.n_columns
+        self.n_chunks = n_chunks
+
+        return None
+
+    def reset(self) -> Iterable[np.ndarray]:
+        """
+        Resets the internal state of the data feeder.
+        Yields:
+            Iterable[np.ndarray]: a generator object returning features as numpy array.
+        """
+
+        chunk_edge_indices = np.linspace(
+            start=self.start_index,
+            stop=self.end_index,
+            num=self.n_chunks+1,
+            dtype=int,
+            endpoint=True)
+
+        for start, end in zip(chunk_edge_indices[:-1], chunk_edge_indices[1:]):
+
+            joined_chunks_in_memory = np.hstack([dataset[start:end, :]
+                                                 for dataset in self.datasets])
+
+            for row in joined_chunks_in_memory:
+                yield row
+
+    def split(self, n: int | float):
+        """
+        Splits the dataset into multiple non-overlapping contiguous sub-feeders that span the dataset.
+        Common use case is it use in stable baselines vector env to parallelize running multiple
+        trading environments, leading to significant speedup of training process.
+        Args:
+            n (int | float): if int, number of sub-feeders to split the dataset into. if float (0, 1)
+            yields two sub-feeders performing n, 1-n train test split
+        Returns:
+            List[StaticDataFeeder]: A list of StaticDataFeeder objects.
+        """
+
+        if isinstance(n, int):
+
+            assert n > 0, "n must be a positive integer"
+
+            edge_indices = np.linspace(
+                start=self.start_index,
+                stop=self.end_index,
+                num=self.n+1,
+                dtype=int,
+                endpoint=True)
+
+        elif isinstance(n, float):
+
+            assert 0 < n < 1, "n must be a float between 0 and 1"
+
+            edge_indices = np.array([
+                self.start_index,
+                int(self.start_index + n * (self.end_index - self.start_index)),
+                self.end_index
+            ], dtype=int)
+
+        static_data_feeders = list()
+
+        for start, end in zip(edge_indices[:-1], edge_indices[1:]):
+
+            static_data_feeder = StaticDataFeeder(
+                dataset_metadata=self.dataset_metadata,
+                datasets=self.datasets,
+                start_index=start,
+                end_index=end,
+                n_chunks=self.n_chunks)
+
+            static_data_feeders.append(static_data_feeder)
+
+        return static_data_feeders
+
+
+class AsyncDataFeeder(AbstractDataFeeder):
+    def __init__(
+        self, 
+        stream_metadata: StreamMetaData, 
+        data_client: AbstractDataClient
+        ) -> None:
+        super().__init__()
