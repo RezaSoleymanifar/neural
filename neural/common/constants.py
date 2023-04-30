@@ -2,7 +2,7 @@ import os
 import numpy as np
 import logging
 
-from neural.data.time import Calendar
+from neural.utils.time import Calendar
 
 
 # =====================================CONNECTION=========================================

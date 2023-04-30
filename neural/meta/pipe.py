@@ -1,7 +1,11 @@
 from abc import abstractmethod, ABC
 from typing import Optional
 
-from neural.wrapper import (
+from neural.wrapper.base import (
+    MarketEnvMetadataWrapper, 
+    ConsoleTearsheetRenderWrapper)
+
+from neural.wrapper.action import (
     MinTradeSizeActionWrapper,
     FixedMarginActionWrapper, 
     NetWorthRelativeMaximumShortSizing,
@@ -9,14 +13,17 @@ from neural.wrapper import (
     ConsoleTearsheetRenderWrapper,
     MarketEnvMetadataWrapper,
     IntegerAssetQuantityActionWrapper,
-    ActionClipperWrapper,
-    FlattenToNUmpyObservationWrapper,
+    ActionClipperWrapper)
+
+from neural.wrapper.observation import (
     ObservationStackerWrapper, 
-    ObservationBufferWrapper)
+    ObservationBufferWrapper, 
+    FlattenToNUmpyObservationWrapper,
+    NormalizeObservationWrapper)
 
-from neural.env.base import AbstractMarketEnv
+from neural.wrapper.reward import NormalizeRewardWrapper
 
-
+from neural.utils.base import RunningStatistics
 
 class AbstractPipe(ABC):   
 
@@ -35,76 +42,35 @@ class AbstractPipe(ABC):
 
         raise NotImplementedError
 
-    def find_metadata_wrapper(self, env):
-        raise NotImplementedError
-    
-    def find_render_wrapper(self, env):
-        raise NotImplementedError
 
-    def warmup(
-            self,
-            env: AbstractMarketEnv,
-            n_episodes: Optional[int] = None
-            ) -> None:
-        
-        """
-        Runs environment with random actions. Useful for tuning
-        parameters of normalizer wrappers that depend on having seen observations.
-        
-        Args:
-        - env: AbstractMarketEnv object to warm up.
-        - n_episodes: Number of episodes to run. If None, runs until env is done.
-
-        Returns:
-        None
-        """
-
-        piped_env = self.pipe(env)
-
-        for episode in n_episodes:
-            observation = piped_env.reset()
-
-            while True:
-                action = piped_env.action_space.sample()
-                observation, reward, done, info = piped_env.step(action)
-
-                if done:
-                    break
-
-        return None
 
 
 class NetWorthRelativeShortMarginPipe(AbstractPipe):
 
     """
-    A pipe is a sequence of market wrappers applied in a non-conflicting way. Use
+    A pipe is a stack of wrappers applied in a non-conflicting way. Use
     wrappers to customize the base market env, manipulate actions and
     observations, impose trading logic, etc. according to your specific needs.
+    Wrappers are intantiated every time the pipe method is called. If you need 
+    to restore state of some wrappers, you can make that state a constructor
+    argument of both wrapper class and and the pipe and return the state in wrapper constructor
+    so that pipe can track this state and pass it to the wrapper constructor when loading the pipe.
     """
 
     def __init__(
-            self,
-            trade_ratio: float = 0.02,
-            short_ratio: float = 0,
-            initial_margin: float = 1,
-            min_action: float = 1,
-            integer: bool = False,
-            buffer_size: int = 10,
-            stack_size: int = None,
-            verbosity: int = 20,
-            ) -> None:
-        
-        """
-        Args:
-        - min_action (float): minimum trade size.
-        - integer (bool): whether the asset quantities must be integers.
-        - initial_margin (float): the initial leverage allowed by the trader.
-        - short_ratio (float): the percentage of the net worth that can be
-        shorted.
-        - trade_ratio (float): the percentage of the net worth that is traded
-        at each trade.
-        - verbosity (int): the level of detail of the output of the market env.
-        """
+        self,
+        trade_ratio: float = 0.02,
+        short_ratio: float = 0,
+        initial_margin: float = 1,
+        min_action: float = 1,
+        integer: bool = False,
+        buffer_size: int = 10,
+        stack_size: int = None,
+        verbosity: int = 20,
+        observation_statistics: Optional[RunningStatistics] = None,
+        reward_statistics: Optional[RunningStatistics] = None,
+        ) -> None:
+    
 
         self.trade_ratio = trade_ratio
         self.short_ratio = short_ratio
@@ -114,6 +80,8 @@ class NetWorthRelativeShortMarginPipe(AbstractPipe):
         self.buffer_size = buffer_size
         self.stack_size = stack_size
         self.verbosity = verbosity
+        self.observation_statistics = observation_statistics
+        self.reward_statistics = reward_statistics
 
         self.metadata_wrapper = MarketEnvMetadataWrapper
         self.render = ConsoleTearsheetRenderWrapper
@@ -128,6 +96,9 @@ class NetWorthRelativeShortMarginPipe(AbstractPipe):
         self.flatten = FlattenToNUmpyObservationWrapper
         self.buffer = ObservationBufferWrapper
         self.stacker = ObservationStackerWrapper
+        self.normalize_observation = NormalizeObservationWrapper
+
+        self.normalize_reward = NormalizeRewardWrapper
 
         return None
 
@@ -136,13 +107,15 @@ class NetWorthRelativeShortMarginPipe(AbstractPipe):
 
         """
         Applies a stack of market wrappers successively to an environment.
-        Wrappers are addedd successively akin to layers in PyTorch.
+        Wrappers are addedd successively akin to layers in PyTorch. state of
+        wrappers are seved to an attribute of the Pipe class so that they can
+        be restored later.
 
         Args:
         - env (AbstractMarketEnv): the environment to be wrapped.
 
         Returns:
-        - env (AbstractMarketEnv): the wrapped environment.
+        - env (gym.Env): the wrapped environment.
         """
 
         # helper wrappers
@@ -154,11 +127,17 @@ class NetWorthRelativeShortMarginPipe(AbstractPipe):
         env = self.buffer(env, buffer_size= self.buffer_size)
         env = self.stacker(env, stack_size = self.stack_size)
 
+        env, self.observation_statistics = self.normalize_observation(
+            env, observation_statistics=self.observation_statistics)
+
         # action wrappers
         env = self.min_trade(env, min_action=self.min_action)
         env = self.integer_sizing(env, self.integer)
         env = self.margin_sizing(env, initial_margin=self.initial_margin)
         env = self.short_sizing(env, short_ratio=self.short_ratio)
         env = self.position_sizing(env, trade_ratio=self.trade_ratio)
+
+        env, self.reward_statistics = self.normalize_reward(env, self.reward_statistics)
+
         
         return env

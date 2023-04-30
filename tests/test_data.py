@@ -13,7 +13,7 @@ sys.path.insert(0, os.path.abspath(
 from neural.core.data.ops import AlpacaDataFetcher
 from neural.core.data.enums import DatasetType
 from neural.common.constants import DOW_JONES_SYMBOLS
-from neural.tools.base import to_timeframe
+from neural.utils.base import to_timeframe
 
 
 class TestData(BaseConnectionTest):

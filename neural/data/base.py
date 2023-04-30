@@ -6,7 +6,7 @@ from dataclasses import dataclass
 import pickle
 import pandas as pd
 
-from neural.data.time import Calendar
+from neural.utils.time import Calendar
 from neural.data.enums import AbstractDataSource, FeatureType
 
 

@@ -7,7 +7,7 @@ import numpy as np
 from gym import spaces, Env
 
 from neural.common.constants import GLOBAL_DATA_TYPE
-from neural.data.base import StaticDataFeeder, AsyncDataFeeder
+from neural.data.base import StaticDataFeeder
 from neural.data.base import FeatureType
 
 if TYPE_CHECKING:

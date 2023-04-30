@@ -1,17 +1,16 @@
 from typing import Optional
 from gym import Env
-import gym
 from abc import ABC, abstractmethod
 from typing import Dict
 import numpy as np
 from gym import (Env, RewardWrapper)
 
-from neural.tools.misc import RunningStatistics
+from neural.utils.base import RunningStatistics
 from neural.wrapper.base import metadata
 
 
 
-class NormalizeReward(RewardWrapper):
+class NormalizeRewardWrapper(RewardWrapper):
 
     """
     This wrapper will normalize immediate rewards. 
@@ -36,6 +35,7 @@ class NormalizeReward(RewardWrapper):
         env: Env,
         epsilon: float = 1e-8,
         clip_threshold: float = np.inf,
+        reward_statistics: Optional[RunningStatistics] = None,
         ) -> None:
 
         """
@@ -58,9 +58,13 @@ class NormalizeReward(RewardWrapper):
 
         super().__init__(env)
 
-        self.reward_rms = RunningStatistics()
+        self.reward_statistics = (
+            reward_statistics if reward_statistics is not None else RunningStatistics())
         self.epsilon = epsilon
         self.clip_threshold = clip_threshold
+
+        return reward_statistics
+    
 
     def reward(self, reward: float) -> float:
         
@@ -76,8 +80,8 @@ class NormalizeReward(RewardWrapper):
             float: The normalized reward.
         """
 
-        self.reward_rms.update(reward)
-        normalized_reward = self.reward_rms.normalize(reward, self.epsilon, self.clip_threshold)
+        self.reward_statistic.update(reward)
+        normalized_reward = self.reward_statistic.normalize(reward, self.epsilon, self.clip_threshold)
 
         return normalized_reward
 

@@ -1,5 +1,6 @@
 from typing import Optional, Dict, List, Callable, Tuple
 
+import numpy as np
 import pandas as pd
 
 from alpaca.trading.enums import AccountStatus, AssetExchange, AssetClass, AssetStatus
@@ -24,13 +25,13 @@ from alpaca.data.requests import (
 from neural.common.log import logger
 from neural.common.constants import API_KEY, API_SECRET 
 from neural.client.base import AbstractClient, AbstractTradeClient, AbstractDataClient
-from neural.data.enums import AlpacaDataSource
+from neural.data.enums import AlpacaDataSource, AssetType
 from neural.data.base import AssetType
-from neural.tools.misc import objects_to_df
+from neural.utils.misc import objects_to_df
 
 
 
-class AlpacaClient(AbstractClient):
+class AlpacaTradeClient(AbstractClient):
 
     """
     Option 1: Instantiate an instance of the AlpacaClient class with your API key and secret.
@@ -145,11 +146,6 @@ class AlpacaClient(AbstractClient):
     @property
     def assets(self) -> pd.DataFrame:
 
-        """
-        Get all assets available through the Alpaca API.
-
-        :return: A DataFrame containing the assets.
-        """
 
         if self._assets is None:
             self._assets = self.clients['trade'].get_all_assets()
@@ -163,14 +159,6 @@ class AlpacaClient(AbstractClient):
     @property
     def symbols(self) -> Dict[str, Asset]:
 
-        """
-        Get the symbols of assets fetched from the Alpaca API.
-
-        Returns
-        -------
-        Dict
-            A dictionary of symbols mapped to their respective assets.
-        """
 
         if self._symbols is None:
             self._symbols = {asset.symbol: asset for asset in self.assets}
@@ -179,29 +167,8 @@ class AlpacaClient(AbstractClient):
 
 
     @property
-    def exchanges(self) -> List[str]:
-
-        """
-        Get a list of all supported exchanges.
-
-        :return: A list of exchange names.
-        """
-
-        if self._exchanges is None:
-            self._exchanges = [item for item in AssetExchange]
-
-        exchanges =  [item.value for item in self._exchanges]
-        return exchanges
-
-
-    @property
     def asset_classes(self) -> List[str]:
 
-        """
-        Get a list of all supported asset classes.
-
-        :return: A list of asset class names.
-        """
 
         if self._asset_classes is None:
             self._asset_classes = [item for item in AssetClass]
@@ -210,8 +177,18 @@ class AlpacaClient(AbstractClient):
         return asset_classes
 
 
+    @property
+    def exchanges(self) -> List[str]:
 
-class AlpacaDataClient(AlpacaClient, AbstractDataClient):
+
+        if self._exchanges is None:
+            self._exchanges = [item for item in AssetExchange]
+
+        exchanges =  [item.value for item in self._exchanges]
+        return exchanges
+
+
+class AlpacaDataClient(AlpacaTradeClient, AbstractDataClient):
 
     def __init__(self, *args, **kwargs):
 
@@ -229,22 +206,6 @@ class AlpacaDataClient(AlpacaClient, AbstractDataClient):
         asset_class=AssetType
         ) -> Tuple[Callable, BaseTimeseriesDataRequest]:
 
-        """
-        Returns the appropriate data downloader and request object based on the provided dataset type
-        and asset class.
-
-        Parameters:
-        -----------
-        dataset_type: DatasetType
-            The type of dataset being downloaded, one of ['BAR', 'QUOTE', 'TRADE'].
-        asset_class: AssetClass, optional
-            The asset class being downloaded, defaults to `AssetClass.US_EQUITY`.
-
-        Returns:
-        --------
-        Tuple[Any, Any]
-            A tuple containing the appropriate downloader and request objects.
-        """
 
         client_map = {
             AssetType.STOCK: self.clients['stocks'],
@@ -261,14 +222,14 @@ class AlpacaDataClient(AlpacaClient, AbstractDataClient):
 
         downloader_request_map = {
             AlpacaDataSource.DatasetType.TRADE: {
-                AssetClass.US_EQUITY: ('get_stock_bars', StockBarsRequest),
-                AssetClass.CRYPTO: ('get_crypto_bars', CryptoBarsRequest)},
+                AssetType.STOCK: ('get_stock_bars', StockBarsRequest),
+                AssetType.CRYPTO: ('get_crypto_bars', CryptoBarsRequest)},
             AlpacaDataSource.DatasetType.QUOTE: {
-                AssetClass.US_EQUITY: ('get_stock_quotes', StockQuotesRequest),
-                AssetClass.CRYPTO: ('get_crypto_quotes', CryptoQuotesRequest)},
+                AssetType.STOCK: ('get_stock_quotes', StockQuotesRequest),
+                AssetType.CRYPTO: ('get_crypto_quotes', CryptoQuotesRequest)},
             AlpacaDataSource.DatasetType.TRADE: {
-                AssetClass.US_EQUITY: ('get_stock_trades', StockTradesRequest),
-                AssetClass.CRYPTO: ('get_crypto_trades', CryptoTradesRequest)}}
+                AssetType.STOCK: ('get_stock_trades', StockTradesRequest),
+                AssetType.CRYPTO: ('get_crypto_trades', CryptoTradesRequest)}}
 
         downloader_method_name, request = downloader_request_map[dataset_type][asset_class]
         downloader = safe_method_call(
@@ -278,15 +239,26 @@ class AlpacaDataClient(AlpacaClient, AbstractDataClient):
 
 
     def get_streamer(self, 
+        # callable take an async handler that receies the data and a list of symbols
+        # async def handler(data):
+        #   print(data)
+
         stream_types: AlpacaDataSource.StreamType,
         asset_class: AssetType,
-        ) -> BaseStream:
+        ) -> Callable:
 
 
         stream_map = {
-            AlpacaDataSource.StreamType,
-            AssetClass.US_EQUITY: StockDataStream,
-            AssetClass.CRYPTO: CryptoDataStream}
+            AlpacaDataSource.StreamType.BAR:{
+                AssetType.STOCK: ('subscribe_bars', StockDataStream),
+                AssetType.CRYPTO: ('subscribe_bars', CryptoDataStream)},
+            AlpacaDataSource.StreamType.QUOTE:{
+                AssetType.STOCK: ('subscribe_quotes', StockDataStream),
+                AssetType.CRYPTO: ('subscribe_quotes', CryptoDataStream)},
+            AlpacaDataSource.StreamType.TRADE:{
+                AssetType.STOCK: ('subscribe_trades', StockDataStream),
+                AssetType.CRYPTO: ('subscribe_trades', CryptoDataStream)}
+            }
 
         stream = stream_map[asset_class]
 
@@ -298,22 +270,22 @@ class AlpacaDataClient(AlpacaClient, AbstractDataClient):
 
         for symbol in symbols:
 
-            symbol_data = self.client.symbols[symbol]
+            asset = self.client.symbols[symbol]
 
-            if symbol_data is None:
+            if asset is None:
                 raise ValueError(f'Symbol {symbol} is not a known symbol.')
 
-            if not symbol_data.tradable:
+            if not asset.tradable:
                 logger.warning(f'Symbol {symbol} is not a tradable symbol.')
 
-            if symbol_data.status != AssetStatus.ACTIVE:
+            if asset.status != AssetStatus.ACTIVE:
                 logger.warning(f'Symbol {symbol} is not an active symbol.')
 
-            if not symbol_data.fractionable:
+            if not asset.fractionable:
                 logger.warning(
                     f'Symbol {symbol} is not a fractionable symbol.')
 
-            if not symbol_data.easy_to_borrow:
+            if not asset.easy_to_borrow:
                 logger.warning(
                     f'Symbol {symbol} is not easy to borrow (ETB).')
 
@@ -330,14 +302,17 @@ class AlpacaDataClient(AlpacaClient, AbstractDataClient):
     
 
 
-class AlpacaTradeClient(AbstractTradeClient):
+class AlpacaTradeClient(AlpacaTradeClient, AbstractTradeClient):
 
     def __init__(self, *args, **kwargs):
 
         super().__init__(*args, **kwargs)
         
         self._cash = None
-
+        self._asset_quantities = None
+        self._net_worth = None
+        self._longs = None
+        self._shorts = None
 
 
     @property
@@ -456,21 +431,43 @@ class AlpacaTradeClient(AbstractTradeClient):
     def place_order(
         self,
         symbol: str,
-        quantity: float,
-        time_in_force: str,
+        quantity: Optional[float] = None,
+        notional: Optional[float] = None,
+        time_in_force: str = 'fok',
         ) -> Order:
 
+        # this is a market order. Other order types should be implemented by user.
+        # time in force options:
+        # Day order = "day"
+        # Good 'til cancelled = "gtc"
+        # Opoening order = "opg"
+        # Closing order = "cls"
+        # Immediate or cancel = "ioc"
+        # Fill or kill = "fok"
 
-        assert time_in_force in ['ioc', 'fok'], 'Invalid time in force. options: ioc, fok}'
 
-        side = OrderSide.BUY if quantity > 0 else OrderSide.SELL
-        quantity = abs(quantity)
+        if quantity is None and notional is None:
+            raise ValueError('Either quantity or notional must be specified.')
+        
+        if quantity is not None and notional is not None:
+            raise ValueError('Only one of quantity or notional can be specified.')
+        
+        sign = np.sign(quantity) if quantity is not None else np.sign(notional)
+
+        if quantity is not None:
+            quantity = abs(quantity)
+        
+        if notional is not None:
+            notional = abs(notional)
+            
+        side = OrderSide.BUY if sign > 0 else OrderSide.SELL
         time_in_force = TimeInForce(time_in_force)
 
 
         market_order_request = MarketOrderRequest(
             symbol=symbol,
             qty=quantity,
+            notional=notional,
             side=side,
             time_in_force=TimeInForce.DAY)
 

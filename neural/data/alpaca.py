@@ -5,15 +5,15 @@ import os
 import pandas as pd
 import numpy as np
 
-from neural.client.alpaca import AlpacaClient, AlpacaDataClient
+from neural.client.alpaca import AlpacaTradeClient, AlpacaDataClient
 from neural.common import logger
 from neural.common.constants import ALPACA_ACCEPTED_DOWNLOAD_RESOLUTIONS
 from neural.data.base import DatasetMetadata
-from neural.data.time import Calendar
+from neural.utils.time import Calendar
 from neural.data.enums import AssetType, AlpacaDataSource
-from neural.data.io import DatasetIO
-from neural.tools.base import progress_bar, validate_path, Calendar
-from neural.tools.misc import to_timeframe
+from neural.utils.io import IOHandler
+from neural.utils.base import progress_bar, validate_path, Calendar
+from neural.utils.misc import to_timeframe
 
 
 
@@ -28,7 +28,7 @@ class AlpacaDataDownloader():
     and process it for further use.
     """
 
-    def __init__(self, data_client: AlpacaClient) -> None:
+    def __init__(self, data_client: AlpacaTradeClient) -> None:
 
         """
         Initializes the AlpacaDataFetcher class.
@@ -237,7 +237,7 @@ class AlpacaDataDownloader():
                 n_columns=n_columns,
             )
 
-            DatasetIO.write_to_hdf5(
+            IOHandler.write_to_hdf5(
                 file_path=file_path,
                 data_to_write=features_np,
                 metadata=metadata,

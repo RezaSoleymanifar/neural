@@ -85,7 +85,7 @@ class FillDeque(deque):
 class RunningStatistics:
 
     """
-    A class for computing the running mean and standard deviation of a series of data.
+    A class for computing the running mean and standard deviation of a stream of data.
     Can be used to normalize data to a mean of 0 and standard deviation of 1 in an online
     fashion.
 

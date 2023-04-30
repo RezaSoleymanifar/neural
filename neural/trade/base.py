@@ -3,71 +3,16 @@ from typing import List
 import pickle
 import tarfile
 
+import numpy as np
 import torch
 from torch import nn
 
 from neural.client.alpaca import AbstractTradeClient, AbstractDataClient
 from neural.data.base import DatasetMetadata
 from neural.data.base import AsyncDataFeeder
-from neural.env.base import TradeMarketEnv
-from neural.wrapper.pipe import AbstractPipe
-
-
-
-class Agent:
-
-    def __init__(
-        self, 
-        dataset_metadata: DatasetMetadata, 
-        pipe: AbstractPipe, 
-        model: nn.Module):
-        
-        self.dataset_metadata = dataset_metadata
-        self.pipe = pipe
-        self.model = model
-
-    def save(self, filename):
-
-        with tarfile.open(filename, 'w') as tar:
-            # Save dataset metadata
-            dataset_metadata_bytes = pickle.dumps(self.dataset_metadata)
-            dataset_metadata_file = tarfile.TarInfo(name='dataset_metadata')
-            dataset_metadata_file.size = len(dataset_metadata_bytes)
-            tar.addfile(dataset_metadata_file,
-                        fileobj=pickle.BytesIO(dataset_metadata_bytes))
-
-            # Save pipe
-            pipe_bytes = pickle.dumps(self.pipe)
-            pipe_file = tarfile.TarInfo(name='pipe')
-            pipe_file.size = len(pipe_bytes)
-            tar.addfile(pipe_file, fileobj=pickle.BytesIO(pipe_bytes))
-
-            # Save model
-            with tarfile.open(mode='w', fileobj=tar) as inner_tar:
-                inner_tar.addfile(
-                    'model', fileobj=torch.save(self.model, 'model'))
-
-    @staticmethod
-    def load(filename):
-        with tarfile.open(filename, 'r') as tar:
-            # Load dataset metadata
-            dataset_metadata_file = tar.getmember('dataset_metadata')
-            dataset_metadata_bytes = tar.extractfile(
-                dataset_metadata_file).read()
-            dataset_metadata = pickle.loads(dataset_metadata_bytes)
-
-            # Load pipe
-            pipe_file = tar.getmember('pipe')
-            pipe_bytes = tar.extractfile(pipe_file).read()
-            pipe = pickle.loads(pipe_bytes)
-
-            # Load model
-            with tarfile.open(mode='r', fileobj=tar) as inner_tar:
-                model_file = inner_tar.getmember('model')
-                model_bytes = inner_tar.extractfile(model_file).read()
-                model = torch.load(model_bytes)
-
-            return Agent(dataset_metadata, pipe, model)
+from neural.env.base import TradeMarketEnv, TrainMarketEnv
+from neural.meta.pipe import AbstractPipe
+from neural.meta.agent import Agent
 
 
 
@@ -78,12 +23,13 @@ class AbstractTrader(ABC):
     This trader requires a client to connect to a trading environment, a model to generate
     actions, a data pipe to feed data to the model, and metadata for the dataset being used
     to create aggregated data stream matching the training data.
-    """
+    """  
 
     def __init__(self,
         trade_client: AbstractTradeClient,
-        data_clients: List[AbstractDataClient],
-        agent: Agent):
+        data_client: AbstractDataClient,
+        agent: Agent,
+        warmup_env: TrainMarketEnv = None):
 
         """
         Initializes an AbstractTrader object.
@@ -96,13 +42,20 @@ class AbstractTrader(ABC):
         """
 
         self.trade_client = trade_client
-        self.data_clients = data_clients
+        self.data_client = data_client
         self.agent = agent
+        self.data_feeder = self._get_data_feeder()
 
-        self.stream_metadata = self.agent.dataset_metadata.stream
-        self.datafeeder = AsyncDataFeeder(self.stream_metadata, self.data_clients)
 
         return None
+
+
+    def _get_data_feeder(self):
+
+        stream_metadata = self.agent.dataset_metadata.stream
+        data_feeder = AsyncDataFeeder(stream_metadata, self.data_client)
+
+        return data_feeder
 
 
     def apply_rules(self, *args, **kwargs):
@@ -121,6 +74,59 @@ class AbstractTrader(ABC):
         raise NotImplementedError
     
 
+    def no_short(self, quantities: np.ndarray):
+
+        # Due to rounding errors it is is possible that short positions are created
+        # with a very small fractional amount however it will have the same ramifications
+        # as a normal short position. This method will modify quantities at order time
+        # to ensure that not short positions are created.
+
+        held_quantities = self.trade_client.asset_quantities
+        available_quantities = np.where(held_quantities <= 0, 0, held_quantities)
+        quantities = min(abs(quantities), available_quantities)
+
+        return quantities
+    
+    def no_margin(self, quantities: np.ndarray, cash_ratio_threshold: float = 0.1):
+
+        # due to slippage it is possible that margin trading can happen, even when 
+        # no margin occurrs that time of placing orders.the way to 
+        # prevent this practically is to allow a minimum amount of cash to be held
+        # at all times. This method will modify quantities at order time to ensure
+        # that if cash falls below a certain threshold all buy orders will be nullified
+        # Note if margin trading is a concern, it is recommended to set the margin
+        # parameter to a relatively high value.
+
+        cash_ratio = self.trade_client.cash/self.data_client.net_worth
+        if cash_ratio < cash_ratio_threshold:
+            quantities = np.where(quantities > 0, 0, quantities)
+        
+        return quantities
+
+
+    def place_orders(
+        self, 
+        actions: np.ndarray, 
+        *args, 
+        **kwargs):
+        """
+        Takes actions from the model and places relevant orders.
+
+        Args:
+            actions (np.ndarray): A 2D numpy array of actions generated by the model.
+
+        Raises:
+            NotImplementedError: This method must be implemented by a subclass.
+        """
+        # Get the list of symbols from the dataset metadata
+
+        symbols = self.agent.dataset_metadata.symbols
+
+        # Loop over the symbols and actions and place orders for each symbol
+        for symbol, quantity in zip(symbols, actions):
+            self.trade_client.place_order(symbol, actions, *args, **kwargs)
+
+
     def trade(self):
 
         """
@@ -132,29 +138,7 @@ class AbstractTrader(ABC):
         """
 
         self.trade_market_env = TradeMarketEnv(trader=self)
+        self._get_data_feeder()
+        self.agent.trade(self.trade_market_env)
 
-        piped_trade_env = self.pipe(self.trade_market_env)
-        observation = piped_trade_env.reset()
-
-        while True:
-
-            action = self.model(observation)
-            observation, *_ = piped_trade_env.step(action)
-
-
-    def place_orders(self, actions, *args, **kwargs):
-        """
-        Takes actions from the model and places relevant orders.
-
-        Args:
-            actions (np.ndarray): A 2D numpy array of actions generated by the model.
-
-        Raises:
-            NotImplementedError: This method must be implemented by a subclass.
-        """
-        # Get the list of symbols from the dataset metadata
-        symbols = self.dataset_metadata.symbols
-
-        # Loop over the symbols and actions and place orders for each symbol
-        for symbol, action in zip(symbols, actions):
-            self.trade_client.place_order(symbol, action, *args, **kwargs)
+        return None

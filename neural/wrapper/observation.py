@@ -5,8 +5,8 @@ from gym import (Env, Wrapper, ObservationWrapper, spaces, Space)
 
 from neural.common.constants import ACCEPTED_OBSERVATION_TYPES, GLOBAL_DATA_TYPE
 from neural.common.exceptions import IncompatibleWrapperError
-from neural.train.env.wrapper.base import metadata
-from neural.tools.misc import FillDeque, RunningStatistics
+from neural.wrapper.base import metadata
+from neural.utils.base import FillDeque, RunningStatistics
 
 
 def validate_observation(wrapper: Wrapper, observation: np.ndarray | Dict[str, np.ndarray]) -> None:
@@ -1063,7 +1063,7 @@ class ObservationStackerWrapper(ObservationWrapper):
 
 
 @observation
-class RunningMeanSandardDeviationObservationWrapper(ObservationWrapper):
+class RunningStatisticsObservationWrapper(ObservationWrapper):
 
     """
     A Gym environment wrapper that tracks the running mean and standard deviation
@@ -1098,13 +1098,19 @@ class RunningMeanSandardDeviationObservationWrapper(ObservationWrapper):
     >>> env = RunningMeanSandardDeviationObservationWrapper(env)
     """
 
-    def __init__(self, env: Env):
-        super().__init__(env)
-        self.expected_observation_type = [dict, np.ndarray]
-        self.observation_rms = self.initialize_observation_rms(
-            env.observation_space.sample())
+    def __init__(self, env: Env, observation_statistics: Optional[RunningStatistics] = None):
 
-    def initialize_observation_rms(
+        super().__init__(env)
+
+        self.expected_observation_type = [dict, np.ndarray]
+        self.observation_statistics = (
+            observation_statistics if observation_statistics is not None 
+            else self.initialize_observation_statistics(env.observation_space.sample()))
+        
+        return self.observation_statistics
+
+
+    def initialize_observation_statistics(
         self, observation: np.ndarray[float] | Dict[str, np.ndarray[float]]
         ) -> RunningStatistics | Dict[str, RunningStatistics]:
         
@@ -1147,11 +1153,11 @@ class RunningMeanSandardDeviationObservationWrapper(ObservationWrapper):
         """
 
         if isinstance(observation, np.ndarray):
-            self.observation_rms.update(observation)
+            self.observation_statistics.update(observation)
 
         elif isinstance(observation, dict):
             for key, array in observation.items():
-                self.observation_rms[key].update(array)
+                self.observation_statistics[key].update(array)
 
         return None
 
@@ -1164,7 +1170,7 @@ class RunningMeanSandardDeviationObservationWrapper(ObservationWrapper):
 
 
 @observation
-class NormalizeObservationWrapper(RunningMeanSandardDeviationObservationWrapper):
+class NormalizeObservationWrapper(RunningStatisticsObservationWrapper):
 
     """
     A wrapper class that normalizes the observations received from the environment
@@ -1193,7 +1199,14 @@ class NormalizeObservationWrapper(RunningMeanSandardDeviationObservationWrapper)
     >>> env = NormalizeObservationWrapper(env)
     """
 
-    def __init__(self, env: Env, epsilon: float = 1e-8, clip: float = 10) -> None:
+    def __init__(
+        self, 
+        env: Env, 
+        epsilon: float = 1e-8, 
+        clip: float = 10,
+        observation_statistics = Optional[RunningStatistics]
+        ) -> None:
+
         super().__init__(env)
         self.epsilon = epsilon
         self.clip = clip
