@@ -27,11 +27,11 @@ from neural.common.constants import API_KEY, API_SECRET
 from neural.client.base import AbstractClient, AbstractTradeClient, AbstractDataClient
 from neural.data.enums import AlpacaDataSource, AssetType
 from neural.data.base import AssetType
-from neural.utils.misc import objects_to_df
+from neural.utils.misc import objects_to_dataframe
 
 
 
-class AlpacaTradeClient(AbstractClient):
+class AlpacaClient(AbstractClient):
 
     """
     Option 1: Instantiate an instance of the AlpacaClient class with your API key and secret.
@@ -150,7 +150,7 @@ class AlpacaTradeClient(AbstractClient):
         if self._assets is None:
             self._assets = self.clients['trade'].get_all_assets()
 
-        assets_dataframe =  objects_to_df(self._assets)
+        assets_dataframe =  objects_to_dataframe(self._assets)
         
         return assets_dataframe
 
@@ -200,6 +200,16 @@ class AlpacaDataClient(AlpacaTradeClient, AbstractDataClient):
 
         return AlpacaDataSource
 
+    @staticmethod
+    def safe_method_call(object, method_name):
+
+        if hasattr(object, method_name):
+            return getattr(object, method_name)
+        else:
+            raise AttributeError(
+                f"Client does not have method '{method_name}'")
+            
+
     def get_downloader_and_request(
         self,
         dataset_type: AlpacaDataSource.DatasetType,
@@ -213,12 +223,6 @@ class AlpacaDataClient(AlpacaTradeClient, AbstractDataClient):
 
         client = client_map[asset_class]
 
-        def safe_method_call(client, method_name):
-            if hasattr(client, method_name):
-                return getattr(client, method_name)
-            else:
-                raise AttributeError(
-                    f"Client does not have method '{method_name}'")
 
         downloader_request_map = {
             AlpacaDataSource.DatasetType.TRADE: {
@@ -232,8 +236,8 @@ class AlpacaDataClient(AlpacaTradeClient, AbstractDataClient):
                 AssetType.CRYPTO: ('get_crypto_trades', CryptoTradesRequest)}}
 
         downloader_method_name, request = downloader_request_map[dataset_type][asset_class]
-        downloader = safe_method_call(
-            client=client, method_name=downloader_method_name)
+        downloader = AlpacaDataClient.safe_method_call(
+            object=client, method_name=downloader_method_name)
 
         return downloader, request
 
@@ -243,7 +247,7 @@ class AlpacaDataClient(AlpacaTradeClient, AbstractDataClient):
         # async def handler(data):
         #   print(data)
 
-        stream_types: AlpacaDataSource.StreamType,
+        stream_type: AlpacaDataSource.StreamType,
         asset_class: AssetType,
         ) -> Callable:
 
@@ -260,9 +264,10 @@ class AlpacaDataClient(AlpacaTradeClient, AbstractDataClient):
                 AssetType.CRYPTO: ('subscribe_trades', CryptoDataStream)}
             }
 
-        stream = stream_map[asset_class]
-
-        return stream
+        stream_method_name, stream = stream_map[stream_type][asset_class]
+        streamer = stream.stream_method_name
+        
+        return streamer
 
 
     def _validate_symbols(self, symbols: List[str]):
@@ -290,7 +295,7 @@ class AlpacaDataClient(AlpacaTradeClient, AbstractDataClient):
                     f'Symbol {symbol} is not easy to borrow (ETB).')
 
         asset_classes = set(
-            self.symbols.get(symbol).asset_class for symbol in symbols)
+            self.symbols[symbol].asset_class for symbol in symbols)
 
         # checks if symbols have the same asset class
         if len(asset_classes) != 1:
@@ -302,7 +307,7 @@ class AlpacaDataClient(AlpacaTradeClient, AbstractDataClient):
     
 
 
-class AlpacaTradeClient(AlpacaTradeClient, AbstractTradeClient):
+class AlpacaTradeClient(AlpacaClient, AbstractTradeClient):
 
     def __init__(self, *args, **kwargs):
 
@@ -349,7 +354,7 @@ class AlpacaTradeClient(AlpacaTradeClient, AbstractTradeClient):
 
         for symbol in symbols:
             row = positions_dataframe.loc[positions_dataframe['symbol'] == symbol].iloc[0]
-            quantity = (row['qty'] if row['side'] == 'long' else -1 * row['qty'])
+            quantity = row['qty'] if row['side'] == 'long' else -1 * row['qty']
 
             asset_quantities[symbol] = quantity
 
@@ -357,7 +362,7 @@ class AlpacaTradeClient(AlpacaTradeClient, AbstractTradeClient):
 
 
     @property
-    def net_worth(self):
+    def net_worth(self) -> float:
 
         """
         The current net worth of the trader.
@@ -372,7 +377,7 @@ class AlpacaTradeClient(AlpacaTradeClient, AbstractTradeClient):
 
 
     @property
-    def longs(self):
+    def longs(self) -> float:
 
         """
         The current long positions held by the trader.
@@ -387,7 +392,7 @@ class AlpacaTradeClient(AlpacaTradeClient, AbstractTradeClient):
 
 
     @property
-    def shorts(self):
+    def shorts(self) -> float:
 
         """
         The total value of all short positions held by the trader.
@@ -411,7 +416,7 @@ class AlpacaTradeClient(AlpacaTradeClient, AbstractTradeClient):
 
         self._positions = self.clients['trading'].get_all_positions()
 
-        positions_dataframe =  objects_to_df(self._positions)
+        positions_dataframe =  objects_to_dataframe(self._positions)
 
         return positions_dataframe
     
@@ -454,22 +459,19 @@ class AlpacaTradeClient(AlpacaTradeClient, AbstractTradeClient):
         
         sign = np.sign(quantity) if quantity is not None else np.sign(notional)
 
-        if quantity is not None:
-            quantity = abs(quantity)
-        
-        if notional is not None:
-            notional = abs(notional)
-            
         side = OrderSide.BUY if sign > 0 else OrderSide.SELL
         time_in_force = TimeInForce(time_in_force)
+        
 
+        quantity = abs(quantity) if quantity is not None else None
+        notional = abs(notional) if notional is not None else None
 
         market_order_request = MarketOrderRequest(
             symbol=symbol,
             qty=quantity,
             notional=notional,
             side=side,
-            time_in_force=TimeInForce.DAY)
+            time_in_force=time_in_force)
 
         market_order = self.clients['trade'].submit_order(order_data=market_order_request)
 

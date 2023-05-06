@@ -21,11 +21,31 @@ class AlpacaTraderFactory(AbstractTrader):
 
 
     def check_trade_constraints(self, *args, **kwargs):
+        
         """
-        Checks if all trade constraints are met before placing orders.
+        The PDT rule is a regulation enforced by the U.S. Securities and Exchange Commission (SEC) that
+        applies to traders who execute four or more day trades within a five-business-day period using a margin account.
+        A day trade is the act of buy and sell of the same asset on the same day in a margin account. Same applies
+        to shorting and then covering the same asset on the same day in a margin account.
+        If a trader meets this threshold, they are classified as a pattern day trader and must maintain a
+        minimum equity balance of $25,000 in their account to continue day trading. v
+
+        If margin falls bellow maintenance margin then a margin call is issued. A margin call is a broker's demand
+        on an investor using margin to deposit additional money or securities so that the margin account is brought
+        up to the minimum maintenance margin. Margin calls occur when the account value depresses to a value
+        calculated by the broker's particular formula. If the investor fails to bring the account back into line,
+
+        Alpaca API has automatic margin call and pattern day trader protection in place. This facility is provided
+        to avoid triggering the Alpaca's protection mechanism in a more conservative way.
 
         Raises:
+        ---------
             TradeConstraintViolationError: If any trade constraint is violated.
+        
+        Notes:
+        ---------
+            This is only valid in margin accounts. If using cash account the PDT rule does not apply. Also
+            if using 
         """
 
         # pattern day trader constraint
@@ -60,71 +80,23 @@ class AlpacaTrader(AlpacaTraderFactory):
 
     Args:
         client (AlpacaMetaClient): An instance of the Alpaca client.
-        model (nn.Module): The PyTorch model to use for trading.
-        pipe (AbstractPipe): The data pipe to use for feeding the model with data.
-        dataset_metadata (DatasetMetadata): The metadata for the dataset used for training the model.
+        agent (Agent): An instance of the agent to perform decision making.
 
     Attributes:
-        client (AlpacaMetaClient): An instance of the Alpaca client.
-        model (nn.Module): The PyTorch model to use for trading.
-        pipe (AbstractPipe): The data pipe to use for feeding the model with data.
-        dataset_metadata (DatasetMetadata): The metadata for the dataset used for training the model.
-
+        trade_client (AlpacaMetaClient): An instance of the Alpaca client.
+        agent (Agent): An instance of the agent to perform decision making.
     """
 
     def __init__(self, 
-        client: AlpacaTradeClient, 
+        trade_client: AlpacaTradeClient, 
         agent: Agent) -> None:
 
         super().__init__(
-            client,
-            model,
-            pipe,
-            dataset_metadata)
-
-
-    def constraints(self, place_orders_func: Callable):
-
-
-        def customized_place_order(action):
-
-            self.check_trade_constraints()
-
-            place_orders_func(action)
-
-        return customized_place_order
+            trade_client,
+            agent=agent)
+    
     
 
-    def rules(self, place_orders_func: Callable):
-
-        """
-        Decorator factory that returns a new function `custom_place_order`.
-        The purpose of `custom_place_order` is to wrap around a given `place_order_func` function and enforce certain 
-        constraints and rules before calling it.
-        
-        The `check_trade_constraints` method is used to check if any trade constraints are violated, and the `apply_rules` 
-        method is used to apply additional rules. Once these constraints and rules have been checked and applied, 
-        `place_order_func` is called with the `action` argument.
-        
-        The `custom` method is designed to allow users to customize the `place_orders` method while still enforcing the 
-        necessary constraints and rules. It can be used by defining a custom `place_orders` function and then decorating 
-        it with `custom` to ensure that the necessary checks are performed before the orders are placed.
-        """
-
-        def customized_place_order(action):
-
-            try:
-                self.apply_rules()
-
-            except NotImplementedError:
-                pass
-
-            place_orders_func(action)
-
-        return customized_place_order
-    
-
-    @rules
     def place_orders(self, action, *args, **kwargs):
 
         return super().place_orders(action, *args, **kwargs)

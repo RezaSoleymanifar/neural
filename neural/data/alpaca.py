@@ -90,7 +90,7 @@ class AlpacaDataDownloader():
             symbols (List[str]): A list of symbols to download. Note that API does
             not preserve the order of the symbols in the output dataframe. 
             asset_class (AssetClass): The asset class to download.
-            resolution (str): The resolution of the dataset to download (e.g., "1Min").
+            resolution (str): The resolution of the dataset to download (e.g., "1Min", "15Min").
             start (datetime): The start date and time of the dataset to download.
             end (datetime): The end date and time of the dataset to download.
 
@@ -229,7 +229,7 @@ class AlpacaDataDownloader():
                 dataset_type=[dataset_type],
                 column_schema=column_schema,
                 asset_class=asset_class,
-                symbols=symbols,
+                assets=symbols,
                 start=market_open,
                 end=market_close,
                 resolution=resolution,

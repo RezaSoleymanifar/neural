@@ -1,11 +1,12 @@
 from typing import Type, Dict
+from gym.core import Env
 
 import numpy as np
 from gym import (ActionWrapper, Env, Wrapper, spaces, Space)
 
 from neural.common.constants import ACCEPTED_ACTION_TYPES, GLOBAL_DATA_TYPE
 from neural.common.exceptions import IncompatibleWrapperError
-from neural.meta.env.wrapper.base import metadata
+from neural.wrapper.base import metadata
 
 
 
@@ -369,6 +370,21 @@ class IntegerAssetQuantityActionWrapper(ActionWrapper):
     
 
 
+class LiabilitySizingActionWrapper(ActionWrapper):
+    """
+    This action wrapper curbs the liabilities taken when it reaches a certain threshold. This threshold
+    can have a cushion around the maintenance margin to avoid a margin call. It automatically ignores
+    actions that lead to taking more liabilities when the threshold is reached. This included borrowing
+    more cash or shorting more assets. It is recommended to apply this wrapper after the position sizing
+    wrappers to mechanically limit the liabilities taken by the agent. It is still possible that maintenance 
+    margin can be violated due price change. In such scenarios it is beneficial to penalize the agent
+    for violating the set threshold.
+    """
+    def __init__(self, env: Env) -> None:
+        super().__init__(env)
+        self.action_space = spaces.Box(
+            -np.inf, np.inf, shape= (self.n_symbols,), dtype= GLOBAL_DATA_TYPE)
+
 @action
 @metadata
 class NetWorthRelativeMaximumShortSizing(ActionWrapper):
@@ -500,6 +516,7 @@ class NetWorthRelativeMaximumShortSizing(ActionWrapper):
 class FixedMarginActionWrapper(ActionWrapper):
 
     """
+
     A wrapper for OpenAI Gym trading environments that limits the maximum margin amount
     relative to net worth. Margin trading allows buying more than available cash using leverage.
     The initial_margin parameter specifies the fraction of the trade value that must be
@@ -525,7 +542,13 @@ class FixedMarginActionWrapper(ActionWrapper):
     """
 
 
-    def __init__(self, env: Env, initial_margin: float = 1) -> None:
+    def __init__(
+        self, 
+        env: Env, 
+        initial_margin: float = 1, 
+        leverage = 1,
+        maintenance_margin: float = 0.25
+        ) -> None:
         """
         Initializes a new instance of the FixedMarginActionWrapper class.
 
@@ -545,7 +568,11 @@ class FixedMarginActionWrapper(ActionWrapper):
 
         super().__init__(env)
 
-        assert 0 < initial_margin <= 1, "Initial margin must be a float in (0, 1]."
+        if not 0 < initial_margin <= 1:
+            raise AssertionError("Initial margin must be a float in (0, 1].")   
+        
+        if not 1 <= leverage:
+            raise AssertionError("Leverage must be a float greater than 1.")
 
         self.initial_margin = initial_margin
         self.n_symbols = self.market_metadata_wrapper.n_symbols
@@ -581,14 +608,14 @@ class FixedMarginActionWrapper(ActionWrapper):
 
 
         cash = self.market_metadata_wrapper.cash
+        net_worth = self.market_metadata_wrapper.net_worth
 
         for asset, action in enumerate(actions):
             
             if action <= 0:
                 continue
-
-            leverage = 1/self.initial_margin
             
+            leverage = 1/self.initial_margin
             buy = min(action, leverage * cash)
             cash -= buy
             actions[asset] = buy

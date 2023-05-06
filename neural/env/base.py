@@ -192,22 +192,23 @@ class TrainMarketEnv(AbstractMarketEnv):
         """
 
         self.data_feeder = data_feeder
-        self.data_metadata = self.data_feeder.stream_metadata
-        self.column_schema = self.data_metadata.column_schema
-        self.asset_price_mask = self.data_metadata.column_schema[FeatureType.ASSET_CLOSE_PRICE]
-        self.n_steps = self.data_metadata.n_rows
-        self.n_features = self.data_metadata.n_columns
-        self.n_symbols = len(self.data_metadata.symbols)
-
-        self.index = None
         self.initial_cash = initial_cash
         self.initial_asset_quantities = initial_asset_quantities
+        
+        self.data_metadata = self.data_feeder.dataset_metadata
+        self.feature_schema = self.data_metadata.feature_schema
+        self.asset_price_mask = self.data_metadata.asset_price_mask
+        self.n_steps = self.data_metadata.n_rows
+        self.n_features = self.data_metadata.n_columns
+        self.n_symbols = len(self.data_metadata.assets)
+
+        self.index = None
         self.cash = None
         self.net_worth = None
         self.asset_quantities = None
         self.holds = None
         self.features = None
-        self.asset_prices = None
+        self._asset_prices = None
         self.info = None
 
         self.action_space = spaces.Box(
@@ -232,19 +233,25 @@ class TrainMarketEnv(AbstractMarketEnv):
         
         return None
     
+    @property
+    def asset_prices(self) -> np.ndarray:
+
+        self._asset_prices = self.features[self.asset_price_mask]
+
+        return self._asset_prices
+
 
     def update_env(self) -> None:
 
         """
         Updates the environment state by moving to the next time step and updating 
-        the environment variables such as features, asset prices, holds, and net worth.
+        the environment variables such as features, holds, and net worth.
 
         Returns:
             None
         """
 
         self.features = next(self.row_generator)
-        self.asset_prices = self.features[self.asset_price_mask]
 
         self.index += 1
         self.holds[self.asset_quantities != 0] += 1
@@ -253,7 +260,7 @@ class TrainMarketEnv(AbstractMarketEnv):
         return None
 
 
-    def construct_observation(self) -> Dict:
+    def construct_observation(self) -> Dict[str, np.ndarray[float]]:
 
         """
         Constructs the current observation from the environment's state variables.
@@ -270,13 +277,12 @@ class TrainMarketEnv(AbstractMarketEnv):
             'cash': np.array([self.cash], dtype=GLOBAL_DATA_TYPE),
             'asset_quantities': self.asset_quantities,
             'holds': self.holds,
-            'features': self.features
-        }
+            'features': self.features}
         
         return observation
 
 
-    def place_orders(self, actions: Iterable[float]) -> None:
+    def place_orders(self, actions: np.ndarray[float]) -> None:
 
         """
         Places orders on the assets based on the given actions.
@@ -324,14 +330,14 @@ class TrainMarketEnv(AbstractMarketEnv):
         self.row_generator = self.data_feeder.reset()
 
         self.index = -1
-        self.holds = np.zeros((self.n_symbols,), dtype=GLOBAL_DATA_TYPE)
-
         self.cash = self.initial_cash
 
         self.asset_quantities = (
             np.zeros((self.n_symbols,), dtype=GLOBAL_DATA_TYPE)
             if self.initial_asset_quantities is None
             else self.initial_asset_quantities)
+        
+        self.holds = np.zeros((self.n_symbols,), dtype=GLOBAL_DATA_TYPE)
 
         self.update_env()
 
@@ -342,8 +348,8 @@ class TrainMarketEnv(AbstractMarketEnv):
 
     def step(
         self, 
-        actions: Iterable[float]
-        ) -> Tuple[Dict, float, bool, Dict]:
+        actions: np.ndarray[float]
+        ) -> Tuple[Dict[str, np.ndarray], float, bool, Dict]:
 
         """
         Execute a step in the trading environment.
@@ -386,16 +392,16 @@ class TrainMarketEnv(AbstractMarketEnv):
         self.update_env()
         
         reward = self.net_worth - net_worth_
-        self.observation = self.construct_observation()
+        observation = self.construct_observation()
 
         # report terminal state
         done = self.index == self.n_steps - 1
             
-        return self.observation, reward, done, self.info
+        return observation, reward, done, self.info
         
 
 
-class TradeMarketEnv(AbstractMarketEnv):
+class TradeMarketEnv(TrainMarketEnv):
 
 
     """
@@ -493,43 +499,18 @@ class TradeMarketEnv(AbstractMarketEnv):
         """
 
         self.trader = trader
-        self.client = self.trader.trade_client
-        self.data_metadata = self.trader.stream_metadata
-        self.data_feeder = self.data_feeder
+        self.trade_client = self.trader.trade_client
 
-        self.column_schema = self.data_metadata.column_schema
-        self.asset_price_mask = self.data_metadata.column_schema[FeatureType.ASSET_CLOSE_PRICE]
-        self.n_steps = float('inf')
-        self.n_features = self.data_metadata.n_columns
-        self.n_symbols = len(self.data_metadata.symbols)
+        data_feeder = self.trader.data_streamer
+        data_metadata = self.trader.stream_metadata
+        initial_cash = self.trader.cash
+        initial_asset_quantities = self.trader.asset_quantities
 
-        self.initial_cash = self.trader.initial_cash
-        self.cash = None
-        self.net_worth = None
-        self.asset_quantities = None
-        self.holds = None
-        self.features = None
-        self.info = None
-
-        self.action_space = spaces.Box(
-            low=-np.inf, high=np.inf, shape=(
-            self.n_symbols,), dtype=GLOBAL_DATA_TYPE)
-        
-        self.observation_space = spaces.Dict({
-            'cash':spaces.Box(
-            low=0, high=np.inf, shape=(1,), dtype=GLOBAL_DATA_TYPE),
-
-            'asset_quantities': spaces.Box(
-            low=0, high=np.inf, shape = (
-            self.n_symbols,), dtype=GLOBAL_DATA_TYPE),
-
-            'holds': spaces.Box(
-            low=0, high=np.inf, shape = (
-            self.n_symbols,), dtype=GLOBAL_DATA_TYPE),
-            
-            'features': spaces.Box(
-            low=-np.inf, high=np.inf, shape = (
-            self.n_features,), dtype=GLOBAL_DATA_TYPE)})
+        super().__init__(
+            data_feeder=data_feeder, 
+            data_metadata=data_metadata, 
+            initial_cash=initial_cash, 
+            initial_asset_quantities=initial_asset_quantities)
         
         return None
             
@@ -549,8 +530,8 @@ class TradeMarketEnv(AbstractMarketEnv):
 
         # this step will take time equal to dataset resolution to aggregate data stream
         self.features = next(self.row_generator)
+    
         self.holds[self.asset_quantities != 0] += 1
-
         self.cash = self.trader.trade_client.cash
         self.asset_quantities = [
             self.trader.trade_client.asset_quantities.get(symbol, 0) for symbol in self.symbols]
@@ -558,33 +539,9 @@ class TradeMarketEnv(AbstractMarketEnv):
         self.net_worth = self.trader.net_worth
 
         return None
-
-
-    def construct_observation(self) -> Dict:
-
-        """
-        Construct the observation space for the trading environment.
-        The observation space is a dictionary containing the following key-value pairs:
-        - 'cash': The amount of cash available to the trader.
-        - 'asset_quantities': The quantities of assets currently held by the trader.
-        - 'holds': The number of time steps for which the assets have been held by the trader.
-        - 'features': The current features of the market data stream.
-        
-        Returns:
-        observation (Dict): A dictionary containing the current observation space.
-        """
-
-        observation = {
-            'cash': np.array([self.cash], dtype=GLOBAL_DATA_TYPE),
-            'asset_quantities': self.asset_quantities,
-            'holds': self.holds,
-            'features': self.features
-        }
-
-        return observation
     
 
-    def place_orders(self, actions: Iterable[float]) -> None:
+    def place_orders(self, actions: np.ndarray[float]) -> None:
 
         """
         Places orders through the connected trader instance based on the provided actions.
@@ -651,9 +608,8 @@ class TradeMarketEnv(AbstractMarketEnv):
         self.update_env()
 
         reward = self.net_worth - net_worth_
+        observation = self.construct_observation()
+        
+        done = False
 
-        # returns states using env vars
-        self.observation = self.construct_observation()
-
-
-        return self.observation, reward, False, self.info
+        return observation, reward, done, self.info

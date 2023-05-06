@@ -28,7 +28,7 @@ from neural.utils.base import RunningStatistics
 class AbstractPipe(ABC):   
 
     """
-    Abstract class for environment pipes, which add functionality to an existing
+    Abstract class for environment pipes, which add extended functionality to an existing
     environment by applying wrappers successively.
     """
 
@@ -53,8 +53,9 @@ class NetWorthRelativeShortMarginPipe(AbstractPipe):
     observations, impose trading logic, etc. according to your specific needs.
     Wrappers are intantiated every time the pipe method is called. If you need 
     to restore state of some wrappers, you can make that state a constructor
-    argument of both wrapper class and and the pipe and return the state in wrapper constructor
-    so that pipe can track this state and pass it to the wrapper constructor when loading the pipe.
+    argument of both wrapper class and and the pipe and set the argument passed
+    to wrapper equal to state of wrapper. If both satate are immutable, the
+    values will be synchronized.
     """
 
     def __init__(
@@ -69,6 +70,7 @@ class NetWorthRelativeShortMarginPipe(AbstractPipe):
         verbosity: int = 20,
         observation_statistics: Optional[RunningStatistics] = None,
         reward_statistics: Optional[RunningStatistics] = None,
+        track_statistics: bool = True
         ) -> None:
     
 
@@ -127,8 +129,8 @@ class NetWorthRelativeShortMarginPipe(AbstractPipe):
         env = self.buffer(env, buffer_size= self.buffer_size)
         env = self.stacker(env, stack_size = self.stack_size)
 
-        env, self.observation_statistics = self.normalize_observation(
-            env, observation_statistics=self.observation_statistics)
+        env = self.normalize_observation(
+            env, observation_statistics=self.observation_statistics, track_statistics=self.track_statistics)
 
         # action wrappers
         env = self.min_trade(env, min_action=self.min_action)
@@ -137,7 +139,7 @@ class NetWorthRelativeShortMarginPipe(AbstractPipe):
         env = self.short_sizing(env, short_ratio=self.short_ratio)
         env = self.position_sizing(env, trade_ratio=self.trade_ratio)
 
-        env, self.reward_statistics = self.normalize_reward(env, self.reward_statistics)
+        env = self.normalize_reward(env, self.reward_statistics, track_statistics=self.track_statistics)
 
         
         return env

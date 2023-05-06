@@ -13,9 +13,11 @@ class AbstractTrader(ABC):
 
     """
     Abstract base class for defining a trader that can execute orders based on model actions.
-    This trader requires a client to connect to a trading environment, a model to generate
-    actions, a data pipe to feed data to the model, and metadata for the dataset being used
+    This trader requires a client to connect to a trading environment, a data client to
+    stream the live data and an agent to perform the decision making. The agent has a model to generate
+    actions, a data pipe to feed preprocessed to the model, and metadata for the dataset being used
     to create aggregated data stream matching the training data.
+    TODO: support or multiple data clients for streaming from multiple data stream sources.
     """  
 
     def __init__(self,
@@ -28,16 +30,13 @@ class AbstractTrader(ABC):
 
         Args:
             client (AbstractClient): An instance of the client to connect to the trading environment.
-            model (nn.Module): A PyTorch model used to generate actions for the trader.
-            pipe (AbstractPipe): An instance of the data pipe used to feed data to the model.
-            dataset_metadata (DatasetMetadata): Metadata for the dataset being used for training and validation.
+            data_client (AbstractDataClient): An instance of the data client to stream data.
+            agent (Agent): An instance of the agent to perform decision making.
         """
 
         self.trade_client = trade_client
         self.data_client = data_client
         self.agent = agent
-        self.data_feeder = self._get_data_feeder()
-
 
         return None
 
@@ -61,16 +60,17 @@ class AbstractTrader(ABC):
 
     def no_short(self, quantities: np.ndarray):
 
-        # Due to rounding errors it is is possible that short positions are created
-        # with a very small fractional amount however it will have the same ramifications
-        # as a normal short position. This method will modify quantities at order time
-        # to ensure that not short positions are created.
+        # Due to rounding errors it is not possible to guarantee absolute zero as the output of the pipe
+        # and thus small nominal amoutns that can haphazardly happen it will have the same ramifications
+        # as a normal short position. If shoring can lead to being flagged as a pattern day tra This method
+        # will modify quantities at order time to ensure that no short positions are created.
 
         held_quantities = self.trade_client.asset_quantities
         available_quantities = np.where(held_quantities <= 0, 0, held_quantities)
         quantities = min(abs(quantities), available_quantities)
 
         return quantities
+    
     
     def no_margin(self, quantities: np.ndarray, cash_ratio_threshold: float = 0.1):
 
@@ -105,7 +105,7 @@ class AbstractTrader(ABC):
         """
         # Get the list of symbols from the dataset metadata
 
-        symbols = self.agent.dataset_metadata.symbols
+        symbols = self.agent.dataset_metadata.assets
 
         # Loop over the symbols and actions and place orders for each symbol
         for symbol, quantity in zip(symbols, actions):

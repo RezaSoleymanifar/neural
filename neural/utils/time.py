@@ -1,5 +1,6 @@
 from abc import abstractmethod, ABC
 from typing import Any
+from enum import Enum
 
 import pandas as pd
 import pandas_market_calendars as market_calendars
@@ -16,8 +17,14 @@ class AbstractCalendar(ABC):
     Link: https://pandas-market-calendars.readthedocs.io/en/latest/usage.html.
     """
 
+    @staticmethod
     @abstractmethod
-    def schedule(self, caelndar_type: CalendarType) -> pd.DataFrame:
+    def schedule(
+        caelndar_name: str,
+        start_date: Any,
+        end_date: Any,
+        ) -> pd.DataFrame:
+
         """
         An abstract method that returns a DataFrame of market_open and market_close date times
         corresponding to a working day on this calendar. The DataFrame should have columns 'market_open'
@@ -54,7 +61,6 @@ class Calendar:
         asset class. 
         get_schedule(start_date, end_date) -> pd.DataFrame: Returns a schedule dataframe with
         trading dates and times.
-        get_local_time_zone() -> str: Returns the local time zone for the specified calendar type.
 
     Example:
         ---------
@@ -67,22 +73,15 @@ class Calendar:
         2022-01-10	2022-01-10 00:00:00+00:00	2022-01-11 00:00:00+00:00
     """
 
-    def __init__(self, calendar_type: CalendarType) -> None:
-        
-        """
-        Initializes a new instance of the Calendar class.
 
-        Args:
-            asset_class (AssetClass): The asset class for which the calendar is created.
-        """
-        
-        self.calendar_type = calendar_type
+    @property
+    def calendar_names(self) -> list:
+        calendar_names = market_calendars.get_calendar_names()
+        return calendar_names
 
-        return None
-
-
+    @staticmethod
     def schedule(
-        self,
+        calendar_name: str,
         start_date: Any,
         end_date: Any
         ) -> pd.DataFrame:
@@ -101,7 +100,7 @@ class Calendar:
             pd.DataFrame: A dataframe with trading dates and times.
         """
 
-        calendar = market_calendars.get_calendar(self.calendar_type.value)
+        calendar = market_calendars.get_calendar(calendar_name)
 
         # Time returned is always UTC
         schedule_dataframe = calendar.schedule(start_date=start_date, end_date=end_date)

@@ -8,7 +8,7 @@ from alpaca.data.timeframe import TimeFrame, TimeFrameUnit
 
 
 
-def objects_to_df(
+def objects_to_dataframe(
     object_collection: Iterable[Dict[str, str]]
     ) -> pd.DataFrame:
     

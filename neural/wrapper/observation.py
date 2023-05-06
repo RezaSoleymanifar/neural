@@ -12,7 +12,8 @@ from neural.utils.base import FillDeque, RunningStatistics
 def validate_observation(wrapper: Wrapper, observation: np.ndarray | Dict[str, np.ndarray]) -> None:
 
     """
-    Validate the observation received by a wrapper.
+    This is a helper function that is shared between the observation sanity checkers. It performs a
+    basic check to see if the observation is a known observation type accepted by this library.
 
     Parameters
     ----------
@@ -49,9 +50,9 @@ def validate_observation(wrapper: Wrapper, observation: np.ndarray | Dict[str, n
 def observation(wrapper_class: Type[Wrapper]) -> Type[Wrapper]:
 
     """
-    A decorator that augments an existing Gym wrapper class by checking if an
-    observation is in its expected observation space before returning it from the reset
-    and step functions.
+    A decorator that augments an existing Gym wrapper and extends it to have input and output self checks.
+    The reulst is a new observation wrapper that checks if the observation of the wrapped env is in its expected observation space, and also
+    check if the observation returned by the wrapped env is in its defined observation space.
 
     Parameters
     ----------
@@ -92,8 +93,10 @@ def observation(wrapper_class: Type[Wrapper]) -> Type[Wrapper]:
 
 
         """
-        A wrapper that checks if an observation is in the observation space before returning it
-        from the reset and step functions.
+        This wrapper allows an observation wrapper to have input and output self checks by subclassing
+        from it and overriding the observation method. The reulst is a new observation wrapper that
+        checks if the observation of the wrapped env is in its expected observation space, and also
+        check if the observation returned by the wrapped env is in its defined observation space.
 
         Parameters
         ----------
@@ -123,7 +126,7 @@ def observation(wrapper_class: Type[Wrapper]) -> Type[Wrapper]:
             observation: Union[np.ndarray[float], Dict[str, np.ndarray[float]]]) -> None:
             Validates if the observation is in the observation space.
         observation(self, observation: Union[np.ndarray[float], Dict[str, np.ndarray[float]]]
-        ) -> Union[np.ndarray[float], Dict[str, np.ndarray[float]]]:
+            ) -> Union[np.ndarray[float], Dict[str, np.ndarray[float]]]:
             Checks if the observation is in the observation space before returning it
             from the observation method of the base class.
         """
@@ -148,7 +151,7 @@ def observation(wrapper_class: Type[Wrapper]) -> Type[Wrapper]:
                 If the observation is not in the observation space.
             """
 
-            # as a byproduct of following due to inheritance from gym.ObservationWrapper
+            # as a byproduct of following and due to inheritance from gym.ObservationWrapper
             # existence of self.observation_space is guaranteed
             if not hasattr(
                 env, 'observation_space') or not isinstance(env.observation_space, Space):
@@ -170,7 +173,9 @@ def observation(wrapper_class: Type[Wrapper]) -> Type[Wrapper]:
         def _validate_expected_observation_type(self):
 
             """
-            Validates the expected observation type of the wrapper.
+            Validates the expected observation type of the wrapper. ACCEPTED_OBSERVATION_TYPES constant
+            is a list of valid observation types that can be used to define the expected
+            observation type of a wrapper.
 
             Raises
             ------
@@ -209,9 +214,13 @@ def observation(wrapper_class: Type[Wrapper]) -> Type[Wrapper]:
             ) -> None:
 
             """
-            Validates if the observation is in the expected observation type.
+            Validates if the observation is in the expected observation type. the expected observation type
+            is a gym.Space or a subset list of ACCEPTED_ACTION_TYPES. If gym.Space, the observation is checked
+            the the gym space contains it. If subset list of ACCEPTED_ACTION_TYPES, the observation check
+            is less strict and only checks if the observation is of the expected type. This is used when a 
+            wrapper can handle an arbitrary numpy array or dict without imposing any additional restrictions
+            on strcutre of input.
 
-            Parameters
             ----------
             observation : Union[np.ndarray[float], Dict[str, np.ndarray[float]]]
                 The observation to check.
@@ -223,13 +232,20 @@ def observation(wrapper_class: Type[Wrapper]) -> Type[Wrapper]:
             """
 
             validate_observation(self, observation)
-            # when expected observation type is Space
+            
+            valid = True
+
             if isinstance(self.expected_observation_type, Space
                 ) and not self.expected_observation_type.contains(observation):
+                valid = False
+            
+            elif type(observation) not in self.expected_observation_type:
+                valid = False
 
+            if not valid:
                 raise IncompatibleWrapperError(
                 f'Wrapper {type(self).__name__} received an observation of type {type(observation)}, '
-                'which is not in the expected observation space {self.exptected_observation_space}.')
+                f'which is not in the expected observation type {self.expected_observation_type}.')
             
             return None
 
@@ -240,7 +256,9 @@ def observation(wrapper_class: Type[Wrapper]) -> Type[Wrapper]:
             ) -> None:
 
             """
-            Validates if the observation is in the observation space.
+            Validates if the observation is in the observation space. This is post input validation and performed
+            at each time wrapper prouces an observation, to ensure that the observation is in the observation
+            space of the wrapper.
 
             Parameters
             ----------
@@ -268,8 +286,11 @@ def observation(wrapper_class: Type[Wrapper]) -> Type[Wrapper]:
             ) -> np.ndarray[float] | Dict[str, np.ndarray[float]]:
 
             """
-            Checks if the observation is in the observation space before returning it
-            from the observation method of the base class.
+            This overrides the observation method of the base class and performs the sanity checks
+            before and after calling the observation method of the base class. It ensures adherence to
+            the input/output structure of the wrapper and catching irregularities in the observation
+            during the entire operation of wrapper.
+
 
             Parameters
             ----------
@@ -291,8 +312,7 @@ def observation(wrapper_class: Type[Wrapper]) -> Type[Wrapper]:
             observation = super().observation(observation)
             self._validate_observation_in_observation_space(observation)
 
-            return 
-
+            return observation
 
     return ObservationSpaceCheckerWrapper
 
@@ -303,7 +323,9 @@ def buffer(wrapper_class: Type[Wrapper]) -> Type[Wrapper]:
     """
     A decorator that augments an existing Gym wrapper class by recursively
     searching through enclosed wrappers for an observation buffer and creating
-    a pointer to it, if available.
+    a pointer to it, if available. If no observation buffer is found, an error
+    is raised. Useful for upstream wrappers that need to access the history of
+    observations.
 
     Args
     ----------
@@ -323,8 +345,6 @@ def buffer(wrapper_class: Type[Wrapper]) -> Type[Wrapper]:
 
     Example
     -------
-    >>> from gym import ObservationWrapper
-    >>> from neural.meta.env.wrapper.buffer import buffer, ObservationBufferWrapper
 
     >>> @buffer
     >>> class CustomBufferDependentWrapper(Wrapper):
@@ -342,7 +362,7 @@ def buffer(wrapper_class: Type[Wrapper]) -> Type[Wrapper]:
     class ObservationBufferDependentWrapper(wrapper_class):
 
         """
-        A wrapper that searches recursively through enclosed wrappers for an
+        A class that extends the base wrapper class to search recursively through enclosed wrappers for an
         observation buffer and creates a pointer to it. If search fails, an error
         is raised.
 
@@ -350,7 +370,8 @@ def buffer(wrapper_class: Type[Wrapper]) -> Type[Wrapper]:
         ----------
         observation_buffer_wrapper : ObservationBufferWrapper
             A reference to the observation buffer wrapper found in the
-            enclosed wrappers.
+            enclosed wrappers. use this attribute to access the observation
+            buffer wrapper and its attributes.
 
         Methods
         -------
@@ -1098,7 +1119,11 @@ class RunningStatisticsObservationWrapper(ObservationWrapper):
     >>> env = RunningMeanSandardDeviationObservationWrapper(env)
     """
 
-    def __init__(self, env: Env, observation_statistics: Optional[RunningStatistics] = None):
+    def __init__(
+        self, 
+        env: Env, 
+        observation_statistics: Optional[RunningStatistics] = None,
+        track_statistics: bool = True):
 
         super().__init__(env)
 
@@ -1106,6 +1131,9 @@ class RunningStatisticsObservationWrapper(ObservationWrapper):
         self.observation_statistics = (
             observation_statistics if observation_statistics is not None 
             else self.initialize_observation_statistics(env.observation_space.sample()))
+        
+        if track_statistics:
+            observation_statistics = self.observation_statistics
         
         return self.observation_statistics
 
@@ -1136,6 +1164,7 @@ class RunningStatisticsObservationWrapper(ObservationWrapper):
                 observation_rms[key] = RunningStatistics()
 
         return observation_rms
+
 
     def update(
         self,
@@ -1204,12 +1233,14 @@ class NormalizeObservationWrapper(RunningStatisticsObservationWrapper):
         env: Env, 
         epsilon: float = 1e-8, 
         clip: float = 10,
-        observation_statistics = Optional[RunningStatistics]
+        observation_statistics = Optional[RunningStatistics],
+        track_statistics: bool = True
         ) -> None:
 
         super().__init__(env)
         self.epsilon = epsilon
         self.clip = clip
+        self.track_statistics = track_statistics
 
     def observation(
         self, observation: np.ndarray[float] | Dict[str, np.ndarray[float]]

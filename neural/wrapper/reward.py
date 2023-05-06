@@ -36,16 +36,20 @@ class NormalizeRewardWrapper(RewardWrapper):
         epsilon: float = 1e-8,
         clip_threshold: float = np.inf,
         reward_statistics: Optional[RunningStatistics] = None,
+        track_statistics: bool = True
         ) -> None:
 
         """
         This wrapper normalizes immediate rewards so that rewards have mean 0 and standard deviation 1.
+        If track is True the reward_statistics argument will be set equal reward_statistics attribute.
+        This is useful if you want to track the reward statistics from the outer scope.
 
         Args:
         -------
             env (Env): The environment to apply the wrapper.
             epsilon (float, optional): A small constant to avoid divide-by-zero errors when normalizing data. 
-            Defaults to 1e-8. clip_threshold (float, optional): A value to clip normalized data to, to prevent outliers 
+            Defaults to 1e-8. 
+            clip_threshold (float, optional): A value to clip normalized data to, to prevent outliers 
             from dominating the statistics. Defaults to np.inf.
 
         Example
@@ -63,7 +67,10 @@ class NormalizeRewardWrapper(RewardWrapper):
         self.epsilon = epsilon
         self.clip_threshold = clip_threshold
 
-        return reward_statistics
+        if track_statistics:
+            reward_statistics = self.reward_statistics
+
+        return None
     
 
     def reward(self, reward: float) -> float:
@@ -86,6 +93,22 @@ class NormalizeRewardWrapper(RewardWrapper):
         return normalized_reward
 
 
+class LiabilityInterstRewardWrapper(RewardWrapper):
+
+    """
+    This wrapper charges an interest rate at the end of the day on the liability of the agent.
+    The liabilities include borrowed cash, or borrowed assets. The interest rate is calculated
+    as a percentage of the liability. Apply this wrapper prior to normalization of rewards as this
+    substracts the notional value of interest from the reward.
+    """
+
+class PenalizeMarginCallRewardShaperWrapper(RewardWrapper):
+
+    """
+    In the event of a margin call this wrapper applies a penalty to the reward signal. If enough cusion provided in 
+    sizing the liabilities, the agent should be able to avoid margin calls, however if the agent is unable to
+    avoid margin calls, due to adverse price change this penalty can help it learn to avoid margin calls better.
+    """
 
 class AbstractRewardShaperWrapper(RewardWrapper, ABC):
 
