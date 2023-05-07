@@ -10,23 +10,22 @@ from alpaca.data.historical import StockHistoricalDataClient, CryptoHistoricalDa
 from alpaca.data.live import StockDataStream, CryptoDataStream
 from alpaca.trading import TradingClient, MarketOrderRequest
 from alpaca.trading.enums import OrderSide, TimeInForce
-from alpaca.trading.models import Order, TradeAccount, Asset, Position
+from alpaca.trading.models import Order, TradeAccount, Position
+from alpaca.trading.models import Asset as AlpacaAsset
 from alpaca.data.requests import BaseTimeseriesDataRequest
 
 from alpaca.data.requests import (
     CryptoBarsRequest,
-    CryptoQuotesRequest,
     CryptoTradesRequest,
     StockBarsRequest,
     StockQuotesRequest,
-    StockTradesRequest
-)
+    StockTradesRequest)
 
 from neural.common.log import logger
 from neural.common.constants import API_KEY, API_SECRET 
 from neural.client.base import AbstractClient, AbstractTradeClient, AbstractDataClient
-from neural.data.enums import AlpacaDataSource, AssetType
-from neural.data.base import AssetType
+from neural.data.base import AlpacaDataSource, Asset
+from neural.data.enums import AssetType
 from neural.utils.misc import objects_to_dataframe
 
 
@@ -70,8 +69,6 @@ class AlpacaClient(AbstractClient):
         self.secret = secret if secret is not None else API_SECRET
         self.paper = paper
 
-        self._validate_credentials()
-        super().__init__()
 
         self._clients = None
         self._account = None
@@ -80,11 +77,14 @@ class AlpacaClient(AbstractClient):
         self._asset_classes = None
         self._exchanges = None
 
+        super().__init__()
+
         return None
 
 
     def connect(self):
         # super class runs this method at contructor.
+        self._validate_credentials()
         self._clients = self._get_clients()
         self._account = self._get_account()
 
@@ -99,6 +99,7 @@ class AlpacaClient(AbstractClient):
         
         return None
     
+
     def _get_clients(self) -> RESTClient:
 
         # crypto does not need key, and secret but will be faster if provided
@@ -117,7 +118,7 @@ class AlpacaClient(AbstractClient):
     def _get_account(self) -> TradeAccount:
 
         try:
-            self.account = self.clients['trading'].get_account()
+            account = self.clients['trading'].get_account()
             if not self.account.status == AccountStatus.ACTIVE:
 
                 logger.warning(
@@ -127,7 +128,7 @@ class AlpacaClient(AbstractClient):
             logger.exception(
                 f'Account setup failed: {e}')
             
-        return None
+        return account
     
 
     @property
@@ -146,6 +147,9 @@ class AlpacaClient(AbstractClient):
     @property
     def assets(self) -> pd.DataFrame:
 
+        """
+        Returns a dataframe of all assets available on Alpaca API.
+        """
 
         if self._assets is None:
             self._assets = self.clients['trade'].get_all_assets()
@@ -157,9 +161,12 @@ class AlpacaClient(AbstractClient):
 
 
     @property
-    def symbols(self) -> Dict[str, Asset]:
+    def symbols(self) -> Dict[str, AlpacaAsset]:
 
-
+        """
+        Returns a dictionary of all symbols available on Alpaca API. The 
+        corresponding values are the Asset objects.
+        """
         if self._symbols is None:
             self._symbols = {asset.symbol: asset for asset in self.assets}
 
@@ -188,7 +195,7 @@ class AlpacaClient(AbstractClient):
         return exchanges
 
 
-class AlpacaDataClient(AlpacaTradeClient, AbstractDataClient):
+class AlpacaDataClient(AlpacaClient, AbstractDataClient):
 
     def __init__(self, *args, **kwargs):
 
@@ -199,6 +206,7 @@ class AlpacaDataClient(AlpacaTradeClient, AbstractDataClient):
     def data_source(self):
 
         return AlpacaDataSource
+
 
     @staticmethod
     def safe_method_call(object, method_name):
@@ -213,7 +221,7 @@ class AlpacaDataClient(AlpacaTradeClient, AbstractDataClient):
     def get_downloader_and_request(
         self,
         dataset_type: AlpacaDataSource.DatasetType,
-        asset_class=AssetType
+        asset_type=AssetType
         ) -> Tuple[Callable, BaseTimeseriesDataRequest]:
 
 
@@ -221,7 +229,7 @@ class AlpacaDataClient(AlpacaTradeClient, AbstractDataClient):
             AssetType.STOCK: self.clients['stocks'],
             AssetType.CRYPTO: self.clients['crypto']}
 
-        client = client_map[asset_class]
+        client = client_map[asset_type]
 
 
         downloader_request_map = {
@@ -235,7 +243,7 @@ class AlpacaDataClient(AlpacaTradeClient, AbstractDataClient):
                 AssetType.STOCK: ('get_stock_trades', StockTradesRequest),
                 AssetType.CRYPTO: ('get_crypto_trades', CryptoTradesRequest)}}
 
-        downloader_method_name, request = downloader_request_map[dataset_type][asset_class]
+        downloader_method_name, request = downloader_request_map[dataset_type][asset_type]
         downloader = AlpacaDataClient.safe_method_call(
             object=client, method_name=downloader_method_name)
 
@@ -243,12 +251,13 @@ class AlpacaDataClient(AlpacaTradeClient, AbstractDataClient):
 
 
     def get_streamer(self, 
-        # callable take an async handler that receies the data and a list of symbols
+                     
+        # callable take an async handler that receiVes the data and a list of symbols
         # async def handler(data):
         #   print(data)
 
         stream_type: AlpacaDataSource.StreamType,
-        asset_class: AssetType,
+        asset_type: AssetType,
         ) -> Callable:
 
 
@@ -264,46 +273,63 @@ class AlpacaDataClient(AlpacaTradeClient, AbstractDataClient):
                 AssetType.CRYPTO: ('subscribe_trades', CryptoDataStream)}
             }
 
-        stream_method_name, stream = stream_map[stream_type][asset_class]
-        streamer = stream.stream_method_name
+        stream_method_name, stream = stream_map[stream_type][asset_type]
+
+        streamer = AlpacaDataClient.safe_method_call(
+            object=stream, method_name=stream_method_name)
         
         return streamer
 
 
-    def _validate_symbols(self, symbols: List[str]):
+    def _get_assets(self, symbols: List[str]):
 
+        asset_type_map = {
+            AssetClass.US_EQUITY: AssetType.STOCK, AssetClass.CRYPTO: AssetType.CRYPTO}
+        
+        assets = list()
 
+        asset_types = set(
+            asset_type_map[self.symbols[symbol].asset_class] for symbol in symbols)
+
+        # checks if symbols have the same asset class
+        if len(asset_types) != 1:
+            raise ValueError(f'Non-homogenous asset types: {asset_types}.')
+        
         for symbol in symbols:
 
-            asset = self.client.symbols[symbol]
+            alpaca_asset = self.client.symbols[symbol]
 
-            if asset is None:
+            if alpaca_asset is None:
                 raise ValueError(f'Symbol {symbol} is not a known symbol.')
 
-            if not asset.tradable:
+            if not alpaca_asset.tradable:
                 logger.warning(f'Symbol {symbol} is not a tradable symbol.')
 
-            if asset.status != AssetStatus.ACTIVE:
+            if alpaca_asset.status != AssetStatus.ACTIVE:
                 logger.warning(f'Symbol {symbol} is not an active symbol.')
 
-            if not asset.fractionable:
+            if not alpaca_asset.fractionable:
                 logger.warning(
                     f'Symbol {symbol} is not a fractionable symbol.')
 
-            if not asset.easy_to_borrow:
+            if not alpaca_asset.easy_to_borrow:
                 logger.warning(
                     f'Symbol {symbol} is not easy to borrow (ETB).')
+            
+            asset_type = asset_type_map[alpaca_asset.asset_class]
 
-        asset_classes = set(
-            self.symbols[symbol].asset_class for symbol in symbols)
+            assets.append(
+                Asset(
+                symbol=symbol,
+                asset_type= asset_type,
+                marginable=alpaca_asset.marginable,
+                fractionable=alpaca_asset.fractionable,
+                shortable=alpaca_asset.shortable,
+                initial_margin=alpaca_asset.initial_margin,
+                maintenance_margin=alpaca_asset.maintenance_margin
+                ))
 
-        # checks if symbols have the same asset class
-        if len(asset_classes) != 1:
-            raise ValueError('Symbols are not of the same asset class.')
-
-        asset_class = asset_classes.pop()
-
-        return asset_class
+        return assets
     
 
 
@@ -453,7 +479,6 @@ class AlpacaTradeClient(AlpacaClient, AbstractTradeClient):
 
         if quantity is None and notional is None:
             raise ValueError('Either quantity or notional must be specified.')
-        
         if quantity is not None and notional is not None:
             raise ValueError('Only one of quantity or notional can be specified.')
         

@@ -2,30 +2,29 @@ from abc import abstractmethod, ABC
 from typing import Optional
 
 from neural.wrapper.base import (
-    MarketEnvMetadataWrapper, 
+    MarketEnvMetadataWrapper,
     ConsoleTearsheetRenderWrapper)
 
 from neural.wrapper.action import (
     MinTradeSizeActionWrapper,
-    FixedMarginActionWrapper, 
+    FixedMarginActionWrapper,
     NetWorthRelativeMaximumShortSizing,
-    NetWorthRelativeUniformPositionSizing, 
-    ConsoleTearsheetRenderWrapper,
-    MarketEnvMetadataWrapper,
+    NetWorthRelativeUniformPositionSizing,
     IntegerAssetQuantityActionWrapper,
     ActionClipperWrapper)
 
 from neural.wrapper.observation import (
-    ObservationStackerWrapper, 
-    ObservationBufferWrapper, 
+    ObservationStackerWrapper,
+    ObservationBufferWrapper,
     FlattenToNUmpyObservationWrapper,
     NormalizeObservationWrapper)
 
 from neural.wrapper.reward import NormalizeRewardWrapper
-
 from neural.utils.base import RunningStatistics
 
-class AbstractPipe(ABC):   
+
+
+class AbstractPipe(ABC):
 
     """
     Abstract class for environment pipes, which add extended functionality to an existing
@@ -63,7 +62,7 @@ class NetWorthRelativeShortMarginPipe(AbstractPipe):
         trade_ratio: float = 0.02,
         short_ratio: float = 0,
         initial_margin: float = 1,
-        min_action: float = 1,
+        min_trade: float = 1,
         integer: bool = False,
         buffer_size: int = 10,
         stack_size: int = None,
@@ -73,17 +72,17 @@ class NetWorthRelativeShortMarginPipe(AbstractPipe):
         track_statistics: bool = True
         ) -> None:
     
-
         self.trade_ratio = trade_ratio
         self.short_ratio = short_ratio
         self.initial_margin = initial_margin
-        self.min_action = min_action
+        self.min_trade = min_trade
         self.integer = integer
         self.buffer_size = buffer_size
         self.stack_size = stack_size
         self.verbosity = verbosity
         self.observation_statistics = observation_statistics
         self.reward_statistics = reward_statistics
+        self.track_statistics = track_statistics
 
         self.metadata_wrapper = MarketEnvMetadataWrapper
         self.render = ConsoleTearsheetRenderWrapper
@@ -130,16 +129,17 @@ class NetWorthRelativeShortMarginPipe(AbstractPipe):
         env = self.stacker(env, stack_size = self.stack_size)
 
         env = self.normalize_observation(
-            env, observation_statistics=self.observation_statistics, track_statistics=self.track_statistics)
+            env, observation_statistics=self.observation_statistics,
+            track_statistics=self.track_statistics)
 
         # action wrappers
-        env = self.min_trade(env, min_action=self.min_action)
+        env = self.min_trade(env, min_action=self.min_trade)
         env = self.integer_sizing(env, self.integer)
         env = self.margin_sizing(env, initial_margin=self.initial_margin)
         env = self.short_sizing(env, short_ratio=self.short_ratio)
         env = self.position_sizing(env, trade_ratio=self.trade_ratio)
 
-        env = self.normalize_reward(env, self.reward_statistics, track_statistics=self.track_statistics)
-
-        
+        env = self.normalize_reward(
+            env, self.reward_statistics, track_statistics=self.track_statistics)
+                
         return env

@@ -4,234 +4,6 @@ from abc import ABC
 from neural.client.alpaca import AlpacaDataClient
 
 
-class AbstractDataSource(ABC):
-
-    """
-    Abstract base class for a data source that standardizes the interface for accessing data from different sources.
-    A data source is typically an API or a database that provides access to data. This class defines the interface
-    for accessing data from a data source. The data source can either provide a static data namely dataset that 
-    aggreates old data streams useful for training. Or it can provide a live stream of data that is used for high frequency trading.
-    It also defines a set of nested enums for standardizing the available dataset and stream types.
-
-    Attributes:
-    -----------
-    DatasetType : Enum
-        Enumeration class that defines the available dataset types for the data source. This can include
-        types such as stock prices, weather data, social media data, etc. Dataset types are used to organize
-        the data and to ensure that consistent data processing methods are used across datasets.
-
-    StreamType : Enum
-    ----------------
-        Enumeration class that defines the available stream types for the data source. This can include types
-        such as tick data, volume data, order book data, tweets etc. Stream types are used to stream live data for 
-        high frequency trading. Usually an algorithm is trained usinsg a static data and it's dataset metadata is
-        mappped to a stream type for streaming and aggregating the type of data that was used to train the agent on.
-        Any dataset type should logically have a corresponding stream type, otherwise trained agent will not be deployable
-        in a live trading environment.
-    
-    Methods:
-    -----------
-        stream(dataset_type: DatasetType) -> StreamType
-            Returns the stream type corresponding to the specified dataset type. By default maps 
-            to corresponding stream type using the value of the dataset type enum. This means a
-            dataset type with value 'STOCK' will be mapped to a stream type with value 'STOCK'.
-            This behavior can be overriden to provide custom mapping between dataset and stream types.
-
-    Example:
-    -----------
-        >>> class MyDataSource(AbstractDataSource):
-        ...     class DatasetType(Enum):
-        ...         MY_DATASET = 'MY_DATASET'
-        ...     class StreamType(Enum):
-        ...         MY_STREAM = 'MY_STREAM'
-        ...     def stream(self, dataset_type):
-        ...         # your custom stream mapping logic here.
-        ...         ...
-    """ 
-
-    class DatasetType(Enum):
-
-        @property
-        def data_source(self):
-
-             # returns pointer to data source in the outer scope.
-            self._data_source = globals()[self.__class__.__qualname__.split('.')[0]]
-             
-            return self._data_source
-        
-
-        @property
-        def stream(self):
-            # uses the stream implementation of data source to map dataset type to stream type.
-            return self.data_source.stream(self)
-
-
-        def __eq__(self, other):
-
-            # convenience method to check if other is a dataset type.
-            return isinstance(other, AbstractDataSource.DatasetType)
-
-
-    class StreamType(Enum):
-
-        # convenience method to check if other is a stream type.
-        @property
-        def data_source(self):
-
-            # recovers data source from the outer scope.
-            self._data_source = globals()[self.__class__.__qualname__.split('.')[0]]
-             
-            return self._data_source
-        
-
-        def __eq__(self, other):
-
-            # convenience method to check if other is a stream type.
-            return isinstance(other, AbstractDataSource.StreamType)
-
-
-    @classmethod
-    def stream(cls, dataset_type: DatasetType) -> StreamType:
-
-        """
-        Returns a StreamType enum member corresponding to the given DatasetType enum member.
-        If a different behavior is intended subclasses can override this method to provide custom
-        mapping between dataset and stream types.
-
-        Args:
-        ---------
-            dataset_type (DatasetType): A member of the DatasetType enum that represents the type of dataset.
-
-        Returns:
-        --------
-            StreamType: A member of the StreamType enum that corresponds to the given dataset_type.
-
-        Raises:
-        ---
-            ValueError: If dataset_type is not a valid member of the DatasetType enum, 
-            or if there is no corresponding member of the StreamType enum.
-
-        Notes:
-        ------
-            The other direction of mapping from stream to dataset type is not valid because
-            there can be multiple dataset types that can be mapped to the same stream type.
-        """
-
-        stream_map = {
-            dataset_type: cls.StreamType(dataset_type.value) for dataset_type in cls.DatasetType}
-
-        try:
-            stream_type = stream_map[dataset_type]
-
-        except KeyError:
-            raise KeyError(f"Corresponding stream type of {dataset_type} is not found.")
-        
-        return stream_type
-
-
-
-
-class AlpacaDataSource(AbstractDataSource):
-
-
-    class DatasetType(AbstractDataSource.DatasetType):
-
-        """
-        Enumeration class that defines constants for the different types of datasets.
-
-        Attributes
-        ----------
-        TRADE : str
-            The type of dataset for aggregated trade stream data. Also known as bars data.
-        QUOTE : str
-            The type of dataset for aggregated quote stream.
-        ORDER_BOOK : str
-            The type of dataset for aggregated order book data.
-        """
-        BAR = 'BAR'
-        TRADE = 'TRADE'
-        QUOTE = 'QUOTE'
-        ORDER_BOOK = 'ORDER_BOOK'
-
-    class StreamType(AbstractDataSource.StreamType):
-
-        """
-        Enumeration class that defines constants for the different types of data streams.
-
-        Attributes
-        ----------
-        QUOTE : str
-            The type of data stream for quotes.
-        TRADE : str
-            The type of data stream for trades.
-        ORDER_BOOK : str
-            The type of data stream for order book data.
-        """
-        BAR = 'BAR'
-        TRADE = 'TRADE'
-        QUOTE = 'QUOTE'
-
-
-class CalendarType(Enum):
-
-    """
-
-    If an asset does not fall under these three categories it can be handled by user speciying the
-    CalendarType.MY_CALENDAR_TYPE = 'VALID_PANDAS_CALENDAR' and providing a valid pandas_market_calendars
-    calendar. This is the calendar used by default and CelndarType enum values correponds to valid
-    strings for the pandas_market_calendars get_calendar() method.
-    More information here: https://pandas-market-calendars.readthedocs.io/en/latest/modules.html.
-
-    Examples:
-    ----------
-    >>> CalendarType.MY_CALENDAR_TYPE = 'VALID_PANDAS_CALENDAR'
-    """
-
-    NEW_YORK_STOCK_EXCHANGE = 'NYSE'
-    TWENTY_FOUR_SEVEN = '24/7'
-    TWENTY_FOUR_FIVE = '24/5'
-    CHICAGO_MERCANTILE_EXCHANGE = 'CME'
-    INTERCONTINENTAL_EXCHANGE = 'ICE'
-    LONDON_STOCK_EXCHANGE = 'LSE'
-    TOKYO_STOCK_EXCHANGE = 'TSE'
-    SINGAPORE_EXCHANGE = 'SGX'
-    AUSTRALIAN_SECURITIES_EXCHANGE = 'ASX'
-    MOSCOW_EXCHANGE = 'MOEX'
-    BME_SPANISH_EXCHANGES = 'BM'
-    BOVESPA = 'FBOVESPA'
-    JOHANNESBURG_STOCK_EXCHANGE = 'JSE'
-    SHANGHAI_STOCK_EXCHANGE = 'SSE'
-    SHENZHEN_STOCK_EXCHANGE = 'SZSE'
-    HONG_KONG_EXCHANGES_AND_CLEARING = 'HKEX'
-    NATIONAL_STOCK_EXCHANGE_OF_INDIA = 'NSE'
-    BOMBAY_STOCK_EXCHANGE = 'BSE'
-    KOREA_EXCHANGE = 'KRX'
-    TAIWAN_STOCK_EXCHANGE = 'TWSE'
-
-    @property
-    def schedule(self):
-        return CALENDAR(self.value).schedule
-
-
-class AssetType(Enum):
-
-    """
-    Enum class that defines the type of asset. Note that supported calendars 
-    are 
-    """
-
-    STOCK = 'STOCK'
-    ETF = 'ETF'
-    CRYPTO = 'CRYPTO'
-    CURRENCY = 'CURRENCY'
-    COMMODITY = 'COMMODITY'
-    BOND = 'BOND'
-    INDEX = 'INDEX'
-    FUTURE = 'FUTURE'
-    OPTION = 'OPTION'
-    FUND = 'FUND'
-
-
 class FeatureType(Enum):
 
     """
@@ -282,6 +54,59 @@ class FeatureType(Enum):
     ASSET_CLOSE_PRICE = 'CLOSE'
     ASSET_BID_PRICE = 'BID'
     ASSET_ASK_PRICE = 'ASK'
-    EMBEDDING = 'EMBEDDING'
-    SENTIMENT = 'SENTIMENT'
-    TEXT = 'TEXT'
+    ASSET_TEXT_EMBEDDING = 'EMBEDDING'
+    ASSET_SENTIMENT_SCORE = 'SENTIMENT'
+    ASSET_TEXT = 'TEXT'
+
+
+class AssetType(str, Enum):
+
+    """
+    An enum class representing different categories of financial instruments.
+
+    STOCK: Represents ownership in a publicly traded corporation. Stocks can be traded on stock exchanges, 
+    and their value can fluctuate based on various factors such as the company's financial performance and market conditions.
+
+    CURRENCY: Represents a unit of currency, such as the US dollar, Euro, or Japanese yen. Currencies can be traded on the 
+    foreign exchange market (Forex), and their value can fluctuate based on various factors such as interest rates, g
+    eopolitical events, and market sentiment.
+
+    CRYPTOCURRENCY: Represents a digital or virtual currency that uses cryptography for security and operates 
+    independently of a central bank. Cryptocurrencies can be bought and sold on various cryptocurrency exchanges, 
+    and their value can fluctuate based on various factors such as supply and demand, adoption rates, and regulatory developments.
+
+    FUTURES: Represents a standardized contract to buy or sell an underlying asset at a predetermined price and date in the future. 
+    Futures can be traded on various futures exchanges, and their value can fluctuate based on various factors such as supply and demand, 
+    geopolitical events, and market sentiment.
+
+    OPTIONS: Represents a financial contract that gives the buyer the right, but not the obligation, to buy or sell an underlying 
+    asset at a specified price on or before a specified date. Options can be traded on various options exchanges, 
+    and their value can fluctuate based on various factors such as the price of the underlying asset, 
+    the time until expiration, and market volatility.
+
+    BOND: Represents debt issued by a company or government entity. Bonds can be traded on various bond markets, 
+    and their value can fluctuate based on various factors such as interest rates, creditworthiness, and market conditions.
+
+    EXCHANGE_TRADED_FUND: Represents a type of investment fund traded on stock exchanges, similar to mutual funds, 
+    but with shares that can be bought and sold like individual stocks. ETFs can provide exposure to a wide range of asset classes, 
+    such as stocks, bonds, and commodities, and their value can fluctuate based on various factors such as the performance of 
+    the underlying assets and market conditions.
+
+    MUTUAL_FUND: Represents a professionally managed pool of money from many investors, used to purchase a diversified mix of stocks, 
+    bonds, or other assets. Mutual funds can be bought and sold through fund companies or brokerages, and their value can 
+    fluctuate based on various factors such as the performance of the underlying assets and market conditions.
+
+    COMMODITY: Represents a physical or virtual product that can be bought or sold, such as gold, oil, or currencies. 
+    Commodities can be traded on various commodity exchanges, and their value can fluctuate based on various factors 
+    such as supply and demand, geopolitical events, and market sentiment.
+    """
+
+    STOCK = 'STOCK'
+    CURRENCY = 'CURRENCY'
+    CRYPTO = 'CRYPTOCURRENCY'
+    FUTURES = 'FUTURES'
+    OPTIONS = 'OPTIONS'
+    BOND = 'BOND'
+    EXCHANGE_TRADED_FUND = 'ETF'
+    MUTUAL_FUND = 'MUTUAL_FUND'
+    COMMODITY = 'COMMODITY'

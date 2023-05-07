@@ -3,70 +3,18 @@ from datetime import datetime
 from typing import Dict, Tuple, Iterable, Optional, List
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from enum import Enum
 from collections import OrderedDict
+from enum import Enum
 
 import h5py as h5
 import pickle
 import pandas as pd
 import numpy as np
 
-from neural.utils.time import Calendar
+from neural.utils.time import Calendar, CalendarType
 from neural.data.enums import AbstractDataSource, FeatureType
 from neural.client.base import AbstractDataClient
-
-
-class AssetType(str, Enum):
-
-    """
-    An enum class representing different categories of financial instruments.
-
-    STOCK: Represents ownership in a publicly traded corporation. Stocks can be traded on stock exchanges, 
-    and their value can fluctuate based on various factors such as the company's financial performance and market conditions.
-
-    CURRENCY: Represents a unit of currency, such as the US dollar, Euro, or Japanese yen. Currencies can be traded on the 
-    foreign exchange market (Forex), and their value can fluctuate based on various factors such as interest rates, g
-    eopolitical events, and market sentiment.
-
-    CRYPTOCURRENCY: Represents a digital or virtual currency that uses cryptography for security and operates 
-    independently of a central bank. Cryptocurrencies can be bought and sold on various cryptocurrency exchanges, 
-    and their value can fluctuate based on various factors such as supply and demand, adoption rates, and regulatory developments.
-
-    FUTURES: Represents a standardized contract to buy or sell an underlying asset at a predetermined price and date in the future. 
-    Futures can be traded on various futures exchanges, and their value can fluctuate based on various factors such as supply and demand, 
-    geopolitical events, and market sentiment.
-
-    OPTIONS: Represents a financial contract that gives the buyer the right, but not the obligation, to buy or sell an underlying 
-    asset at a specified price on or before a specified date. Options can be traded on various options exchanges, 
-    and their value can fluctuate based on various factors such as the price of the underlying asset, 
-    the time until expiration, and market volatility.
-
-    BOND: Represents debt issued by a company or government entity. Bonds can be traded on various bond markets, 
-    and their value can fluctuate based on various factors such as interest rates, creditworthiness, and market conditions.
-
-    EXCHANGE_TRADED_FUND: Represents a type of investment fund traded on stock exchanges, similar to mutual funds, 
-    but with shares that can be bought and sold like individual stocks. ETFs can provide exposure to a wide range of asset classes, 
-    such as stocks, bonds, and commodities, and their value can fluctuate based on various factors such as the performance of 
-    the underlying assets and market conditions.
-
-    MUTUAL_FUND: Represents a professionally managed pool of money from many investors, used to purchase a diversified mix of stocks, 
-    bonds, or other assets. Mutual funds can be bought and sold through fund companies or brokerages, and their value can 
-    fluctuate based on various factors such as the performance of the underlying assets and market conditions.
-
-    COMMODITY: Represents a physical or virtual product that can be bought or sold, such as gold, oil, or currencies. 
-    Commodities can be traded on various commodity exchanges, and their value can fluctuate based on various factors 
-    such as supply and demand, geopolitical events, and market sentiment.
-    """
-
-    STOCK = 'STOCK'
-    CURRENCY = 'CURRENCY'
-    CRYPTOCURRENCY = 'CRYPTOCURRENCY'
-    FUTURES = 'FUTURES'
-    OPTIONS = 'OPTIONS'
-    BOND = 'BOND'
-    EXCHANGE_TRADED_FUND = 'ETF'
-    MUTUAL_FUND = 'MUTUAL_FUND'
-    COMMODITY = 'COMMODITY'
+from neural.data.enums import AssetType
 
 
 
@@ -94,7 +42,178 @@ class Asset:
     initial_margin: float
     maintenance_margin: float
 
+
+  
+class AbstractDataSource(ABC):
+
+    """
+    Abstract base class for a data source that standardizes the interface for accessing data from different sources.
+    A data source is typically an API or a database that provides access to data. This class defines the interface
+    for accessing data from a data source. The data source can either provide a static data namely dataset that 
+    aggreates old data streams useful for training. Or it can provide a live stream of data that is used for high frequency trading.
+    It also defines a set of nested enums for standardizing the available dataset and stream types.
+
+    Attributes:
+    -----------
+    DatasetType : Enum
+        Enumeration class that defines the available dataset types for the data source. This can include
+        types such as stock prices, weather data, social media data, etc. Dataset types are used to organize
+        the data and to ensure that consistent data processing methods are used across datasets.
+
+    StreamType : Enum
+    ----------------
+        Enumeration class that defines the available stream types for the data source. This can include types
+        such as tick data, volume data, order book data, tweets etc. Stream types are used to stream live data for 
+        high frequency trading. Usually an algorithm is trained usinsg a static data and it's dataset metadata is
+        mappped to a stream type for streaming and aggregating the type of data that was used to train the agent on.
+        Any dataset type should logically have a corresponding stream type, otherwise trained agent will not be deployable
+        in a live trading environment.
     
+    Methods:
+    -----------
+        stream(dataset_type: DatasetType) -> StreamType
+            Returns the stream type corresponding to the specified dataset type. By default maps 
+            to corresponding stream type using the value of the dataset type enum. This means a
+            dataset type with value 'STOCK' will be mapped to a stream type with value 'STOCK'.
+            This behavior can be overriden to provide custom mapping between dataset and stream types.
+
+    Example:
+    -----------
+        >>> class MyDataSource(AbstractDataSource):
+        ...     class DatasetType(Enum):
+        ...         MY_DATASET = 'MY_DATASET'
+        ...     class StreamType(Enum):
+        ...         MY_STREAM = 'MY_STREAM'
+        ...     def stream(self, dataset_type):
+        ...         # your custom stream mapping logic here.
+        ...         ...
+    """ 
+
+    class DatasetType(Enum):
+
+        @property
+        def data_source(self):
+
+             # returns pointer to data source class in the outer scope.
+            self._data_source = globals()[self.__class__.__qualname__.split('.')[0]]
+             
+            return self._data_source
+        
+
+        @property
+        def stream(self):
+            # uses the stream implementation of data source to map dataset type to stream type.
+            return self.data_source.stream(self)
+
+
+        def __eq__(self, other):
+
+            # convenience method to check if other is a dataset type.
+            return isinstance(other, AbstractDataSource.DatasetType)
+
+
+    class StreamType(Enum):
+
+        @property
+        def data_source(self):
+
+            # recovers data source from the outer scope.
+            self._data_source = globals()[self.__class__.__qualname__.split('.')[0]]
+             
+            return self._data_source
+        
+
+        def __eq__(self, other):
+
+            # convenience method to check if other is a stream type.
+            return isinstance(other, AbstractDataSource.StreamType)
+
+
+    @classmethod
+    def stream(cls, dataset_type: DatasetType) -> StreamType:
+
+        """
+        Returns a StreamType enum member corresponding to the given DatasetType enum member.
+        If a different behavior is intended subclasses can override this method to provide custom
+        mapping between dataset and stream types.
+
+        Args:
+        ---------
+            dataset_type (DatasetType): A member of the DatasetType enum that represents the type of dataset.
+
+        Returns:
+        --------
+            StreamType: A member of the StreamType enum that corresponds to the given dataset_type.
+
+        Raises:
+        ---
+            ValueError: If dataset_type is not a valid member of the DatasetType enum, 
+            or if there is no corresponding member of the StreamType enum.
+
+        Notes:
+        ------
+            The other direction of mapping from stream to dataset type is not valid because
+            there can be multiple dataset types that can be mapped to the same stream type.
+        """
+
+        stream_map = {
+            dataset_type: cls.StreamType(dataset_type.value) for dataset_type in cls.DatasetType}
+
+        try:
+            stream_type = stream_map[dataset_type]
+
+        except KeyError:
+            raise KeyError(f"Corresponding stream type of {dataset_type} is not found.")
+        
+        return stream_type
+
+
+
+
+class AlpacaDataSource(AbstractDataSource):
+
+    """
+    Represents Alpaca API as a data source. Provides standardized enums for historical
+    and live data from Alpaca API.
+    """
+
+    class DatasetType(AbstractDataSource.DatasetType):
+
+        """
+        Enumeration class that defines constants for the different types of datasets.
+
+        Attributes
+        ----------
+        TRADE : str
+            The type of dataset for aggregated trade stream data. Also known as bars data.
+        QUOTE : str
+            The type of dataset for aggregated quote stream.
+        ORDER_BOOK : str
+            The type of dataset for aggregated order book data.
+        """
+        BAR = 'BAR'
+        TRADE = 'TRADE'
+        QUOTE = 'QUOTE'
+        ORDER_BOOK = 'ORDER_BOOK'
+
+    class StreamType(AbstractDataSource.StreamType):
+
+        """
+        Enumeration class that defines constants for the different types of data streams.
+
+        Attributes
+        ----------
+        QUOTE : str
+            The type of data stream for quotes.
+        TRADE : str
+            The type of data stream for trades.
+        ORDER_BOOK : str
+            The type of data stream for order book data.
+        """
+        BAR = 'BAR'
+        TRADE = 'TRADE'
+        QUOTE = 'QUOTE'
+
 
 
 @dataclass
@@ -115,8 +234,19 @@ class AbstractDataMetaData:
     data_schema: Dict[AbstractDataSource.DatasetType: Tuple[Asset]] | Dict[AbstractDataSource.StreamType: Tuple[Asset]]
     feature_schema: Dict[FeatureType, Tuple[bool]]
     resolution: str
+    calendar_type: CalendarType
 
 
+    @property
+    def n_columns(self) -> int: 
+
+        """
+        Returns the number of columns in the dataset. This is useful for
+        checking if the dataset has been downloaded correctly.
+        """
+
+        return len(next(iter(self.feature_schema.values())))
+    
     @property
     def assets(self) -> List[Asset]:
         # returns a list of unique assets in the data schema. Order is preserved.
@@ -136,11 +266,11 @@ class AbstractDataMetaData:
         # when a time interval is over and features are observed the closing price of interval is used to 
         # immediately place orders. The order of price mask matches the order of symbols in the data schema.
 
-        mask_ = [mask for feature_type, mask in self.feature_schema.items() 
+        mask_in_list = [mask for feature_type, mask in self.feature_schema.items() 
             if feature_type == FeatureType.ASSET_CLOSE_PRICE]
         
-        mask =  mask_.pop() if mask_ else None
-        return mask
+        asset_price_mask =  mask_in_list.pop() if mask_in_list else None
+        return asset_price_mask
 
 
     @property
@@ -157,7 +287,7 @@ class AbstractDataMetaData:
 
 
     @staticmethod
-    def create_feature_schema(data: pd.DataFrame):
+    def create_feature_schema(dataframe: pd.DataFrame):
 
         """
         Creates a feature schema dictionary for a given DataFrame, with DataType as keys and boolean masks as values.
@@ -165,7 +295,7 @@ class AbstractDataMetaData:
         By default downloaders provide downloaded data in a pandas Dataframe format.
 
         Args:
-            data (pd.DataFrame): The input DataFrame for which the feature schema is to be created. By defaulat
+            dataframe (pd.DataFrame): The input DataFrame for which the feature schema is to be created. By defaulat
             all feature types in FeatureType are enumerated and their value is matched against the column names of the input DataFrame.
             If a column name contains the vluae of a feature type, the corresponding boolean mask is set to True. this process
             is case insensitive. For example if dataframe has the column name 'AAPL_close_price' the boolean mask for FeatureType.ASSET_CLOSE_PRICE
@@ -181,10 +311,11 @@ class AbstractDataMetaData:
         for feature_type in FeatureType:
             # if column name contains the feature type value set the corresponding boolean mask to True.
             # this check is case insensitive.
-            mask = data.columns.str.lower().str.match('.*'+feature_type.value.lower()+'.*')
+            mask = dataframe.columns.str.lower().str.match('.*'+feature_type.value.lower()+'.*')
             feature_schema[feature_type] = mask
 
         return feature_schema
+
 
     def __or__(self, other, **kwargs):
         
@@ -192,10 +323,15 @@ class AbstractDataMetaData:
         if not self._validate_data_schema(other.data_schema):
 
             raise ValueError(
-                f'Metadata {other} has feature type {other.feature_types} which is not compatible with {self.feature_types}.')
+                f'Metadata {other} has data schema {other.data_schema} which is not compatible with {self.data_schema}.')
         
         if self.resolution != other.resolution:
             raise ValueError('Datasets must have the same resolution.')
+
+        if not self.calendar_type != other.calendar_type:
+
+            raise ValueError(
+                f'Metadata {other} has calendar type {other.calendar_type} which is not compatible with {self.calendar_type}.')
 
         data_schema = self.data_schema.update(other.data_schema)
         feature_schema = self._join_feature_schemas(other)
@@ -208,6 +344,36 @@ class AbstractDataMetaData:
             **kwargs)
 
 
+    def __add__(self, other: AbstractDataMetaData, **kwargs) -> AbstractDataMetaData:
+
+        # stream metadata child cannot use this method. appending stream metadata would not make sense.
+        # if used with stream metadata it will raise a not implemented error.
+
+
+        # ensures data schemas are identical.
+        if pickle.dumps(self.data_schema) != pickle.dumps(other.data_schema):
+            raise ValueError(f'Datasets must have identical data schemas.')
+           
+        # ensures data schemas are identical.
+        if pickle.dumps(self.feature_schema) != pickle.dumps(other.feature_schema):
+            raise ValueError(f'Datasets must have identical feature schemas.')
+
+        if self.resolution != other.resolution:
+            raise ValueError(
+                f'Dataset resolutions{self.resolution} and {other.resolution} are mismatched.')
+        
+        if not self.calendar_type != other.calendar_type:
+
+            raise ValueError(
+                f'Metadata {other} has calendar type {other.calendar_type} which is not compatible with {self.calendar_type}.')
+
+        return self.__class__(
+            data_schema=self.data_schema,
+            feature_schema=self.feature_schema,
+            resolution=self.resolution,
+            calendar_type=self.calendar_type,
+            **kwargs)
+    
     def _validate_data_schema(self, data_schema):
 
         # checks if all stream or all datasets.
@@ -218,8 +384,10 @@ class AbstractDataMetaData:
             
         return True
     
-    def _join_feature_schemas(self, other):
 
+    def _join_feature_schemas(self, other):
+        # joins feature schemas of two datasets or streams. The boolean masks
+        # are simply concatenated to indicate the features types in the joind dataset/stream.
         if set(self.feature_schema.keys()) != set(other.data_schema.keys()):
 
             raise ValueError(
@@ -241,6 +409,7 @@ class StreamMetaData(AbstractDataMetaData):
     data_schema: Dict[AbstractDataSource.StreamType: Tuple[str]]
     feature_schema: Dict[FeatureType, Tuple[bool]]
     resolution: str
+    calendar_type: CalendarType
 
 
     @property
@@ -254,7 +423,8 @@ class StreamMetaData(AbstractDataMetaData):
         n_rows = np.inf
         return n_rows
 
-
+    def __add__(self, other: AbstractDataMetaData, **kwargs) -> AbstractDataMetaData:
+        raise NotImplementedError
 
 
 @dataclass
@@ -263,21 +433,9 @@ class DatasetMetadata(AbstractDataMetaData):
     data_schema: Dict[AbstractDataSource.DatasetType: Tuple[str]]
     feature_schema: Dict[FeatureType, Tuple[bool]]
     resolution: str
-    resolution: str
     start: datetime
     end: datetime
     n_rows: int
-
-
-    @property
-    def n_columns(self) -> int: 
-
-        """
-        Returns the number of columns in the dataset. This is useful for
-        checking if the dataset has been downloaded correctly.
-        """
-
-        return len(next(iter(self.feature_schema.values())))
 
         
     def __or__(self, other: AbstractDataMetaData) -> AbstractDataMetaData:
@@ -302,44 +460,6 @@ class DatasetMetadata(AbstractDataMetaData):
         return super().__or__(other, start=self.start, end=self.end, n_rows=self.n_rows)
 
 
-    def __add__(self, other, **kwargs):
-
-        # stream metadata child cannot use this method. appending stream metadata would not make sense.
-        # if used with stream metadata it will raise a not implemented error.
-
-
-        # ensures data schemas are identical.
-        if pickle.dumps(self.data_schema) != pickle.dumps(other.data_schema):
-            raise ValueError(f'Datasets must have identical data schemas.')
-           
-        # ensures data schemas are identical.
-        if pickle.dumps(self.feature_schema) != pickle.dumps(other.feature_schema):
-            raise ValueError(f'Datasets must have identical feature schemas.')
-
-        if self.resolution != other.resolution:
-            raise ValueError(
-                f'Dataset resolutions{self.resolution} and {other.resolution} are mismatched.')
-        
-        if not self.calendar_type != other.calendar_type:
-
-            raise ValueError(
-                f'Metadata {other} has calendar type {other.calendar_type} which is not compatible with {self.calendar_type}.')
-
-        if not self._check_dates(prev_end=self.end, cur_start=other.start):
-
-            raise ValueError(
-                f'Non-consecutive market days between end time {self.end} and {self.start}.')
-
-
-        data_schema = self._join_feature_schemas(other)
-
-        return self._class__(
-            feature_types=self.feature_types,
-            data_schema=data_schema,
-            symbols=self.assets,
-            resolution=self.resolution,
-            **kwargs)
-
     def __add__(self, other: AbstractDataMetaData) -> AbstractDataMetaData:
 
         # this is useful for appending datasets that are large to downolad in one go.
@@ -348,6 +468,12 @@ class DatasetMetadata(AbstractDataMetaData):
         # the process and update the metadata. For example downloading tradde data for 
         # S&P500 stocks for a fixed time interval can happens by downloading the data for
         # a list of symbols at a time.
+
+        if not self._check_dates(prev_end=self.end, cur_start=other.start):
+
+            raise ValueError(
+                f'Non-consecutive market days between end time {self.end} and {other.start}.')
+
 
         return super().__add__(other, start=self.start, end=other.end, n_rows=self.n_rows)
 
@@ -363,17 +489,24 @@ class DatasetMetadata(AbstractDataMetaData):
         start_date = prev_end.date()
         end_date = cur_start.date()
 
+        if not self.prev_end < cur_start:
+            raise ValueError(
+                f'Start date{cur_start} must be greater than end date {prev_end}.')
 
-        schedule = Calendar.schedule(start_date= start_date, end_date= end_date)
+        schedule = Calendar.schedule(calendar_type = self.calendar_type, start_date= start_date, end_date= end_date)
         
         return True if len(schedule) == 2 else False
     
     @property
     def stream(self):
+        
+        data_schema = {dataset_type.stream: data_schema[dataset_type] for dataset_type in self.data_schema}
         stream = StreamMetaData(
             data_schema=self.data_schema,
             feature_schema=self.feature_schema,
-            resolution=self.resolution)
+            resolution=self.resolution,
+            calendar_type=self.calendar_type)
+        
         return stream
 
 

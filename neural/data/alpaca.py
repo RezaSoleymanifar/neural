@@ -5,12 +5,12 @@ import os
 import pandas as pd
 import numpy as np
 
-from neural.client.alpaca import AlpacaTradeClient, AlpacaDataClient
+from neural.client.alpaca import AlpacaDataClient
 from neural.common import logger
 from neural.common.constants import ALPACA_ACCEPTED_DOWNLOAD_RESOLUTIONS
-from neural.data.base import DatasetMetadata
-from neural.utils.time import Calendar
+from neural.data.base import DatasetMetadata, AlpacaDataSource
 from neural.data.enums import AssetType, AlpacaDataSource
+from neural.utils.time import Calendar
 from neural.utils.io import IOHandler
 from neural.utils.base import progress_bar, validate_path, Calendar
 from neural.utils.misc import to_timeframe
@@ -28,7 +28,7 @@ class AlpacaDataDownloader():
     and process it for further use.
     """
 
-    def __init__(self, data_client: AlpacaTradeClient) -> None:
+    def __init__(self, data_client: AlpacaDataClient) -> None:
 
         """
         Initializes the AlpacaDataFetcher class.
@@ -113,7 +113,7 @@ class AlpacaDataDownloader():
 
         downloader, request = self.data_client.get_downloader_and_request(
             dataset_type=dataset_type,
-            asset_class=AssetType)
+            asset_type=AssetType)
 
         data = downloader(request(
             symbol_or_symbols=symbols,

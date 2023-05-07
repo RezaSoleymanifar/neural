@@ -50,13 +50,12 @@ class AbstractClient(ABC):
         # this can be used post initialization to automaitcally connect to the API
         self.connect(*args, **kwargs)
 
-
     @abstractmethod
     def connect(self, *args, **kwargs):
-        # Connect to the API
+        """
+        Connect to the API. This method must be implemented in the subclass.
+        """
         raise NotImplementedError
-
-
 
 
 class AbstractTradeClient(AbstractClient):
@@ -90,15 +89,13 @@ class AbstractTradeClient(AbstractClient):
 
         NotImplementedError: If the method is not implemented in the derived class.
     """
-    
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        
 
     @property
     @abstractmethod
     def cash(self) -> float:
-
         """
         The current amount of cash available to the trader.
 
@@ -108,12 +105,10 @@ class AbstractTradeClient(AbstractClient):
         """
 
         raise NotImplementedError
-    
 
     @property
     @abstractmethod
     def asset_quantities(self) -> np.ndarray[float]:
-
         """
         The current quantity of each asset held by the trader.
 
@@ -123,13 +118,10 @@ class AbstractTradeClient(AbstractClient):
         """
 
         raise NotImplementedError
-  
-
 
     @property
     @abstractmethod
     def net_worth(self) -> float:
-
         """
         The current net worth of the trader.
 
@@ -139,12 +131,9 @@ class AbstractTradeClient(AbstractClient):
         """
 
         raise NotImplementedError
-    
-
 
     @abstractmethod
     def check_connection(self, *args, **kwargs):
-
         """
         check the connection to the service. If the connection is successful,
         the method should return True, otherwise False. The Trader class will use this method to check
@@ -153,16 +142,13 @@ class AbstractTradeClient(AbstractClient):
 
         raise NotImplementedError
 
-
     @abstractmethod
     def place_order(self, *args, **kwargs):
-
         """
         Abstract method for placing an order for a single asset.
         """
 
         raise NotImplementedError
-
 
 
 class AbstractDataClient(AbstractClient):
@@ -171,14 +157,13 @@ class AbstractDataClient(AbstractClient):
     Abstract base class for a client that connects to a data service or API.
     This class defines a blueprint for clients that provide data functionality.
     """
-    
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
     @property
     @abstractmethod
     def data_source(self) -> AbstractDataSource:
-
         """
         The name of the data source. Data clients are enforced
         to have a data source attribute. This helps mapping clients to
@@ -186,6 +171,3 @@ class AbstractDataClient(AbstractClient):
         """
 
         raise NotImplementedError
-
-
-
