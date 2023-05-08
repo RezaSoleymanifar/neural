@@ -6,11 +6,10 @@ import numpy as np
 import tableprint, os
 from tqdm import tqdm
 
-
 #================================================Data=====================================================
 
-class FillDeque(deque):
 
+class FillDeque(deque):
     """
     A custom deque implementation that fills itself with the first item it receives 
     when it's empty until it reaches the specified buffer size. After that, it behaves 
@@ -52,7 +51,6 @@ class FillDeque(deque):
         return iter(self.buffer)
 
     def __getitem__(self, index):
-
         """
         Returns a slice of the buffer as a list.
 
@@ -81,9 +79,7 @@ class FillDeque(deque):
         return None
 
 
-
 class RunningStatistics:
-
     """
     A class for computing the running mean and standard deviation of a stream of data.
     Can be used to normalize data to a mean of 0 and standard deviation of 1 in an online
@@ -106,7 +102,6 @@ class RunningStatistics:
     """
 
     def __init__(self, epsilon=1e-8, clip_threshold: float = np.inf):
-
         """
         Initializes the RunningMeanStandardDeviation object.
         """
@@ -127,10 +122,8 @@ class RunningStatistics:
 
         return None
 
-
     @property
     def minimum(self):
-
         """
         Returns the minimum value of the data stored in the RunningMeanStandardDeviation object.
         """
@@ -138,7 +131,6 @@ class RunningStatistics:
         assert self.count, "Must have at least one data point to compute minimum"
 
         return self._minimum
-
 
     @property
     def maximum(self):
@@ -149,7 +141,6 @@ class RunningStatistics:
 
         return self._minimum
 
-
     @property
     def mean(self):
         """
@@ -159,7 +150,6 @@ class RunningStatistics:
         assert self.count, "Must have at least one data point to compute mean"
 
         return self._mean
-
 
     @property
     def std(self):
@@ -174,7 +164,6 @@ class RunningStatistics:
         self._std = np.sqrt(variance)
 
         return self._std
-
 
     def initialize_statistics(self, array: np.ndarray):
         """
@@ -193,7 +182,6 @@ class RunningStatistics:
         self.maximum = -np.inf
 
         return None
-
 
     def update(self, array: np.ndarray):
         """
@@ -219,21 +207,17 @@ class RunningStatistics:
 
         return None
 
-
     def normalize(self, array: np.ndarray):
 
         # Normalize the array using the running mean and standard deviation
         normalized_array = np.clip(
-            (array - self.mean) / (self.std + self.epsilon), -self.clip, self.clip)
+            (array - self.mean) / (self.std + self.epsilon), -self.clip,
+            self.clip)
 
         return normalized_array
 
 
-
-def validate_path(
-    file_path: str | os.PathLike
-    ) -> None:
-
+def validate_path(file_path: str | os.PathLike) -> None:
     """
     Validates a file path by checking if it is a directory and if the parent directory exists.
     Args:
@@ -249,24 +233,26 @@ def validate_path(
     if os.path.isdir(file_path):
         raise ValueError(
             f"The specified path {file_path} is a directory, not a file.")
-    
+
     else:
         dir_path = os.path.dirname(file_path)
 
         if not os.path.isdir(dir_path):
             raise ValueError(
-                f"Directory {dir_path} leading to the specified file does not exist.")
-        
+                f"Directory {dir_path} leading to the specified file does not exist."
+            )
+
     return None
 
 
 #============================Visualization==============================
 
 
-def tabular_print(
-    entries: List, style='banner',
-    align='left', width = 15, header = False) -> None:
-
+def tabular_print(entries: List,
+                  style='banner',
+                  align='left',
+                  width=15,
+                  header=False) -> None:
     """
     Prints a list of entries in a tabular format.
 
@@ -283,19 +269,15 @@ def tabular_print(
 
     # helper method to tabulate performance metrics.
     if header:
-        row = tableprint.header(
-            entries, style=style, align=align, width=width)
+        row = tableprint.header(entries, style=style, align=align, width=width)
 
     else:
-        row = tableprint.row(
-            entries, style=style, align=align, width=width)
+        row = tableprint.row(entries, style=style, align=align, width=width)
 
     return row
 
 
-
 def progress_bar(total: Iterable):
-
     """
     Creates a progress bar using the tqdm library.
     Args:
@@ -306,15 +288,14 @@ def progress_bar(total: Iterable):
     """
 
     bar_format = '{l_bar}{bar}| {n_fmt}/{total_fmt} | {elapsed}<{remaining}'
-    bar = tqdm(total = total, bar_format = bar_format)
+    bar = tqdm(total=total, bar_format=bar_format)
     return bar
-
 
 
 #============================Financial==============================
 
-def sharpe_ratio(net_worth_history: List[float], base=0):
 
+def sharpe_ratio(net_worth_history: List[float], base=0):
     """
     Calculates the Sharpe ratio of a given net worth history list.
 
@@ -328,6 +309,6 @@ def sharpe_ratio(net_worth_history: List[float], base=0):
 
     hist = pd.Series(net_worth_history)
     returns = hist.pct_change().dropna()
-    val = (returns.mean()-base)/returns.std()
+    val = (returns.mean() - base) / returns.std()
 
     return val

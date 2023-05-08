@@ -27,8 +27,8 @@ from neural.utils.base import RunningStatistics
 class AbstractPipe(ABC):
 
     """
-    Abstract class for environment pipes, which add extended functionality to an existing
-    environment by applying wrappers successively.
+    Abstract class for environment pipes, which add extended functionality to an
+    existing environment by applying wrappers successively.
     """
 
 

@@ -211,7 +211,9 @@ class AssetType(str, Enum):
 
     """
     An enum class representing different categories of financial
-    instruments.
+    instruments amenable to high frequency trading. This enum is used to
+    standardize the asset type of different financial instruments in 
+    the library.
 
     STOCK: Represents ownership in a publicly traded corporation. Stocks
     can be traded on stock exchanges, and their value can fluctuate
@@ -244,11 +246,6 @@ class AssetType(str, Enum):
     based on various factors such as the price of the underlying asset,
     the time until expiration, and market volatility.
 
-    BOND: Represents debt issued by a company or government entity.
-    Bonds can be traded on various bond markets, and their value can
-    fluctuate based on various factors such as interest rates,
-    creditworthiness, and market conditions.
-
     EXCHANGE_TRADED_FUND: Represents a type of investment fund traded on
     stock exchanges, similar to mutual funds, but with shares that can
     be bought and sold like individual stocks. ETFs can provide exposure
@@ -256,13 +253,6 @@ class AssetType(str, Enum):
     commodities, and their value can fluctuate based on various factors
     such as the performance of the underlying assets and market
     conditions.
-
-    MUTUAL_FUND: Represents a professionally managed pool of money from
-    many investors, used to purchase a diversified mix of stocks, bonds,
-    or other assets. Mutual funds can be bought and sold through fund
-    companies or brokerages, and their value can fluctuate based on
-    various factors such as the performance of the underlying assets and
-    market conditions.
 
     COMMODITY: Represents a physical or virtual product that can be
     bought or sold, such as gold, oil, or currencies. Commodities can be
@@ -276,7 +266,5 @@ class AssetType(str, Enum):
     CRYPTO = 'CRYPTOCURRENCY'
     FUTURES = 'FUTURES'
     OPTIONS = 'OPTIONS'
-    BOND = 'BOND'
     EXCHANGE_TRADED_FUND = 'ETF'
-    MUTUAL_FUND = 'MUTUAL_FUND'
     COMMODITY = 'COMMODITY'

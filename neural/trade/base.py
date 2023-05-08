@@ -8,7 +8,6 @@ from neural.env.base import TradeMarketEnv
 from neural.meta.agent import Agent
 
 
-
 class AbstractTrader(ABC):
 
     """
@@ -18,13 +17,11 @@ class AbstractTrader(ABC):
     actions, a data pipe to feed preprocessed to the model, and metadata for the dataset being used
     to create aggregated data stream matching the training data.
     TODO: support or multiple data clients for streaming from multiple data stream sources.
-    """  
+    """
 
-    def __init__(self,
-        trade_client: AbstractTradeClient,
-        data_client: AbstractDataClient,
-        agent: Agent):
-
+    def __init__(
+        self, trade_client: AbstractTradeClient, data_client: AbstractDataClient, agent: Agent
+    ):
         """
         Initializes an AbstractTrader object.
 
@@ -40,10 +37,7 @@ class AbstractTrader(ABC):
 
         return None
 
-
-
     def apply_rules(self, *args, **kwargs):
-
         """
         Applies trading rules to the trades. Override this method to apply custom rules
         before placing orders. This allows rule based trading to complement the model based
@@ -56,10 +50,8 @@ class AbstractTrader(ABC):
         """
 
         raise NotImplementedError
-    
 
     def no_short(self, quantities: np.ndarray):
-
         # Due to rounding errors it is not possible to guarantee absolute zero as the output of the pipe
         # and thus small nominal amoutns that can haphazardly happen it will have the same ramifications
         # as a normal short position. If shoring can lead to being flagged as a pattern day tra This method
@@ -70,30 +62,23 @@ class AbstractTrader(ABC):
         quantities = min(abs(quantities), available_quantities)
 
         return quantities
-    
-    
-    def no_margin(self, quantities: np.ndarray, cash_ratio_threshold: float = 0.1):
 
-        # due to slippage it is possible that margin trading can happen, even when 
-        # no margin occurrs that time of placing orders.the way to 
+    def no_margin(self, quantities: np.ndarray, cash_ratio_threshold: float = 0.1):
+        # due to slippage it is possible that margin trading can happen, even when
+        # no margin occurrs that time of placing orders.the way to
         # prevent this practically is to allow a minimum amount of cash to be held
         # at all times. This method will modify quantities at order time to ensure
         # that if cash falls below a certain threshold all buy orders will be nullified
         # Note if margin trading is a concern, it is recommended to set the margin
         # parameter to a relatively high value.
 
-        cash_ratio = self.trade_client.cash/self.data_client.net_worth
+        cash_ratio = self.trade_client.cash / self.data_client.net_worth
         if cash_ratio < cash_ratio_threshold:
             quantities = np.where(quantities > 0, 0, quantities)
-        
+
         return quantities
 
-
-    def place_orders(
-        self, 
-        actions: np.ndarray, 
-        *args, 
-        **kwargs):
+    def place_orders(self, actions: np.ndarray, *args, **kwargs):
         """
         Takes actions from the model and places relevant orders.
 
@@ -111,17 +96,13 @@ class AbstractTrader(ABC):
         for symbol, quantity in zip(symbols, actions):
             self.trade_client.place_order(symbol, actions, *args, **kwargs)
 
-
     def _get_trade_market_env(self, trader):
-        
         stream_metadata = self.agent.dataset_metadata.stream
         data_feeder = AsyncDataFeeder(stream_metadata, self.data_client)
         self._get_data_feeder()
         self.trade_market_env = TradeMarketEnv(trader=self)
 
-
     def trade(self):
-
         """
         Starts the trading process by creating a trading environment and executing
         actions from the model.
@@ -130,7 +111,6 @@ class AbstractTrader(ABC):
             NotImplementedError: This method must be implemented by a subclass.
         """
 
-        
         self.trade_market_env = self._get_trade_market_env(self)
         observation = self.trade_market_env.reset()
 
@@ -139,4 +119,3 @@ class AbstractTrader(ABC):
             observation, reward, done, info = self.trade_market_env.step(action)
             if done:
                 self.trade_market_env.reset()
-

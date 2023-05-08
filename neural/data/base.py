@@ -80,10 +80,12 @@ from neural.data.enums import FeatureType, AssetType
 from neural.utils.time import Calendar, CalendarType
 
 
-@dataclass
+@dataclass(frozen=True)
 class Asset:
     """
-    A dataclass representing a financial asset.
+    A dataclass representing a financial asset. This can be a stock,
+    currency, cryptocurrency, futures contract, etc. This class
+    standardizes the representation of assets throughout the framework.
 
     Attributes:
     ----------
