@@ -387,64 +387,9 @@ class IntegerAssetQuantityActionWrapper(ActionWrapper):
 
         if self.integer:
             asset_prices = self.market_metadata_wrapper.asset_prices
-            for asset, action in enumerate(actions):
-                action = (action // asset_prices[asset]) * asset_prices[asset]
+            for asset, action, price in enumerate(actions, asset_prices):
+                action = (action // price) * price
                 actions[asset] = action
-
-        return actions.astype(GLOBAL_DATA_TYPE)
-
-
-@action
-@metadata
-class AlpacaShortingActionWrapper(ActionWrapper):
-    """
-    A wrapper that implements the shorting logic of the Alpaca API. This
-    wrapper modifies the agent's actions to ensure that if new short
-    positions are opened then they are for shortable assets only. If
-    shorting is not allowed for an asset then the action is modified to
-    be zero. By default integer quantities are enforced for short
-    actions. In other words fractional shorting is not allowed. This is
-    Alpaca API default behavior.
-
-    Args:
-    ----------
-    env: gym.Env
-        The environment to wrap.
-
-    Attributes:
-    ----------
-    n_assets (int):
-        The number of assets in the environment.
-    action_space (gym.spaces.Box):
-        The action space of the environment.
-    
-    Example:
-    --------
-    >>> from neural.meta.env.base import TrainMarketEnv 
-    >>> env = TrainMarketEnv(...)
-    >>> wrapped_env = AlpacaShortActionWrapper(env)
-    """
-
-    def __init__(self, env: Env) -> None:
-        super().__init__(env)
-        self.action_space = spaces.Box(-np.inf,
-                                       np.inf,
-                                       shape=(self.n_assets, ),
-                                       dtype=GLOBAL_DATA_TYPE)
-
-    def action(self, actions: np.ndarray[float]) -> np.ndarray[float]:
-
-        quantities = self.market_metadata_wrapper.asset_quantities
-        asset_prices = self.market_metadata_wrapper.asset_prices
-        assets = self.market_metadata_wrapper.assets
-
-        for asset, quantity, action, price, asset_ in enumerate(
-                zip(quantities, actions, asset_prices, assets)):
-            if quantity <= 0 and action < 0:
-                if not asset_.shortable:
-                    action = 0
-                elif asset.shortable:
-                    actions[asset] = (action // price) * price
 
         return actions.astype(GLOBAL_DATA_TYPE)
 
@@ -484,11 +429,11 @@ class PositionCloseActionWrapper:
             np.ndarray[float]: The modified actions.
         """
         positions = self.market_metadata_wrapper.positions
-        for action, position in zip(actions, positions):
+        for asset, action, position in enumerate(zip(actions, positions)):
             if (position > 0 and action + position < 0
                     or position < 0 and action + position > 0):
                 action = -position
-            actions[action] = action
+            actions[asset] = action
         return actions.astype(GLOBAL_DATA_TYPE)
 
 
@@ -496,22 +441,7 @@ class PositionCloseActionWrapper:
 @metadata
 class PositionOpenActionWrapper(ActionWrapper):
     """
-    This wrapper handles the intial margin constraint for traded assets
-    in a margin account. If initial_margin of asset does not exceed the
-    excess_margin then the actions are not modified. If initial_margin
-    exceeds excess_margin then the random actions are set to zero, until
-    initial margin of all assets is less than excess_margin. Note that
-    if excess margin is less than initial margin requirement then it is
-    guraranteed that after purchase of assets given current prices
-    (equity fixed) the excess margin will still be greater than zero.
-    Also note that for non marginable assets opening new position
-    requires cash, and not margin.
-
-    Initial margin is required when opening a new position, and is not
-    checked when closing existing position. If excess margin is greater
-    than initial margin requirement then it is guraranteed that after
-    purchasing the assets given current prices (equity fixed) the excess
-    margin will still be greater than zero.
+    a
     """
 
     def __init__(self, env: Env) -> None:
@@ -690,6 +620,61 @@ class PositionMaintainActionWrapper(ActionWrapper):
                 if (action < 0 and quantity <= 0
                         or action > 0 and quantity >= 0):
                     actions[action] = 0
+
+
+@action
+@metadata
+class AlpacaShortingActionWrapper(ActionWrapper):
+    """
+    A wrapper that implements the shorting logic of the Alpaca API. This
+    wrapper modifies the agent's actions to ensure that if new short
+    positions are opened then they are for shortable assets only. If
+    shorting is not allowed for an asset then the action is modified to
+    be zero. By default integer quantities are enforced for short
+    actions. In other words fractional shorting is not allowed. This is
+    Alpaca API default behavior.
+
+    Args:
+    ----------
+    env: gym.Env
+        The environment to wrap.
+
+    Attributes:
+    ----------
+    n_assets (int):
+        The number of assets in the environment.
+    action_space (gym.spaces.Box):
+        The action space of the environment.
+    
+    Example:
+    --------
+    >>> from neural.meta.env.base import TrainMarketEnv 
+    >>> env = TrainMarketEnv(...)
+    >>> wrapped_env = AlpacaShortActionWrapper(env)
+    """
+
+    def __init__(self, env: Env) -> None:
+        super().__init__(env)
+        self.action_space = spaces.Box(-np.inf,
+                                       np.inf,
+                                       shape=(self.n_assets, ),
+                                       dtype=GLOBAL_DATA_TYPE)
+
+    def action(self, actions: np.ndarray[float]) -> np.ndarray[float]:
+
+        quantities = self.market_metadata_wrapper.asset_quantities
+        asset_prices = self.market_metadata_wrapper.asset_prices
+        assets = self.market_metadata_wrapper.assets
+
+        for asset, quantity, action, price, asset_ in enumerate(
+                zip(quantities, actions, asset_prices, assets)):
+            if quantity <= 0 and action < 0:
+                if not asset_.shortable:
+                    action = 0
+                elif asset.shortable:
+                    actions[asset] = (action // price) * price
+
+        return actions.astype(GLOBAL_DATA_TYPE)
 
 
 @action
