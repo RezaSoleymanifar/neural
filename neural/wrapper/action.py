@@ -449,7 +449,7 @@ class PositionOpenActionWrapper(ActionWrapper):
 
         self.asset_quantities = self.market_metadata_wrapper.quantities
         self.asset_prices = self.market_metadata_wrapper.asset_prices
-        self.portfolio_value = np.abs(self.quantities * self.asset_prices)
+        self.portfolio_value = self.market_metadata_wrapper.portfolio_value
         self.assets = self.market_metadata_wrapper.assets
         self.excess_margin = self.market_metadata_wrapper.excess_margin
 
