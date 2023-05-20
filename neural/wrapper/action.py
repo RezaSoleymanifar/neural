@@ -229,15 +229,20 @@ class MinTradeSizeActionWrapper(ActionWrapper):
 
     Args:
     ----------
-        env: 
+        env: gym.Env 
             The environment to wrap. 
-        min_trade: 
-            The minimum trade size allowed in the environment. Default is 1.
+        min_trade:  float, optional
+            The minimum trade size allowed in the environment. Default
+            is 1.
 
     Attributes:
-        min_trade (float): The minimum trade size allowed in the
-        environment. n_symbols (int): The number of symbols in the
-        environment. action_space (gym.spaces.Box): The action space of
+    ----------
+        min_trade (float): 
+            The minimum trade size allowed in the
+        environment. n_symbols (int): 
+            The number of symbols in the
+        environment. 
+            action_space (gym.spaces.Box): The action space of
         the environment.
 
     Methods:
