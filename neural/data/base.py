@@ -93,8 +93,8 @@ class AlpacaAsset(AbstractAsset):
     """
     A dataclass representing a financial asset in Alpaca API:
     https://alpaca.markets/. This can be a stock, or cryptocurrency.
-    This class standardizes the representation of assets throughout the
-    framework.
+    This class standardizes the representation of assets in Alpaca API.
+    
 
     Attributes:
     ----------
