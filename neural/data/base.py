@@ -94,7 +94,7 @@ class AlpacaAsset(AbstractAsset):
     A dataclass representing a financial asset in Alpaca API:
     https://alpaca.markets/. This can be a stock, or cryptocurrency.
     This class standardizes the representation of assets in Alpaca API.
-    
+    Natively encodes the mechanics for opening and closing positions.
 
     Attributes:
     ----------
@@ -148,6 +148,20 @@ class AlpacaAsset(AbstractAsset):
         """
 
         return self.easy_to_borrow if self.marginable else False
+    
+    @property
+    def initial_margin(self, short: bool = False):
+        """
+        A float representing the initial margin of the asset.
+        """
+        if not self.marginable:
+            return None
+        elif not short:
+            return self.initial_margin
+        elif short:
+            return 1.5
+
+        return self.initial_margin if self.marginable else None
     
     @property
     def maintenance_margin(self):
