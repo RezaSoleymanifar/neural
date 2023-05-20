@@ -117,11 +117,6 @@ class AlpacaAsset(AbstractAsset):
             A boolean indicating whether the asset can be borrowed
             easily. Alpaca API has restrictive rules for hard to borrow
             assets and in general HTB assets cannot be shorted.
-        initial_margin: float
-            A float representing the initial margin of the asset. 25%
-            margin for long positions and 150% margin for short
-            positions is a FINRA requirement: 
-            https://www.finra.org/filing-reporting/regulation-t-filings.
         maintenance_margin: float | None
             A float representing the maintenance margin of the asset. 
             This means that maintenace_margin * position_value should be
@@ -162,7 +157,6 @@ class AlpacaAsset(AbstractAsset):
     asset_type: AssetType
     fractionable: bool
     marginable: bool
-    initial_margin: float = 0.5
     maintenance_margin: Optional[float] = None
     shortable: Optional[bool] = None
     easy_to_borrow: Optional[bool] = None
