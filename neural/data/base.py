@@ -80,7 +80,16 @@ from neural.data.enums import FeatureType, AssetType, CalendarType
 
 
 @dataclass(frozen=True)
-class Asset:
+class AbstractAsset(ABC):
+    """
+    A generic financial asset. This class standardizes the
+    representation of assets throughout the framework.
+    """
+    symbol: str
+    asset_type: AssetType
+
+
+class AlpacaAsset(AbstractAsset):
     """
     A dataclass representing a financial asset. This can be a stock,
     currency, cryptocurrency, futures contract, etc. This class
@@ -118,6 +127,7 @@ class Asset:
     fractionable: bool
     shortable: bool = None
     easy_to_borrow: bool = None
+    initial_margin: float = None
     maintenance_margin: float = None
     required_margin: float = None
 
@@ -542,8 +552,8 @@ class AbstractDataMetaData:
         masks are simply concatenated to indicate the features type
         locations in the joined dataset/stream.
     """
-    data_schema: Dict[AbstractDataSource.DatasetType:Tuple[Asset]] | Dict[
-        AbstractDataSource.StreamType:Tuple[Asset]]
+    data_schema: Dict[AbstractDataSource.DatasetType:Tuple[AlpacaAsset]] | Dict[
+        AbstractDataSource.StreamType:Tuple[AlpacaAsset]]
     feature_schema: Dict[FeatureType, Tuple[bool]]
     resolution: str
     calendar_type: CalendarType
@@ -559,7 +569,7 @@ class AbstractDataMetaData:
         return n_columns
 
     @property
-    def assets(self) -> List[Asset]:
+    def assets(self) -> List[AlpacaAsset]:
         """
         Returns a list of unique assets in the data schema. Order is
         preserved.
@@ -1001,7 +1011,7 @@ class DatasetMetadata(AbstractDataMetaData):
             appended to each other. This method facilitates updating the
             metadata object automatically and validating the process.
     """
-    data_schema: Dict[AbstractDataSource.DatasetType:Tuple[Asset]]
+    data_schema: Dict[AbstractDataSource.DatasetType:Tuple[AlpacaAsset]]
     feature_schema: Dict[FeatureType, Tuple[bool]]
     resolution: str
     calendar_type: CalendarType

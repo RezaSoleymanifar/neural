@@ -24,7 +24,7 @@ from alpaca.data.requests import (
 from neural.common.log import logger
 from neural.common.constants import API_KEY, API_SECRET 
 from neural.client.base import AbstractClient, AbstractTradeClient, AbstractDataClient
-from neural.data.base import AlpacaDataSource, Asset
+from neural.data.base import AlpacaDataSource, AlpacaAsset
 from neural.data.enums import AssetType
 from neural.utils.misc import objects_to_dataframe
 
@@ -319,7 +319,7 @@ class AlpacaDataClient(AlpacaClient, AbstractDataClient):
             asset_type = asset_type_map[alpaca_asset.asset_class]
 
             assets.append(
-                Asset(
+                AlpacaAsset(
                 symbol=symbol,
                 asset_type= asset_type,
                 marginable=alpaca_asset.marginable,
@@ -363,7 +363,7 @@ class AlpacaTradeClient(AlpacaClient, AbstractTradeClient):
 
     
     @property
-    def asset_quantities(self, assets: List[Asset]) -> np.ndarray[float]:
+    def asset_quantities(self, assets: List[AlpacaAsset]) -> np.ndarray[float]:
 
         """
         Returns a dictionary of symbols and asset quantities for 
