@@ -130,7 +130,7 @@ class AlpacaAsset(AbstractAsset):
             A boolean indicating whether the asset can be sold short
             (i.e., sold before buying to profit from a price decrease).
         easy_to_borrow: bool | None
-            A boolean indicating whether the asset can be borrowed  
+            A boolean indicating whether the asset can be borrowed
             easily.
         
     Notes:
@@ -138,9 +138,11 @@ class AlpacaAsset(AbstractAsset):
         The marginable, shortable, easy_to_borrow, intial_margin, and
         maintenance_margin properties are only valid for assets that are
         marginable. For example, cryptocurrencies are not marginable and
-        therefore do not have these properties. There are rare cases
-        where non-marginable assets can be shorted, but this is not
-        supported by this library due to the complexity of the process.
+        therefore do not have these properties. nonmarginable assets can
+        only be purchased using cash and cannot be shorted. There are
+        rare cases where non-marginable assets can be shorted, but this
+        is not supported by this library due to the complexity of the
+        process.
 
     """
 
@@ -156,7 +158,12 @@ class AlpacaAsset(AbstractAsset):
     @property
     def initial_margin(self, short: bool = False) -> float | None:
         """
-        A float representing the initial margin of the asset.
+        A float representing the initial margin of the asset. 25% margin
+        for long positions and 150% margin for short positions is a
+        FINRA requirement:
+        https://www.finra.org/filing-reporting/regulation-t-filings.
+        Alpaca API has a 50% margin requirement for opening positions,
+        by default.
         """
         if not self.marginable:
             return None
