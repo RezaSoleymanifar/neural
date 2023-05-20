@@ -385,11 +385,9 @@ class IntegerAssetQuantityActionWrapper(ActionWrapper):
             quantity is an integer multiple of its price.
         """
 
-        
-        asset_prices = self.market_metadata_wrapper.asset_prices
-        quantities = self.market_metadata_wrapper.quantities
         if self.integer:
-            for asset, action, quantity in enumerate(actions, quantities):
+            asset_prices = self.market_metadata_wrapper.asset_prices
+            for asset, action in enumerate(actions):
                     action = (action // asset_prices[asset]) * asset_prices[asset]
                     actions[asset] = action
 
