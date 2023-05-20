@@ -238,12 +238,11 @@ class MinTradeSizeActionWrapper(ActionWrapper):
     Attributes:
     ----------
         min_trade (float): 
-            The minimum trade size allowed in the
-        environment. n_symbols (int): 
-            The number of symbols in the
-        environment. 
-            action_space (gym.spaces.Box): The action space of
-        the environment.
+            The minimum trade size allowed in the environment.
+        n_symbols (int):
+            The number of symbols in the environment.
+        action_space (gym.spaces.Box):
+            The action space of the environment.
 
     Methods:
         __init__(self, env: Env, min_trade: float = 1) -> None:
@@ -302,15 +301,16 @@ class MinTradeSizeActionWrapper(ActionWrapper):
 @metadata
 class IntegerAssetQuantityActionWrapper(ActionWrapper):
     """
-    A wrapper for OpenAI Gym trading environments that modifies the
-    agent's actions to ensure they correspond to an integer quantity of
-    assets, i.e. no fractional quantities are allowed. This is useful
-    for trading environments that do not allow fractional quantities of
-    or modifying actions for assets that are inherently non-fractionable
-    even on platforms that do allow fractional trading. By default
-    applies the rule that short positions must be integer multiples of
-    number shares. This is because shorting fractional quantities of
-    shares is not allowed in most trading platforms.
+    Fractional quantity of shares is natively allowed by the base market
+    environment. This wrapper modifies the agent's actions to ensure
+    they correspond to an integer quantity of assets, i.e. no fractional
+    quantities are allowed. This is useful for trading environments that
+    do not allow fractional quantities of assets or modifying actions for
+    assets that are inherently non-fractionable even on platforms that
+    do allow fractional trading. By default applies the rule that short
+    positions must be integer multiples of number shares. This is
+    because shorting fractional quantities of shares is not allowed in
+    most trading platforms.
 
     This class should be used with caution, as the modification of the
     agent's actions to enforce integer quantities may not be valid in
