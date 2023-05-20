@@ -311,7 +311,8 @@ class IntegerAssetQuantityActionWrapper(ActionWrapper):
 
     The modification of the agent's actions to enforce integer
     quantities may not be valid in live trading environments due to
-    price slippage. Trader o
+    price slippage. Trader object is responsible for handling this
+    type of anomalies.
 
     Args:
     -----------
@@ -319,7 +320,7 @@ class IntegerAssetQuantityActionWrapper(ActionWrapper):
         The trading environment to be wrapped.
     integer : bool, optional
         A flag that indicates whether to enforce integer asset
-        quantities or not. Defaults to True.
+        quantities or not. Defaults to True.  
 
     Attributes:
     -----------
@@ -331,6 +332,10 @@ class IntegerAssetQuantityActionWrapper(ActionWrapper):
     asset_prices : ndarray or None
         An array containing the current prices of each asset in the
         environment, or None if the prices have not been set yet.
+    n_assets : int
+        The number of assets in the environment.
+    action_space : gym.spaces.Box
+        The action space of the environment.
 
     Example:
     --------
@@ -356,10 +361,10 @@ class IntegerAssetQuantityActionWrapper(ActionWrapper):
         super().__init__(env)
         self.integer = integer
         self.asset_prices = None
-        self.n_symbols = self.market_metadata_wrapper.n_symbols
+        self.n_assets = self.market_metadata_wrapper.n_assets
         self.action_space = (spaces.Box(-np.inf,
                                         np.inf,
-                                        shape=(self.n_symbols, ),
+                                        shape=(self.n_assets, ),
                                         dtype=GLOBAL_DATA_TYPE))
         return None
 
@@ -383,10 +388,10 @@ class IntegerAssetQuantityActionWrapper(ActionWrapper):
         
         asset_prices = self.market_metadata_wrapper.asset_prices
         quantities = self.market_metadata_wrapper.quantities
-        for asset, action, quantity in enumerate(actions, quantities):
-            if self.integer or quantity < 0:
-                action = (action // asset_prices[asset]) * asset_prices[asset]
-                actions[asset] = action
+        if self.integer:
+            for asset, action, quantity in enumerate(actions, quantities):
+                    action = (action // asset_prices[asset]) * asset_prices[asset]
+                    actions[asset] = action
 
         return actions.astype(GLOBAL_DATA_TYPE)
 
