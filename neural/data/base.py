@@ -166,14 +166,14 @@ class AlpacaAsset(AbstractAsset):
             return 1.5
     
     @property
-    def maintenance_margin(self):
+    def maintenance_margin(self) -> float | None:
         """
         A float representing the maintenance margin of the asset.
         """
         return self.maintenance_margin if self.marginable else None
     
     @property
-    def shortable(self) -> bool:
+    def shortable(self) -> bool | None:
         """
         A boolean indicating whether the asset can be sold short
         (i.e., sold before buying to profit from a price decrease).
@@ -181,7 +181,7 @@ class AlpacaAsset(AbstractAsset):
         return self.shortable if self.marginable else False
     
     @property
-    def easy_to_borrow(self) -> bool:
+    def easy_to_borrow(self) -> bool | None:
         """
         A boolean indicating whether the asset can be borrowed easily.
         """
