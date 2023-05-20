@@ -178,9 +178,9 @@ class AlpacaAsset(AbstractAsset):
         by default.
         """
         if not self.marginable:
-            return None
+            return 1
         elif not short:
-            return self.initial_margin
+            return 0.5
         elif short:
             return 1.5
     
@@ -195,7 +195,7 @@ class AlpacaAsset(AbstractAsset):
         violated by a greate amount. We enforce this at all times in a
         conservative manner.
         """
-        return self.maintenance_margin if self.marginable else None
+        return self.maintenance_margin if self.marginable else 0
     
     @property
     def shortable(self) -> bool | None:
