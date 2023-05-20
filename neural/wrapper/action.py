@@ -457,12 +457,10 @@ class PositionCloseActionWrapper:
     process. Close the current long/short position, and then open a new
     short/long position. This wrapper modifies the agent's actions to
     ensure that if action exceeds the current position, then the excess
-    is ignored and only the current position is closed. This wrapper
-    modifies the agent's actions to ensure that if action exceeds the
-    current position, then the excess is ignored and only the current
-    position is closed. For example, in order to open short positions,
-    the current open long position must be closed first in a separate
-    order, and then a short position can be opened.
+    is ignored and only the current position is closed. For example, in
+    order to open short positions, the current open long position must
+    be closed first in a separate order, and then a short position can
+    be opened.
     """
 
     def __init__(self, env: Env) -> None:
@@ -473,12 +471,26 @@ class PositionCloseActionWrapper:
                                        dtype=GLOBAL_DATA_TYPE)
 
     def action(self, actions: np.ndarray[float]) -> np.ndarray[float]:
+        """
+        Actions are modified to ensure that if action exceeds the
+        current position, then the excess is ignored and only the
+        current position is closed.
+
+        Args:
+        --------
+            actions (np.ndarray[float]): The actions to perform.
+
+        Returns:
+        --------
+            np.ndarray[float]: The modified actions.
+        """
         positions = self.market_metadata_wrapper.positions
-        asset_prices = self.market_metadata_wrapper.asset_prices
-        for action, position, price in zip(actions, positions, asset_prices):
+        for action, position in zip(actions, positions):
             if (position > 0 and action + position < 0
                     or position < 0 and action + position > 0):
                 action = -position
+            actions[action] = action
+        return actions.astype(GLOBAL_DATA_TYPE)
 
 
 @action
