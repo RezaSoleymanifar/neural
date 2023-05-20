@@ -821,10 +821,11 @@ class EquityBasedUniformPositionSizing(ActionWrapper):
         """
 
         self._set_max_trade_per_asset(self.trade_ratio)
-
-        for asset, action in actions:
-            actions[asset] = self.parse_action(action)
-
+        assets = self.market_metadata_wrapper.assets
+        asset_prices = self.market_metadata_wrapper.asset_prices
+        for asset, action, asset_ in enumerate(zip(actions, assets, asset_prices)):
+            action = self.parse_action(action)
+            actions[asset] = action if asset_.fractionable else 
         return actions
 
 
