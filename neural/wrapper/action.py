@@ -143,6 +143,12 @@ def action(wrapper_class: Type[ActionWrapper]) -> Type[ActionWrapper]:
                 Optional arguments to pass to the wrapper.
             **kwargs : dict
                 Optional keyword arguments to pass to the wrapper.
+            
+            Raises
+            ------
+            IncompatibleWrapperError
+                If non None action space of type `gym.spaces.Space` is
+                not defined first.
             """
 
             super().__init__(env, *args, **kwargs)
@@ -218,12 +224,15 @@ class MinTradeSizeActionWrapper(ActionWrapper):
     """
     A wrapper that limits the minimum trade size for all actions in the
     environment. If the absolute value of any action is below min_trade,
-    it will be replaced with 0. Actions received are notional (USD)
-    asset values.
+    it will be replaced with 0. Actions received are notional base
+    currency asset values.
 
     Args:
-        env: The environment to wrap. min_trade: The minimum trade size
-        allowed in the environment. Default is 1.
+    ----------
+        env: 
+            The environment to wrap. 
+        min_trade: 
+            The minimum trade size allowed in the environment. Default is 1.
 
     Attributes:
         min_trade (float): The minimum trade size allowed in the
