@@ -145,7 +145,6 @@ class AlpacaAsset(AbstractAsset):
         process. A mix of marginable and non-marginable assets in
         portoflio is not supporeted either to the same level of
         irregularities.
-
     """
 
     symbol: str
@@ -177,7 +176,13 @@ class AlpacaAsset(AbstractAsset):
     @property
     def maintenance_margin(self) -> float | None:
         """
-        A float representing the maintenance margin of the asset.
+        A float representing the maintenance margin of the asset. This
+        means that maintenace_margin * position_value should be
+        available in marginable equity. Maintenance margin is cumulative
+        for all assets and needs to be satisfied at all times. Alpaca
+        API in reality enforces this at the end of day or when it is
+        violated by a greate amount. Due to complexity of modeling we
+        enforce this at all times.
         """
         return self.maintenance_margin if self.marginable else None
     
@@ -185,7 +190,8 @@ class AlpacaAsset(AbstractAsset):
     def shortable(self) -> bool | None:
         """
         A boolean indicating whether the asset can be sold short
-        (i.e., sold before buying to profit from a price decrease).
+        (i.e., sold before buying to profit from a price decrease). In 
+        Alpaca API shorted assets cannot have faractional 
         """
         return self.shortable if self.marginable else False
     
