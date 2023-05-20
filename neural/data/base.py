@@ -135,10 +135,12 @@ class AlpacaAsset(AbstractAsset):
         
     Notes:
     ------
-        The marginable, shortable and easy_to_borrow, intial_margin, and
+        The marginable, shortable, easy_to_borrow, intial_margin, and
         maintenance_margin properties are only valid for assets that are
         marginable. For example, cryptocurrencies are not marginable and
-        therefore do not have these properties. T
+        therefore do not have these properties. There are rare cases
+        where non-marginable assets can be shorted, but this is not
+        supported by this library due to the complexity of the process.
 
     """
 
