@@ -305,18 +305,13 @@ class IntegerAssetQuantityActionWrapper(ActionWrapper):
     environment. This wrapper modifies the agent's actions to ensure
     they correspond to an integer quantity of assets, i.e. no fractional
     quantities are allowed. This is useful for trading environments that
-    do not allow fractional quantities of assets or modifying actions for
-    assets that are inherently non-fractionable even on platforms that
-    do allow fractional trading. By default applies the rule that short
-    positions must be integer multiples of number shares. This is
-    because shorting fractional quantities of shares is not allowed in
-    most trading platforms.
+    do not allow fractional quantities of assets or modifying actions
+    for assets that are inherently non-fractionable even on platforms
+    that do allow fractional trading.
 
-    This class should be used with caution, as the modification of the
-    agent's actions to enforce integer quantities may not be valid in
-    some trading environments due to price slippage. Ensure other action
-    wrappers applied before this would not modify the actions in a way
-    that asset quantities are not integer anymore.
+    The modification of the agent's actions to enforce integer
+    quantities may not be valid in live trading environments due to
+    price slippage. Trader o
 
     Args:
     -----------
