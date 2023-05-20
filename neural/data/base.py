@@ -887,11 +887,9 @@ class AbstractDataMetaData:
             must be identical for appending to be valid.
         """
         if set(self.feature_schema.keys()) != set(other.data_schema.keys()):
-
             raise ValueError('Datasets do not have matching feature schemas.')
-
+        
         merged_feature_schema = dict()
-
         for key in self.feature_schema.keys():
 
             merged_feature_schema[
