@@ -437,109 +437,109 @@ class PositionCloseActionWrapper:
         return actions.astype(GLOBAL_DATA_TYPE)
 
 
+# @action
+# @metadata
+# class PositionOpenActionWrapper(ActionWrapper):
+#     """
+#     a
+#     """
+
+#     def __init__(self, env: Env) -> None:
+#         super().__init__(env)
+
+#         self.asset_quantities = self.market_metadata_wrapper.quantities
+#         self.asset_prices = self.market_metadata_wrapper.asset_prices
+#         self.portfolio_value = self.market_metadata_wrapper.portfolio_value
+#         self.positions = self.market_metadata_wrapper.positions
+#         self.assets = self.market_metadata_wrapper.assets
+#         self.excess_margin = self.market_metadata_wrapper.excess_margin
+
+#         self.action_space = spaces.Box(-np.inf,
+#                                        np.inf,
+#                                        shape=(self.n_assets, ),
+#                                        dtype=GLOBAL_DATA_TYPE)
+
+#     @property
+#     def open_position_action_indices(self, actions):
+#         indices = [
+#             index for index, quantity, action in enumerate(
+#                 zip(self.quantities, actions))
+#             if (action < 0 and quantity <= 0 or action > 0 and quantity >= 0)
+#         ]
+#         return indices
+
+#     @property
+#     def nonmarginable_open_position_action_indices(self):
+#         indices = [
+#             index for index in self.open_position_action_indices
+#             if not self.assets[index].marginable
+#         ]
+#         return indices
+
+#     @property
+#     def marginable_open_position_action_indices(self):
+#         indices = [
+#             index for index in self.open_position_action_indices
+#             if self.assets[index].marginable
+#         ]
+#         return indices
+
+#     def initial_margin_required(self):
+
+#         margin_required = [
+#             self.assets[index].initial_margin * self.portfolio_value[index]
+#             for index in self.marginable_open_position_action_indices
+#         ]
+
+#         return margin_required
+
+#     def cash_required(self):
+#         for index in self.nonmarginable_open_position_action_indices:
+#             cash_required = self.portfolio_value[index]
+#             return cash_required
+
+#     def rectify_actions(self, actions, indices):
+#         # randomly sets a nonzero action to zero
+#         random_index = np.random.choice(indices)
+#         actions[random_index] = 0
+#         return actions
+
+#     def check_cash_requirement(self) -> bool:
+#         # get index of assets that are non marginable:
+#         non_marginable_indices = [
+#             index for index, asset in enumerate(self.assets)
+#             if not asset.marginable
+#         ]
+
+#     def check_initial_margin(self) -> bool:
+#         """
+#         Initial margin is required when opening a new position, and is
+#         not checked when closing existing position. This method checks
+#         if initial margin requirement is met for all assets. If not then
+#         False is returned. If yes then True is returned.
+#         """
+#         for action, asset, quantity, position in (self.actions, self.assets,
+#                                                   self.quantities,
+#                                                   self.portfolio_value):
+#             margin_required += self.initial_margin_required(
+#                 asset, action, quantity, position)
+#             if margin_required > self.excess_margin:
+#                 return False
+#         return True
+
+#     def action(self, actions: np.ndarray[float]) -> np.ndarray[float]:
+#         """
+#         Checks if initial margin requirement is met for all assets. If
+#         not then randomly sets a nonzero action to zero until initial
+#         margin requirement is met.
+#         """
+#         while not self.check_initial_margin():
+#             actions = self.rectify_actions(actions)
+#         return actions
+
+
 @action
-@metadata
-class PositionOpenActionWrapper(ActionWrapper):
-    """
-    a
-    """
-
-    def __init__(self, env: Env) -> None:
-        super().__init__(env)
-
-        self.asset_quantities = self.market_metadata_wrapper.quantities
-        self.asset_prices = self.market_metadata_wrapper.asset_prices
-        self.portfolio_value = self.market_metadata_wrapper.portfolio_value
-        self.positions = self.market_metadata_wrapper.positions
-        self.assets = self.market_metadata_wrapper.assets
-        self.excess_margin = self.market_metadata_wrapper.excess_margin
-
-        self.action_space = spaces.Box(-np.inf,
-                                       np.inf,
-                                       shape=(self.n_assets, ),
-                                       dtype=GLOBAL_DATA_TYPE)
-
-    @property
-    def open_position_action_indices(self, actions):
-        indices = [
-            index for index, quantity, action in enumerate(
-                zip(self.quantities, actions))
-            if (action < 0 and quantity <= 0 or action > 0 and quantity >= 0)
-        ]
-        return indices
-
-    @property
-    def nonmarginable_open_position_action_indices(self):
-        indices = [
-            index for index in self.open_position_action_indices
-            if not self.assets[index].marginable
-        ]
-        return indices
-
-    @property
-    def marginable_open_position_action_indices(self):
-        indices = [
-            index for index in self.open_position_action_indices
-            if self.assets[index].marginable
-        ]
-        return indices
-
-    def initial_margin_required(self):
-
-        margin_required = [
-            self.assets[index].initial_margin * self.portfolio_value[index]
-            for index in self.marginable_open_position_action_indices
-        ]
-
-        return margin_required
-
-    def cash_required(self):
-        for index in self.nonmarginable_open_position_action_indices:
-            cash_required = self.portfolio_value[index]
-            return cash_required
-
-    def rectify_actions(self, actions, indices):
-        # randomly sets a nonzero action to zero
-        random_index = np.random.choice(indices)
-        actions[random_index] = 0
-        return actions
-
-    def check_cash_requirement(self) -> bool:
-        # get index of assets that are non marginable:
-        non_marginable_indices = [
-            index for index, asset in enumerate(self.assets)
-            if not asset.marginable
-        ]
-
-    def check_initial_margin(self) -> bool:
-        """
-        Initial margin is required when opening a new position, and is
-        not checked when closing existing position. This method checks
-        if initial margin requirement is met for all assets. If not then
-        False is returned. If yes then True is returned.
-        """
-        for action, asset, quantity, position in (self.actions, self.assets,
-                                                  self.quantities,
-                                                  self.portfolio_value):
-            margin_required += self.initial_margin_required(
-                asset, action, quantity, position)
-            if margin_required > self.excess_margin:
-                return False
-        return True
-
-    def action(self, actions: np.ndarray[float]) -> np.ndarray[float]:
-        """
-        Checks if initial margin requirement is met for all assets. If
-        not then randomly sets a nonzero action to zero until initial
-        margin requirement is met.
-        """
-        while not self.check_initial_margin():
-            actions = self.rectify_actions(actions)
-        return actions
-
-
-@action
-class PositionMaintainActionWrapper(ActionWrapper):
+class ExcessMarginActionWrapper(ActionWrapper):
     """
     This wrapper provides a mechanism for the agent to avoid getting a
     margin call. This happens by providing a cushion (delta) around the
@@ -625,7 +625,7 @@ class PositionMaintainActionWrapper(ActionWrapper):
 
 @action
 @metadata
-class AlpacaShortingActionWrapper(ActionWrapper):
+class ShortingActionWrapper(ActionWrapper):
     """
     A wrapper that implements the shorting logic of the Alpaca API. This
     wrapper modifies the agent's actions to ensure that if new short
@@ -823,9 +823,11 @@ class EquityBasedUniformPositionSizing(ActionWrapper):
         self._set_max_trade_per_asset(self.trade_ratio)
         assets = self.market_metadata_wrapper.assets
         asset_prices = self.market_metadata_wrapper.asset_prices
-        for asset, action, asset_ in enumerate(zip(actions, assets, asset_prices)):
+        for asset, action, asset_, price in enumerate(
+                zip(actions, assets, asset_prices)):
             action = self.parse_action(action)
-            actions[asset] = action if asset_.fractionable else 
+            actions[asset] = action if asset_.fractionable else (action //
+                                                                 price) * price
         return actions
 
 
