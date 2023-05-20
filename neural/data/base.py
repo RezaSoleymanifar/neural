@@ -115,22 +115,41 @@ class AlpacaAsset(AbstractAsset):
         easy_to_borrow: bool
             A boolean indicating whether the asset can be borrowed
             easily.
-        required_margin: float
-            A conservative simplification that enforces a required
-            margin equal to maximum of initial margin and maintenance
-            marign to be satisfied both at opening positions and
-            maintaining positions.
+        initial_margin: float
+            A float representing the initial margin of the asset.
+        maintenance_margin: float | None
+            A float representing the maintenance margin of the asset.
+        
+    Properties:
+    -----------
+        shortable: bool
+            A boolean indicating whether the asset can be sold short
+            (i.e., sold before buying to profit from a price decrease).
+        easy_to_borrow: bool
+            A boolean indicating whether the asset can be borrowed  
+            easily.
+        initial_margin: float
+            A float representing the initial margin of the asset.
+        maintenance_margin: float | None
+            A float representing the maintenance margin of the asset.
+        
+    Notes:
+    ------
+        The marginable, shortable and easy_to_borrow, intial_margin, and
+        maintenance_margin properties are only valid for assets that are
+        marginable. For example, cryptocurrencies are not marginable and
+        therefore do not have these properties. T
+
     """
 
     symbol: str
     asset_type: AssetType
     marginable: bool
     fractionable: bool
-    shortable: bool = None
-    easy_to_borrow: bool = None
-    initial_margin: float = None
-    maintenance_margin: float = None
-    required_margin: float = None
+    shortable: Optional[bool] = None
+    easy_to_borrow: Optional[bool] = None
+    initial_margin: float = 0.5
+    maintenance_margin: Optional[float] = None
 
     @property
     def shortable(self) -> bool:
