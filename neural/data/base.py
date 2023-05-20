@@ -606,7 +606,7 @@ class AbstractDataMetaData:
         checking if the dataset has been downloaded correctly. 
         """
 
-        n_columns = len(next(iter(self.feature_schema.values())))
+        n_columns = len(self.feature_schema.values()[0])
         return n_columns
 
     @property
