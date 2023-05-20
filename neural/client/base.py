@@ -119,18 +119,6 @@ class AbstractTradeClient(AbstractClient):
 
         raise NotImplementedError
 
-    @property
-    @abstractmethod
-    def net_worth(self) -> float:
-        """
-        The current net worth of the trader.
-
-        Raises:
-        --------
-            NotImplementedError: This property must be implemented by a subclass.
-        """
-
-        raise NotImplementedError
 
     @abstractmethod
     def check_connection(self, *args, **kwargs):

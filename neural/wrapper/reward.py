@@ -2,6 +2,7 @@ from typing import Optional
 from gym import Env
 from abc import ABC, abstractmethod
 from typing import Dict
+from gym.core import Env
 import numpy as np
 from gym import (Env, RewardWrapper)
 
@@ -9,9 +10,43 @@ from neural.utils.base import RunningStatistics
 from neural.wrapper.base import metadata
 
 
+@metadata
+class RewardGeneratorWrapper(RewardWrapper):
+    """
+    A wrapper that generates rewards for the environment.
+    By default the market env returns None as reward. This wrapper
+    combined with the metadata wrapper provide the reward signal which
+    is the change in equity from the previous step. Equity is defined as
+    the net value owned by the agent in cash and assets. This is sum of
+    all cash and assets owned by the agent minus cash and asset debt.
+    E = L + C - S where E is equity, L total value of longs, C cash, S
+    total value of shorts. Note that cash can be negative if the agent
+    has borrowed cash.
+
+    Attributes:
+    ----------
+        env (gym.Env): The environment to wrap.
+        equity_history (list[float]): A list of equity values for each
+        step in the episode.
+
+    Methods:
+    -------
+        reward(reward: float) -> float:
+            Generate the reward signal.
+    """
+    def __init__(self, env: Env) -> None:
+        """
+        Initializes 
+        """
+        super().__init__(env)
+        self.equity_history = self.market_metadata_wrapper.equity_history
+    
+    def reward(self, reward: float) -> float:
+        reward = self.equity_history[-1] - self.equity_history[-2]
+        return reward
+    
 
 class NormalizeRewardWrapper(RewardWrapper):
-
     """
     This wrapper will normalize immediate rewards. 
 
@@ -30,15 +65,12 @@ class NormalizeRewardWrapper(RewardWrapper):
             Normalize the reward.
     """
 
-    def __init__(
-        self,
-        env: Env,
-        epsilon: float = 1e-8,
-        clip_threshold: float = np.inf,
-        reward_statistics: Optional[RunningStatistics] = None,
-        track_statistics: bool = True
-        ) -> None:
-
+    def __init__(self,
+                 env: Env,
+                 epsilon: float = 1e-8,
+                 clip_threshold: float = np.inf,
+                 reward_statistics: Optional[RunningStatistics] = None,
+                 track_statistics: bool = True) -> None:
         """
         This wrapper normalizes immediate rewards so that rewards have mean 0 and standard deviation 1.
         If track is True the reward_statistics argument will be set equal reward_statistics attribute.
@@ -62,8 +94,8 @@ class NormalizeRewardWrapper(RewardWrapper):
 
         super().__init__(env)
 
-        self.reward_statistics = (
-            reward_statistics if reward_statistics is not None else RunningStatistics())
+        self.reward_statistics = (reward_statistics if reward_statistics
+                                  is not None else RunningStatistics())
         self.epsilon = epsilon
         self.clip_threshold = clip_threshold
 
@@ -71,10 +103,8 @@ class NormalizeRewardWrapper(RewardWrapper):
             reward_statistics = self.reward_statistics
 
         return None
-    
 
     def reward(self, reward: float) -> float:
-        
         """
         Normalize the reward.
 
@@ -88,13 +118,13 @@ class NormalizeRewardWrapper(RewardWrapper):
         """
 
         self.reward_statistic.update(reward)
-        normalized_reward = self.reward_statistic.normalize(reward, self.epsilon, self.clip_threshold)
+        normalized_reward = self.reward_statistic.normalize(
+            reward, self.epsilon, self.clip_threshold)
 
         return normalized_reward
 
 
 class LiabilityInterstRewardWrapper(RewardWrapper):
-
     """
     This wrapper charges an interest rate at the end of the day on the liability of the agent.
     The liabilities include borrowed cash, or borrowed assets. The interest rate is calculated
@@ -102,16 +132,16 @@ class LiabilityInterstRewardWrapper(RewardWrapper):
     substracts the notional value of interest from the reward.
     """
 
-class PenalizeMarginCallRewardShaperWrapper(RewardWrapper):
 
+class PenalizeMarginCallRewardShaperWrapper(RewardWrapper):
     """
     In the event of a margin call this wrapper applies a penalty to the reward signal. If enough cusion provided in 
     sizing the liabilities, the agent should be able to avoid margin calls, however if the agent is unable to
     avoid margin calls, due to adverse price change this penalty can help it learn to avoid margin calls better.
     """
 
-class AbstractRewardShaperWrapper(RewardWrapper, ABC):
 
+class AbstractRewardShaperWrapper(RewardWrapper, ABC):
     """
     A blueprint class for reward shaping wrappers.
 
@@ -137,9 +167,7 @@ class AbstractRewardShaperWrapper(RewardWrapper, ABC):
         reward: An abstract method for shaping the reward signal.
     """
 
-
     def __init__(self, env: Env) -> None:
-        
         """
         Initializes the AbstractRewardShaperWrapper instance.
 
@@ -150,10 +178,8 @@ class AbstractRewardShaperWrapper(RewardWrapper, ABC):
         super().__init__(env)
         self.reward_rms = RunningStatistics()
 
-
     @abstractmethod
     def check_condition(self, *args, **kwargs) -> bool:
-
         """
         An abstract method for checking whether to apply reward shaping.
 
@@ -167,10 +193,8 @@ class AbstractRewardShaperWrapper(RewardWrapper, ABC):
 
         raise NotImplementedError
 
-
     @abstractmethod
     def reward(self, reward: float, *args, **kwargs) -> float:
-
         """
         An abstract method for shaping the reward signal.
 
@@ -185,9 +209,10 @@ class AbstractRewardShaperWrapper(RewardWrapper, ABC):
 
         raise NotImplementedError
 
-
-    def parse_scale(threshold: float, value: float, factor: float = 1.0, base = 1.0) -> float:
-
+    def parse_scale(threshold: float,
+                    value: float,
+                    factor: float = 1.0,
+                    base=1.0) -> float:
         """
         Calculate the scaling factor for shaping the reward based on the deviation from a threshold.
         The return value scale from this function can be used to adjust the reward signal based on the
@@ -227,9 +252,10 @@ class AbstractRewardShaperWrapper(RewardWrapper, ABC):
         scale = np.sign(scale) * np.power(base, abs(scale))
         return scale
 
-
-    def shape_reward(self, use_std: bool = None, use_min: bool = None, scale: float = 1) -> float:
-
+    def shape_reward(self,
+                     use_std: bool = None,
+                     use_min: bool = None,
+                     scale: float = 1) -> float:
         """
         Calculate the shaped reward based on the input parameters.
 
@@ -274,29 +300,27 @@ class AbstractRewardShaperWrapper(RewardWrapper, ABC):
         >>>     return scale
         >>> reward_shaper = lambda reward: shape_reward(use_std=True, scale=parse_scale(reward))
         """
-    
+
         if use_min is not None and use_std is not None:
-            raise ValueError("Cannot set both use_min and use_std parameters at the same time.")
+            raise ValueError(
+                "Cannot set both use_min and use_std parameters at the same time."
+            )
 
         if use_min is None and use_std is None:
             raise ValueError("Either use_min or use_std parameter must be set.")
 
-
         if use_min is not None:
             shaped_reward = scale * self.reward_rms.min if use_min else scale * self.reward_rms.max
-
 
         elif use_std is not None:
             shaped_reward = self.reward_rms.mean + scale * self.reward_rms.std
 
         return shaped_reward
-    
 
     def step(
         self,
         action: np.ndarray[float] | Dict[str, np.ndarray[float]],
-        ) -> np.ndarray[float] | Dict[str, np.ndarray[float]]:
-        
+    ) -> np.ndarray[float] | Dict[str, np.ndarray[float]]:
         """
         Advances the environment by one step and updates the reward signal.
 
@@ -318,9 +342,7 @@ class AbstractRewardShaperWrapper(RewardWrapper, ABC):
         return observation, reward, done, info
 
 
-
 class AbstractFixedRewardShaperWrapper(AbstractRewardShaperWrapper):
-
     """
     Abstract base class for a fixed reward shaping strategy.
 
@@ -351,12 +373,12 @@ class AbstractFixedRewardShaperWrapper(AbstractRewardShaperWrapper):
     """
 
     def __init__(
-        self, env: Env,
+        self,
+        env: Env,
         use_std: bool = None,
         use_min: bool = None,
         scale: float = -1.0,
-        ) -> None:
-
+    ) -> None:
         """
         Initializes the abstract fixed reward shaper wrapper.
 
@@ -377,10 +399,8 @@ class AbstractFixedRewardShaperWrapper(AbstractRewardShaperWrapper):
         self.use_min = use_min
         self.scale = scale
 
-
     @abstractmethod
     def check_condition(self) -> bool:
-
         """
         Abstract method that checks the condition for shaping the reward.
 
@@ -390,11 +410,9 @@ class AbstractFixedRewardShaperWrapper(AbstractRewardShaperWrapper):
 
         raise NotImplementedError
 
-
     @property
     @abstractmethod
     def threshold(self) -> float:
-
         """
         Abstract property that defines the threshold used for shaping the reward.
 
@@ -404,9 +422,7 @@ class AbstractFixedRewardShaperWrapper(AbstractRewardShaperWrapper):
 
         raise NotImplementedError
 
-
     def reward(self, reward: float) -> float:
-
         """
         Shapes the reward based on the check_condition method.
 
@@ -418,16 +434,15 @@ class AbstractFixedRewardShaperWrapper(AbstractRewardShaperWrapper):
         """
 
         if self.check_condition():
-            reward = self.shape_reward(
-                threshold = self.threshold, use_std=self.use_std, use_min=self.use_min, scale=self.scale)
+            reward = self.shape_reward(threshold=self.threshold,
+                                       use_std=self.use_std,
+                                       use_min=self.use_min,
+                                       scale=self.scale)
 
         return reward
 
 
-
-
 class AbstractDynamicRewardShaperWrapper(AbstractRewardShaperWrapper, ABC):
-
     """
     Abstract base class for a dynamic reward shaper wrapper.
 
@@ -461,13 +476,13 @@ class AbstractDynamicRewardShaperWrapper(AbstractRewardShaperWrapper, ABC):
     """
 
     def __init__(
-        self, env: Env, 
-        use_std: bool = None, 
-        use_min: bool = None, 
+        self,
+        env: Env,
+        use_std: bool = None,
+        use_min: bool = None,
         factor: float = -1.0,
         base: float = 1.0,
-        ) -> None:
-    
+    ) -> None:
         """
         Initializes the abstract dynamic reward shaper wrapper.
 
@@ -489,10 +504,8 @@ class AbstractDynamicRewardShaperWrapper(AbstractRewardShaperWrapper, ABC):
         self.factor = factor
         self.base = base
 
-
     @abstractmethod
     def check_condition(self) -> bool:
-
         """
         Abstract method that checks whether the reward should be shaped based on the current episode state.
 
@@ -502,11 +515,9 @@ class AbstractDynamicRewardShaperWrapper(AbstractRewardShaperWrapper, ABC):
 
         raise NotImplementedError
 
-
     @property
     @abstractmethod
     def metric(self) -> float:
-
         """
         Abstract property that defines the metric used to adjust the scaling factor.
 
@@ -516,11 +527,9 @@ class AbstractDynamicRewardShaperWrapper(AbstractRewardShaperWrapper, ABC):
 
         raise NotImplementedError
 
-
     @property
     @abstractmethod
     def threshold(self) -> float:
-
         """
         Abstract property that defines the threshold used for shaping the reward.
 
@@ -529,10 +538,8 @@ class AbstractDynamicRewardShaperWrapper(AbstractRewardShaperWrapper, ABC):
         """
 
         raise NotImplementedError
-    
 
     def reward(self, reward: float) -> float:
-
         """
         Shapes the reward signal based on the check_condition method and the adjusted scaling factor.
 
@@ -544,15 +551,17 @@ class AbstractDynamicRewardShaperWrapper(AbstractRewardShaperWrapper, ABC):
         """
 
         if self.check_condition():
-            scale = self.parse_scale(self.threshold, self.metric, self.factor, self.base)
-            reward = self.shape_reward(use_std=self.use_std, use_min=self.use_min, scale=scale)
+            scale = self.parse_scale(self.threshold, self.metric, self.factor,
+                                     self.base)
+            reward = self.shape_reward(use_std=self.use_std,
+                                       use_min=self.use_min,
+                                       scale=scale)
 
         return reward
 
 
 @metadata
 class FixedPenalizeShortRatioRewardWrapper(AbstractFixedRewardShaperWrapper):
-
     """
     A reward shaping wrapper that penalizes a short ratio lower than a given threshold.
 
@@ -576,13 +585,13 @@ class FixedPenalizeShortRatioRewardWrapper(AbstractFixedRewardShaperWrapper):
     """
 
     def __init__(
-        self, env: Env,
+        self,
+        env: Env,
         short_ratio_threshold: float = 0.2,
         use_std: bool = None,
         use_min: bool = None,
         scale: float = 1.0,
-        ) -> None:
-
+    ) -> None:
         """
         Initializes the PenalizeShortRatioRewardWrapper instance.
 
@@ -602,10 +611,8 @@ class FixedPenalizeShortRatioRewardWrapper(AbstractFixedRewardShaperWrapper):
         self.scale = scale
         self.short_ratio = None
 
-
     @property
     def threshold(self) -> float:
-
         """
         The short ratio threshold.
 
@@ -614,7 +621,6 @@ class FixedPenalizeShortRatioRewardWrapper(AbstractFixedRewardShaperWrapper):
         """
 
         return self.short_ratio_threshold
-    
 
     def check_condition(self) -> bool:
 
@@ -623,15 +629,15 @@ class FixedPenalizeShortRatioRewardWrapper(AbstractFixedRewardShaperWrapper):
 
         if not net_worth > 0:
             return False
-        
-        self.short_ratio = abs(shorts) / net_worth 
+
+        self.short_ratio = abs(shorts) / net_worth
 
         return self.short_ratio > self.short_ratio_threshold
 
 
 @metadata
-class DynamicPenalizeShortRatioRewardWrapper(FixedPenalizeShortRatioRewardWrapper):
-
+class DynamicPenalizeShortRatioRewardWrapper(
+        FixedPenalizeShortRatioRewardWrapper):
     """
     A reward shaping wrapper that penalizes a short ratio lower than a given threshold.
 
@@ -686,13 +692,14 @@ class DynamicPenalizeShortRatioRewardWrapper(FixedPenalizeShortRatioRewardWrappe
     """
 
     def __init__(
-        self, env: Env,
+        self,
+        env: Env,
         short_ratio_threshold: float = 0.2,
         use_std: bool = None,
         use_min: bool = None,
         factor: float = -1.0,
         base: float = 1.0,
-        ) -> None:
+    ) -> None:
         """
         Initializes the DynamicPenalizeShortRatioRewardWrapper instance.
 
@@ -718,10 +725,8 @@ class DynamicPenalizeShortRatioRewardWrapper(FixedPenalizeShortRatioRewardWrappe
         super().__init__(env, short_ratio_threshold, use_std, use_min, factor)
         self.factor = factor
 
-
     @property
     def threshold(self) -> float:
-
         """
         The short ratio threshold.
 
@@ -730,11 +735,9 @@ class DynamicPenalizeShortRatioRewardWrapper(FixedPenalizeShortRatioRewardWrappe
         """
 
         return self.short_ratio_threshold
-    
 
     @property
     def metric(self) -> float:
-
         """
         The short ratio.
 
@@ -743,10 +746,8 @@ class DynamicPenalizeShortRatioRewardWrapper(FixedPenalizeShortRatioRewardWrappe
         """
 
         return self.short_ratio
-    
 
     def check_condition(self) -> bool:
-
         """
         Checks whether the reward should be shaped based on the current episode state.
 
@@ -761,15 +762,14 @@ class DynamicPenalizeShortRatioRewardWrapper(FixedPenalizeShortRatioRewardWrappe
 
         if not net_worth > 0:
             return False
-        
-        self.short_ratio = abs(shorts) / net_worth 
+
+        self.short_ratio = abs(shorts) / net_worth
 
         return self.short_ratio > self.short_ratio_threshold
 
 
 @metadata
 class FixedPenalizeCashRatioRewardWrapper(AbstractRewardShaperWrapper):
-
     """
     A reward shaping wrapper that penalizes a cash ratio lower than a given threshold. The cash ratio is defined
     as the ratio of cash to net worth. This ratio has meaning when both cash and net worth are positive.
@@ -826,8 +826,7 @@ class FixedPenalizeCashRatioRewardWrapper(AbstractRewardShaperWrapper):
         use_std: Optional[bool] = None,
         use_min: Optional[bool] = None,
         scale: float = -1.0,
-        ) -> None:
-        
+    ) -> None:
         """
         Initializes the FixedPenalizeCashRatioRewardWrapper instance.
 
@@ -853,7 +852,6 @@ class FixedPenalizeCashRatioRewardWrapper(AbstractRewardShaperWrapper):
         self.cash_ratio_threshold = cash_ratio_threshold
         self.cash_ratio = None
 
-
     @property
     def threshold(self) -> float:
         """
@@ -866,9 +864,7 @@ class FixedPenalizeCashRatioRewardWrapper(AbstractRewardShaperWrapper):
         """
         return self.cash_ratio_threshold
 
-
     def check_condition(self) -> bool:
-
         """
         Checks whether the reward should be shaped based on the current episode state.
 
@@ -890,9 +886,8 @@ class FixedPenalizeCashRatioRewardWrapper(AbstractRewardShaperWrapper):
 
 
 @metadata
-class DynamicPenalizeShortRatioRewardWrapper(FixedPenalizeShortRatioRewardWrapper):
-
-
+class DynamicPenalizeShortRatioRewardWrapper(
+        FixedPenalizeShortRatioRewardWrapper):
 
     def __init__(
         self,
@@ -901,7 +896,7 @@ class DynamicPenalizeShortRatioRewardWrapper(FixedPenalizeShortRatioRewardWrappe
         use_std: Optional[bool] = None,
         use_min: Optional[bool] = None,
         factor: float = -1.0,
-        ) -> None:
+    ) -> None:
         """
         A wrapper that modifies the reward function of an environment by penalizing the agent when its 
         cash ratio rises above a certain threshold.
@@ -930,7 +925,6 @@ class DynamicPenalizeShortRatioRewardWrapper(FixedPenalizeShortRatioRewardWrappe
         """
 
         super().__init__(env, use_std, use_min, factor)
-
         """
         Initializes the `DynamicPenalizeShortRatioRewardWrapper` instance.
 
@@ -949,12 +943,9 @@ class DynamicPenalizeShortRatioRewardWrapper(FixedPenalizeShortRatioRewardWrappe
 
         self.cash_ratio_threshold = cash_ratio_threshold
         self.cash_ratio = None
-        
-
 
     @property
     def threshold(self) -> float:
-
         """
         Returns the `cash_ratio_threshold` value.
 
@@ -964,10 +955,8 @@ class DynamicPenalizeShortRatioRewardWrapper(FixedPenalizeShortRatioRewardWrappe
 
         return self.cash_ratio_threshold
 
-
     @property
     def metric(self) -> float:
-
         """
         Returns the current cash ratio.
 
@@ -976,9 +965,8 @@ class DynamicPenalizeShortRatioRewardWrapper(FixedPenalizeShortRatioRewardWrappe
         """
 
         return self.cash_ratio
-    
-    def check_condition(self) -> bool:
 
+    def check_condition(self) -> bool:
         """
         Calculates the current cash ratio by dividing the amount of cash by the net worth. 
         If the net worth or cash is zero or negative, returns False. If the cash ratio 

@@ -9,8 +9,9 @@ from neural.wrapper.base import metadata
 from neural.utils.base import FillDeque, RunningStatistics
 
 
-def validate_observation(wrapper: Wrapper, observation: np.ndarray | Dict[str, np.ndarray]) -> None:
-
+def validate_observation(
+        wrapper: Wrapper,
+        observation: np.ndarray | Dict[str, np.ndarray]) -> None:
     """
     This is a helper function that is shared between the observation sanity checkers. It performs a
     basic check to see if the observation is a known observation type accepted by this library.
@@ -42,13 +43,13 @@ def validate_observation(wrapper: Wrapper, observation: np.ndarray | Dict[str, n
     if not valid:
         raise IncompatibleWrapperError(
             f'Wrapper {type(wrapper).__name__} received an observation of type {type(observation)}, '
-            F'which is not in the accepted observation types {ACCEPTED_OBSERVATION_TYPES}.')
+            F'which is not in the accepted observation types {ACCEPTED_OBSERVATION_TYPES}.'
+        )
 
     return False
 
 
 def observation(wrapper_class: Type[Wrapper]) -> Type[Wrapper]:
-
     """
     A decorator that augments an existing Gym wrapper and extends it to have input and output self checks.
     The reulst is a new observation wrapper that checks if the observation of the wrapped env is in its expected observation space, and also
@@ -86,12 +87,11 @@ def observation(wrapper_class: Type[Wrapper]) -> Type[Wrapper]:
     """
 
     if not issubclass(wrapper_class, ObservationWrapper):
-        raise TypeError(f"{wrapper_class.__name__} must be a subclass of {ObservationWrapper}")
-
+        raise TypeError(
+            f"{wrapper_class.__name__} must be a subclass of {ObservationWrapper}"
+        )
 
     class ObservationSpaceCheckerWrapper(wrapper_class):
-
-
         """
         This wrapper allows an observation wrapper to have input and output self checks by subclassing
         from it and overriding the observation method. The reulst is a new observation wrapper that
@@ -132,7 +132,6 @@ def observation(wrapper_class: Type[Wrapper]) -> Type[Wrapper]:
         """
 
         def __init__(self, env: Env, *args, **kwargs) -> None:
-
             """
             Initializes the ObservationSpaceCheckerWrapper instance.
 
@@ -153,14 +152,14 @@ def observation(wrapper_class: Type[Wrapper]) -> Type[Wrapper]:
 
             # as a byproduct of following and due to inheritance from gym.ObservationWrapper
             # existence of self.observation_space is guaranteed
-            if not hasattr(
-                env, 'observation_space') or not isinstance(env.observation_space, Space):
+            if not hasattr(env, 'observation_space') or not isinstance(
+                    env.observation_space, Space):
 
                 raise IncompatibleWrapperError(
                     f'Wrapper {type(self).__name__} requires a non None observation '
                     f'space of type {Space} to be defined in the enclosed environment '
                     f'{type(env).__name__}.')
-            
+
             super().__init__(env, *args, **kwargs)
 
             self._validate_expected_observation_type()
@@ -168,10 +167,8 @@ def observation(wrapper_class: Type[Wrapper]) -> Type[Wrapper]:
                 env.observation_space.sample())
 
             return None
-        
 
         def _validate_expected_observation_type(self):
-
             """
             Validates the expected observation type of the wrapper. ACCEPTED_OBSERVATION_TYPES constant
             is a list of valid observation types that can be used to define the expected
@@ -183,36 +180,34 @@ def observation(wrapper_class: Type[Wrapper]) -> Type[Wrapper]:
                 If the expected observation type is not valid.
             """
 
-            if (not hasattr(self, 'expected_observation_type') or
-                    self.expected_observation_type is None):
+            if (not hasattr(self, 'expected_observation_type')
+                    or self.expected_observation_type is None):
 
                 raise IncompatibleWrapperError(
                     f'Wrapper {type(self).__name__} needs to have a '
                     f'non None expected observation type '
                     f'defined before applying {observation} decorator.')
-            
+
             valid = False
             # expected observation type is Space or subset list of [np.ndarray, dict]
             if isinstance(self.expected_observation_type, Space):
                 valid = True
 
-            elif isinstance(self.expected_observation_type, list
-                ) and set(self.expected_observation_type).issubset(ACCEPTED_OBSERVATION_TYPES):
+            elif isinstance(self.expected_observation_type, list) and set(
+                    self.expected_observation_type).issubset(
+                        ACCEPTED_OBSERVATION_TYPES):
                 valid = True
-            
+
             if not valid:
 
                 raise IncompatibleWrapperError(
-                f'Wrapper {type(self).__name__} is defining an exptected observation type '
-                f'of type {type(self.expected_observation_type)}, which is not in the accepted '
-                'observation types {ACCEPTED_OBSERVATION_TYPES}.')
-
+                    f'Wrapper {type(self).__name__} is defining an exptected observation type '
+                    f'of type {type(self.expected_observation_type)}, which is not in the accepted '
+                    'observation types {ACCEPTED_OBSERVATION_TYPES}.')
 
         def _validate_observation_in_expected_observation_type(
-            self, 
-            observation: np.ndarray[float] | Dict[str, np.ndarray[float]]
-            ) -> None:
-
+            self, observation: np.ndarray[float] | Dict[str, np.ndarray[float]]
+        ) -> None:
             """
             Validates if the observation is in the expected observation type. the expected observation type
             is a gym.Space or a subset list of ACCEPTED_ACTION_TYPES. If gym.Space, the observation is checked
@@ -232,29 +227,28 @@ def observation(wrapper_class: Type[Wrapper]) -> Type[Wrapper]:
             """
 
             validate_observation(self, observation)
-            
+
             valid = True
 
-            if isinstance(self.expected_observation_type, Space
-                ) and not self.expected_observation_type.contains(observation):
+            if isinstance(
+                    self.expected_observation_type, Space
+            ) and not self.expected_observation_type.contains(observation):
                 valid = False
-            
+
             elif type(observation) not in self.expected_observation_type:
                 valid = False
 
             if not valid:
                 raise IncompatibleWrapperError(
-                f'Wrapper {type(self).__name__} received an observation of type {type(observation)}, '
-                f'which is not in the expected observation type {self.expected_observation_type}.')
-            
+                    f'Wrapper {type(self).__name__} received an observation of type {type(observation)}, '
+                    f'which is not in the expected observation type {self.expected_observation_type}.'
+                )
+
             return None
 
-
         def _validate_observation_in_observation_space(
-            self,
-            observation: np.ndarray[float] | Dict[str, np.ndarray[float]]
-            ) -> None:
-
+            self, observation: np.ndarray[float] | Dict[str, np.ndarray[float]]
+        ) -> None:
             """
             Validates if the observation is in the observation space. This is post input validation and performed
             at each time wrapper prouces an observation, to ensure that the observation is in the observation
@@ -274,17 +268,16 @@ def observation(wrapper_class: Type[Wrapper]) -> Type[Wrapper]:
             validate_observation(self, observation)
             if not self.self.observation_space.contains(observation):
 
-                raise IncompatibleWrapperError(f'Wrapper {type(self).__name__} outputs an observation '
-                    f'that is not in its defined observation space {self.exptected_observation_space}.')
-            
+                raise IncompatibleWrapperError(
+                    f'Wrapper {type(self).__name__} outputs an observation '
+                    f'that is not in its defined observation space {self.exptected_observation_space}.'
+                )
+
             return None
 
-
         def observation(
-            self, 
-            observation: np.ndarray[float] | Dict[str, np.ndarray[float]]
-            ) -> np.ndarray[float] | Dict[str, np.ndarray[float]]:
-
+            self, observation: np.ndarray[float] | Dict[str, np.ndarray[float]]
+        ) -> np.ndarray[float] | Dict[str, np.ndarray[float]]:
             """
             This overrides the observation method of the base class and performs the sanity checks
             before and after calling the observation method of the base class. It ensures adherence to
@@ -317,9 +310,7 @@ def observation(wrapper_class: Type[Wrapper]) -> Type[Wrapper]:
     return ObservationSpaceCheckerWrapper
 
 
-
 def buffer(wrapper_class: Type[Wrapper]) -> Type[Wrapper]:
-
     """
     A decorator that augments an existing Gym wrapper class by recursively
     searching through enclosed wrappers for an observation buffer and creating
@@ -360,7 +351,6 @@ def buffer(wrapper_class: Type[Wrapper]) -> Type[Wrapper]:
             f"{wrapper_class.__name__} must be a subclass of {Wrapper}")
 
     class ObservationBufferDependentWrapper(wrapper_class):
-
         """
         A class that extends the base wrapper class to search recursively through enclosed wrappers for an
         observation buffer and creates a pointer to it. If search fails, an error
@@ -392,7 +382,6 @@ def buffer(wrapper_class: Type[Wrapper]) -> Type[Wrapper]:
         """
 
         def __init__(self, env: Env, *args, **kwargs) -> None:
-
             """
             Initializes the ObservationBufferDependentWrapper instance.
 
@@ -410,8 +399,8 @@ def buffer(wrapper_class: Type[Wrapper]) -> Type[Wrapper]:
                 env)
             super().__init__(env, *args, **kwargs)
 
-        def find_observation_buffer_wrapper(self, env: Env) -> ObservationBufferWrapper:
-
+        def find_observation_buffer_wrapper(
+                self, env: Env) -> ObservationBufferWrapper:
             """
             Searches recursively for an observation buffer wrapper in enclosed wrappers.
 
@@ -445,11 +434,9 @@ def buffer(wrapper_class: Type[Wrapper]) -> Type[Wrapper]:
     return ObservationBufferDependentWrapper
 
 
-
 @observation
 @metadata
 class PositionsFeatureEngineeringWrapper(ObservationWrapper):
-
     """
     A wrapper for OpenAI Gym trading environments that augments observations such that,
     instead of asset quantities held, the notional USD value of assets (positions) is 
@@ -481,7 +468,6 @@ class PositionsFeatureEngineeringWrapper(ObservationWrapper):
     """
 
     def __init__(self, env: Env) -> None:
-
         """
         Initializes a new instance of the PositionsFeatureEngineeringWrapper class.
 
@@ -495,45 +481,57 @@ class PositionsFeatureEngineeringWrapper(ObservationWrapper):
         self.n_symbols = self.market_metadata_wrapper.n_symbols
         self.n_features = self.market_metadata_wrapper.n_features
         self.expected_observation_type = spaces.Dict({
-
-            'cash': spaces.Box(
-                low=-np.inf, high=np.inf, shape=(1,), dtype=GLOBAL_DATA_TYPE),
-
-            'asset_quantities': spaces.Box(
-                low=-np.inf, high=np.inf, shape=(
-                    self.n_symbols,), dtype=GLOBAL_DATA_TYPE),
-
-            'holds': spaces.Box(
-                low=0, high=np.inf, shape=(
-                    self.n_symbols,), dtype=np.int32),
-
-            'features': spaces.Box(
-                low=-np.inf, high=np.inf, shape=(
-                    self.n_features,), dtype=GLOBAL_DATA_TYPE)})
+            'cash':
+            spaces.Box(low=-np.inf,
+                       high=np.inf,
+                       shape=(1, ),
+                       dtype=GLOBAL_DATA_TYPE),
+            'asset_quantities':
+            spaces.Box(low=-np.inf,
+                       high=np.inf,
+                       shape=(self.n_symbols, ),
+                       dtype=GLOBAL_DATA_TYPE),
+            'holds':
+            spaces.Box(low=0,
+                       high=np.inf,
+                       shape=(self.n_symbols, ),
+                       dtype=np.int32),
+            'features':
+            spaces.Box(low=-np.inf,
+                       high=np.inf,
+                       shape=(self.n_features, ),
+                       dtype=GLOBAL_DATA_TYPE)
+        })
 
         self.observation_space = spaces.Dict({
-
-            'cash': spaces.Box(
-                low=-np.inf, high=np.inf, shape=(1,), dtype=GLOBAL_DATA_TYPE),
-
-            'positions': spaces.Box(
-                low=-np.inf, high=np.inf, shape=(
-                    self.n_symbols,), dtype=GLOBAL_DATA_TYPE),
-
-            'holds': spaces.Box(
-                low=0, high=np.inf, shape=(
-                    self.n_symbols,), dtype=np.int32),
-
-            'features': spaces.Box(
-                low=-np.inf, high=np.inf, shape=(
-                    self.n_features,), dtype=GLOBAL_DATA_TYPE)})
+            'cash':
+            spaces.Box(low=-np.inf,
+                       high=np.inf,
+                       shape=(1, ),
+                       dtype=GLOBAL_DATA_TYPE),
+            'positions':
+            spaces.Box(low=-np.inf,
+                       high=np.inf,
+                       shape=(self.n_symbols, ),
+                       dtype=GLOBAL_DATA_TYPE),
+            'holds':
+            spaces.Box(low=0,
+                       high=np.inf,
+                       shape=(self.n_symbols, ),
+                       dtype=np.int32),
+            'features':
+            spaces.Box(low=-np.inf,
+                       high=np.inf,
+                       shape=(self.n_features, ),
+                       dtype=GLOBAL_DATA_TYPE)
+        })
 
         return None
 
     def observation(
         self,
-        observation: Dict[str, np.ndarray[float]]) -> Dict[str, np.ndarray[float]]:
-
+        observation: Dict[str,
+                          np.ndarray[float]]) -> Dict[str, np.ndarray[float]]:
         """
         Augments the observation such that, instead of asset quantities held, the notional 
         value of assets (positions) is used.
@@ -561,7 +559,6 @@ class PositionsFeatureEngineeringWrapper(ObservationWrapper):
 @observation
 @metadata
 class WealthAgnosticFeatureEngineeringWrapper(ObservationWrapper):
-
     """
     A wrapper for OpenAI Gym trading environments that augments observations
     such that net worth sensitive features are now independent of net worth.
@@ -595,7 +592,6 @@ class WealthAgnosticFeatureEngineeringWrapper(ObservationWrapper):
     """
 
     def __init__(self, env: Env) -> None:
-
         """
         Initializes a new instance of the WealthAgnosticFeatureEngineeringWrapper class.
 
@@ -612,46 +608,62 @@ class WealthAgnosticFeatureEngineeringWrapper(ObservationWrapper):
         self.n_features = self.market_metadata_wrapper.n_features
 
         self.expected_observation_type = spaces.Dict({
-
-            'cash': spaces.Box(
-                low=-np.inf, high=np.inf, shape=(1,), dtype=GLOBAL_DATA_TYPE),
-
-            'positions': spaces.Box(
-                low=-np.inf, high=np.inf, shape=(
-                    self.n_symbols,), dtype=GLOBAL_DATA_TYPE),
-
-            'holds': spaces.Box(
-                low=0, high=np.inf, shape=(
-                    self.n_symbols,), dtype=np.int32),
-
-            'features': spaces.Box(
-                low=-np.inf, high=np.inf, shape=(
-                    self.n_features,), dtype=GLOBAL_DATA_TYPE)})
+            'cash':
+            spaces.Box(low=-np.inf,
+                       high=np.inf,
+                       shape=(1, ),
+                       dtype=GLOBAL_DATA_TYPE),
+            'positions':
+            spaces.Box(low=-np.inf,
+                       high=np.inf,
+                       shape=(self.n_symbols, ),
+                       dtype=GLOBAL_DATA_TYPE),
+            'holds':
+            spaces.Box(low=0,
+                       high=np.inf,
+                       shape=(self.n_symbols, ),
+                       dtype=np.int32),
+            'features':
+            spaces.Box(low=-np.inf,
+                       high=np.inf,
+                       shape=(self.n_features, ),
+                       dtype=GLOBAL_DATA_TYPE)
+        })
 
         self.observation_space = spaces.Dict({
-
-            'cash': spaces.Box(
-                low=-np.inf, high=np.inf, shape=(1,), dtype=GLOBAL_DATA_TYPE),
-
-            'positions': spaces.Box(
-                low=-np.inf, high=np.inf, shape=(
-                    self.n_symbols,), dtype=GLOBAL_DATA_TYPE),
-
-            'holds': spaces.Box(
-                low=0, high=np.inf, shape=(
-                    self.n_symbols,), dtype=np.int32),
-
-            'features': spaces.Box(
-                low=-np.inf, high=np.inf, shape=(
-                    self.n_features,), dtype=GLOBAL_DATA_TYPE),
-
-            'return': spaces.Box(
-                low=-np.inf, high=np.inf, shape=(1,), dtype=GLOBAL_DATA_TYPE), })
+            'cash':
+            spaces.Box(low=-np.inf,
+                       high=np.inf,
+                       shape=(1, ),
+                       dtype=GLOBAL_DATA_TYPE),
+            'positions':
+            spaces.Box(low=-np.inf,
+                       high=np.inf,
+                       shape=(self.n_symbols, ),
+                       dtype=GLOBAL_DATA_TYPE),
+            'holds':
+            spaces.Box(low=0,
+                       high=np.inf,
+                       shape=(self.n_symbols, ),
+                       dtype=np.int32),
+            'features':
+            spaces.Box(low=-np.inf,
+                       high=np.inf,
+                       shape=(self.n_features, ),
+                       dtype=GLOBAL_DATA_TYPE),
+            'return':
+            spaces.Box(low=-np.inf,
+                       high=np.inf,
+                       shape=(1, ),
+                       dtype=GLOBAL_DATA_TYPE),
+        })
 
         return None
 
-    def observation(self, observation: Dict[str, np.ndarray[float]]) -> Dict[str, np.ndarray[float]]:
-
+    def observation(
+        self,
+        observation: Dict[str,
+                          np.ndarray[float]]) -> Dict[str, np.ndarray[float]]:
         """
         Augments the observation such that net worth sensitive 
         features now have net worth independent values.
@@ -672,13 +684,12 @@ class WealthAgnosticFeatureEngineeringWrapper(ObservationWrapper):
 
         observation['positions'] /= net_worth
         observation['cash'] /= net_worth
-        observation['return'] = net_worth/self.initial_cash - 1
+        observation['return'] = net_worth / self.initial_cash - 1
 
         return observation
 
 
 class ObservationBufferWrapper(ObservationWrapper):
-
     """
     A wrapper for OpenAI Gym trading environments that provides a temporary buffer of observations for subsequent wrappers
     that require this form of information. Autofills itself with the first observation received from the environment to
@@ -708,7 +719,6 @@ class ObservationBufferWrapper(ObservationWrapper):
     """
 
     def __init__(self, env: Env, buffer_size: int = 10) -> None:
-
         """
         Initializes a new instance of the ObservationBufferWrapper class.
 
@@ -730,7 +740,6 @@ class ObservationBufferWrapper(ObservationWrapper):
         return None
 
     def reset(self):
-
         """
         Resets the environment and clears the observation buffer.
 
@@ -740,7 +749,6 @@ class ObservationBufferWrapper(ObservationWrapper):
             A dictionary containing the first observation of the reset environment.
         """
 
-
         observation = self.env.reset()
         self.observation_buffer.clear()
         self.observation_buffer.append(observation)
@@ -748,7 +756,6 @@ class ObservationBufferWrapper(ObservationWrapper):
         return observation
 
     def observation(self, observation):
-
         """
         Adds the observation to the buffer and returns the buffer as the new observation.
 
@@ -768,10 +775,8 @@ class ObservationBufferWrapper(ObservationWrapper):
         return observation
 
 
-
 @observation
 class FlattenToNUmpyObservationWrapper(ObservationWrapper):
-
     """
     A wrapper for OpenAI Gym trading environments that flattens the observation space to a 1D numpy array.
 
@@ -800,7 +805,6 @@ class FlattenToNUmpyObservationWrapper(ObservationWrapper):
     """
 
     def __init__(self, env: Env) -> None:
-
         """
         Initializes a new instance of the FlattenToNumpyObservationWrapper class.
 
@@ -817,7 +821,6 @@ class FlattenToNUmpyObservationWrapper(ObservationWrapper):
         return None
 
     def flattened_space(self, space: Space) -> spaces.Box:
-
         """
         Returns a flattened observation space.
 
@@ -844,11 +847,10 @@ class FlattenToNUmpyObservationWrapper(ObservationWrapper):
             flattened_high = space.high.flatten() if not np.isscalar(
                 space.high) else np.full(flattened_shape, space.high)
 
-            flattened_observation_space = spaces.Box(
-                low=flattened_low,
-                high=flattened_high,
-                shape=flattened_shape,
-                dtype=GLOBAL_DATA_TYPE)
+            flattened_observation_space = spaces.Box(low=flattened_low,
+                                                     high=flattened_high,
+                                                     shape=flattened_shape,
+                                                     dtype=GLOBAL_DATA_TYPE)
 
             return flattened_observation_space
 
@@ -860,28 +862,27 @@ class FlattenToNUmpyObservationWrapper(ObservationWrapper):
             for key, space in space.items():
                 flattened_observation_space[key] = self.flattened_space(space)
 
-            flattened_low = np.concatenate(
-                [flattened_observation_space[key
-                ].low for key in flattened_observation_space])
+            flattened_low = np.concatenate([
+                flattened_observation_space[key].low
+                for key in flattened_observation_space
+            ])
 
-            flattened_high = np.concatenate(
-                [flattened_observation_space[key
-                ].high for key in flattened_observation_space])
+            flattened_high = np.concatenate([
+                flattened_observation_space[key].high
+                for key in flattened_observation_space
+            ])
 
             flattened_size = sum(
-                shape[0] for shape in 
-                flattened_observation_space.values())
+                shape[0] for shape in flattened_observation_space.values())
 
             flattened_shape = (flattened_size, )
 
-            return spaces.Box(
-                low=flattened_low,
-                high=flattened_high,
-                shape=flattened_shape,
-                dtype=GLOBAL_DATA_TYPE)
+            return spaces.Box(low=flattened_low,
+                              high=flattened_high,
+                              shape=flattened_shape,
+                              dtype=GLOBAL_DATA_TYPE)
 
     def observation(self, observation):
-
         """
         Flattens the observation space to a 1D numpy array.
 
@@ -897,8 +898,8 @@ class FlattenToNUmpyObservationWrapper(ObservationWrapper):
         """
 
         if isinstance(observation, dict):
-            observation = np.concatenate([
-                array.flatten() for array in observation.values()])
+            observation = np.concatenate(
+                [array.flatten() for array in observation.values()])
 
         elif isinstance(observation, np.ndarray):
             observation = observation.flatten()
@@ -908,7 +909,6 @@ class FlattenToNUmpyObservationWrapper(ObservationWrapper):
 
 @buffer
 class ObservationStackerWrapper(ObservationWrapper):
-
     """
     A wrapper for OpenAI Gym trading environments that stacks the last n observations in the buffer.
     If observation is changed between buffer and stacker, all changes will be lost as this wrapper's
@@ -963,21 +963,20 @@ class ObservationStackerWrapper(ObservationWrapper):
         super().__init__(env)
 
         buffer_size = self.observation_buffer_wrapper.buffer_size
-        self.stack_size = (
-            stack_size if stack_size is not None else buffer_size)
+        self.stack_size = (stack_size
+                           if stack_size is not None else buffer_size)
 
-        assert (self.stack_size <= buffer_size,
-                f"Stack size {self.stack_size} cannot exceed buffer size {buffer_size}.")
+        assert (
+            self.stack_size <= buffer_size,
+            f"Stack size {self.stack_size} cannot exceed buffer size {buffer_size}."
+        )
 
         self.observation_space = None
 
         return None
 
     def infer_stacked_observation_space(
-        self,
-        observation_space: spaces.Box
-    ) -> spaces.Box:
-
+            self, observation_space: spaces.Box) -> spaces.Box:
         """
         Infers the observation space of the stacked observations.
 
@@ -994,28 +993,26 @@ class ObservationStackerWrapper(ObservationWrapper):
 
         # TODO: Add support for other observation spaces
         assert isinstance(observation_space, spaces.Box), (
-            f"currently {ObservationStackerWrapper.__name__} only supports Box observation spaces")
+            f"currently {ObservationStackerWrapper.__name__} only supports Box observation spaces"
+        )
 
         observation = observation_space.sample()
         stacked_shape = np.stack([observation] * self.stack_size).shape
 
         stacked_low = (np.full(stacked_shape, observation_space.low)
-                       if np.isscalar(observation_space.low)
-                       else np.stack(self.stack_size * [observation_space.low]))
+                       if np.isscalar(observation_space.low) else np.stack(
+                           self.stack_size * [observation_space.low]))
 
         stacked_high = (np.full(stacked_shape, observation_space.high)
-                        if np.isscalar(observation_space.high)
-                        else np.stack(self.stack_size * [observation_space.high]))
+                        if np.isscalar(observation_space.high) else np.stack(
+                            self.stack_size * [observation_space.high]))
 
-        return spaces.Box(
-            low=stacked_low,
-            high=stacked_high,
-            shape=stacked_shape,
-            dtype=GLOBAL_DATA_TYPE)
-
+        return spaces.Box(low=stacked_low,
+                          high=stacked_high,
+                          shape=stacked_shape,
+                          dtype=GLOBAL_DATA_TYPE)
 
     def stacked_observation_space(self) -> Space:
-
         """
         Returns a flattened observation space.
 
@@ -1042,14 +1039,13 @@ class ObservationStackerWrapper(ObservationWrapper):
         elif isinstance(buffer_observation_space, dict):
             stacked_observation_space = dict()
             for key, space in buffer_observation_space.items():
-                stacked_observation_space[key] = self.infer_stacked_observation_space(
-                    space)
+                stacked_observation_space[
+                    key] = self.infer_stacked_observation_space(space)
 
         return stacked_observation_space
 
-
-    def observation(self, observation: Dict[str, np.ndarray[float]] | np.ndarray[float]):
-
+    def observation(self, observation: Dict[str, np.ndarray[float]]
+                    | np.ndarray[float]):
         """
         Returns the last n stacked observations in the buffer. Note observation in argument
         is discarded and only elemetns in buffer are used, thus if observation is changed
@@ -1067,7 +1063,8 @@ class ObservationStackerWrapper(ObservationWrapper):
             An ndarray or dict of ndarrays containing the stacked observations.
         """
 
-        stack = self.observation_buffer_wrapper.observation_buffer[-self.stack_size:]
+        stack = self.observation_buffer_wrapper.observation_buffer[-self.
+                                                                   stack_size:]
 
         # Check if the observations are ndarrays or dictionaries of ndarrays
         if isinstance(stack[0], np.ndarray):
@@ -1085,7 +1082,6 @@ class ObservationStackerWrapper(ObservationWrapper):
 
 @observation
 class RunningStatisticsObservationWrapper(ObservationWrapper):
-
     """
     A Gym environment wrapper that tracks the running mean and standard deviation
     of the observations using the RunningMeanStandardDeviation class.
@@ -1119,29 +1115,27 @@ class RunningStatisticsObservationWrapper(ObservationWrapper):
     >>> env = RunningMeanSandardDeviationObservationWrapper(env)
     """
 
-    def __init__(
-        self, 
-        env: Env, 
-        observation_statistics: Optional[RunningStatistics] = None,
-        track_statistics: bool = True):
+    def __init__(self,
+                 env: Env,
+                 observation_statistics: Optional[RunningStatistics] = None,
+                 track_statistics: bool = True):
 
         super().__init__(env)
 
         self.expected_observation_type = [dict, np.ndarray]
-        self.observation_statistics = (
-            observation_statistics if observation_statistics is not None 
-            else self.initialize_observation_statistics(env.observation_space.sample()))
-        
+        self.observation_statistics = (observation_statistics if
+                                       observation_statistics is not None else
+                                       self.initialize_observation_statistics(
+                                           env.observation_space.sample()))
+
         if track_statistics:
             observation_statistics = self.observation_statistics
-        
-        return self.observation_statistics
 
+        return self.observation_statistics
 
     def initialize_observation_statistics(
         self, observation: np.ndarray[float] | Dict[str, np.ndarray[float]]
-        ) -> RunningStatistics | Dict[str, RunningStatistics]:
-        
+    ) -> RunningStatistics | Dict[str, RunningStatistics]:
         """
         Initializes the running mean standard deviation for the observation.
 
@@ -1165,12 +1159,9 @@ class RunningStatisticsObservationWrapper(ObservationWrapper):
 
         return observation_rms
 
-
     def update(
-        self,
-        observation: np.ndarray[float] | Dict[str, np.ndarray[float]]
-        ) -> None:
-
+            self, observation: np.ndarray[float] | Dict[str, np.ndarray[float]]
+    ) -> None:
         """
         Updates the running mean standard deviation with the new observation.
 
@@ -1190,8 +1181,8 @@ class RunningStatisticsObservationWrapper(ObservationWrapper):
 
         return None
 
-    def observation(self, observation: np.ndarray[float] | Dict[str, np.ndarray[float]]):
-
+    def observation(self, observation: np.ndarray[float]
+                    | Dict[str, np.ndarray[float]]):
 
         self.update(observation)
 
@@ -1200,7 +1191,6 @@ class RunningStatisticsObservationWrapper(ObservationWrapper):
 
 @observation
 class NormalizeObservationWrapper(RunningStatisticsObservationWrapper):
-
     """
     A wrapper class that normalizes the observations received from the environment
     using running mean standard deviation.
@@ -1228,14 +1218,12 @@ class NormalizeObservationWrapper(RunningStatisticsObservationWrapper):
     >>> env = NormalizeObservationWrapper(env)
     """
 
-    def __init__(
-        self, 
-        env: Env, 
-        epsilon: float = 1e-8, 
-        clip: float = 10,
-        observation_statistics = Optional[RunningStatistics],
-        track_statistics: bool = True
-        ) -> None:
+    def __init__(self,
+                 env: Env,
+                 epsilon: float = 1e-8,
+                 clip: float = 10,
+                 observation_statistics=Optional[RunningStatistics],
+                 track_statistics: bool = True) -> None:
 
         super().__init__(env)
         self.epsilon = epsilon
@@ -1244,8 +1232,7 @@ class NormalizeObservationWrapper(RunningStatisticsObservationWrapper):
 
     def observation(
         self, observation: np.ndarray[float] | Dict[str, np.ndarray[float]]
-        ) -> np.ndarray[float] | Dict[str, np.ndarray[float]]:
-
+    ) -> np.ndarray[float] | Dict[str, np.ndarray[float]]:
         """
         Normalizes the observation received from the environment and returns it.
 
@@ -1255,7 +1242,6 @@ class NormalizeObservationWrapper(RunningStatisticsObservationWrapper):
         Returns:
             The normalized observation.
         """
-
 
         observation = super().observation(observation)
 
@@ -1269,7 +1255,8 @@ class NormalizeObservationWrapper(RunningStatisticsObservationWrapper):
 
             for key, rms in self.observation_rms.items():
                 observation[key] = rms.normalize(
-                    observation, self.epsilon, self.clip).astype(GLOBAL_DATA_TYPE)
+                    observation, self.epsilon,
+                    self.clip).astype(GLOBAL_DATA_TYPE)
 
         return observation
 

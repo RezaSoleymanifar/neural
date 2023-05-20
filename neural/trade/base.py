@@ -11,24 +11,31 @@ from neural.meta.agent import Agent
 class AbstractTrader(ABC):
 
     """
-    Abstract base class for defining a trader that can execute orders based on model actions.
-    This trader requires a client to connect to a trading environment, a data client to
-    stream the live data and an agent to perform the decision making. The agent has a model to generate
-    actions, a data pipe to feed preprocessed to the model, and metadata for the dataset being used
-    to create aggregated data stream matching the training data.
-    TODO: support or multiple data clients for streaming from multiple data stream sources.
+    Abstract base class for defining a trader that can execute orders
+    based on model actions. This trader requires a client to connect to
+    a trading environment, a data client to stream the live data and an
+    agent to perform the decision making. The agent has a model to
+    generate actions, a data pipe to feed preprocessed to the model, and
+    metadata for the dataset being used to create aggregated data stream
+    matching the training data. TODO: support or multiple data clients
+    for streaming from multiple data stream sources.
     """
 
     def __init__(
-        self, trade_client: AbstractTradeClient, data_client: AbstractDataClient, agent: Agent
+        self, 
+        trade_client: AbstractTradeClient, 
+        data_client: AbstractDataClient, 
+        agent: Agent
     ):
         """
         Initializes an AbstractTrader object.
 
         Args:
-            client (AbstractClient): An instance of the client to connect to the trading environment.
-            data_client (AbstractDataClient): An instance of the data client to stream data.
-            agent (Agent): An instance of the agent to perform decision making.
+            client (AbstractClient): An instance of the client to
+            connect to the trading environment. data_client
+            (AbstractDataClient): An instance of the data client to
+            stream data. agent (Agent): An instance of the agent to
+            perform decision making.
         """
 
         self.trade_client = trade_client
@@ -37,62 +44,58 @@ class AbstractTrader(ABC):
 
         return None
 
+    @property
+    def cash(self):
+        return self.trade_client.cash
+    
+    @property
+    def asset_quantities(self):
+        return self.trade_client.asset_quantities
+    
+    
     def apply_rules(self, *args, **kwargs):
         """
-        Applies trading rules to the trades. Override this method to apply custom rules
-        before placing orders. This allows rule based trading to complement the model based
-        trading. For example, a rule could be to only buy a stock if it has a positive
-        sentiment score. Or execute a techinical analysis strategy whenever a condition is met
-        to override the normal behavior of the model.
+        Applies trading rules to the trades. Override this method to
+        apply custom rules before placing orders. This allows rule based
+        trading to complement the model based trading. For example, a
+        rule could be to only buy a stock if it has a positive sentiment
+        score. Or execute a techinical analysis strategy whenever a
+        condition is met to override the normal behavior of the model.
 
         Raises:
-            NotImplementedError: This method must be implemented by a subclass.
+            NotImplementedError: This method must be implemented by a
+            subclass.
         """
 
         raise NotImplementedError
 
-    def no_short(self, quantities: np.ndarray):
-        # Due to rounding errors it is not possible to guarantee absolute zero as the output of the pipe
-        # and thus small nominal amoutns that can haphazardly happen it will have the same ramifications
-        # as a normal short position. If shoring can lead to being flagged as a pattern day tra This method
-        # will modify quantities at order time to ensure that no short positions are created.
-
-        held_quantities = self.trade_client.asset_quantities
-        available_quantities = np.where(held_quantities <= 0, 0, held_quantities)
-        quantities = min(abs(quantities), available_quantities)
-
-        return quantities
-
-    def no_margin(self, quantities: np.ndarray, cash_ratio_threshold: float = 0.1):
-        # due to slippage it is possible that margin trading can happen, even when
-        # no margin occurrs that time of placing orders.the way to
-        # prevent this practically is to allow a minimum amount of cash to be held
-        # at all times. This method will modify quantities at order time to ensure
-        # that if cash falls below a certain threshold all buy orders will be nullified
-        # Note if margin trading is a concern, it is recommended to set the margin
-        # parameter to a relatively high value.
-
-        cash_ratio = self.trade_client.cash / self.data_client.net_worth
-        if cash_ratio < cash_ratio_threshold:
-            quantities = np.where(quantities > 0, 0, quantities)
-
-        return quantities
+    def integer_shorts(self, *args, **kwargs):
+        """
+        Considers constraint on shorting stocks that quantity of stocks
+        to be shorted must be an integer always.
+        TODO: experiment with scenario that actions leads to shortting.
+        How the residual quantity is handled in that case?
+        """
+        raise notImplementedError
 
     def place_orders(self, actions: np.ndarray, *args, **kwargs):
         """
         Takes actions from the model and places relevant orders.
 
         Args:
-            actions (np.ndarray): A 2D numpy array of actions generated by the model.
+            actions (np.ndarray): A 2D numpy array of actions generated
+            by the model.
 
         Raises:
-            NotImplementedError: This method must be implemented by a subclass.
+            NotImplementedError: This method must be implemented by a
+            subclass.
         """
         # Get the list of symbols from the dataset metadata
 
         symbols = self.agent.dataset_metadata.assets
 
-        # Loop over the symbols and actions and place orders for each symbol
+        # Loop over the symbols and actions and place orders for each
+        # symbol
         for symbol, quantity in zip(symbols, actions):
             self.trade_client.place_order(symbol, actions, *args, **kwargs)
 
@@ -104,11 +107,12 @@ class AbstractTrader(ABC):
 
     def trade(self):
         """
-        Starts the trading process by creating a trading environment and executing
-        actions from the model.
+        Starts the trading process by creating a trading environment and
+        executing actions from the model.
 
         Raises:
-            NotImplementedError: This method must be implemented by a subclass.
+            NotImplementedError: This method must be implemented by a
+            subclass.
         """
 
         self.trade_market_env = self._get_trade_market_env(self)

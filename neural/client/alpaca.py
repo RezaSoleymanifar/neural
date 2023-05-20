@@ -325,7 +325,7 @@ class AlpacaDataClient(AlpacaClient, AbstractDataClient):
                 marginable=alpaca_asset.marginable,
                 fractionable=alpaca_asset.fractionable,
                 shortable=alpaca_asset.shortable,
-                initial_margin=alpaca_asset.initial_margin,
+                required_margin=alpaca_asset.initial_margin,
                 maintenance_margin=alpaca_asset.maintenance_margin
                 ))
 
@@ -363,7 +363,7 @@ class AlpacaTradeClient(AlpacaClient, AbstractTradeClient):
 
     
     @property
-    def asset_quantities(self) -> Dict[str, float]:
+    def asset_quantities(self, assets: List[Asset]) -> np.ndarray[float]:
 
         """
         Returns a dictionary of symbols and asset quantities for 

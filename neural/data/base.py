@@ -76,8 +76,7 @@ import pandas as pd
 import numpy as np
 
 from neural.client.base import AbstractDataClient
-from neural.data.enums import FeatureType, AssetType
-from neural.utils.time import Calendar, CalendarType
+from neural.data.enums import FeatureType, AssetType, CalendarType
 
 
 @dataclass(frozen=True)
@@ -103,23 +102,70 @@ class Asset:
         shortable: bool
             A boolean indicating whether the asset can be sold short
             (i.e., sold before buying to profit from a price decrease).
-        initial_margin: float
-            A float representing the initial margin required to trade
-            the asset on margin.
-        maintenance_margin: float
-            A float representing the maintenance margin required to keep
-            the asset in a margin account.
+        easy_to_borrow: bool
+            A boolean indicating whether the asset can be borrowed
+            easily.
+        required_margin: float
+            A conservative simplification that enforces a required
+            margin equal to maximum of initial margin and maintenance
+            marign to be satisfied both at opening positions and
+            maintaining positions.
     """
 
     symbol: str
     asset_type: AssetType
     marginable: bool
     fractionable: bool
-    shortable: bool
-    initial_margin: float
-    maintenance_margin: float
+    shortable: bool = None
+    easy_to_borrow: bool = None
+    maintenance_margin: float = None
+    required_margin: float = None
 
+    @property
+    def shortable(self) -> bool:
+        """
+        A boolean indicating whether the asset can be sold short
+        (i.e., sold before buying to profit from a price decrease).
+        """
 
+        return self.shortable if self.marginable else False
+    
+    @property
+    def easy_to_borrow(self) -> bool:
+        """
+        A boolean indicating whether the asset can be borrowed easily.
+        """
+
+        return self.easy_to_borrow if self.marginable else False
+    
+    @property
+    def maintenance_margin(self):
+        """
+        A float representing the maintenance margin of the asset.
+        """
+
+        return self.maintenance_margin if self.marginable else None
+    
+    @property
+    def required_margin(self, short: bool = False) -> float:
+        """
+        A conservative simplification that enforces a required margin
+        equal to maximum of initial margin and maintenance marign to be
+        satisfied both at opening positions and maintaining positions.
+        Initial margin for nearly all marginable assets is 50% of the
+        asset price. Maintenance margin is typically 30% of the asset
+        price. Maintenance margin of 150% is a regulation T requirement
+        for shorting stocks. More info:
+        https://www.finra.org/filing-reporting/regulation-t-filings
+        """
+        if not self.marginable:
+            return None
+        elif not short:
+            return max(0.5, self.maintenance_margin)
+        elif short:
+            return 1.5
+
+    
 class AbstractDataSource(ABC):
     """
     Abstract base class for a data source that standardizes the
@@ -919,9 +965,10 @@ class DatasetMetadata(AbstractDataMetaData):
             the fixed length of each time interval in the dataset.
         start: datetime
             A datetime object representing the start time of the
-            dataset.
+            dataset. Note start and end times are inclusive.
         end: datetime
             A datetime object representing the end time of the dataset.
+            Note start and end times are inclusive.
         n_rows: int
             An integer representing the number of rows in the dataset.
             This is useful for checking if the dataset has been
@@ -1128,7 +1175,7 @@ class AbstractDataFeeder(ABC):
     """
 
     @abstractmethod
-    def get_row_generator(self, *args, **kwargs):
+    def get_features_generator(self, *args, **kwargs):
         """
         Returns a generator object that can be used to for iterative
         providing data for market simulation.
@@ -1222,7 +1269,7 @@ class StaticDataFeeder(AbstractDataFeeder):
 
         return None
 
-    def get_row_generator(self) -> Iterable[np.ndarray]:
+    def get_features_generator(self) -> Iterable[np.ndarray]:
         """
         This method returns a generator object that can be used to for
         iterative providing data for market simulation.
