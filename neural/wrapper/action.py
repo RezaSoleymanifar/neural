@@ -396,11 +396,33 @@ class IntegerAssetQuantityActionWrapper(ActionWrapper):
 
 @action
 @metadata
-class AlpacaShortActionWrapper(ActionWrapper):
+class AlpacaShortingActionWrapper(ActionWrapper):
     """
-    Ignore short actions for assets that are not shortable. This wrapper
-    modifies the agent's actions to ensure that if new short positions
-    are opened then they are for shortable assets only.
+    A wrapper that implements the shorting logic of the Alpaca API. This
+    wrapper modifies the agent's actions to ensure that if new short
+    positions are opened then they are for shortable assets only. If
+    shorting is not allowed for an asset then the action is modified to
+    be zero. By default integer quantities are enforced for short
+    actions. In other words fractional shorting is not allowed. This is
+    Alpaca API default behavior.
+
+    Args:
+    ----------
+    env: gym.Env
+        The environment to wrap.
+
+    Attributes:
+    ----------
+    n_assets (int):
+        The number of assets in the environment.
+    action_space (gym.spaces.Box):
+        The action space of the environment.
+    
+    Example:
+    --------
+    >>> from neural.meta.env.base import TrainMarketEnv 
+    >>> env = TrainMarketEnv(...)
+    >>> wrapped_env = AlpacaShortActionWrapper(env)
     """
 
     def __init__(self, env: Env) -> None:

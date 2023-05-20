@@ -451,7 +451,7 @@ class MarketEnvMetadataWrapper(AbstractMarketEnvMetadataWrapper):
         """
         The current notional value of short positions held in the 
         market environment.
-        """
+        """ 
         short_mask = self.asset_quantities < 0
         self.shorts = abs(
             self.asset_quantities[short_mask] @ self.asset_prices[short_mask])
