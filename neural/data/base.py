@@ -91,23 +91,24 @@ class AbstractAsset(ABC):
 
 class AlpacaAsset(AbstractAsset):
     """
-    A dataclass representing a financial asset. This can be a stock,
-    currency, cryptocurrency, futures contract, etc. This class
-    standardizes the representation of assets throughout the framework.
+    A dataclass representing a financial asset in Alpaca API:
+    https://alpaca.markets/. This can be a stock, or cryptocurrency.
+    This class standardizes the representation of assets throughout the
+    framework.
 
     Attributes:
     ----------
         symbol: str
             A string representing the symbol or ticker of the asset.
         asset_type: AssetType
-            An instance of the `AssetType` enum class representing
-            the type of asset.
+            An instance of the `AssetType` enum class representing the
+            type of asset.
         marginable: bool
-            A boolean indicating whether the asset can be bought
-            on margin (i.e., borrowed funds).
+            A boolean indicating whether the asset can be bought on
+            margin (i.e., borrowed funds).
         fractionable: bool
-            A boolean indicating whether the asset can be traded
-            in fractional shares.
+            A boolean indicating whether the asset can be traded in
+            fractional shares.
         shortable: bool
             A boolean indicating whether the asset can be sold short
             (i.e., sold before buying to profit from a price decrease).
