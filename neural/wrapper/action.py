@@ -388,14 +388,16 @@ class IntegerAssetQuantityActionWrapper(ActionWrapper):
         if self.integer:
             asset_prices = self.market_metadata_wrapper.asset_prices
             for asset, action in enumerate(actions):
-                    action = (action // asset_prices[asset]) * asset_prices[asset]
-                    actions[asset] = action
+                action = (action // asset_prices[asset]) * asset_prices[asset]
+                actions[asset] = action
 
         return actions.astype(GLOBAL_DATA_TYPE)
 
 
+class AbstractShortActionWrapper(ActionWrapper):
+    pass
 
-class ShortActionWrapper(ActionWrapper):
+class AlpacaShortActionWrapper(ActionWrapper):
     """
     Ignore short actions for assets that are not shortable. This wrapper
     modifies the agent's actions to ensure that if new short positions
@@ -415,10 +417,16 @@ class ShortActionWrapper(ActionWrapper):
         asset_prices = self.market_metadata_wrapper.asset_prices
         assets = self.market_metadata_wrapper.assets
 
-        for quantity, action, asset in zip(quantities, actions, asset_prices,
-                                           assets):
-            if quantity <= 0 and action < 0 and not asset.shortable:
-                action = 0
+        for quantity, action, price, asset in zip(quantities, actions,
+                                                  asset_prices, assets):
+            if quantity <= 0 and action < 0:
+                if not asset.shortable:
+                    action = 0
+                else:
+                    action = (action // price) * price
+            actions[asset] = action
+
+        return actions.astype(GLOBAL_DATA_TYPE)
 
 
 @action
@@ -500,14 +508,18 @@ class PositionOpenActionWrapper(ActionWrapper):
 
     @property
     def nonmarginable_open_position_action_indices(self):
-        indices = [index for index in self.open_position_action_indices
-                   if not self.assets[index].marginable]
+        indices = [
+            index for index in self.open_position_action_indices
+            if not self.assets[index].marginable
+        ]
         return indices
 
     @property
     def marginable_open_position_action_indices(self):
-        indices = [index for index in self.open_position_action_indices
-                   if self.assets[index].marginable]
+        indices = [
+            index for index in self.open_position_action_indices
+            if self.assets[index].marginable
+        ]
         return indices
 
     def initial_margin_required(self):
@@ -523,7 +535,7 @@ class PositionOpenActionWrapper(ActionWrapper):
         for index in self.marginable_action_indices:
             cash_required = self.portfolio_value[index]
             return cash_required
-        
+
     def rectify_actions(self, actions, indices):
         # randomly sets a nonzero action to zero
         random_index = np.random.choice(indices)
