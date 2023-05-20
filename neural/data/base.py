@@ -160,8 +160,6 @@ class AlpacaAsset(AbstractAsset):
             return self.initial_margin
         elif short:
             return 1.5
-
-        return self.initial_margin if self.marginable else None
     
     @property
     def maintenance_margin(self):
@@ -170,25 +168,7 @@ class AlpacaAsset(AbstractAsset):
         """
 
         return self.maintenance_margin if self.marginable else None
-    
-    @property
-    def required_margin(self, short: bool = False) -> float:
-        """
-        A conservative simplification that enforces a required margin
-        equal to maximum of initial margin and maintenance marign to be
-        satisfied both at opening positions and maintaining positions.
-        Initial margin for nearly all marginable assets is 50% of the
-        asset price. Maintenance margin is typically 30% of the asset
-        price. Maintenance margin of 150% is a regulation T requirement
-        for shorting stocks. More info:
-        https://www.finra.org/filing-reporting/regulation-t-filings
-        """
-        if not self.marginable:
-            return None
-        elif not short:
-            return max(0.5, self.maintenance_margin)
-        elif short:
-            return 1.5
+
 
     
 class AbstractDataSource(ABC):
