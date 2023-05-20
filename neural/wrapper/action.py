@@ -394,9 +394,8 @@ class IntegerAssetQuantityActionWrapper(ActionWrapper):
         return actions.astype(GLOBAL_DATA_TYPE)
 
 
-class AbstractShortActionWrapper(ActionWrapper):
-    pass
-
+@action
+@metadata
 class AlpacaShortActionWrapper(ActionWrapper):
     """
     Ignore short actions for assets that are not shortable. This wrapper
