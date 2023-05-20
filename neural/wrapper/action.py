@@ -290,7 +290,7 @@ class MinTradeSizeActionWrapper(ActionWrapper):
             The modified actions.
         """
 
-        for asset, action in actions:
+        for asset, action in enumerate(actions):
             if abs(action) < self.min_trade:
                 actions[asset] = 0
 
@@ -438,14 +438,13 @@ class AlpacaShortingActionWrapper(ActionWrapper):
         asset_prices = self.market_metadata_wrapper.asset_prices
         assets = self.market_metadata_wrapper.assets
 
-        for quantity, action, price, asset in enumerate(zip(quantities, actions,
-                                                  asset_prices)):
+        for asset, quantity, action, price, asset_ in enumerate(
+                zip(quantities, actions, asset_prices, assets)):
             if quantity <= 0 and action < 0:
-                if not asset.shortable:
+                if not asset_.shortable:
                     action = 0
-                else:
-                    action = (action // price) * price
-            actions[asset] = action
+                elif asset.shortable:
+                    actions[asset] = (action // price) * price
 
         return actions.astype(GLOBAL_DATA_TYPE)
 
