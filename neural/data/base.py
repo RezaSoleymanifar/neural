@@ -142,7 +142,9 @@ class AlpacaAsset(AbstractAsset):
         only be purchased using cash and cannot be shorted. There are
         rare cases where non-marginable assets can be shorted, but this
         is not supported by this library due to the complexity of the
-        process.
+        process. A mix of marginable and non-marginable assets in
+        portoflio is not supporeted either to the same level of
+        irregularities.
 
     """
 
