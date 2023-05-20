@@ -541,32 +541,29 @@ class PositionCloseActionWrapper:
 @action
 class ExcessMarginActionWrapper(ActionWrapper):
     """
-    This wrapper provides a mechanism for the agent to avoid getting a
-    margin call. This happens by providing a cushion (delta) around the
-    gross maintenance margin ratio (alpha), such that equity >= (alpha +
-    delta) * portfolio_value, or equivalently excess_margin /
-    portfolio_value >= delta When threshold delta is violated then
-    agent's action are modified so that no action that leads to
-    increasing portfolio value is taken. This includes opening new long
-    or short positions. Both of these at the moment of order placement
-    would lead to a higher portfolio value, and same equity, thus
-    violating the threshold further. When threshold is triggered then
-    only actions that lead to closing long positions or closing short
-    positions are allowed. Any other action is simply ignored (set to
-    zero).
-    A marginable asset is an asset that can be used as collateral for
-    margin trading. It basically behaves as available cash that can 
-
+    Excess margin caputres the concept of available liquidity that needs
+    to be mainted to facilitate increasing positions and maintaining
+    existing positions. In the context of marginable assets this excess
+    margin translates to the amount of marginable equity after
+    subtracting maintenance margin requirement. In the context of
+    nonmarginable assets this is equivalent to the amount of cash that
+    is available at all times for trading as a percentage of portfolio
+    value. In the context of marginable assets it can be shown that if
+    excess margin ratio (ratio of ecexss margin to portfolio value) is
+    greater than delta > 0 then maintenance margin requirement and
+    initial margin requirements are met at all times. Similarly for 
+    nonmarginable assets if excess margin ratio is greater than delta
+    then it can be shown that there is always enough cash to buy more
+    nonmarginable assets, given that 
     
     Examples
     --------
     if maintenance_margin_ratio = 0.25 and delta = 0.05 then wrapper
     tries tries to maintain equity >= 0.3 * portfolio_value at all
     times. Note that delta >= 0 can be any non negative value. If delta
-    is set to 0 then wrapper modifies agent's actions after
-    margin call happens. Thus to avoid margin call it is recommended to
-    set delta to a value high enough to avoid the inevitable effect of
-    slippage.
+    is set to 0 then wrapper modifies agent's actions after margin call
+    happens. Thus to avoid margin call it is recommended to set delta to
+    a value high enough to avoid the inevitable effect of slippage.
     """
 
     def __init__(self, env: Env, delta: float) -> None:
