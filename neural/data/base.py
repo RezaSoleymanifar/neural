@@ -108,17 +108,28 @@ class AlpacaAsset(AbstractAsset):
             fractional shares.
         marginable: bool
             A boolean indicating whether the asset can be bought on
-            margin (i.e., borrowed funds).
+            margin (i.e., borrowed funds). If an asset is not marginable,
+            then it cannot be shorted.
         shortable: bool
             A boolean indicating whether the asset can be sold short
             (i.e., sold before buying to profit from a price decrease).
         easy_to_borrow: bool
             A boolean indicating whether the asset can be borrowed
-            easily.
+            easily. Alpaca API has restrictive rules for hard to borrow
+            assets and in general HTB assets cannot be shorted.
         initial_margin: float
-            A float representing the initial margin of the asset.
+            A float representing the initial margin of the asset. 25%
+            margin for long positions and 150% margin for short
+            positions is a FINRA requirement: 
+            https://www.finra.org/filing-reporting/regulation-t-filings.
         maintenance_margin: float | None
-            A float representing the maintenance margin of the asset.
+            A float representing the maintenance margin of the asset. 
+            This means that maintenace_margin * position_value should be
+            available in marginable equity. Maintenance margin is
+            cumulative for all assets and needs to be satisfied at all
+            times. Alpaca API in reality enforces this at the end of day
+            or when it is violated by a greate amount. We enforce this
+            at all times in a conservative manner.
         
     Properties:
     -----------
@@ -181,8 +192,8 @@ class AlpacaAsset(AbstractAsset):
         available in marginable equity. Maintenance margin is cumulative
         for all assets and needs to be satisfied at all times. Alpaca
         API in reality enforces this at the end of day or when it is
-        violated by a greate amount. Due to complexity of modeling we
-        enforce this at all times.
+        violated by a greate amount. We enforce this at all times in a
+        conservative manner.
         """
         return self.maintenance_margin if self.marginable else None
     
@@ -199,8 +210,9 @@ class AlpacaAsset(AbstractAsset):
     def easy_to_borrow(self) -> bool | None:
         """
         A boolean indicating whether the asset can be borrowed easily.
-        Alpaca API has restrictive rules for hard to borrow assets. This
-        library only allows easy to borrow assets to be shorted.
+        Alpaca API has restrictive rules for hard to borrow assets and
+        in general HTB assets cannot be shorted. This library only
+        allows easy to borrow assets to be shorted.
         """
         return self.easy_to_borrow if self.marginable else False
 
