@@ -191,7 +191,7 @@ class AlpacaAsset(AbstractAsset):
         """
         A boolean indicating whether the asset can be sold short
         (i.e., sold before buying to profit from a price decrease). In 
-        Alpaca API shorted assets cannot have faractional 
+        Alpaca API shorted assets cannot have faractional quantities.
         """
         return self.shortable if self.marginable else False
     
@@ -199,6 +199,8 @@ class AlpacaAsset(AbstractAsset):
     def easy_to_borrow(self) -> bool | None:
         """
         A boolean indicating whether the asset can be borrowed easily.
+        Alpaca API has restrictive rules for hard to borrow assets. This
+        library only allows easy to borrow assets to be shorted.
         """
         return self.easy_to_borrow if self.marginable else False
 
