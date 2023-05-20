@@ -554,16 +554,25 @@ class ExcessMarginActionWrapper(ActionWrapper):
     initial margin requirements are met at all times. Similarly for 
     nonmarginable assets if excess margin ratio is greater than delta
     then it can be shown that there is always enough cash to buy more
-    nonmarginable assets, given that 
+    nonmarginable assets, given that trade ratio phi (ratio of total
+    value of trade to equity) is less than delta/(1+ delta) < 1.
+    Respecting the excess margin ratio constrain also ensure that no
+    margin call is received, since it by definition satisfies the 
+    maintenance margin requirement. If excess margin ratio is violated
+    then actions that lead to increasin portfolio value are ignored
+    until the ratio is restored to be greater than delta.
+
+
     
     Examples
     --------
-    if maintenance_margin_ratio = 0.25 and delta = 0.05 then wrapper
-    tries tries to maintain equity >= 0.3 * portfolio_value at all
-    times. Note that delta >= 0 can be any non negative value. If delta
-    is set to 0 then wrapper modifies agent's actions after margin call
-    happens. Thus to avoid margin call it is recommended to set delta to
-    a value high enough to avoid the inevitable effect of slippage.
+    marginable assets:
+        if gross maintenance margin = 0.25 and delta = 0.05 then wrapper
+        tries tries to maintain equity >= (0.25 + 0.05) * portfolio_value at all
+        times. Note that delta >= 0 can be any non negative value. If delta
+        is set to 0 then wrapper modifies agent's actions after margin call
+        happens. Thus to avoid margin call it is recommended to set delta to
+        a value high enough to avoid the inevitable effect of slippage.
     """
 
     def __init__(self, env: Env, delta: float) -> None:
