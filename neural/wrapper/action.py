@@ -450,6 +450,7 @@ class PositionOpenActionWrapper(ActionWrapper):
         self.asset_quantities = self.market_metadata_wrapper.quantities
         self.asset_prices = self.market_metadata_wrapper.asset_prices
         self.portfolio_value = self.market_metadata_wrapper.portfolio_value
+        self.positions = self.market_metadata_wrapper.positions
         self.assets = self.market_metadata_wrapper.assets
         self.excess_margin = self.market_metadata_wrapper.excess_margin
 
@@ -493,7 +494,7 @@ class PositionOpenActionWrapper(ActionWrapper):
         return margin_required
 
     def cash_required(self):
-        for index in self.marginable_action_indices:
+        for index in self.nonmarginable_open_position_action_indices:
             cash_required = self.portfolio_value[index]
             return cash_required
 
