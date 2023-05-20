@@ -103,12 +103,12 @@ class AlpacaAsset(AbstractAsset):
         asset_type: AssetType
             An instance of the `AssetType` enum class representing the
             type of asset.
-        marginable: bool
-            A boolean indicating whether the asset can be bought on
-            margin (i.e., borrowed funds).
         fractionable: bool
             A boolean indicating whether the asset can be traded in
             fractional shares.
+        marginable: bool
+            A boolean indicating whether the asset can be bought on
+            margin (i.e., borrowed funds).
         shortable: bool
             A boolean indicating whether the asset can be sold short
             (i.e., sold before buying to profit from a price decrease).
@@ -122,16 +122,16 @@ class AlpacaAsset(AbstractAsset):
         
     Properties:
     -----------
-        shortable: bool
-            A boolean indicating whether the asset can be sold short
-            (i.e., sold before buying to profit from a price decrease).
-        easy_to_borrow: bool
-            A boolean indicating whether the asset can be borrowed  
-            easily.
-        initial_margin: float
+        initial_margin: float | None
             A float representing the initial margin of the asset.
         maintenance_margin: float | None
             A float representing the maintenance margin of the asset.
+        shortable: bool | None
+            A boolean indicating whether the asset can be sold short
+            (i.e., sold before buying to profit from a price decrease).
+        easy_to_borrow: bool | None
+            A boolean indicating whether the asset can be borrowed  
+            easily.
         
     Notes:
     ------
@@ -146,32 +146,15 @@ class AlpacaAsset(AbstractAsset):
 
     symbol: str
     asset_type: AssetType
-    marginable: bool
     fractionable: bool
-    shortable: Optional[bool] = None
-    easy_to_borrow: Optional[bool] = None
+    marginable: bool
     initial_margin: float = 0.5
     maintenance_margin: Optional[float] = None
+    shortable: Optional[bool] = None
+    easy_to_borrow: Optional[bool] = None
 
     @property
-    def shortable(self) -> bool:
-        """
-        A boolean indicating whether the asset can be sold short
-        (i.e., sold before buying to profit from a price decrease).
-        """
-
-        return self.shortable if self.marginable else False
-    
-    @property
-    def easy_to_borrow(self) -> bool:
-        """
-        A boolean indicating whether the asset can be borrowed easily.
-        """
-
-        return self.easy_to_borrow if self.marginable else False
-    
-    @property
-    def initial_margin(self, short: bool = False):
+    def initial_margin(self, short: bool = False) -> float | None:
         """
         A float representing the initial margin of the asset.
         """
@@ -187,9 +170,22 @@ class AlpacaAsset(AbstractAsset):
         """
         A float representing the maintenance margin of the asset.
         """
-
         return self.maintenance_margin if self.marginable else None
-
+    
+    @property
+    def shortable(self) -> bool:
+        """
+        A boolean indicating whether the asset can be sold short
+        (i.e., sold before buying to profit from a price decrease).
+        """
+        return self.shortable if self.marginable else False
+    
+    @property
+    def easy_to_borrow(self) -> bool:
+        """
+        A boolean indicating whether the asset can be borrowed easily.
+        """
+        return self.easy_to_borrow if self.marginable else False
 
     
 class AbstractDataSource(ABC):
