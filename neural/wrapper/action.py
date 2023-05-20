@@ -16,16 +16,25 @@ def validate_actions(
     types.
 
     Args:
+    ----------
         wrapper (Wrapper): The wrapper object calling the validation
         function. actions (numpy.ndarray[float] or dict[str,
         numpy.ndarray[float]]): The action to validate.
 
     Returns:
+    ----------
         None
 
     Raises:
+    ----------
         IncompatibleWrapperError: If the action type is not in the
         accepted action types.
+    
+    Notes:
+    ----------
+        This function is called by the `action` decorator to validate
+        the type of the action before calling the `step` function of the
+        base class.
     """
 
     valid = False
@@ -42,7 +51,6 @@ def validate_actions(
             f'Wrapper {type(wrapper).__name__} received an action of type {type(actions)}, '
             F'which is not in the accepted action types {ACCEPTED_ACTION_TYPES}.'
         )
-
     return False
 
 
@@ -73,7 +81,7 @@ def action(wrapper_class: Type[ActionWrapper]) -> Type[ActionWrapper]:
     -----
     The `ActionSpaceCheckerWrapper` class wraps the given
     `wrapper_class` and overrides its `step` method to perform action
-    space validation before calling the base class's `step` method.
+    validation before calling the base class's `step` method.
 
     Examples
     --------
