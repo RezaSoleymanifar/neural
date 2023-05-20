@@ -438,8 +438,8 @@ class AlpacaShortingActionWrapper(ActionWrapper):
         asset_prices = self.market_metadata_wrapper.asset_prices
         assets = self.market_metadata_wrapper.assets
 
-        for quantity, action, price, asset in zip(quantities, actions,
-                                                  asset_prices, assets):
+        for quantity, action, price, asset in enumerate(zip(quantities, actions,
+                                                  asset_prices)):
             if quantity <= 0 and action < 0:
                 if not asset.shortable:
                     action = 0
