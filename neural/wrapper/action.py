@@ -453,17 +453,16 @@ class AlpacaShortingActionWrapper(ActionWrapper):
 @action
 class PositionCloseActionWrapper:
     """
-    For actions that exceed the current position, the excess is ignored
-    because real-world mechanism enforces closing current position in a
-    separate order before opening a new position and this two cannot
-    happen jointly. This wrapper modifies the agent's actions to ensure
-    that if action exceeds the current position, then the excess is
-    ignored and only the current position is closed. For example, in
-    order to open short positions, the current open long position must
-    be closed first in a separate order, and then a short position can
-    be opened. If asset is not held, or is already borrowed, then
-    the action is modified to have integer number of shares as shorting
-    cannot take place with fractional quantities.
+    Transition from long to short position and vice versa is a two step
+    process. Close the current long/short position, and then open a new
+    short/long position. This wrapper modifies the agent's actions to
+    ensure that if action exceeds the current position, then the excess
+    is ignored and only the current position is closed. This wrapper
+    modifies the agent's actions to ensure that if action exceeds the
+    current position, then the excess is ignored and only the current
+    position is closed. For example, in order to open short positions,
+    the current open long position must be closed first in a separate
+    order, and then a short position can be opened.
     """
 
     def __init__(self, env: Env) -> None:
