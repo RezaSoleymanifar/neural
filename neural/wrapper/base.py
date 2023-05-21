@@ -758,25 +758,27 @@ class MarginAccountMetaDataWrapper(AbstractMarketEnvMetadataWrapper):
         return excess_margin
 
     @property
-    def progress(self) -> float | str:
+    def progress(self) -> str:
         """
         If the underlying market env is a `TrainMarketEnv`, this method returns
-        the progress of the episode as a float in [0, 1]. If the underlying
-        market env is a `TradeMarketEnv`, this method returns current date and
-        time.
+        the progress of the episode as a percentage string in ['0%', '100%'].
+        If the underlying market env is a `TradeMarketEnv`, this method returns
+        current date and time.
 
         Returns:
         ----------
-            progress (float | str): 
-                The progress of the episode as a percentage or the current date
-                and time.
+            progress (str): 
+                The progress of the episode as a percentage string or the
+                current date and time.
         """
         if isinstance(self.market_env, TradeMarketEnv):
             progress = datetime.now().strftime("%m/%d/%Y, %H:%M")
         else:
-            progress = self.market_env.index / self.market_env.n_steps
+            progress_percentage = self.market_env.index / self.market_env.n_steps
+            progress = f'{progress_percentage:.0%}'
 
         return progress
+
 
     @property
     def profit(self):
@@ -1020,7 +1022,7 @@ class ConsoleTearsheetRenderWrapper(Wrapper):
         sharpe = self.market_metadata_wrapper.sharpe
 
         metrics = [
-            f'{progress:.0%}', f'{return_:.2%}', f'{sharpe:.4f}',
+            progress, f'{return_:.2%}', f'{sharpe:.4f}',
             f'${profit:,.0f}', f'${equity:,.0f}', f'${cash:,.0f}',
             f'${portfolio_value:,.0f}', f'${longs:,.0f}', f'${shorts:,.0f}'
         ]
