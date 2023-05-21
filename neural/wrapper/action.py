@@ -686,9 +686,9 @@ class ExcessMarginActionWrapper(ActionWrapper):
         asset_quantities = self.market_metadata_wrapper.asset_quantities
         if self.excess_margin_ratio < self.delta:
             for action, quantity in zip(actions, asset_quantities):
-                    if (action < 0 and quantity <= 0
-                            or action > 0 and quantity >= 0):
-                        actions[action] = 0
+                if (action < 0 and quantity <= 0
+                        or action > 0 and quantity >= 0):
+                    actions[action] = 0
 
 
 @action
@@ -751,13 +751,14 @@ class ShortingActionWrapper(ActionWrapper):
 class EquityBasedUniformActionInterpreter(ActionWrapper):
     """
     Transforms the actions produced by the agent that is in (-1, 1)
-    range to be in (-max_trade, max_trade) range corresponding to
-    notional value of buy/sell orders for each asset. if 0 then asset is
-    held. max_trade = trade_ratio * equity. The trade_ratio parameter
-    controls the maximum percentage of equity that can be traded at each
-    step.  It maps actions in the range (-1, 1) to buy/sell/hold using
-    fixed zones for each action type. (-1, -hold_threshold) is mapped to
-    sell, (-hold_threshold, hold_threshold) is mapped to hold, and
+    range to be in (-max_trade_per_asset, max_trade_per_asset) range
+    corresponding to notional value of buy/sell orders for each asset.
+    if 0 then asset is held. max_trade_per_asset = (trade_equity_ratio *
+    equity)/n_assets. The trade_equity_ratio parameter controls the maximum
+    percentage of equity that can be traded at each step.  It maps
+    actions in the range (-1, 1) to buy/sell/hold using fixed zones for
+    each action type. (-1, -hold_threshold) is mapped to sell,
+    (-hold_threshold, hold_threshold) is mapped to hold, and
     (hold_threshold, 1) is mapped to buy. The hold_threshold is
     specified by user. The action in the range (-threshold, threshold)
     is parsed as hold. The action outside this range is linearly
@@ -860,16 +861,14 @@ class EquityBasedUniformActionInterpreter(ActionWrapper):
 
         super().__init__(env)
 
-        if not 0 < trade_equity_ratio <= 1:
-            raise(f'Trade ratio must be a float in (0, 1]., '
-                  '{trade_equity_ratio} given.'
-                  )
-        
-        if not 0 < hold_threshold < 1: 
-            raise(f'Hold threshold must be a float in (0, 1)., '
-                  '{hold_threshold} given.'
-                  )
-        
+        if not 0 < trade_equity_ratio < 1:
+            raise (f'Trade ratio must be a float in (0, 1)., '
+                   '{trade_equity_ratio} given.')
+
+        if not 0 < hold_threshold < 1:
+            raise (f'Hold threshold must be a float in (0, 1)., '
+                   '{hold_threshold} given.')
+
         self.trade_ratio = trade_equity_ratio
         self.hold_threshold = hold_threshold
         self._max_trade_per_asset = None
