@@ -196,8 +196,20 @@ class AlpacaAsset(AbstractAsset):
 
         def default_margin(price, short):
             """
-            
+            Link: https://alpaca.markets/docs/introduction/ The
+            maintenance margin is calculated based on the following
+            table:
+
+            | Pos | Cond    | Margin Req  |
+            | --- | ------- | ----------- |
+            | L   | SP < $2.50  | 100% EOD MV |
+            | L   | SP >= $2.50 | 30% EOD MV  |
+            | L   | 2x ETF       | 100% EOD MV |
+            | L   | 3x ETF       | 100% EOD MV |
+            | S   | SP < $5.00  | Max $2.50/S or 100% |
+            | S   | SP >= $5.00 | Max $5.00/S or 30%  |
             """
+
             if not self.marginable:
                 return 0
             elif not short:
@@ -211,7 +223,7 @@ class AlpacaAsset(AbstractAsset):
                 elif price >= 5.00:
                     return max(5.0 / price, 0.3)
         
-        return max(self.maintenance_margin, de
+        return max(self.maintenance_margin, default_margin(price, short),
                    self.get_initial_margin(short)) if self.marginable else 0
 
     @property
