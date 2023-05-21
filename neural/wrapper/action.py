@@ -501,16 +501,30 @@ class InitialMarginActionWrapper(ActionWrapper):
         requirement then by definition marginable equity is greater
         than initial margin requirement. Secondly post transaction
         excess margin is greater than zero, which ensures that no margin
-        call is received. ExcessMarginActionWrapper can be used to
-        ensure that this rule is not triggered, by modifying the agent's
-        actions that lead to increasing portfolio value. In case this
-        mediation is not enough then following rule is triggered to
-        ensure that a base level of liquidity is maintained at all
-        times.
+        call is received.
 
         In the context of nonmarginable assets this rule ensures that
         there is enough cash to increase the position value of
         nonmarginable assets.
+
+        Args:
+        ----------
+            actions (np.ndarray[float]): The actions to perform.
+        
+        Returns:
+        ----------
+            np.ndarray[float]: The modified actions.
+
+        Notes:
+        -------
+            ExcessMarginActionWrapper must be applied upstream to ensure
+            a certain elvel of excess margin is maintained at all times.
+            In conjunction with this wrapper it ensures excess margin is
+            always large enough that initial margin requirement, and 
+            maintenance margin requirement is met at all times. However
+            this wrapper operates as a last line of defense to ensure
+            that no margin call is received or equivalently cash is 
+            not negative at any point in time, for nonmarginable assets.
         """
         excess_margin = self.market_metadata_wrapper.excess_margin
         if excess_margin < self.initial_margin_required:
