@@ -754,10 +754,10 @@ class EquityBasedUniformActionInterpreter(ActionWrapper):
     range to be in (-max_trade_per_asset, max_trade_per_asset) range
     corresponding to notional value of buy/sell orders for each asset.
     if 0 then asset is held. max_trade_per_asset = (trade_equity_ratio *
-    equity)/n_assets. The trade_equity_ratio parameter controls the maximum
-    percentage of equity that can be traded at each step.  It maps
-    actions in the range (-1, 1) to buy/sell/hold using fixed zones for
-    each action type. (-1, -hold_threshold) is mapped to sell,
+    equity)/n_assets. The trade_equity_ratio parameter controls the
+    maximum percentage of equity that can be traded at each step.  It
+    maps actions in the range (-1, 1) to buy/sell/hold using fixed zones
+    for each action type. (-1, -hold_threshold) is mapped to sell,
     (-hold_threshold, hold_threshold) is mapped to hold, and
     (hold_threshold, 1) is mapped to buy. The hold_threshold is
     specified by user. The action in the range (-threshold, threshold)
@@ -798,24 +798,24 @@ class EquityBasedUniformActionInterpreter(ActionWrapper):
 
     Notes:
     --------
-    Caution must be taken with trade_ratio so that it can work
+    Caution must be taken with trade_equity_ratio so that it can work
     conjunction with excess margin wrapper (2%-10% recommended). If
-    trade_ratio is too large then it can lead to triggering margin call
-    avoidance mechanism that ignores actions that lead to increasing
-    portfolio value, which can potentially lead to most of the actions
-    being ignored to avoid margin call/negative cash thresholds for
-    marginbale and nonmarginable cases respectively. On the other hand
-    if trade_ratio is less than delta/(1+ delta) < 1 for non marginable
-    assets and less than 1/(gross_initial_margin) for marginable assets
-    then it can be shown that there is alwasy enough free liquidity
-    (marginable equity/cash) to both open and maintain positions. This
-    is because a large enough free liquidity and small enough trade size
-    paired together results in initial margin requirement and
-    maintenance margin requirement being met at all times. This is true
-    for both marginable and nonmarginable assets. In case excess margin
-    ratio is violated then actions that lead to increasing portfolio
-    value are set to zero similar to margin call avoidance mechanism.
-    However this is applied post violation. 
+    trade_equity_ratio is too large then it can lead to triggering
+    margin call avoidance mechanism that ignores actions that lead to
+    increasing portfolio value, which can potentially lead to most of
+    the actions being ignored to avoid margin call/negative cash
+    thresholds for marginable and nonmarginable cases respectively. On
+    the other hand if trade_equity_ratio is less than delta/(1+ delta) <
+    1 for non marginable assets and less than 1/(gross_initial_margin)
+    for marginable assets then it can be shown that there is alwasy
+    enough free liquidity (marginable equity/cash) to both open and
+    maintain positions. This is because a large enough free liquidity
+    and small enough trade size paired together results in initial
+    margin requirement and maintenance margin requirement being met at
+    all times. This is true for both marginable and nonmarginable
+    assets. In case excess margin ratio is violated then actions that
+    lead to increasing portfolio value are set to zero similar to margin
+    call avoidance mechanism. However this is applied post violation. 
 
     If outputs of the agent are not in (-1, 1) range, for example if
     they are discrete actions, then use a action mapper wrapper to map
@@ -826,7 +826,7 @@ class EquityBasedUniformActionInterpreter(ActionWrapper):
     def __init__(self, env: Env, trade_equity_ratio=0.02, hold_threshold=0.15):
         """
         Initializes a new instance of the action wrapper with the given
-        environment, trade ratio, and hold threshold.
+        environment, trade equity ratio, and hold threshold.
 
         Args:
         ----------
@@ -862,14 +862,14 @@ class EquityBasedUniformActionInterpreter(ActionWrapper):
         super().__init__(env)
 
         if not 0 < trade_equity_ratio < 1:
-            raise (f'Trade ratio must be a float in (0, 1)., '
-                   '{trade_equity_ratio} given.')
+            raise ('Trade ratio must be a float in (0, 1)., '
+                   f'{trade_equity_ratio} given.')
 
         if not 0 < hold_threshold < 1:
-            raise (f'Hold threshold must be a float in (0, 1)., '
-                   '{hold_threshold} given.')
+            raise ('Hold threshold must be a float in (0, 1)., '
+                   f'{hold_threshold} given.')
 
-        self.trade_ratio = trade_equity_ratio
+        self.trade_equity_ratio = trade_equity_ratio
         self.hold_threshold = hold_threshold
         self._max_trade_per_asset = None
         self.n_assets = self.market_metadata_wrapper.n_assets
@@ -881,31 +881,15 @@ class EquityBasedUniformActionInterpreter(ActionWrapper):
 
         return None
 
-    def _set_max_trade_per_asset(self, trade_ratio: float) -> None:
+    @property
+    def max_trade_per_asset(self):
         """
-        Sets the value for the maximum trade that can be made for each
-        asset based on the given trade ratio.
-
-        Args:
-        --------
-            trade_ratio(float): 
-                The maximum percentage of net worth that can be traded
-                at each step.
-
-        Returns:
-        --------
-            float: The maximum trade that can be made for each asset.
-
-        Notes:
-        --------
-            The recommended value for initial_cash is >=
-            n_assets/trade_ratio.
+        The maximum trade that can be made for each asset. This is
+        computed as a percentage of equity.
         """
-
-        self._max_trade_per_asset = (
-            trade_ratio * self.market_metadata_wrapper.equity) / self.n_assets
-
-        return None
+        max_trade_per_asset = (
+            self.trade_equity_ratio * self.market_metadata_wrapper.equity) / self.n_assets
+    ``  return max_trade_per_asset
 
     def parse_action(self, action: float) -> float:
         """
