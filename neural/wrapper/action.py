@@ -517,10 +517,12 @@ class ExcessMarginActionWrapper(ActionWrapper):
 
     Use this wrapper to:
         1. Avoid margin calls by ensuring maintenance margin requirement
-            is met at all times.
-        2. Ensure initial margin requirement is met for all trades.
-        2. Ensure cash availability requirement is met for all trades.
-
+        is met at all times.
+        2. Ensure initial margin requirement is met for all trades,
+        given that trade ratio is less than 1/(gross_initial_margin).
+        2. Ensure cash availability requirement is met for all trades
+        given that trade ratio is less than delta/(1+ delta) < 1.
+        
     Args:
     ----------
     env: gym.Env
@@ -556,7 +558,7 @@ class ExcessMarginActionWrapper(ActionWrapper):
 
     Notes:
     ----------
-    In order for initla margin requirement and cash availability is met
+    In order for initial margin requirement and cash availability is met
     at all times, trade_ratio in position sizing wrapper must be less
     than delta/(1+ delta) < 1 for nonmarginable assets, and less than
     1/(gross_initial_margin) for marginable assets. This ensures that
@@ -564,13 +566,23 @@ class ExcessMarginActionWrapper(ActionWrapper):
     enough that initial margin requirement and cash availability
     requirement is met at all times. If ratio if violated then actions
     leading to increasing portfolio value are ignored until the ratio is
-    restored to be greater than delta.
+    restored to be greater than delta. gross_initial_margin is defined
+    as the sum of initial margin requirements for all assets divided by
+    the sum of total value of all assets or portfolio value.
     """
 
     def __init__(self, env: Env, delta: float) -> None:
         """
-        Args:
+        Initializes a new instance of the ExcessMarginActionWrapper
+        class with the given environment and delta.
 
+        Args:
+        ----------
+        env (Env):
+            The environment to wrap.
+        delta (float):
+            The minimum excess margin ratio that needs to be maintained
+            at all times.
         """
         super().__init__(env)
         if not delta > 0:
