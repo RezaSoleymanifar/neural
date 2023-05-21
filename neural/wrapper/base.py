@@ -550,10 +550,19 @@ class MarketEnvMetadataWrapper(AbstractMarketEnvMetadataWrapper):
     @property
     def excess_margin(self) -> float:
         """
-        The current maintenance margin of the trader. Excess margin is
-        the amount of marginable equity above the maintenance margin
-        requirement. This amount in margin account behaves similar to
-        available cash, due to marginability of the underlying assets..
+        Excess margin is the amount of marginable equity above the
+        maintenance margin requirement. In the context of nonmarginable
+        assets, this is the same as the cash. Excess margin is set to
+        maintain a ceratain ratio with respect to porfolio value. This
+        ensures that: 
+            1) maintenance margin requirement is always met (by
+            definition) 
+            2) the trader has enough marginable equity to
+            open new positions (automatically satisfying initial margin
+            reuirements). 
+            3) If initial margin of purchased assets do not
+            exceed the excess margin, it also gurarantees that post
+            transaction the maintenance margin requirement is also met.
         """
         excess_margin = self.marginable_equity - self.maintenance_margin_requirement
         return excess_margin
