@@ -795,7 +795,7 @@ class ConsoleTearsheetRenderWrapper(Wrapper):
         self._set_render_frequency()
         return None
 
-    def _set_render_frequency(self, verbosity: int) -> None:
+    def _set_render_frequency(self) -> None:
 
         if isinstance(self.market_env, TrainMarketEnv):
             self.render_every = self.market_env.n_steps // self.verbosity
@@ -804,9 +804,7 @@ class ConsoleTearsheetRenderWrapper(Wrapper):
 
     def reset(self) -> np.ndarray[float] | Dict[str, np.ndarray[float]]:
         """
-        Reset the environment and the tear sheet index.
         """
-
         observation = self.env.reset()
 
         resolution = self.market_env.data_metadata.resolution
@@ -814,7 +812,7 @@ class ConsoleTearsheetRenderWrapper(Wrapper):
         end_date = self.market_env.data_metadata.end.date()
         days = (end_date - start_date).days
 
-        logger.info('Episode: '
+        logger.info('Episode:'
                     f'\n\t start = {start_date}'
                     f'\n\t end = {end_date}'
                     f'\n\t days = {days}'
@@ -822,9 +820,8 @@ class ConsoleTearsheetRenderWrapper(Wrapper):
                     f'\n\t n_assets = {self.market_env.n_assets}'
                     f'\n\t n_steps = {self.market_env.n_steps:,}'
                     f'\n\t n_features = {self.market_env.n_features:,}')
-
+        
         self.render()
-
         return observation
 
     def step(
