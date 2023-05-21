@@ -84,9 +84,23 @@ class AbstractAsset(ABC):
     """
     A generic financial asset. This class standardizes the
     representation of assets throughout the framework.
+
+    Attributes:
+    -----------
+        symbol: str
+            A string representing the symbol or ticker of the asset.
+        asset_type: AssetType
+            An instance of the `AssetType` enum class representing the
+            type of asset.
+        fractionable: bool
+            A boolean indicating whether the asset can be traded in
+            fractional shares. This is useful for trading for example
+            cryptocurrencies or stocks that are expensive to buy as a
+            whole share.
     """
     symbol: str
     asset_type: AssetType
+    fractionable: bool
 
 
 class AlpacaAsset(AbstractAsset):
