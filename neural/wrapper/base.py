@@ -776,7 +776,44 @@ class MarginAccountMetaDataWrapper(AbstractMarketEnvMetadataWrapper):
 class ConsoleTearsheetRenderWrapper(Wrapper):
     """
     A wrapper that prints a tear sheet to console showing market env
-    metadata.
+    metadata. The tear sheet is printed every 'verbosity' times. If the
+    underlying market env is a `TrainMarketEnv`, the tear sheet is
+    printed every 'n_steps / verbosity' steps. If the underlying market
+    env is a `TradeMarketEnv`, the tear sheet is printed every step of 
+    trading. The tear sheet shows the following information:
+        - Progress: The progress of the episode as a percentage.
+        - Return: The current return of the trader. 
+        - Sharpe ratio: The current sharpe ratio of the trader. 
+        - Profit: The current profit of the trader. 
+        - Equity: The current equity of the trader. 
+        - Cash: The current amount of cash available to the trader.
+        - Portfolio value: The current portfolio value of the trader.
+        - Longs: The current notional value of long positions held in
+            the market environment.
+        - Shorts: The current notional value of short positions held in
+            the market environment.
+    
+    Attributes:
+    ----------
+        env (gym.Env):
+            The environment being wrapped.
+        market_env (AbstractMarketEnv):
+            A pointer to the underlying market environment.
+        market_metadata_wrapper (AbstractMarketEnvMetadataWrapper):
+            A pointer to the underlying market metadata wrapper.
+        verbosity (int):
+            The frequency of printing the tear sheet. If the underlying
+            market env is a `TrainMarketEnv`, the tear sheet is printed
+            every 'n_steps / verbosity' steps. If the underlying market
+            env is a `TradeMarketEnv`, the tear sheet is printed every
+            step of trading.
+        render_every (int):
+            The frequency of printing the tear sheet. If the underlying
+            market env is a `TrainMarketEnv`, the tear sheet is printed 
+            every 'n_steps / verbosity' steps. If the underlying market 
+            env is a `TradeMarketEnv`, the tear sheet is printed every
+            step of trading.
+        
 
     """
 
