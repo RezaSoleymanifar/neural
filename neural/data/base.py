@@ -160,7 +160,7 @@ class AlpacaAsset(AbstractAsset):
     """
 
     marginable: bool
-    get_maintenance_margin: Optional[float] = None
+    maintenance_margin: Optional[float] = None
     shortable: Optional[bool] = None
     easy_to_borrow: Optional[bool] = None
 
@@ -192,7 +192,7 @@ class AlpacaAsset(AbstractAsset):
         maintenance margin at the end of day, we set the maintenance
         margin to be the maximum of the two.
         """
-        return max(self.mainte,
+        return max(self.maintenance_margin,
                    self.get_initial_margin(short)) if self.marginable else 0
 
     @property
