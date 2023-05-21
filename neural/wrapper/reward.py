@@ -136,7 +136,34 @@ class LiabilityInterstRewardWrapper(RewardWrapper):
     the liability. Apply this wrapper prior to normalization of rewards
     as this substracts the notional value of interest from the reward.
     """
+    def __init__(self, env, interest_rate = 0.08):
+        super().__init__(env)
+        self.interest_rate = interest_rate
+        self.previous_day = None
 
+    def reset(self):
+        observation = self.env.reset()
+        self.previous_day = self.market_metadata_wrapper.day
+        return observation
+
+    def reward(self, reward):
+        current_day = self.market_metadata_wrapper.day
+        if current_day != self.previous_day:
+            interest = self.compute_interest()
+            reward -= interest
+            self.previous_day = current_day
+        
+        return reward
+
+    def compute_interest(self):
+        cash_debt = abs(min(self.market_metadata_wrapper.cash, 0))
+        cash_interest = cash_debt * self.interest_rate
+        positions = self.market_metadata_wrapper.positions
+        asset_quantitties = self.market_metadata_wrapper.asset_quantities
+        asset_debt = sum(position for position and qauntity in zip(positions, asset_quantitties) if quantity < 0)
+        asset_interest = asset_debt * self.interest_rate
+
+        return cash_interest + asset_interest
 
 class PenalizeMarginCallRewardShaperWrapper(RewardWrapper):
     """
