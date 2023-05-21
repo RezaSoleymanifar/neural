@@ -4,6 +4,7 @@ from typing import Type, Dict, Tuple, Any
 from datetime import datetime
 
 import numpy as np
+import pandas as pd
 from gym import Env, Wrapper
 
 from neural.common.log import logger
@@ -310,6 +311,18 @@ class AbstractMarketEnvMetadataWrapper(Wrapper, ABC):
         self.history = defaultdict(list)
 
     @property
+    def schedule(self) -> pd.DataFrame:
+        """
+        The schedule of the market environment.
+        """
+        calendar = self.data_metadata.calendar_type
+        start_date = self.data_metadata.start_date
+        end_date = self.data_metadata.end_date
+        schedule = calendar.schedule(start_date=start_date, end_date=end_date)
+
+        return schedule
+    
+    @property
     def index(self) -> int:
         """
         The current index of the episode.
@@ -323,11 +336,7 @@ class AbstractMarketEnvMetadataWrapper(Wrapper, ABC):
         environment's index and resolution. Day count starts at 1.
         """
         resolution = self.data_metadata.resolution
-        calendar = self.data_metadata.calendar
-        start_date = self.data_metadata.start_date
-        end_date = self.data_metadata.end_date
-        calendar.schedule(start_date=start_date, end_date=end_date)
-        
+
         # Extract the numeric value from the resolution string
         resolution_value = int(resolution.rstrip('Min'))
 
