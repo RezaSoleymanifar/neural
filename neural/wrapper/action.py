@@ -439,7 +439,7 @@ class PositionCloseActionWrapper:
 
 @action
 @metadata
-class PositionOpenActionWrapper(ActionWrapper):
+class InitialMarginActionWrapper(ActionWrapper):
     """
     a
     """
