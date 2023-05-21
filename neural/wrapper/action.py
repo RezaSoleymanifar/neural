@@ -888,8 +888,9 @@ class EquityBasedUniformActionInterpreter(ActionWrapper):
         computed as a percentage of equity.
         """
         max_trade_per_asset = (
-            self.trade_equity_ratio * self.market_metadata_wrapper.equity) / self.n_assets
-    ``  return max_trade_per_asset
+            self.trade_equity_ratio *
+            self.market_metadata_wrapper.equity) / self.n_assets
+        return max_trade_per_asset
 
     def parse_action(self, action: float) -> float:
         """
@@ -897,14 +898,14 @@ class EquityBasedUniformActionInterpreter(ActionWrapper):
         hold threshold and maximum trade per asset.
 
         Args:
-
-            action (float): 
-                The action value to parse.
+        --------
+        action (float): 
+            The action value to parse.
 
         Returns:
         --------
-            float: 
-                The parsed action value.
+        float: 
+            The parsed action value.
 
         Notes:
             Actions within the range (-hold_threshold, hold_threshold)
@@ -915,31 +916,28 @@ class EquityBasedUniformActionInterpreter(ActionWrapper):
         fraction = (abs(action) - self.hold_threshold) / (1 -
                                                           self.hold_threshold)
 
-        parsed_action = (fraction * self._max_trade_per_asset *
+        parsed_action = (fraction * self.max_trade_per_asset *
                          np.sign(action) if fraction > 0 else 0)
 
         return parsed_action
 
     def action(self, actions: np.ndarray[float]) -> np.ndarray[float]:
         """
-        Limits maximum value of trades to a fixed percentage of equity. 
-        This ensures that total value of trades does not exceed this 
-        fixed percentage of equity. It also parses the actions to be
-        buy, sell, or hold.
+        Limits maximum value of trades to a fixed percentage of equity.
+        This ensures that total value of trades do not exceed this fixed
+        percentage of equity. It also parses the actions as buy,
+        sell, or hold.
 
         Args:
-            actions (np.ndarray[float]): The actions to perform.
+        ----------
+        actions (np.ndarray[float]): 
+            The actions to perform.
 
         Returns:
-            np.ndarray[float]: The parsed actions.
-
-        Notes:
-            This method sets the maximum trade per asset based on the
-            trade ratio and parses each action value as buy, sell, or
-            hold using the parse_action method.
+        ----------
+        np.ndarray[float]: 
+            The parsed actions.
         """
-
-        self._set_max_trade_per_asset(self.trade_ratio)
         assets = self.market_metadata_wrapper.assets
         asset_prices = self.market_metadata_wrapper.asset_prices
         for asset, action, asset_, price in enumerate(
