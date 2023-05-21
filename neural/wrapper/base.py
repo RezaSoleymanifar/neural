@@ -557,7 +557,7 @@ class MarketEnvMetadataWrapper(AbstractMarketEnvMetadataWrapper):
         ensures that: 
             1) maintenance margin requirement is always met (by
                 definition) 
-            2) Given small enough trade ratio, the trader
+            2) Given small enough trade to equity ratio, the trader
                 has enough marginable equity to open new positions
                 (automatically satisfying initial margin reuirements). 
             3) If initial margin of purchased assets do not exceed the
@@ -582,11 +582,53 @@ class MarketEnvMetadataWrapper(AbstractMarketEnvMetadataWrapper):
                 and time.
         """
         if isinstance(self.market_env, TradeMarketEnv):
-            self._progress = datetime.now().strftime("%m/%d/%Y, %H:%M")
+            progress = datetime.now().strftime("%m/%d/%Y, %H:%M")
         else:
-            self._progress = self.market_env.index / self.market_env.n_steps
+            progress = self.market_env.index / self.market_env.n_steps
 
-        return self._progress
+        return progress
+    
+    @property
+    def profit(self):
+        """
+        The current profit of the trader. This is the difference between
+        the current equity and the initial equity.
+
+        Returns:
+        ----------
+            profit (float):
+                The current profit of the trader.
+        """
+        profit = self.equity - self.initial_equity
+        return profit
+    
+    @property
+    def return_(self):
+        """
+        The current return of the trader. This is the ratio of the
+        current profit to the initial equity.
+
+        Returns:
+        ----------
+            return_ (float):
+                The current return of the trader.
+        """
+        return_ = self.profit / self.initial_equity
+        return return_
+    
+    @property
+    def sharpe(self):
+        """
+        The current sharpe ratio of the trader. This is the ratio of the
+        current return to the current volatility of the equity.
+
+        Returns:
+        ----------
+            sharpe (float):
+                The current sharpe ratio of the trader.
+        """
+        sharpe = sharpe_ratio(self.history['equity'])
+        return sharpe
 
     def _cache_metadata(self) -> None:
         """
