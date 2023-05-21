@@ -753,7 +753,7 @@ class EquityBasedUniformActionInterpreter(ActionWrapper):
     Transforms the actions produced by the agent that is in (-1, 1)
     range to be in (-max_trade, max_trade) range corresponding to
     notional value of buy/sell orders for each asset. if 0 then asset is
-    held. The max_trade is calculated as a percentage of equity. It maps
+    held. The max_trade = trade_ratio * equity. It maps
     actions in the range (-1, 1) to buy/sell/hold using fixed zones for
     each action type. (-1, -hold_threshold) is mapped to sell,
     (-hold_threshold, hold_threshold) is mapped to hold, and
@@ -762,7 +762,7 @@ class EquityBasedUniformActionInterpreter(ActionWrapper):
     percentage of equity that can be traded at each step. The action in
     the range (-threshold, threshold) is parsed as hold. The action
     outside this range is linearly projected to (0, max_trade). All
-    assets have the same `budet` to trade, hence the name uniform. The
+    assets have the same `budget` to trade, hence the name uniform. The
     budget is max_trade.
 
     Args:
@@ -832,6 +832,12 @@ class EquityBasedUniformActionInterpreter(ActionWrapper):
             made for each asset. Initialized to None. 
         action_space (Box): 
             The action space of the wrapped environment.
+
+        Raises:
+        ----------
+        AssertionError:
+            If trade ratio is not in (0, 1] or hold threshold is not in
+            (0, 1).
         """
 
         super().__init__(env)
