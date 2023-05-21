@@ -194,18 +194,24 @@ class AlpacaAsset(AbstractAsset):
         margin to be the maximum of the two.
         """
 
-        if not self.marginable:
-            return 0
-        elif not short:
-            elif self.price >= 2.50:
-                return 0.3
-        elif short:
-            if self.price < 5.00:
-                return max(2.5 / self.price, 1)
-            elif self.price >= 5.00:
-                return max(5.0 / self.price, 0.3)
+        def default_margin(price, short):
+            """
+            
+            """
+            if not self.marginable:
+                return 0
+            elif not short:
+                if price >= 2.50:
+                    return 0.3
+                else:
+                    return 1.0
+            elif short:
+                if price < 5.00:
+                    return max(2.5 / price, 1)
+                elif price >= 5.00:
+                    return max(5.0 / price, 0.3)
         
-        return max(self.maintenance_margin,
+        return max(self.maintenance_margin, de
                    self.get_initial_margin(short)) if self.marginable else 0
 
     @property
