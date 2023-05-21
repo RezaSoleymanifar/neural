@@ -565,10 +565,28 @@ class ExcessMarginActionWrapper(ActionWrapper):
     greater than delta.
 
     Use this wrapper to:
-        1. Avoid margin calls.
-        2. Ensure cash ava
+        1. Avoid margin calls by ensuring maintenance margin requirement
+            is met at all times.
+        2. Ensure initial margin requirement is met for all trades.
+        2. Ensure cash availability requirement is met for all trades.
 
-
+    Args:
+    ----------
+    env: gym.Env
+        The environment to wrap.
+    delta: float
+        The minimum excess margin ratio that needs to be maintained at
+        all times.
+    
+    Attributes:
+    ----------
+    delta: float
+        The minimum excess margin ratio that needs to be maintained at
+        all times.
+    excess_margin_ratio: float
+        The ratio of excess margin to portfolio value.
+    action_space: gym.spaces.Box    
+        The action space of the environment.
     
     Examples
     --------
@@ -585,6 +603,15 @@ class ExcessMarginActionWrapper(ActionWrapper):
         portfolio_value at all times. Avaiability of cash for increasing
         portfolio value is ensured if trade ratio is less than 0.15 /
 
+    Notes:
+    ----------
+    In order for initla margin requirement and cash availability is met
+    at all times, trade_ratio in position sizing wrapper must be less
+    than delta/(1+ delta) < 1 for nonmarginable assets, and less than
+    1/(gross_initial_margin) for marginable assets. This ensures that
+    size of trade is small enough and amount of liquidity is large
+    enough that initial margin requirement and cash availability
+    requirement is met at all times. If ratio if violated then 
     """
 
     def __init__(self, env: Env, delta: float) -> None:
