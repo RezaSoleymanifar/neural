@@ -753,17 +753,17 @@ class EquityBasedUniformActionInterpreter(ActionWrapper):
     Transforms the actions produced by the agent that is in (-1, 1)
     range to be in (-max_trade, max_trade) range corresponding to
     notional value of buy/sell orders for each asset. if 0 then asset is
-    held. The max_trade = trade_ratio * equity. It maps
-    actions in the range (-1, 1) to buy/sell/hold using fixed zones for
-    each action type. (-1, -hold_threshold) is mapped to sell,
-    (-hold_threshold, hold_threshold) is mapped to hold, and
-    (hold_threshold, 1) is mapped to buy. The hold_threshold is
-    specified by user. The trade_ratio parameter controls the maximum
-    percentage of equity that can be traded at each step. The action in
-    the range (-threshold, threshold) is parsed as hold. The action
-    outside this range is linearly projected to (0, max_trade). All
-    assets have the same `budget` to trade, hence the name uniform. The
-    budget is max_trade.
+    held. max_trade = trade_ratio * equity. The trade_ratio
+    parameter controls the maximum percentage of equity that can be
+    traded at each step.  It maps actions in the range (-1, 1) to
+    buy/sell/hold using fixed zones for each action type. (-1,
+    -hold_threshold) is mapped to sell, (-hold_threshold,
+    hold_threshold) is mapped to hold, and (hold_threshold, 1) is mapped
+    to buy. The hold_threshold is specified by user. The action in the
+    range (-threshold, threshold) is parsed as hold. The action outside
+    this range is linearly projected to (0, max_trade). All assets have
+    the same `budget` to trade, hence the name uniform. The budget is
+    max_trade.
 
     Args:
     ----------
@@ -798,6 +798,14 @@ class EquityBasedUniformActionInterpreter(ActionWrapper):
 
     Notes:
     --------
+    Caution must be taken with trade_ratio so that it can
+    work conjunction with excess margin wrapper. If trade_ratio is too
+    large then it can lead to triggering margin call avoidance mechanism
+    that ignores actions that lead to increasing portfolio value. If
+    trade_ratio < delta/(1+ delta) < 1 then it can be shown that excess 
+    margin always exceeds initial margin requirement, and maintenance
+    requirement is met at all times.
+
     If outputs of the agent are not in (-1, 1) range, for example if
     they are discrete actions, then use a action mapper wrapper to map
     them to (-1, 1) range. (-1, 1) is a universal representation for all
