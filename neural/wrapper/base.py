@@ -688,9 +688,9 @@ class MarginAccountMetaDataWrapper(AbstractMarketEnvMetadataWrapper):
         """
         Excess margin is the amount of marginable equity above the
         maintenance margin requirement. In the context of nonmarginable
-        assets, this is the same as the cash. Excess margin is set to
-        maintain a certain ratio with respect to porfolio value. This
-        ensures that: 
+        assets, this is the same as the positive cash. Excess margin is
+        set to maintain a certain ratio with respect to porfolio value.
+        This ensures that: 
             1) maintenance margin requirement is always met (by
                 definition) 
             2) Given small enough trade to equity ratio, the trader
