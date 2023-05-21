@@ -678,7 +678,7 @@ class MarginAccountMetaDataWrapper(AbstractMarketEnvMetadataWrapper):
                 trader.
         """
         margin_required = sum(
-            asset.maintenance_margin(short = quantity < 0) * position
+            asset.get_maintenance_margin(short = quantity < 0) * position
             for asset, position, quantity in zip(self.assets, self.positions,
                                                  self.asset_quantities))
         return margin_required

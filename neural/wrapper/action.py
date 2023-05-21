@@ -495,7 +495,7 @@ class InitialMarginActionWrapper(ActionWrapper):
         required to increase the position value of nonmarginable assets.
         """
         margin_required = sum(
-            self.assets[index].initial_margin(
+            self.assets[index].get_initial_margin(
                 short=self.asset_quantities[index] <= 0) * self.positions[index]
             for index in self.portfolio_increase_action_indices)
         return margin_required
