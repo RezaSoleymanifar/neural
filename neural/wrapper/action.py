@@ -535,7 +535,7 @@ class InitialMarginActionWrapper(ActionWrapper):
 @action
 class ExcessMarginActionWrapper(ActionWrapper):
     """
-    Excess margin caputres the concept of available liquidity that needs
+    Excess margin caputres the concept of free liquidity that needs
     to be mainted to facilitate increasing positions and maintaining
     existing positions. In the context of marginable assets this excess
     margin translates to the amount of marginable equity after
@@ -558,10 +558,13 @@ class ExcessMarginActionWrapper(ActionWrapper):
     until the ratio is restored to be greater than delta.
 
     Use this wrapper to:
-        1. Proactively avoid triggering margin call avoidance mechanism
+        1. Provide some form of cushion around margin call/negative cash
+           thresholds for safety, and more liquidity for trading.
+        2. Proactively avoid triggering margin call avoidance mechanism
            in InitialMarginActionWrapper.
-        2. Proactively avoid triggering negative cash avoidance in 
-         InitialMarginActionWrapper  delta/(1+ delta) < 1.
+        3. Proactively avoid triggering negative cash avoidance in 
+           InitialMarginActionWrapper as long as trade ratio < delta/(1+
+           delta) < 1.
         
     Args:
     ----------
