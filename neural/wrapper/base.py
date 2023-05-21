@@ -542,13 +542,10 @@ class MarketEnvMetadataWrapper(AbstractMarketEnvMetadataWrapper):
         The current maintenance margin of the trader. Excess margin is
         the amount of marginable equity above the maintenance margin
         requirement. This amount in margin account behaves similar to
-        available cash, due to marginability of the underlying assets.
-        Usually initial margin is checked before opening a position and
-        never checked again, but we ensure intial margin is not
-        accommulated for in a convservative manner.
+        available cash, due to marginability of the underlying assets..
         """
-        excess_margin = self.equity - max(
-            self.maintenance_margin_requirement, self.initial_asset_quantities)
+        excess_margin = self.marginable_equity - max(
+            self.maintenance_margin_requirement, self.initial_margin_requirement)
         return excess_margin
     
     @property

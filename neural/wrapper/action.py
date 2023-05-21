@@ -624,7 +624,7 @@ class ExcessMarginActionWrapper(ActionWrapper):
         This mechanism works by ignoreing any action that would lead to
         increasing portfolio value. This does not gurarantee that the
         ratio will be restored however it does gurarantee agents actions
-        will not make restoring the ratio worse. This can be paired with
+        will not increase portfolio_value. This can be paired with
         a reward wrapper to penalize the agent for triggering the
         threshold, or receiving a margin call.
         """
