@@ -646,6 +646,11 @@ class MarginAccountMetaDataWrapper(AbstractMarketEnvMetadataWrapper):
         non-marginable_longs cannot be used to open new positions
         (cannot be used as collateral), this value is not included in
         the marginable equity.
+
+        Returns:
+        ----------
+            marginable_equity (float):
+                The current marginable equity of the trader.
         """
         non_marginable_longs = 0
         for asset, quantity, position in zip(self.assets, self.asset_quantities,
@@ -665,10 +670,17 @@ class MarginAccountMetaDataWrapper(AbstractMarketEnvMetadataWrapper):
         of nonmarginable assets is always zero. This is an abuse of
         terminology, since nonmarginable assets do not have a concept of
         margin.
+
+        Returns:
+        ----------
+            maintenance_margin_requirement (float):
+                The current maintenance margin requirement of the
+                trader.
         """
         margin_required = sum(
-            asset.maintenance_margin * position
-            for asset, position in zip(self.assets, self.positions))
+            asset.maintenance_margin(short = quantity < 0) * position
+            for asset, position, quantity in zip(self.assets, self.positions,
+                                                 self.asset_quantities))
         return margin_required
 
     @property
@@ -687,6 +699,9 @@ class MarginAccountMetaDataWrapper(AbstractMarketEnvMetadataWrapper):
             3) If initial margin of purchased assets do not exceed the
                excess margin, it also gurarantees that post transaction
                the maintenance margin requirement is also met.
+        
+        Returns:
+        
         """
         excess_margin = self.marginable_equity - self.maintenance_margin_requirement
         return excess_margin
@@ -907,7 +922,7 @@ class ConsoleTearsheetRenderWrapper(Wrapper):
                     f'\n\t n_assets = {self.market_env.n_assets}'
                     f'\n\t n_steps = {self.market_env.n_steps:,}'
                     f'\n\t n_features = {self.market_env.n_features:,}')
-        
+
         self.render()
         return observation
 
