@@ -9,7 +9,7 @@ from neural.wrapper.action import (
     MinTradeSizeActionWrapper,
     FixedMarginActionWrapper,
     NetWorthRelativeMaximumShortSizing,
-    EquityBasedUniformPositionSizing,
+    EquityBasedUniformActionInterpreter,
     IntegerAssetQuantityActionWrapper,
     ActionClipperWrapper)
 
@@ -91,7 +91,7 @@ class NetWorthRelativeShortMarginPipe(AbstractPipe):
         self.min_trade = MinTradeSizeActionWrapper
         self.margin_sizing = FixedMarginActionWrapper
         self.short_sizing = NetWorthRelativeMaximumShortSizing
-        self.position_sizing = EquityBasedUniformPositionSizing
+        self.position_sizing = EquityBasedUniformActionInterpreter
         self.clip = ActionClipperWrapper
         
         self.flatten = FlattenToNUmpyObservationWrapper

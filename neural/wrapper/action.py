@@ -509,9 +509,9 @@ class ExcessMarginActionWrapper(ActionWrapper):
     there is always enough cash to buy more nonmarginable assets, given
     that trade ratio phi (ratio of total value of trade to equity) is
     less than delta/(1+ delta) < 1. Respecting the excess margin ratio
-    constrain also ensure that no margin call is received, since it by
+    constraint also ensure that no margin call is received, since it by
     definition satisfies the maintenance margin requirement. If excess
-    margin ratio is violated then actions that lead to increasin
+    margin ratio is violated then actions that lead to increasing
     portfolio value are ignored until the ratio is restored to be
     greater than delta.
 
@@ -677,7 +677,7 @@ class ShortingActionWrapper(ActionWrapper):
 
 @action
 @metadata
-class EquityBasedUniformPositionSizing(ActionWrapper):
+class EquityBasedUniformActionInterpreter(ActionWrapper):
     """
     Transforms the actions produced by the agent that is in (-1, 1)
     range to be in (-max_trade, max_trade) range corresponding to
