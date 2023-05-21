@@ -536,7 +536,7 @@ class InitialMarginActionWrapper(ActionWrapper):
             not negative at any point in time, for nonmarginable assets.
         """
         excess_margin = self.market_metadata_wrapper.excess_margin
-        if excess_margin < self.initial_margin_required:
+        if excess_margin < self.initial_margin_required():
             actions[self.portfolio_increase_action_indices] = 0
         return actions
 
