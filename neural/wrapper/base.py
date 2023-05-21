@@ -558,8 +558,7 @@ class MarginAccountMetaDataWrapper(AbstractMarketEnvMetadataWrapper):
         """
         long_mask = self.asset_quantities > 0
 
-        longs = self.asset_quantities[long_mask] @ self.asset_prices[
-            long_mask]
+        longs = self.asset_quantities[long_mask] @ self.asset_prices[long_mask]
 
         return longs
 
@@ -712,7 +711,7 @@ class MarginAccountMetaDataWrapper(AbstractMarketEnvMetadataWrapper):
             progress = self.market_env.index / self.market_env.n_steps
 
         return progress
-    
+
     @property
     def profit(self):
         """
@@ -726,7 +725,7 @@ class MarginAccountMetaDataWrapper(AbstractMarketEnvMetadataWrapper):
         """
         profit = self.equity - self.initial_equity
         return profit
-    
+
     @property
     def return_(self):
         """
@@ -740,7 +739,7 @@ class MarginAccountMetaDataWrapper(AbstractMarketEnvMetadataWrapper):
         """
         return_ = self.profit / self.initial_equity
         return return_
-    
+
     @property
     def sharpe(self):
         """
@@ -788,9 +787,11 @@ class ConsoleTearsheetRenderWrapper(Wrapper):
         super().__init__(env)
         self.verbosity = verbosity
 
-        if not isinstance(self.verbosity, int) or self.verbosity < 1:
+        if not isinstance(self.verbosity, int) or not (1 <= self.verbosity <=
+                                                       self.market_env.n_steps):
             raise ValueError(
-                f'verbosity must be a non negative integer, got {verbosity}')
+                f'Verbosity must be integer in [1, {self.market_env.n_steps}]'
+                ', but got {verbosity}')
         self._set_render_frequency()
         return None
 
