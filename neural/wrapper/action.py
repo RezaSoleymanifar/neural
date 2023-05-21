@@ -774,7 +774,7 @@ class EquityBasedUniformActionInterpreter(ActionWrapper):
         step. Defaults to 0.02.
     hold_threshold: float, optional
         The threshold for holding the current positions. Defaults to
-        0.15. This reserves the region (-0.15, 0.15) in (-1, 1) for hold    
+        0.15. This reserves the region (-0.15, 0.15) in (-1, 1) for hold
         actions.
     
     Attributes:
@@ -798,10 +798,10 @@ class EquityBasedUniformActionInterpreter(ActionWrapper):
 
     Notes:
     --------
-    If outputs of the agent are not in (-1, 1) range then, for example
-    if they are discrete actions, then use a head wrapper to map them to
-    (-1, 1) range. This range is a universal for all equity based uniform
-    action interpreters.
+    If outputs of the agent are not in (-1, 1) range, for example if
+    they are discrete actions, then use a action mapper wrapper to map
+    them to (-1, 1) range. (-1, 1) is a universal representation for all
+    equity based uniform actions.
     """
 
     def __init__(self, env: Env, trade_equity_ratio=0.02, hold_threshold=0.15):
@@ -810,29 +810,28 @@ class EquityBasedUniformActionInterpreter(ActionWrapper):
         environment, trade ratio, and hold threshold.
 
         Args:
-            env (Env): 
-                The environment to wrap. 
-            trade_equity_ratio (float, optional): 
-                The maximum percentage of equity that can be traded
-                at each step. Defaults to 0.02. 
-            hold_threshold (float, optional): 
-                The threshold for holding the current positions.
-                Defaults to 0.15. This reserves the region (-0.15, 0.15)
-                in (-1, 1) for hold actions.
+        ----------
+        env (Env): 
+            The environment to wrap. 
+        trade_equity_ratio (float, optional): 
+            The maximum percentage of equity that can be traded at each
+            step. Defaults to 0.02. 
+        hold_threshold (float, optional): 
+            The threshold for holding the current positions. Defaults to
+            0.15. This reserves the region (-0.15, 0.15) in (-1, 1) for
+            hold actions.
 
         Attributes:
-            trade_ratio (float): 
-                The maximum percentage of equity that can be traded
-                at each step. 
-            hold_threshold (float): The threshold for
-                holding the current positions.
-            _max_trade_per_asset (float): The maximum trade that can be
-                made for each asset. Initialized to None. 
-            action_space (Box): 
-                The action space of the wrapped environment.
-
-        Returns:
-            None.
+        ----------
+        trade_ratio (float): 
+            The maximum percentage of equity that can be traded at each
+            step. 
+        hold_threshold (float): The threshold for
+            holding the current positions.
+        _max_trade_per_asset (float): The maximum trade that can be
+            made for each asset. Initialized to None. 
+        action_space (Box): 
+            The action space of the wrapped environment.
         """
 
         super().__init__(env)
