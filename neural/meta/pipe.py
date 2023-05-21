@@ -2,7 +2,7 @@ from abc import abstractmethod, ABC
 from typing import Optional
 
 from neural.wrapper.base import (
-    MarketEnvMetadataWrapper,
+    MarginAccountMetaDataWrapper,
     ConsoleTearsheetRenderWrapper)
 
 from neural.wrapper.action import (
@@ -84,7 +84,7 @@ class NetWorthRelativeShortMarginPipe(AbstractPipe):
         self.reward_statistics = reward_statistics
         self.track_statistics = track_statistics
 
-        self.metadata_wrapper = MarketEnvMetadataWrapper
+        self.metadata_wrapper = MarginAccountMetaDataWrapper
         self.render = ConsoleTearsheetRenderWrapper
 
         self.integer_sizing = IntegerAssetQuantityActionWrapper

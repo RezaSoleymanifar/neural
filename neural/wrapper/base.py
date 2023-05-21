@@ -400,18 +400,22 @@ class AbstractMarketEnvMetadataWrapper(Wrapper, ABC):
 
 
 @market
-class MarketEnvMetadataWrapper(AbstractMarketEnvMetadataWrapper):
+class MarginAccountMetaDataWrapper(AbstractMarketEnvMetadataWrapper):
     """
     A metadata wrapper acts as a hub for storing metadata about the
-    environment during an episode. Other wrappers that need access to
-    this metadata can use the decorator `@metadata` to create a pointer
-    to the metadata wrapper. This pointer is accessible via the
-    `market_metadata_wrapper` attribute of the augmented wrapper class.
-    This this wrapper acts as a data hub for other wrappers, it
+    environment during an episode. This wrapper assumes that the info
+    collected from the base env is for a margin account. Collects
+    metadata of a margin account including equity, shorts, longs,
+    portfolio value, maintenance margin, and more. Other wrappers that
+    need access to this metadata can use the decorator `@metadata` to
+    create a pointer to the metadata wrapper. This pointer is accessible
+    via the `market_metadata_wrapper` attribute of the augmented wrapper
+    class. This this wrapper acts as a data hub for other wrappers, it
     duplicates some of the attributes of the underlying market env. This
     is done to avoid the need for wrappers to have access to the
     underlying market env in addition to the metadata wrapper. This
-    wrapper is designed to be used with `AbstractMarketEnv` environments.
+    wrapper is designed to be used with `AbstractMarketEnv`
+    environments, to simulate a margin account.
 
     Attributes:
     ----------
@@ -493,7 +497,7 @@ class MarketEnvMetadataWrapper(AbstractMarketEnvMetadataWrapper):
                     definition)
                 2) Given small enough trade to equity ratio, the trader
                     has enough marginable equity to open new positions
-                    (automatically satisfying initial margin 
+                    (automatically satisfying initial margin
                     reuirements).
                 3) If initial margin of purchased assets do not exceed
                     the excess margin, it also gurarantees that post
@@ -528,8 +532,10 @@ class MarketEnvMetadataWrapper(AbstractMarketEnvMetadataWrapper):
 
     Examples:
     ---------
-        >>> from neural.wrapper.base market
-        >>> class MyWrapper(MarketEnvMetadataWrapper):
+        >>> from neural.wrapper.base import MarketEnvMetadataWrapper
+        >>> from neural.env.base import TrainMarketEnv
+        >>> env = TrainMarketEnv(...)
+        >>> env = MarketEnvMetadataWrapper(env)
     """
 
     def __init__(self, env: Env) -> None:
