@@ -461,6 +461,11 @@ class InitialMarginActionWrapper(ActionWrapper):
 
     @property
     def portfolio_increase_action_indices(self, actions):
+        """
+        Initial margin is checked for all assets that are being
+        increased in position value. This property returns the indices
+        of all assets that are being increased in position value.
+        """
         indices = [
             index for index, quantity, action in enumerate(
                 zip(self.quantities, actions))
@@ -469,7 +474,11 @@ class InitialMarginActionWrapper(ActionWrapper):
         return indices
 
     def initial_margin_required(self):
-
+        """
+        Aggregates the intial margin required for all assets that are
+        being increased in position value. Note that notion of initial
+        
+        """
         margin_required = sum(
             self.assets[index].initial_margin * self.positions[index]
             for index in self.portfolio_increase_action_indices
