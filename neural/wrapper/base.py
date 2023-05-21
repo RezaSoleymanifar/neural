@@ -415,9 +415,121 @@ class MarketEnvMetadataWrapper(AbstractMarketEnvMetadataWrapper):
 
     Attributes:
     ----------
+        initial_cash (float):
+            The initial amount of cash available in the environment.
+        initial_asset_quantities (np.ndarray[float]):
+            The initial quantity of each asset held by the trader.
+        feature_schema (Dict[str, str]):
+            A dictionary mapping feature names to their data types.
+        assets (List[Asset]):
+            A list of assets in the environment.
+        n_steps (int):
+            The number of steps in the environment.
+        n_assets (int): 
+            The number of assets in the environment.
         history (defaultdict):
             A defaultdict object for storing metadata during an episode.
-            
+
+    Properties:
+    ----------
+        index (int):
+            The current index of the episode.
+        cash (float):
+            The current amount of cash available to the trader.
+        asset_quantities (np.ndarray[float]):
+            The current quantity of each asset held by the trader.
+        asset_prices (np.ndarray[float]):
+            The current price of each asset held by the trader.
+        longs (float):
+            The current notional value of long positions held in the
+            market environment.
+        shorts (float):
+            The current notional value of short positions held in the
+            market environment. 
+        positions (np.ndarray[float]):
+            The current positions (notional base currency value) of each
+            asset held. The position of each asset is the quantity of
+            each asset held times its price. Position of an asset is
+            always positive.
+        portfolio_value (float):
+            The current portfolio value of the trader. this includes sum
+            of all positions, both long and short.
+        equity (float):
+            The current equity of the trader. Equity is the sum of all
+            long positions and cash(+/-), minus short positions. This
+            caputures the concept of owened liquidity that can be used
+            to maintain existing assets in the context of marginable
+            assets. In the context of nonmarginable assets, since
+            shorting is not allowed, this is the same as the cash plus
+            the value of long positions. There is no concept of
+            maintaining a position in nonmarginable assets, since they
+            are purchased with cash and cannot be used as collateral.
+        marginable_equity (float):
+            The current marginable equity of the trader. This is the
+            equity that can be used to open new positions and acts
+            similar to available cash, due to marginability of the
+            underlying assets. When trading assets the gross intial
+            margin of the assets should not exceed the marginable
+            equity. In the context of non-margin trading, this is the
+            same as the cash. In the context of margin trading, this is
+            the same as equity. In short, equity = marginable_equity +
+            non_marginable_longs. Since non-marginable_longs cannot be
+            used to open new positions (cannot be used as collateral),
+            this value is not included in the marginable equity.
+        maintenance_margin_requirement (float):
+            The current maintenance margin requirement of the trader.
+            This is the minimum amount of equity that must be maintained
+            in the account to avoid a margin call. Maintenance margin
+            requirement of nonmarginable assets is always zero. This is
+            an abuse of terminology, since nonmarginable assets do not
+            have a concept of margin.
+        excess_margin (float):
+            Excess margin is the amount of marginable equity above the
+            maintenance margin requirement. In the context of
+            nonmarginable assets, this is the same as the cash. Excess
+            margin is set to maintain a ceratain ratio with respect to
+            porfolio value. This ensures that:
+                1) maintenance margin requirement is always met (by
+                    definition)
+                2) Given small enough trade to equity ratio, the trader
+                    has enough marginable equity to open new positions
+                    (automatically satisfying initial margin 
+                    reuirements).
+                3) If initial margin of purchased assets do not exceed
+                    the excess margin, it also gurarantees that post
+                    transaction the maintenance margin requirement is
+                    also met.
+        progress (float | str):
+            If the underlying market env is a `TrainMarketEnv`, this
+            method returns the progress of the episode as a float in [0,
+            1]. If the underlying market env is a `TradeMarketEnv`, this
+            method returns current date and time.
+        profit (float):
+            The current profit of the trader. This is the difference
+            between the current equity and the initial equity.
+        return_ (float):
+            The current return of the trader. This is the ratio of the
+            current profit to the initial equity.
+        sharpe (float):
+            The current sharpe ratio of the trader. This is the ratio of
+            the current return to the current volatility of the equity.
+
+    Methods:
+    ----------
+        _cache_metadata:
+            An abstract method for caching metadata.
+        reset:
+            Resets the environment and updates metadata.
+        step:
+            Performs a step in the environment. Actions taken can be
+            either numpy arrays or dictionaries of numpy arrays.
+        render:
+            Prints the trading metadata tear sheet to console.
+
+    Examples:
+    ---------
+        >>> from neural.wrapper.base market
+        >>> class MyWrapper(MarketEnvMetadataWrapper):
     """
 
     def __init__(self, env: Env) -> None:
