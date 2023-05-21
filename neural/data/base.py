@@ -167,9 +167,6 @@ class AlpacaAsset(AbstractAsset):
         irregularities.
     """
 
-    symbol: str
-    asset_type: AssetType
-    fractionable: bool
     marginable: bool
     maintenance_margin: Optional[float] = None
     shortable: Optional[bool] = None
