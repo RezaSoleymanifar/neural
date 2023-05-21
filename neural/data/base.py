@@ -150,7 +150,8 @@ class AlpacaAsset(AbstractAsset):
         The marginable, shortable, easy_to_borrow, intial_margin, and
         maintenance_margin properties are only valid for assets that are
         marginable. For example, cryptocurrencies are not marginable and
-        therefore do not have these properties. nonmarginable assets can
+        therefore do not need to set these attributes. By default
+        boolean valued attributes are returned as False and nonmarginable assets can
         only be purchased using cash and cannot be shorted. There are
         rare cases where non-marginable assets can be shorted, but this
         is not supported by this library due to the complexity of the
@@ -171,7 +172,11 @@ class AlpacaAsset(AbstractAsset):
         FINRA requirement:
         https://www.finra.org/filing-reporting/regulation-t-filings.
         Alpaca API has a 50% margin requirement for opening positions,
-        by default.
+        by default. Initial margin for nonmarginable assets is 1 namely
+        entire value of trade needs to be available in cash. Since
+        nonmarginable assets cannot be margined this is an abuse of
+        terminalogy to provide a convenient interface for working with
+        marginable and onnmarginable assets.
         """
         if not self.marginable:
             return 1
@@ -180,16 +185,20 @@ class AlpacaAsset(AbstractAsset):
         elif short:
             return 1.5
 
-    def get_maintenance_margin(self, price: float, short: bool = False
-                               ) -> float | None:
+    def get_maintenance_margin(self,
+                               price: float,
+                               short: bool = False) -> float | None:
         """
         A float representing the maintenance margin of the asset. This
         means that maintenace_margin * position_value should be
         available in marginable equity. Maintenance margin is cumulative
         for all assets and needs to be satisfied at all times. Alpaca
         API in reality enforces this at the end of day or when it is
-        violated by a greate amount. We enforce this at all times in a
-        conservative manner. 
+        violated by a greate amount intraday. We enforce this at all
+        times in a conservative manner. Maintenance margin for
+        nonmarginable assets is 0. Since nonmarginable assets cannot be
+        margined this is an abuse of terminalogy to provide a convenient
+        interface for working with marginable and onnmarginable assets.
         
         Default maintenance marigin is the maintenance margin that
         Alpaca API reports by default. maintenance margin attribute is
@@ -232,19 +241,21 @@ class AlpacaAsset(AbstractAsset):
 
             if not self.marginable:
                 return 0
-            
+
             elif not short:
                 if price >= 2.50:
                     return 0.3
                 else:
                     return 1.0
+
             elif short:
                 if price < 5.00:
                     return max(2.5 / price, 1)
                 elif price >= 5.00:
                     return max(5.0 / price, 0.3)
-        
-        return max(self.maintenance_margin, default_maintenance_margin(price, short),
+
+        return max(self.maintenance_margin,
+                   default_maintenance_margin(price, short),
                    self.get_initial_margin(short)) if self.marginable else 0
 
     @property
