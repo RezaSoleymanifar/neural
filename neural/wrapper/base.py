@@ -322,10 +322,15 @@ class AbstractMarketEnvMetadataWrapper(Wrapper, ABC):
         The current day of the episode, updated based on the market
         environment's index and resolution. Day count starts at 1.
         """
-        resolution = self.market_env.data_metadata.resolution
-
+        resolution = self.data_metadata.resolution
+        calendar = self.data_metadata.calendar
+        start_date = self.data_metadata.start_date
+        end_date = self.data_metadata.end_date
+        calendar.schedule(start_date=start_date, end_date=end_date)
+        
         # Extract the numeric value from the resolution string
         resolution_value = int(resolution.rstrip('Min'))
+
 
         # Calculate the number of intervals per day
         intervals_per_day = 390 // resolution_value
