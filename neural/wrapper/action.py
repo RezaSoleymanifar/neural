@@ -460,7 +460,7 @@ class PositionOpenActionWrapper(ActionWrapper):
                                        dtype=GLOBAL_DATA_TYPE)
 
     @property
-    def open_position_action_indices(self, actions):
+    def portfolio_increase_action_indices(self, actions):
         indices = [
             index for index, quantity, action in enumerate(
                 zip(self.quantities, actions))
@@ -470,10 +470,10 @@ class PositionOpenActionWrapper(ActionWrapper):
 
     def initial_margin_required(self):
 
-        margin_required = [
+        margin_required = sum(
             self.assets[index].initial_margin * self.positions[index]
-            for index in self.open_position_action_indices
-        ]
+            for index in self.portfolio_increase_action_indices
+        )
 
         return margin_required
 
@@ -485,7 +485,7 @@ class PositionOpenActionWrapper(ActionWrapper):
         """
         marginable_equity = self.market_metadata_wrapper.marginable_equity
         if marginable_equity < self.initial_margin_required:
-            actions[self.open_position_action_indices] = 0
+            actions[self.portfolio_increase_action_indices] = 0
         return actions
 
 
