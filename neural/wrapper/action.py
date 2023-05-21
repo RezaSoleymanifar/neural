@@ -798,18 +798,23 @@ class EquityBasedUniformActionInterpreter(ActionWrapper):
     Notes:
     --------
     Caution must be taken with trade_ratio so that it can work
-    conjunction with excess margin wrapper. If trade_ratio is too large
-    then it can lead to triggering margin call avoidance mechanism that
-    ignores actions that lead to increasing portfolio value, which can 
-    potentially lead to most of the actions being ignored to avoid
-    margin call/negatie cash thresholds. On the other hand if
-    trade_ratio is less than delta/(1+ delta) < 1 for non marginable 
+    conjunction with excess margin wrapper (2%-10% recommended). If
+    trade_ratio is too large then it can lead to triggering margin call
+    avoidance mechanism that ignores actions that lead to increasing
+    portfolio value, which can potentially lead to most of the actions
+    being ignored to avoid margin call/negative cash thresholds for
+    marginbale and nonmarginable cases respectively. On the other hand
+    if trade_ratio is less than delta/(1+ delta) < 1 for non marginable
     assets and less than 1/(gross_initial_margin) for marginable assets
-    then it can be shown that there is alwasy enough free liquidity to
-    both open and maintain positions. This is because a large enough 
-    free liquidity and small enough trade size ensures that initial
-    margin requirement and maintenance margin requirement is met at all
-    times. This is true for both marginable and nonmarginable assets.
+    then it can be shown that there is alwasy enough free liquidity
+    (marginable equity/cash) to both open and maintain positions. This
+    is because a large enough free liquidity and small enough trade size
+    paired together results in initial margin requirement and
+    maintenance margin requirement being met at all times. This is true
+    for both marginable and nonmarginable assets. In case excess margin
+    ratio is violated then actions that lead to increasing portfolio
+    value are set to zero similar to margin call avoidance mechanism.
+    However this is applied post violation. 
 
     If outputs of the agent are not in (-1, 1) range, for example if
     they are discrete actions, then use a action mapper wrapper to map
