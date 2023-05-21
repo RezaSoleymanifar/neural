@@ -801,6 +801,7 @@ class ConsoleTearsheetRenderWrapper(Wrapper):
             self.render_every = self.market_env.n_steps // self.verbosity
         elif isinstance(self.market_env, TradeMarketEnv):
             self.render_every = 1
+        return None
 
     def reset(self) -> np.ndarray[float] | Dict[str, np.ndarray[float]]:
         """
@@ -833,10 +834,12 @@ class ConsoleTearsheetRenderWrapper(Wrapper):
         necessary.
 
         Args:
+        ----------
             actions (np.ndarray | Dict[str, np.ndarray]): The actions to
             be taken by the agent.
 
         Returns:
+        ----------
             Tuple: A tuple containing the new observation, the reward
             obtained, a boolean indicating whether the episode has
             ended, and a dictionary containing additional information.
@@ -853,24 +856,16 @@ class ConsoleTearsheetRenderWrapper(Wrapper):
         """
         Prints the trading metadata tear sheet to console.
         """
-        initial_cash = self.market_metadata_wrapper.initial_cash
-
-        equity_history = self.market_metadata_wrapper.history['equity']
-        initial_equity = equity_history[0]
+        cash = self.market_metadata_wrapper.cash
+        portfolio_value = sum(self.market_metadata_wrapper.positions)
+        longs = self.market_metadata_wrapper.longs
+        shorts = self.market_metadata_wrapper.shorts
         equity = self.market_metadata_wrapper.equity
 
         progress = self.market_metadata_wrapper.progress
-
-        portfolio_value = sum(self.market_metadata_wrapper.positions)
-        cash = self.market_metadata_wrapper.cash
-
-        longs = self.market_metadata_wrapper.longs
-        shorts = self.market_metadata_wrapper.shorts
-
-        # financial metrics
-        profit = equity - initial_equity
-        return_ = (equity - initial_equity) / initial_equity
-        sharpe = sharpe_ratio(self.market_metadata_wrapper.history['equity'])
+        profit = self.market_metadata_wrapper.profit
+        return_ = self.market_metadata_wrapper.return_
+        sharpe = self.market_metadata_wrapper.sharpe
 
         metrics = [
             f'{progress:.0%}', f'{return_:.2%}', f'{sharpe:.4f}',
