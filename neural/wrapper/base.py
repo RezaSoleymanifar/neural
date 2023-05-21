@@ -316,6 +316,26 @@ class AbstractMarketEnvMetadataWrapper(Wrapper, ABC):
         return self.market_env.index
 
     @property
+    def day(self) -> int:
+        """
+        The current day of the episode, updated based on the market
+        environment's index and resolution. Day count starts at 1.
+        """
+        resolution = self.market_env.data_metadata.resolution
+
+        # Extract the numeric value from the resolution string
+        resolution_value = int(resolution.rstrip('Min'))
+
+        # Calculate the number of intervals per day
+        intervals_per_day = 390 // resolution_value
+
+        return self.index // intervals_per_day + 1
+    
+    @property
+    def date(self):
+        pass
+    
+    @property
     def cash(self) -> float:
         """
         The current amount of cash available to the trader.
