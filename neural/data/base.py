@@ -112,14 +112,6 @@ class AlpacaAsset(AbstractAsset):
 
     Attributes:
     ----------
-        symbol: str
-            A string representing the symbol or ticker of the asset.
-        asset_type: AssetType
-            An instance of the `AssetType` enum class representing the
-            type of asset.
-        fractionable: bool
-            A boolean indicating whether the asset can be traded in
-            fractional shares.
         marginable: bool
             A boolean indicating whether the asset can be bought on
             margin (i.e., borrowed funds). If an asset is not marginable,
@@ -168,12 +160,11 @@ class AlpacaAsset(AbstractAsset):
     """
 
     marginable: bool
-    maintenance_margin: Optional[float] = None
+    get_maintenance_margin: Optional[float] = None
     shortable: Optional[bool] = None
     easy_to_borrow: Optional[bool] = None
 
-    @property
-    def initial_margin(self, short: bool = False) -> float | None:
+    def get_initial_margin(self, short: bool = False) -> float | None:
         """
         A float representing the initial margin of the asset. 25% margin
         for long positions and 150% margin for short positions is a
@@ -189,8 +180,7 @@ class AlpacaAsset(AbstractAsset):
         elif short:
             return 1.5
 
-    @property
-    def maintenance_margin(self, short: bool = False) -> float | None:
+    def get_maintenance_margin(self, short: bool = False) -> float | None:
         """
         A float representing the maintenance margin of the asset. This
         means that maintenace_margin * position_value should be
@@ -202,8 +192,8 @@ class AlpacaAsset(AbstractAsset):
         maintenance margin at the end of day, we set the maintenance
         margin to be the maximum of the two.
         """
-        return max(self.maintenance_margin,
-                   self.initial_margin(short)) if self.marginable else 0
+        return max(self.mainte,
+                   self.get_initial_margin(short)) if self.marginable else 0
 
     @property
     def shortable(self) -> bool | None:
