@@ -494,10 +494,21 @@ class InitialMarginActionWrapper(ActionWrapper):
     def action(self, actions: np.ndarray[float]) -> np.ndarray[float]:
         """
         Checks if initial margin requirement is met for all assets. If
-        not then randomly sets a nonzero action to zero. This 
+        not then randomly sets a nonzero action to zero. This is a 
+        conservative approach to ensure that initial margin requirement
+        firstly satisfied, because if excess margin is greater than
+        initial margin requirement then it by definition marginable 
+        equity is greater than initial margin requirement. Secondly
+        post transaction excess margin is greater than zero, which
+        ensures that no margin call is received.
+        ExcessMarginActionWrapper can be used to ensure that this rule
+        is not triggered, by modifying the agent's actions that lead to
+        increasing portfolio value. In case this mediation is not enough
+        then following rule is triggered to ensure that a base level
+        of liquidity is maintained at all times.
         """
-        marginable_equity = self.market_metadata_wrapper.marginable_equity
-        if marginable_equity < self.initial_margin_required:
+        excess_margin = self.market_metadata_wrapper.excess_margin
+        if excess_margin < self.initial_margin_required:
             actions[self.portfolio_increase_action_indices] = 0
         return actions
 
