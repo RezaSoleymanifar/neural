@@ -424,6 +424,12 @@ class MarketEnvMetadataWrapper(AbstractMarketEnvMetadataWrapper):
         """
         The current notional value of long positions held in the market
         environment.
+
+        Returns:
+        ----------
+            longs (float):
+                The current notional value of long positions held in the
+                market environment.
         """
         long_mask = self.asset_quantities > 0
 
@@ -437,20 +443,26 @@ class MarketEnvMetadataWrapper(AbstractMarketEnvMetadataWrapper):
         """
         The current notional value of short positions held in the 
         market environment.
+
+        Returns:
+        ----------
+            shorts (float):
+                The current notional value of short positions held in
+                the market environment.
         """
         short_mask = self.asset_quantities < 0
         shorts = np.abs(
             self.asset_quantities[short_mask]) @ self.asset_prices[short_mask]
 
-        return self._shorts
+        return shorts
 
     @property
     def positions(self) -> np.ndarray[float]:
         """
         The current positions (notional base currency value) of each
-        asset held by the trader. The position of each asset is the
-        quantity of each asset held times its price. Position of an
-        asset is always positive.
+        asset held. The position of each asset is the quantity of each
+        asset held times its price. Position of an asset is always
+        positive.
 
         Returns:
         ----------
@@ -464,17 +476,28 @@ class MarketEnvMetadataWrapper(AbstractMarketEnvMetadataWrapper):
     @property
     def portfolio_value(self) -> float:
         """
-        The current portfolio value of the trader. this includes ab
-        value of all positions, both long and short.
+        The current portfolio value of the trader. this includes sum of
+        all positions, both long and short.
+
+        Returns:
+        ----------
+            portfolio_value (float):
+                The current portfolio value of the trader.
         """
-        self._portfolio_value = sum(self.positions)
-        return self._portfolio_value
+        portfolio_value = sum(self.positions)
+        return portfolio_value
 
     @property
     def equity(self) -> float:
         """
-        The current equity of the trader. Note cash can be negative if
-        the trader is in debt.
+        The current equity of the trader. Equity is the sum of all
+        long positions and cash, minus short positions. This caputures 
+        the concept of 
+
+        Returns:
+        ----------
+            equity (float):
+                The current equity of the trader.
         """
         self._equity = self.longs + self.cash - self.shorts
         return self._equity
