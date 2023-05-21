@@ -814,12 +814,48 @@ class ConsoleTearsheetRenderWrapper(Wrapper):
             env is a `TradeMarketEnv`, the tear sheet is printed every
             step of trading.
         
-
+    Methods:
+    ----------
+        reset:
+            Resets the environment and updates metadata.
+        step:
+            Performs a step in the environment. Actions taken can be
+            either numpy arrays or dictionaries of numpy arrays.
+        render:
+            Prints the trading metadata tear sheet to console.
+        
+    Raises:
+    -------
+        ValueError:
+            If the verbosity is not an integer in [1, n_steps].
+    
+    Examples:
+    ---------
+        >>> from neural.wrapper.base import ConsoleTearsheetRenderWrapper
+        >>> from neural.env.base import TrainMarketEnv  
+        >>> env = TrainMarketEnv(...)
+        >>> env = ConsoleTearsheetRenderWrapper(env)
     """
 
     def __init__(self, env: Env, verbosity: int = 20) -> None:
         """
         Initializes the ConsoleTearsheetRenderWrapper instance.
+
+        Args:
+        ----------
+            env (gym.Env):
+                The environment being wrapped.
+            verbosity (int):
+                The frequency of printing the tear sheet. If the
+                underlying market env is a `TrainMarketEnv`, the tear
+                sheet is printed every 'n_steps / verbosity' steps. If
+                the underlying market env is a `TradeMarketEnv`, the
+                tear sheet is printed every step of trading.
+        
+        Raises:
+        -------
+            ValueError:
+                If the verbosity is not an integer in [1, n_steps].
         """
         super().__init__(env)
         self.verbosity = verbosity
@@ -833,7 +869,13 @@ class ConsoleTearsheetRenderWrapper(Wrapper):
         return None
 
     def _set_render_frequency(self) -> None:
-
+        """
+        Sets the frequency of printing the tear sheet. If the underlying
+        market env is a `TrainMarketEnv`, the tear sheet is printed
+        every 'n_steps / verbosity' steps. If the underlying market env
+        is a `TradeMarketEnv`, the tear sheet is printed every step of
+        trading.
+        """
         if isinstance(self.market_env, TrainMarketEnv):
             self.render_every = self.market_env.n_steps // self.verbosity
         elif isinstance(self.market_env, TradeMarketEnv):
@@ -842,6 +884,13 @@ class ConsoleTearsheetRenderWrapper(Wrapper):
 
     def reset(self) -> np.ndarray[float] | Dict[str, np.ndarray[float]]:
         """
+        Resets the environment and updates metadata. Prints the trading
+        metadata tear sheet to console.
+
+        Returns:
+        ----------
+            observation (Dict[str, np.ndarray[float]]):
+                The initial observation from the environment.
         """
         observation = self.env.reset()
 
