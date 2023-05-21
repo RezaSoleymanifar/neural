@@ -764,6 +764,44 @@ class EquityBasedUniformActionInterpreter(ActionWrapper):
     outside this range is linearly projected to (0, max_trade). All
     assets have the same `budet` to trade, hence the name uniform. The
     budget is max_trade.
+
+    Args:
+    ----------
+    env: gym.Env
+        The environment to wrap.
+    trade_ratio: float, optional
+        The maximum percentage of equity that can be traded at each
+        step. Defaults to 0.02.
+    hold_threshold: float, optional
+        The threshold for holding the current positions. Defaults to
+        0.15. This reserves the region (-0.15, 0.15) in (-1, 1) for hold    
+        actions.
+    
+    Attributes:
+    ----------
+    trade_ratio: float
+        The maximum percentage of equity that can be traded at each
+        step.
+    hold_threshold: float
+        The threshold for holding the current positions.
+    _max_trade_per_asset: float
+        The maximum trade that can be made for each asset. Initialized
+        to None.
+    action_space: gym.spaces.Box
+        The action space of the environment.
+
+    Example:
+    --------
+    >>> from neural.meta.env.base import TrainMarketEnv
+    >>> env = TrainMarketEnv(...)
+    >>> wrapped_env = EquityBasedUniformActionInterpreter(env)
+
+    Notes:
+    --------
+    If outputs of the agent are not in (-1, 1) range then, for example
+    if they are discrete actions, then use a head wrapper to map them to
+    (-1, 1) range. This range is a universal for all equity based uniform
+    action interpreters.
     """
 
     def __init__(self, env: Env, trade_equity_ratio=0.02, hold_threshold=0.15):
