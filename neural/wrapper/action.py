@@ -578,8 +578,9 @@ class ExcessMarginActionWrapper(ActionWrapper):
         avoid the inevitable effect of slippage.
     nonmarginable assets:
         if delta = 0.15 then wrapper tries to maintain cash >= 0.15 *
-        portfolio_value at all times. Note if delata = 0 then it is
-        possible that cash 
+        portfolio_value at all times. Avaiability of cash for increasing
+        portfolio value is ensured if trade ratio is less than 0.15 /
+
     """
 
     def __init__(self, env: Env, delta: float) -> None:
@@ -588,7 +589,7 @@ class ExcessMarginActionWrapper(ActionWrapper):
 
         """
         super().__init__(env)
-        if not delta >= 0:
+        if not delta > 0:
             raise ValueError('delta must be greater than 0.')
 
         self.delta = delta
@@ -621,12 +622,11 @@ class ExcessMarginActionWrapper(ActionWrapper):
         As long as the ratio stays bellow delta this corrective measure
         is taken until the ratio is restored to be greater than delta.
         This mechanism works by ignoreing any action that would lead to
-        increasing portfolio value, or equivalently opening new
-        positions. This does not gurarantee that the ratio will be
-        restored however it does gurarantee agents actions will not make
-        restoring the ratio worse. This can be paired with a reward
-        wrapper to penalize the agent for triggering the threshold, or
-        receiving a margin call.
+        increasing portfolio value. This does not gurarantee that the
+        ratio will be restored however it does gurarantee agents actions
+        will not make restoring the ratio worse. This can be paired with
+        a reward wrapper to penalize the agent for triggering the
+        threshold, or receiving a margin call.
         """
         asset_quantities = self.market_metadata_wrapper.asset_quantities
         for action, quantity in zip(actions, asset_quantities):
