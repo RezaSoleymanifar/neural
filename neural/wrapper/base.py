@@ -491,27 +491,35 @@ class MarketEnvMetadataWrapper(AbstractMarketEnvMetadataWrapper):
     def equity(self) -> float:
         """
         The current equity of the trader. Equity is the sum of all
-        long positions and cash, minus short positions. This caputures 
-        the concept of 
+        long positions and cash(+/-), minus short positions. This caputures 
+        the concept of owened liquidity that can be used to open new
+        positions or maintain existing ones (in the context of
+        marginable assets). In the concept of non-margin trading, since
+        shorting is not allowed, this is the same as the cash plus the
+        value of long positions.
 
         Returns:
         ----------
             equity (float):
                 The current equity of the trader.
         """
-        self._equity = self.longs + self.cash - self.shorts
-        return self._equity
+        equity = self.longs + self.cash - self.shorts
+        return equity
 
     @property
     def marginable_equity(self) -> float:
         """
         The current marginable equity of the trader. This is the equity
-        that can be used to open new positions and acts similar to 
+        that can be used to open new positions and acts similar to
         available cash, due to marginability of the underlying assets.
         When trading assets the gross intial margin of the assets should
         not exceed the marginable equity. In the context of non-margin
         trading, this is the same as the cash. In the context of margin
-        trading, this is the same as equity.
+        trading, this is the same as equity. In short equity =
+        marginable_equity + non_marginable_longs. Since
+        non-marginable_longs cannot be used to open new positions
+        (cannot be used as collateral), this value is not included in
+        the marginable equity.
         """
         non_marginable_longs = 0
         for asset, quantity, position in zip(self.assets, self.asset_quantities,
