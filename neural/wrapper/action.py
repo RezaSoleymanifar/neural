@@ -439,7 +439,7 @@ class PositionCloseActionWrapper:
 
 @action
 @metadata
-class InitialMarginActionWrapper(ActionWrapper):
+class PositionOpenActionWrapper(ActionWrapper):
     """
     a
     """
@@ -535,22 +535,29 @@ class InitialMarginActionWrapper(ActionWrapper):
 @action
 class ExcessMarginActionWrapper(ActionWrapper):
     """
-    Excess margin caputres the concept of free liquidity that needs
-    to be mainted to facilitate increasing positions and maintaining
-    existing positions. In the context of marginable assets this excess
-    margin translates to the amount of marginable equity after
-    subtracting maintenance margin requirement. In the context of
-    nonmarginable assets this is equivalent to the amount of cash that
-    is available at all times for trading as a percentage of portfolio
-    value. In the context of marginable assets it can be shown that if
-    excess margin ratio (ratio of ecexss margin to portfolio value) is
-    greater than delta > 0 then maintenance margin requirement and
-    initial margin requirements are met at all times, if ratio of total
-    value of trades with respect to equity is less than
-    1/(gross_initial_margin) per interval. Similarly for nonmarginable
-    assets if excess margin ratio is greater than delta > 0 then it can
-    be shown that there is always enough cash to buy more nonmarginable
-    assets, given that trade ratio is less than delta/(1+ delta) < 1.
+    Excess margin caputres the concept of free liquidity that needs to
+    be mainted to facilitate increasing positions and maintaining
+    existing positions. This wrapper in conjunction with appropriate
+    trade ratio ensures that this free liquidity is alwasy large enough
+    so that requirements for opening and maintaining positions are met
+    at all times. 
+    
+    In the context of marginable assets this excess margin translates to
+    the amount of marginable equity after subtracting maintenance margin
+    requirement. In the context of nonmarginable assets this is
+    equivalent to the amount of cash that is available at all times for
+    trading as a percentage of portfolio value. 
+    
+    In the context of marginable assets it can be shown that if excess
+    margin ratio (ratio of ecexss margin to portfolio value) is greater
+    than delta > 0 then maintenance margin requirement and initial
+    margin requirements are met at all times, if ratio of total value of
+    trades with respect to equity is less than 1/(gross_initial_margin).
+    Similarly for nonmarginable assets if excess margin ratio is greater
+    than delta > 0 then it can be shown that there is always enough cash
+    to buy more nonmarginable assets, given that trade ratio is less
+    than delta/(1+ delta) < 1. 
+    
     Respecting the excess margin ratio constraint also ensure that no
     margin call is received, since it by definition satisfies the
     maintenance margin requirement. If excess margin ratio is violated
@@ -561,8 +568,8 @@ class ExcessMarginActionWrapper(ActionWrapper):
         1. Provide some form of cushion around margin call/negative cash
            thresholds for safety, and more liquidity for trading.
         2. Proactively avoid triggering margin call avoidance mechanism
-           in InitialMarginActionWrapper.
-        3. Proactively avoid triggering negative cash avoidance in 
+           in PositionOpenActionWrappper.
+        3. Proactively avoid triggering negative cash avoidance in
            InitialMarginActionWrapper as long as trade ratio < delta/(1+
            delta) < 1.
         
