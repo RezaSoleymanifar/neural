@@ -337,7 +337,7 @@ class AbstractMarketEnvMetadataWrapper(Wrapper, ABC):
         return self.market_env.asset_prices
 
     @abstractmethod
-    def _cache_metadata(self, *args, **kwargs):
+    def _cache_metadata(self):
         """
         An abstract method for caching metadata.
 
@@ -410,7 +410,14 @@ class MarketEnvMetadataWrapper(AbstractMarketEnvMetadataWrapper):
     This this wrapper acts as a data hub for other wrappers, it
     duplicates some of the attributes of the underlying market env. This
     is done to avoid the need for wrappers to have access to the
-    underlying market env in addition to the metadata wrapper.
+    underlying market env in addition to the metadata wrapper. This
+    wrapper is designed to be used with `AbstractMarketEnv` environments.
+
+    Attributes:
+    ----------
+        history (defaultdict):
+            A defaultdict object for storing metadata during an episode.
+            
     """
 
     def __init__(self, env: Env) -> None:
@@ -636,10 +643,13 @@ class MarketEnvMetadataWrapper(AbstractMarketEnvMetadataWrapper):
         `reset` and `step` methods of the wrapper.
         """
         self.history['cash'].append(self.cash)
-        self.history['equity'].append(self.equity)
         self.history['longs'].append(self.longs)
         self.history['shorts'].append(self.shorts)
         self.history['portfolio_value'].append(self.portfolio_value)
+        self.history['equity'].append(self.equity)
+        self.history['profit'].append(self.profit)
+        self.history['return'].append(self.return_)
+        self.history['sharpe'].append(self.sharpe)
 
         return None
 
