@@ -560,11 +560,8 @@ class ExcessMarginActionWrapper(ActionWrapper):
     Use this wrapper to:
         1. Proactively avoid triggering margin call avoidance mechanism
            in InitialMarginActionWrapper.
-        2. Ensure initial margin requirement is met
-            for all trades, given that trade ratio is less than
-            1/(gross_initial_margin). 
-        3. Ensure cash availability requirement is met for all trades
-           given that trade ratio is less than delta/(1+ delta) < 1.
+        2. Proactively avoid triggering negative cash avoidance in 
+         InitialMarginActionWrapper  delta/(1+ delta) < 1.
         
     Args:
     ----------
