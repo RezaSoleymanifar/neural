@@ -300,6 +300,7 @@ class AbstractMarketEnvMetadataWrapper(Wrapper, ABC):
         self.initial_asset_quantities =\
               self.market_env.initial_asset_quantities
 
+        self.data_metadata = self.market_env.data_metadata
         self.feature_schema = self.market_env.feature_schema
         self.assets = self.market_env.assets
 
