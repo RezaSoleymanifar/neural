@@ -547,24 +547,24 @@ class ExcessMarginActionWrapper(ActionWrapper):
     greater than delta > 0 then maintenance margin requirement and
     initial margin requirements are met at all times, if ratio of total
     value of trades with respect to equity is less than
-    1/(gross_initial_margin). Similarly for nonmarginable assets if
-    excess margin ratio is greater than delta then it can be shown that
-    there is always enough cash to buy more nonmarginable assets, given
-    that trade ratio phi (ratio of total value of trade to equity) is
-    less than delta/(1+ delta) < 1. Respecting the excess margin ratio
-    constraint also ensure that no margin call is received, since it by
-    definition satisfies the maintenance margin requirement. If excess
-    margin ratio is violated then actions that lead to increasing
-    portfolio value are ignored until the ratio is restored to be
-    greater than delta.
+    1/(gross_initial_margin) per interval. Similarly for nonmarginable
+    assets if excess margin ratio is greater than delta > 0 then it can
+    be shown that there is always enough cash to buy more nonmarginable
+    assets, given that trade ratio is less than delta/(1+ delta) < 1.
+    Respecting the excess margin ratio constraint also ensure that no
+    margin call is received, since it by definition satisfies the
+    maintenance margin requirement. If excess margin ratio is violated
+    then actions that lead to increasing portfolio value are ignored
+    until the ratio is restored to be greater than delta.
 
     Use this wrapper to:
-        1. Avoid margin calls by ensuring maintenance margin requirement
-        is met at all times.
-        2. Ensure initial margin requirement is met for all trades,
-        given that trade ratio is less than 1/(gross_initial_margin).
-        2. Ensure cash availability requirement is met for all trades
-        given that trade ratio is less than delta/(1+ delta) < 1.
+        1. Proactively avoid triggering margin call avoidance mechanism
+           in InitialMarginActionWrapper.
+        2. Ensure initial margin requirement is met
+            for all trades, given that trade ratio is less than
+            1/(gross_initial_margin). 
+        3. Ensure cash availability requirement is met for all trades
+           given that trade ratio is less than delta/(1+ delta) < 1.
         
     Args:
     ----------
