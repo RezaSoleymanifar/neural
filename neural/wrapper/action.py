@@ -551,16 +551,18 @@ class ExcessMarginActionWrapper(ActionWrapper):
     value. In the context of marginable assets it can be shown that if
     excess margin ratio (ratio of ecexss margin to portfolio value) is
     greater than delta > 0 then maintenance margin requirement and
-    initial margin requirements are met at all times. Similarly for
-    nonmarginable assets if excess margin ratio is greater than delta
-    then it can be shown that there is always enough cash to buy more
-    nonmarginable assets, given that trade ratio phi (ratio of total
-    value of trade to equity) is less than delta/(1+ delta) < 1.
-    Respecting the excess margin ratio constrain also ensure that no
-    margin call is received, since it by definition satisfies the
-    maintenance margin requirement. If excess margin ratio is violated
-    then actions that lead to increasin portfolio value are ignored
-    until the ratio is restored to be greater than delta.
+    initial margin requirements are met at all times, if ratio of total
+    value of trades with respect to equity is less than
+    1/(gross_initial_margin). Similarly for nonmarginable assets if
+    excess margin ratio is greater than delta then it can be shown that
+    there is always enough cash to buy more nonmarginable assets, given
+    that trade ratio phi (ratio of total value of trade to equity) is
+    less than delta/(1+ delta) < 1. Respecting the excess margin ratio
+    constrain also ensure that no margin call is received, since it by
+    definition satisfies the maintenance margin requirement. If excess
+    margin ratio is violated then actions that lead to increasin
+    portfolio value are ignored until the ratio is restored to be
+    greater than delta.
 
 
     
