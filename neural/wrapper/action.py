@@ -564,6 +564,10 @@ class ExcessMarginActionWrapper(ActionWrapper):
     portfolio value are ignored until the ratio is restored to be
     greater than delta.
 
+    Use this wrapper to:
+        1. Avoid margin calls.
+        2. Ensure cash ava
+
 
     
     Examples

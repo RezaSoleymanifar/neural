@@ -518,8 +518,9 @@ class MarketEnvMetadataWrapper(AbstractMarketEnvMetadataWrapper):
         is the minimum amount of equity that must be maintained in the
         account to avoid a margin call.
         """
-        margin_required = 0
-        for asset, position in zip(self.assets, self.positions):
+        margin_required = sum(
+            asset.maintenance_margin * position
+            for asset, position in zip(self.assets, self.positions))
         return margin_required
 
     @property
