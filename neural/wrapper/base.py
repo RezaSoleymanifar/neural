@@ -417,19 +417,6 @@ class MarketEnvMetadataWrapper(AbstractMarketEnvMetadataWrapper):
 
         super().__init__(env)
 
-        self.cash = None
-        self.asset_quantities = None
-
-        self.longs = None
-        self.shorts = None
-        self.positions = None
-
-        self.portfolio_value = None
-
-        self.profit = None
-        self.return_ = None
-        self._progress = None
-
         return None
 
     @property
@@ -440,10 +427,10 @@ class MarketEnvMetadataWrapper(AbstractMarketEnvMetadataWrapper):
         """
         long_mask = self.asset_quantities > 0
 
-        self.longs = self.asset_quantities[long_mask] @ self.asset_prices[
+        longs = self.asset_quantities[long_mask] @ self.asset_prices[
             long_mask]
 
-        return self._longs
+        return longs
 
     @property
     def shorts(self) -> float:
@@ -452,8 +439,8 @@ class MarketEnvMetadataWrapper(AbstractMarketEnvMetadataWrapper):
         market environment.
         """
         short_mask = self.asset_quantities < 0
-        self.shorts = abs(
-            self.asset_quantities[short_mask] @ self.asset_prices[short_mask])
+        shorts = np.abs(
+            self.asset_quantities[short_mask]) @ self.asset_prices[short_mask]
 
         return self._shorts
 
