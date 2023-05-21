@@ -114,8 +114,8 @@ class AlpacaAsset(AbstractAsset):
     ----------
         marginable: bool
             A boolean indicating whether the asset can be bought on
-            margin (i.e., borrowed funds). If an asset is not marginable,
-            then it cannot be shorted.
+            margin (i.e., borrowed funds). If an asset is not
+            marginable, then it cannot be shorted.
         shortable: bool
             A boolean indicating whether the asset can be sold short
             (i.e., sold before buying to profit from a price decrease).
@@ -124,7 +124,7 @@ class AlpacaAsset(AbstractAsset):
             easily. Alpaca API has restrictive rules for hard to borrow
             assets and in general HTB assets cannot be shorted.
         maintenance_margin: float | None
-            A float representing the maintenance margin of the asset. 
+            A float representing the maintenance margin of the asset.
             This means that maintenace_margin * position_value should be
             available in marginable equity. Maintenance margin is
             cumulative for all assets and needs to be satisfied at all
@@ -151,13 +151,14 @@ class AlpacaAsset(AbstractAsset):
         maintenance_margin properties are only valid for assets that are
         marginable. For example, cryptocurrencies are not marginable and
         therefore do not need to set these attributes. By default
-        boolean valued attributes are returned as False and nonmarginable assets can
-        only be purchased using cash and cannot be shorted. There are
-        rare cases where non-marginable assets can be shorted, but this
-        is not supported by this library due to the complexity of the
-        process. A mix of marginable and non-marginable assets in
-        portoflio is not supporeted either to the same level of
-        irregularities.
+        boolean valued attributes are returned as False and maintenance
+        margin and initial margin are returned as 0 and 1 respectively.
+        nonmarginable assets can only be purchased using cash and cannot
+        be shorted. There are rare cases where non-marginable assets can
+        be shorted, but this is not supported by this library due to the
+        complexity of the process. A mix of marginable and
+        non-marginable assets in portoflio is not supporeted either to
+        the same level of irregularities.
     """
 
     marginable: bool
@@ -177,6 +178,23 @@ class AlpacaAsset(AbstractAsset):
         nonmarginable assets cannot be margined this is an abuse of
         terminalogy to provide a convenient interface for working with
         marginable and onnmarginable assets.
+
+        Args:
+        -----
+            short (bool):
+                A boolean indicating whether the initial margin is for a
+                short position. By default False.
+        
+        Returns:
+        --------
+            float:
+                A float representing the initial margin of the asset.
+
+        TODO:
+        -----
+            Investigate why Alpaca API does not follow FINRA 150% margin
+            requirement for short positions. This still works since
+            Alpaca requires 50% initial margin for short positions.
         """
         if not self.marginable:
             return 1
