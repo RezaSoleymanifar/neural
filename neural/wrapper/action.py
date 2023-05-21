@@ -495,18 +495,18 @@ class InitialMarginActionWrapper(ActionWrapper):
         """
         Checks if initial margin requirement is met for all assets. If
         not then sets all porfolio increasing actions to zero. In the
-        context of marginable assets
-        This is a conservative approach to ensure that initial margin
-        requirement firstly satisfied, because if excess margin is
-        greater than initial margin requirement then it by definition
-        marginable equity is greater than initial margin requirement.
-        Secondly post transaction excess margin is greater than zero,
-        which ensures that no margin call is received.
-        ExcessMarginActionWrapper can be used to ensure that this rule
-        is not triggered, by modifying the agent's actions that lead to
-        increasing portfolio value. In case this mediation is not enough
-        then following rule is triggered to ensure that a base level of
-        liquidity is maintained at all times.
+        context of marginable assets this is a conservative approach to
+        ensure that initial margin requirement is firstly satisfied,
+        because if excess margin is greater than initial margin
+        requirement then by definition marginable equity is greater
+        than initial margin requirement. Secondly post transaction
+        excess margin is greater than zero, which ensures that no margin
+        call is received. ExcessMarginActionWrapper can be used to
+        ensure that this rule is not triggered, by modifying the agent's
+        actions that lead to increasing portfolio value. In case this
+        mediation is not enough then following rule is triggered to
+        ensure that a base level of liquidity is maintained at all
+        times.
 
         In the context of nonmarginable assets this rule ensures that
         there is enough cash to increase the position value of
