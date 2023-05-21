@@ -191,23 +191,29 @@ class AlpacaAsset(AbstractAsset):
         violated by a greate amount. We enforce this at all times in a
         conservative manner. Because Alpaca API checks both initial and
         maintenance margin at the end of day, we set the maintenance
-        margin to be the maximum of the two.
+        margin to be the maximum of the two. In the end maximum of 
+        default margin, initial margin, and maintenance margin is used
+        for calculating the maintenance margin.
         """
 
-        def default_margin(price, short):
+        def default_maintenance_margin(price, short):
             """
-            Link: https://alpaca.markets/docs/introduction/ The
+            Link: https://alpaca.markets/docs/introduction/. The
             maintenance margin is calculated based on the following
             table:
 
-            | Pos | Cond    | Margin Req  |
-            | --- | ------- | ----------- |
-            | L   | SP < $2.50  | 100% EOD MV |
-            | L   | SP >= $2.50 | 30% EOD MV  |
-            | L   | 2x ETF       | 100% EOD MV |
-            | L   | 3x ETF       | 100% EOD MV |
-            | S   | SP < $5.00  | Max $2.50/S or 100% |
-            | S   | SP >= $5.00 | Max $5.00/S or 30%  |
+            | Pos | Cond      | Margin Req        |
+            | --- | --------- | ----------------- |
+            | L   | SP < $2.5 | 100% of EOD MV    |
+            | L   | SP >= $2.5| 30% of EOD MV     |
+            | L   | 2x ETF    | 100% of EOD MV    |
+            | L   | 3x ETF    | 100% of EOD MV    |
+            | S   | SP < $5.0 | Max $2.50/S or 100% |
+            | S   | SP >= $5.0| Max $5.00/S or 30% |
+
+            where SP is the stock price and S is the short position. L
+            and S are long and short positions respectively. EOD MV is
+            the end of day market value of the position.
             """
 
             if not self.marginable:
@@ -223,7 +229,7 @@ class AlpacaAsset(AbstractAsset):
                 elif price >= 5.00:
                     return max(5.0 / price, 0.3)
         
-        return max(self.maintenance_margin, default_margin(price, short),
+        return max(self.maintenance_margin, default_maintenance_margin(price, short),
                    self.get_initial_margin(short)) if self.marginable else 0
 
     @property
@@ -232,6 +238,12 @@ class AlpacaAsset(AbstractAsset):
         A boolean indicating whether the asset can be sold short
         (i.e., sold before buying to profit from a price decrease). In 
         Alpaca API shorted assets cannot have faractional quantities.
+        Also if asset is not marginable it cannot be shorted. There are 
+        rare cases where non-marginable assets can be shorted, but this
+        is not supported by this library due to the complexity of the
+        process. A mix of marginable and non-marginable assets in 
+        portoflio is not supporeted either to the same level of
+        irregularities.
         """
         return self.shortable if self.marginable else False
 
