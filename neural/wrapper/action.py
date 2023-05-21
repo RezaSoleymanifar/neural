@@ -475,9 +475,15 @@ class InitialMarginActionWrapper(ActionWrapper):
 
     def initial_margin_required(self):
         """
-        Aggregates the intial margin required for all assets that are
-        being increased in position value. Note that notion of initial
-        
+        Initial margin is a percentage of notional value of trade that
+        needs to be available in form of marginable equity. In the
+        context of nonmarginable assets marginable equity is equivalent
+        to cash. Aggregates the intial margin required for all assets
+        that are being increased in position value. Note that notion of
+        initial margin is only applicable to marginable assets. However
+        with abuse of terminaology we use the same term for
+        nonmarginable assets as well to indicate the amount of cash
+        required to increase the position value of nonmarginable assets.
         """
         margin_required = sum(
             self.assets[index].initial_margin * self.positions[index]

@@ -424,7 +424,6 @@ class MarketEnvMetadataWrapper(AbstractMarketEnvMetadataWrapper):
         self.shorts = None
         self.positions = None
 
-        self.equity = None
         self.portfolio_value = None
 
         self.profit = None
@@ -500,7 +499,9 @@ class MarketEnvMetadataWrapper(AbstractMarketEnvMetadataWrapper):
         that can be used to open new positions and acts similar to 
         available cash, due to marginability of the underlying assets.
         When trading assets the gross intial margin of the assets should
-        not exceed the marginable equity.
+        not exceed the marginable equity. In the context of non-margin
+        trading, this is the same as the cash. In the context of margin
+        trading, this is the same as equity.
         """
         non_marginable_longs = 0
         for asset, quantity, position in zip(self.assets, self.asset_quantities,
