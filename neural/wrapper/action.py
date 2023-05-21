@@ -860,9 +860,16 @@ class EquityBasedUniformActionInterpreter(ActionWrapper):
 
         super().__init__(env)
 
-        assert 0 < trade_equity_ratio <= 1, "Trade ratio must be a float in (0, 1]."
-        assert 0 < hold_threshold < 1, "Hold threshold must be a float in (0, 1)."
-
+        if not 0 < trade_equity_ratio <= 1:
+            raise(f'Trade ratio must be a float in (0, 1]., '
+                  '{trade_equity_ratio} given.'
+                  )
+        
+        if not 0 < hold_threshold < 1: 
+            raise(f'Hold threshold must be a float in (0, 1)., '
+                  '{hold_threshold} given.'
+                  )
+        
         self.trade_ratio = trade_equity_ratio
         self.hold_threshold = hold_threshold
         self._max_trade_per_asset = None
