@@ -439,9 +439,18 @@ class PositionCloseActionWrapper:
 
 @action
 @metadata
-class PositionOpenActionWrapper(ActionWrapper):
+class MarginAccountPositionOpenActionWrapper(ActionWrapper):
     """
-    a
+    Implements the position opening logic of the margin account. This
+    wrapper assumes exclusive all marginable or all nonmarginable
+    assets, but not both. This wrapper modifies the agent's actions to
+    ensure that if new positions are opened it 1) satisfies intial
+    margin constraint, and 2) satisfies maintenance margin constraint
+    after opening the new position. In the context of nonmarginable
+    assets this wrapper ensures that there is enough cash to open new
+    positions. If amount of free liquidity (marginable equity or cash)
+    is not enough to open new positions then the portfolio increasing
+    actions are set to zero.
     """
 
     def __init__(self, env: Env) -> None:
@@ -570,7 +579,7 @@ class ExcessMarginActionWrapper(ActionWrapper):
         2. Proactively avoid triggering margin call avoidance mechanism
            in PositionOpenActionWrappper.
         3. Proactively avoid triggering negative cash avoidance in
-           InitialMarginActionWrapper as long as trade ratio < delta/(1+
+           PositionOpenActionWrapper as long as trade ratio < delta/(1+
            delta) < 1.
         
     Args:
