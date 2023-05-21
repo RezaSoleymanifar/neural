@@ -684,11 +684,11 @@ class ExcessMarginActionWrapper(ActionWrapper):
         threshold, or receiving a margin call.
         """
         asset_quantities = self.market_metadata_wrapper.asset_quantities
-        for action, quantity in zip(actions, asset_quantities):
-            if self.excess_margin_ratio < self.delta:
-                if (action < 0 and quantity <= 0
-                        or action > 0 and quantity >= 0):
-                    actions[action] = 0
+        if self.excess_margin_ratio < self.delta:
+            for action, quantity in zip(actions, asset_quantities):
+                    if (action < 0 and quantity <= 0
+                            or action > 0 and quantity >= 0):
+                        actions[action] = 0
 
 
 @action
@@ -802,9 +802,14 @@ class EquityBasedUniformActionInterpreter(ActionWrapper):
     then it can lead to triggering margin call avoidance mechanism that
     ignores actions that lead to increasing portfolio value, which can 
     potentially lead to most of the actions being ignored to avoid
-    margin call/negatie cash thresholds. On the other hand if 
-
-    For nonmarginable assets If trade_ratio < delta/(1+ delta) < 1
+    margin call/negatie cash thresholds. On the other hand if
+    trade_ratio is less than delta/(1+ delta) < 1 for non marginable 
+    assets and less than 1/(gross_initial_margin) for marginable assets
+    then it can be shown that there is alwasy enough free liquidity to
+    both open and maintain positions. This is because a large enough 
+    free liquidity and small enough trade size ensures that initial
+    margin requirement and maintenance margin requirement is met at all
+    times. This is true for both marginable and nonmarginable assets.
 
     If outputs of the agent are not in (-1, 1) range, for example if
     they are discrete actions, then use a action mapper wrapper to map
