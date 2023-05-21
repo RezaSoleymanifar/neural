@@ -316,8 +316,8 @@ class AbstractMarketEnvMetadataWrapper(Wrapper, ABC):
         The schedule of the market environment.
         """
         calendar = self.data_metadata.calendar_type
-        start_date = self.data_metadata.start_date
-        end_date = self.data_metadata.end_date
+        start_date = self.data_metadata.start.date()
+        end_date = self.data_metadata.end.date()
         schedule = calendar.schedule(start_date=start_date, end_date=end_date)
 
         return schedule
@@ -334,17 +334,22 @@ class AbstractMarketEnvMetadataWrapper(Wrapper, ABC):
         """
         The current day of the episode, updated based on the market
         environment's index and resolution. Day count starts at 1.
+        Computes the number of intervals per day and the cumulative
+        number of intervals per day. The day corresponding to the
+        current index is the first day whose cumulative number of
+        
         """
         resolution = self.data_metadata.resolution
+        resolution_offset = pd.to_timedelta(resolution)
+        market_durations = (self.schedule['end'] - self.schedule['start'])
 
-        # Extract the numeric value from the resolution string
-        resolution_value = int(resolution.rstrip('Min'))
+        intervals_per_day = (market_durations / resolution_offset).astype(int)
+        cumulative_intervals = intervals_per_day.cumsum()
 
+        # Find the day corresponding to the current index
+        day = (self.index < cumulative_intervals).argmax() + 1
 
-        # Calculate the number of intervals per day
-        intervals_per_day = 390 // resolution_value
-
-        return self.index // intervals_per_day + 1
+        return day
     
     @property
     def date(self):
