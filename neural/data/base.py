@@ -189,18 +189,30 @@ class AlpacaAsset(AbstractAsset):
         for all assets and needs to be satisfied at all times. Alpaca
         API in reality enforces this at the end of day or when it is
         violated by a greate amount. We enforce this at all times in a
-        conservative manner. Because Alpaca API checks both initial and
+        conservative manner. 
+        
+        Default maintenance marigin is the maintenance margin that
+        Alpaca API reports by default. maintenance margin attribute is
+        the value received from Alpaca API, however it is subject to
+        change given price change and position change. Thus taking max
+        of default maintenace margin and maintenance margin attribute
+        ensures that the most conservative value is used for calculating
+        the maintenance. Because Alpaca API checks both initial and
         maintenance margin at the end of day, we set the maintenance
-        margin to be the maximum of the two. In the end maximum of 
-        default margin, initial margin, and maintenance margin is used
-        for calculating the maintenance margin.
+        margin to be the maximum of the two. This is not a common
+        behavior since typically initial margin is used for opening
+        positions and maintenance margin is used for maintaining
+        positions. However Alpaca API enforces both at end of day. In
+        the end maximum of default margin, initial margin, and
+        maintenance margin is used for final calculation of the
+        maintenance margin.
         """
 
         def default_maintenance_margin(price, short):
             """
             Link: https://alpaca.markets/docs/introduction/. The
-            maintenance margin is calculated based on the following
-            table:
+            maintenance margin is by default calculated based on the
+            following table:
 
             | Pos | Cond      | Margin Req        |
             | --- | --------- | ----------------- |
@@ -214,10 +226,13 @@ class AlpacaAsset(AbstractAsset):
             where SP is the stock price and S is the short position. L
             and S are long and short positions respectively. EOD MV is
             the end of day market value of the position.
+
+            TODO: Add support for 2x and 3x ETFs.
             """
 
             if not self.marginable:
                 return 0
+            
             elif not short:
                 if price >= 2.50:
                     return 0.3
