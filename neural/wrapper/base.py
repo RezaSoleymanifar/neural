@@ -451,7 +451,7 @@ class MarketEnvMetadataWrapper(AbstractMarketEnvMetadataWrapper):
         """
         The current notional value of short positions held in the 
         market environment.
-        """ 
+        """
         short_mask = self.asset_quantities < 0
         self.shorts = abs(
             self.asset_quantities[short_mask] @ self.asset_prices[short_mask])
@@ -474,7 +474,7 @@ class MarketEnvMetadataWrapper(AbstractMarketEnvMetadataWrapper):
         """
         self._positions = np.abs(self.asset_quantities * self.asset_prices)
         return self._positions
-    
+
     @property
     def portfolio_value(self) -> float:
         """
@@ -483,7 +483,7 @@ class MarketEnvMetadataWrapper(AbstractMarketEnvMetadataWrapper):
         """
         self._portfolio_value = sum(self.positions)
         return self._portfolio_value
-    
+
     @property
     def equity(self) -> float:
         """
@@ -503,11 +503,10 @@ class MarketEnvMetadataWrapper(AbstractMarketEnvMetadataWrapper):
         not exceed the marginable equity.
         """
         non_marginable_longs = 0
-        for asset, quantity, position in zip(
-            self.assets, self.asset_quantities, self.positions):
+        for asset, quantity, position in zip(self.assets, self.asset_quantities,
+                                             self.positions):
             if not asset.marginable:
-                non_marginable_longs += (
-                    position if quantity > 0 else 0)
+                non_marginable_longs += (position if quantity > 0 else 0)
 
         marginable_equity = self.equity - non_marginable_longs
         return marginable_equity
@@ -521,19 +520,6 @@ class MarketEnvMetadataWrapper(AbstractMarketEnvMetadataWrapper):
         """
         margin_required = 0
         for asset, position in zip(self.assets, self.positions):
-            margin_required += asset.maintenance_margin * position
-        return margin_required
-    
-    @property
-    def initial_margin_requirement(self) -> float:
-        """
-        The current initial margin requirement of the trader. This is
-        the minimum amount of equity that must be maintained in the
-        account to avoid a margin call.
-        """
-        margin_required = 0
-        for asset, position in zip(self.assets, self.positions):
-            margin_required += asset.initial_margin * position
         return margin_required
 
     @property
@@ -544,10 +530,9 @@ class MarketEnvMetadataWrapper(AbstractMarketEnvMetadataWrapper):
         requirement. This amount in margin account behaves similar to
         available cash, due to marginability of the underlying assets..
         """
-        excess_margin = self.marginable_equity - max(
-            self.maintenance_margin_requirement, self.initial_margin_requirement)
+        excess_margin = self.marginable_equity - self.maintenance_margin_requirement
         return excess_margin
-    
+
     @property
     def progress(self) -> float | str:
         """

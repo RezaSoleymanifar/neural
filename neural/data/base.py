@@ -177,9 +177,9 @@ class AlpacaAsset(AbstractAsset):
             return 0.5
         elif short:
             return 1.5
-    
+
     @property
-    def maintenance_margin(self) -> float | None:
+    def maintenance_margin(self, short: bool = False) -> float | None:
         """
         A float representing the maintenance margin of the asset. This
         means that maintenace_margin * position_value should be
@@ -187,10 +187,13 @@ class AlpacaAsset(AbstractAsset):
         for all assets and needs to be satisfied at all times. Alpaca
         API in reality enforces this at the end of day or when it is
         violated by a greate amount. We enforce this at all times in a
-        conservative manner.
+        conservative manner. Because Alpaca API checks both initial and
+        maintenance margin at the end of day, we set the maintenance
+        margin to be the maximum of the two.
         """
-        return self.maintenance_margin if self.marginable else 0
-    
+        return max(self.maintenance_margin,
+                   self.initial_margin(short)) if self.marginable else 0
+
     @property
     def shortable(self) -> bool | None:
         """
@@ -199,7 +202,7 @@ class AlpacaAsset(AbstractAsset):
         Alpaca API shorted assets cannot have faractional quantities.
         """
         return self.shortable if self.marginable else False
-    
+
     @property
     def easy_to_borrow(self) -> bool | None:
         """
@@ -210,7 +213,7 @@ class AlpacaAsset(AbstractAsset):
         """
         return self.easy_to_borrow if self.marginable else False
 
-    
+
 class AbstractDataSource(ABC):
     """
     Abstract base class for a data source that standardizes the
@@ -882,7 +885,7 @@ class AbstractDataMetaData:
         """
         if set(self.feature_schema.keys()) != set(other.data_schema.keys()):
             raise ValueError('Datasets do not have matching feature schemas.')
-        
+
         merged_feature_schema = dict()
         for key in self.feature_schema.keys():
 
@@ -1177,7 +1180,7 @@ class DatasetMetadata(AbstractDataMetaData):
         schedule = self.calendar_type.schedule(start_date=start_date,
                                                end_date=end_date)
 
-        conscutive =  True if len(schedule) == 2 else False
+        conscutive = True if len(schedule) == 2 else False
         return conscutive
 
     @property
@@ -1269,6 +1272,7 @@ class StaticDataFeeder(AbstractDataFeeder):
             Iterable[np.ndarray]: a generator object returning features
             as numpy array.
     """
+
     def __init__(self,
                  dataset_metadata: DatasetMetadata,
                  datasets: List[h5.Dataset | np.ndarray],
@@ -1403,6 +1407,7 @@ class AsyncDataFeeder(AbstractDataFeeder):
     required for the environment from an asynchronous source. This is
     useful for loading data from a live stream.
     """
+
     def __init__(self, stream_metadata: StreamMetaData,
                  data_client: AbstractDataClient) -> None:
         super().__init__()
