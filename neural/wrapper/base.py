@@ -783,22 +783,21 @@ class ConsoleTearsheetRenderWrapper(Wrapper):
 
     def __init__(self, env: Env, verbosity: int = 20) -> None:
         """
-
+        Initializes the ConsoleTearsheetRenderWrapper instance.
         """
-
         super().__init__(env)
         self.verbosity = verbosity
 
+        if not isinstance(self.verbosity, int) or self.verbosity < 1:
+            raise ValueError(
+                f'verbosity must be a non negative integer, got {verbosity}')
         self._set_render_frequency()
-
         return None
 
     def _set_render_frequency(self, verbosity: int) -> None:
 
         if isinstance(self.market_env, TrainMarketEnv):
-            self.render_every = (self.market_env.n_steps //
-                                 self.verbosity if self.verbosity > 0 else
-                                 self.market_env.n_steps)
+            self.render_every = self.market_env.n_steps // self.verbosity
         elif isinstance(self.market_env, TradeMarketEnv):
             self.render_every = 1
 
