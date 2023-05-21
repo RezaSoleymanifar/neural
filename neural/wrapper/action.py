@@ -486,17 +486,15 @@ class InitialMarginActionWrapper(ActionWrapper):
         required to increase the position value of nonmarginable assets.
         """
         margin_required = sum(
-            self.assets[index].initial_margin * self.positions[index]
-            for index in self.portfolio_increase_action_indices
-        )
-
+            self.assets[index].initial_margin(
+                short=self.asset_quantities[index] <= 0) * self.positions[index]
+            for index in self.portfolio_increase_action_indices)
         return margin_required
 
     def action(self, actions: np.ndarray[float]) -> np.ndarray[float]:
         """
         Checks if initial margin requirement is met for all assets. If
-        not then randomly sets a nonzero action to zero until initial
-        margin requirement is met.
+        not then randomly sets a nonzero action to zero. This 
         """
         marginable_equity = self.market_metadata_wrapper.marginable_equity
         if marginable_equity < self.initial_margin_required:
