@@ -180,6 +180,7 @@ class MarginAccountPipe(AbstractPipe):
 
         env = self.margin_account_metadata(env)
         env = self.render(env, verbosity=self.verbosity)
+        
         env = self.initial_margin(env)
         env = self.excess_margin(
             env,
