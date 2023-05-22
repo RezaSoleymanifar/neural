@@ -100,6 +100,7 @@ class MarginAccountPipe(AbstractPipe):
                  integer: bool = False,
                  buffer_size: int = 10,
                  stack_size: int = None,
+                 excess_margin_ratio_threshold: float = 0.1,
                  verbosity: int = 20,
                  observation_statistics: Optional[RunningStatistics] = None,
                  reward_statistics: Optional[RunningStatistics] = None,
@@ -115,6 +116,7 @@ class MarginAccountPipe(AbstractPipe):
         self.observation_statistics = observation_statistics
         self.track_statistics = track_statistics
 
+        self.delta = excess_margin_ratio_threshold
         self.verbosity = verbosity
 
         self.metadata_wrapper = MarginAccountMetaDataWrapper
@@ -156,20 +158,13 @@ class MarginAccountPipe(AbstractPipe):
             buffer_size=self.buffer_size,
             stack_size=self.stack_size,
             observation_statistics=self.observation_statistics,
-            track_statistics=self.track_statistics)
-        env = self.flatten(env)
-        env = self.buffer(env, buffer_size=self.buffer_size)
-        env = self.stacker(env, stack_size=self.stack_size)
+            track_statistics=self.track_statistics).pipe(env)
 
-        env = self.normalize_observation(
-            env,
-            observation_statistics=self.observation_statistics,
-            track_statistics=self.track_statistics)
 
         # action wrappers
         env = self.min_trade(env, min_action=self.min_trade)
         env = self.integer_sizing(env, self.integer)
-        env = self.margin_sizing(env, initial_margin=self.initial_margin)
+        env = self.excess_margin(env)
         env = self.shorting(env, short_ratio=self.short_ratio)
         env = self.action_interpreter(env, trade_ratio=self.trade_ratio)
 

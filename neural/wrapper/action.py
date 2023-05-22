@@ -631,7 +631,7 @@ class ExcessMarginActionWrapper(ActionWrapper):
     the sum of total value of all assets or portfolio value.
     """
 
-    def __init__(self, env: Env, delta: float) -> None:
+    def __init__(self, env: Env, excess_margin_ratio_threshold: float) -> None:
         """
         Initializes a new instance of the ExcessMarginActionWrapper
         class with the given environment and delta.
@@ -645,10 +645,10 @@ class ExcessMarginActionWrapper(ActionWrapper):
             at all times.
         """
         super().__init__(env)
-        if not delta > 0:
+        if not excess_margin_ratio_threshold > 0:
             raise ValueError('delta must be greater than 0.')
 
-        self.delta = delta
+        self.excess_margin_ratio_threshold = excess_margin_ratio_threshold
         self.action_space = spaces.Box(-np.inf,
                                        np.inf,
                                        shape=(self.n_assets, ),
@@ -685,7 +685,7 @@ class ExcessMarginActionWrapper(ActionWrapper):
         threshold, or receiving a margin call.
         """
         asset_quantities = self.market_metadata_wrapper.asset_quantities
-        if self.excess_margin_ratio < self.delta:
+        if self.excess_margin_ratio < self.excess_margin_ratio_threshold:
             for action, quantity in zip(actions, asset_quantities):
                 if (action < 0 and quantity <= 0
                         or action > 0 and quantity >= 0):
