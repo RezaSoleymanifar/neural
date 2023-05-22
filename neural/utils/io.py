@@ -10,8 +10,7 @@ import h5py as h5
 import torch
 from torch import nn
 
-from neural.common.constants import (
-    HDF5_DEFAULT_MAX_ROWS, GLOBAL_DATA_TYPE)
+from neural.common.constants import (HDF5_DEFAULT_MAX_ROWS, GLOBAL_DATA_TYPE)
 from neural.common.exceptions import CorruptDataError
 from neural.data.base import DatasetMetadata
 from neural.meta.pipe import AbstractPipe
@@ -19,18 +18,13 @@ from neural.meta.agent import Agent
 from neural.utils.base import validate_path
 
 
-
-def to_hdf5(
-        file_path: str | os.PathLike,
-        numpy_array: np.ndarray,
-        dataset_metadata: DatasetMetadata,
-        dataset_name: str):
-
+def to_hdf5(file_path: str | os.PathLike, numpy_array: np.ndarray,
+            dataset_metadata: DatasetMetadata, dataset_name: str):
     """
-    Saves a numpy array to an HDF5 file. If file exists and dataset
-    already exists, the new data will be appended to the existing
-    dataset. If the file exists but the dataset does not, a new dataset
-    will be created.
+    Saves a numpy array to an HDF5 file. If the file does not exist, new
+    file will be created. If file exists and dataset already exists, the
+    new data will be appended to the existing dataset. If the file
+    exists but the dataset does not, a new dataset will be created.
     
     Args:
     -------
@@ -60,10 +54,12 @@ def to_hdf5(
     with h5.File(file_path, 'a') as hdf5:
 
         if dataset_name not in hdf5:
-            dataset = hdf5.create_dataset(
-                name=dataset_name, data=numpy_array,
-                dtype=GLOBAL_DATA_TYPE, maxshape=(HDF5_DEFAULT_MAX_ROWS,
-                                            numpy_array.shape[1]), chunks=True)
+            dataset = hdf5.create_dataset(name=dataset_name,
+                                          data=numpy_array,
+                                          dtype=GLOBAL_DATA_TYPE,
+                                          maxshape=(HDF5_DEFAULT_MAX_ROWS,
+                                                    numpy_array.shape[1]),
+                                          chunks=True)
 
             serialized_metadata = dill.dumps(dataset_metadata, protocol=0)
             dataset.attrs['metadata'] = serialized_metadata
@@ -72,15 +68,16 @@ def to_hdf5(
             dataset_metadata_, dataset = extract_hdf5_dataset(
                 hdf5_file=hdf5, dataset_name=dataset_name)
 
-            # Append the new data to the dataset and update metadata
-            new_metadata = dataset_metadata_ + dataset_metadata
+            new_dataset_metadata = dataset_metadata_ + dataset_metadata
             dataset.resize(
-                (new_metadata.n_rows, new_metadata.n_columns))
+                (new_dataset_metadata.n_rows, new_dataset_metadata.n_columns))
 
-            dataset[dataset_metadata_.n_rows: new_metadata.n_rows, :] = numpy_array
-            serialized_new_metadata = dill.dumps(new_metadata, protocol=0)
+            dataset[dataset_metadata_.n_rows:new_dataset_metadata.
+                    n_rows, :] = numpy_array
+            serialized_new_dataset_metadata = dill.dumps(new_dataset_metadata,
+                                                 protocol=0)
 
-            dataset.attrs['metadata'] = serialized_new_metadata
+            dataset.attrs['metadata'] = serialized_new_dataset_metadata
 
     return None
 
@@ -88,28 +85,9 @@ def to_hdf5(
 def from_hdf5(
     file_path: str | os.PathLike,
     dataset_name: Optional[str] = None
-    ) -> Tuple[DatasetMetadata, List[h5.Dataset]]:
-    
+) -> Tuple[DatasetMetadata, List[h5.Dataset]]:
     """
-    Loads one or more datasets from an HDF5 file and returns a tuple
-    containing their metadata and the datasets themselves as h5py
-    dataset objects. Args:
-        file_path (str | os.PathLike): The path to the HDF5 file to load
-        the dataset(s) from. target_dataset_name (Optional[str]): The
-        name of the target dataset to load. If not
-            provided, all datasets in the file will be loaded.
-    Returns:
-        Tuple[DatasetMetadata, List[h5.Dataset]]: A tuple containing the
-        metadata object for the
-            loaded dataset(s) and the loaded dataset(s) as h5py dataset
-            objects.
-    Raises:
-        CorruptDataError: If the number of rows or columns specified in
-        the metadata object
-            does not match the actual number of rows or columns in the
-            target dataset.
-        FileNotFoundError: If the file_path does not exist. ValueError:
-        If the file_path is not a valid HDF5 file.
+    
     """
 
     validate_path(file_path=file_path)
@@ -140,50 +118,34 @@ def from_hdf5(
 
 
 def extract_hdf5_dataset(
-    hdf5_file: h5.File,
-    dataset_name: str
-    ) -> Tuple[DatasetMetadata, h5.Dataset]:
-
+        hdf5_file: h5.File,
+        dataset_name: str) -> Tuple[DatasetMetadata, h5.Dataset]:
     """
-    Extracts a target dataset and its metadata from an HDF5 file. Args:
-        hdf5 (h5.File): The HDF5 file object to extract the dataset
-        from. target_dataset_name (str): The name of the target dataset
-        to extract.
-    Returns:
-        Tuple[DatasetMetadata, h5.Dataset]: A tuple containing the
-        metadata object for the
-            target dataset and the target dataset object as a h5py
-            dataset object.
-    Raises:
-        CorruptDataError: If the number of rows or columns specified in
-        the metadata object
-            does not match the actual number of rows or columns in the
-            target dataset.
+    
     """
 
     try:
         dataset = hdf5_file[dataset_name]
     except KeyError:
         raise ValueError(f'Dataset {dataset_name} does not exist in file.')
-    
+
     serialized_metadata = dataset.attrs['metadata']
     metadata = dill.loads(serialized_metadata.encode())
 
     # sanity checking considtency between metadata and dataset
     if metadata.n_rows != len(dataset):
-        raise CorruptDataError(
-            f'Rows in {dataset_name}: {len(dataset)}.'
-            f'Rows in metadata: {metadata.n_rows}')
+        raise CorruptDataError(f'Rows in {dataset_name}: {len(dataset)}.'
+                               f'Rows in metadata: {metadata.n_rows}')
 
     if metadata.n_columns != dataset.shape[1]:
-        raise CorruptDataError(
-            f'Columns in {dataset_name}: {dataset.shape[1]}.'
-            f'Columns in metadata: {metadata.n_columns}')
+        raise CorruptDataError(f'Columns in {dataset_name}: {dataset.shape[1]}.'
+                               f'Columns in metadata: {metadata.n_columns}')
 
     return metadata, dataset
 
 
-def get_file_like(object: object, file_name: str) -> Tuple[tarfile.TarInfo, dill.BytesIO]:
+def get_file_like(object: object,
+                  file_name: str) -> Tuple[tarfile.TarInfo, dill.BytesIO]:
     # creates a file-like object from an object and tar info for that
     # object. can be used to add an object to a tarfile as a file.
 
@@ -192,7 +154,7 @@ def get_file_like(object: object, file_name: str) -> Tuple[tarfile.TarInfo, dill
         file = open(path, 'rb')
         file_tar_info = tarfile.TarInfo(name=file_name)
         file_tar_info.size = os.path.getsize(path)
-    
+
     else:
         object_bytes = dill.dumps(object)
         file = dill.BytesIO(object_bytes)
@@ -208,13 +170,10 @@ def add_to_tarfile(file_path, file_tar_info, file_like):
     validate_path(file_path=file_path)
     with tarfile.open(file_path, 'w') as file:
 
-        file.addfile(tarinfo = file_tar_info, fileobj=file_like)
+        file.addfile(tarinfo=file_tar_info, fileobj=file_like)
 
 
-
-def save_agent(
-    file_path: str | os.PathLike,
-    agent: Agent):
+def save_agent(file_path: str | os.PathLike, agent: Agent):
 
     model = agent.model
     pipe = agent.pipe
@@ -227,19 +186,18 @@ def save_agent(
     pipe_tar_info, pipe_file = get_file_like(dataset_metadata, 'pipe')
     add_to_tarfile(file_path, pipe_tar_info, pipe_file)
 
-
     model_file_path = os.path.join(os.path.dirname(file_path), 'model')
     torch.save(model, model_file_path)
     model_tar_info, model_file = get_file_like(model_file_path, 'model')
     add_to_tarfile(file_path, model_tar_info, model_file)
-    
+
     # a copy model file is now in the agent file_path.
     os.remove(os.path.join(os.path.dirname(file_path), 'model'))
 
 
 def load_agent(
     file_path: str | os.PathLike,
-    ) -> Tuple[nn.Module, AbstractPipe, DatasetMetadata]:
+) -> Tuple[nn.Module, AbstractPipe, DatasetMetadata]:
 
     with tarfile.open(file_path, 'r') as agent_file:
 
@@ -261,7 +219,4 @@ def load_agent(
     # Initialize pipe
     pipe = pipe_class()
 
-    return Agent(
-        model = model, 
-        pipe = pipe, 
-        dataset_metadata = dataset_metadata)
+    return Agent(model=model, pipe=pipe, dataset_metadata=dataset_metadata)
