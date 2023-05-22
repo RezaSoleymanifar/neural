@@ -131,8 +131,7 @@ class AlpacaDataDownloader():
         concurrently even for stocks, since some stocks have different
         trading hours and calendar types due to being listed on
         different exchanges. In Alpaca API however all stock tickers are
-        traded in New York Stock Exchange, so this is not an issue for
-        stocks. 
+        traded in New York Stock Exchange, so this is not an issue. 
 
         Args:
         ----------
@@ -154,7 +153,7 @@ class AlpacaDataDownloader():
 
         Returns:
         ----------
-            dataset_dataframe (pd.DataFrame):
+            dataset (pd.DataFrame):
                 The raw dataset downloaded from the Alpaca API.
         """
 
@@ -192,27 +191,29 @@ class AlpacaDataDownloader():
 
         """
         Downloads financial features data for the given symbols and
-        saves it in an HDF5 file format.
-        
+        saves it in an HDF5 file format. A mix of stocks and
+        cryptocurrencies cannot be written to the same HDF5 file, since
+        they have different calendar types and trading hours. The
+        dataset requires underlying data to have identical trading hours
+        and calendar types. This also can restricts the assets that can
+        be traded concurrently even for stocks, since some stocks have
+        different trading hours and calendar types due to being listed
+        on different exchanges. In Alpaca API however all stock tickers
+        are traded in New York Stock Exchange, so this is not an issue. 
+
+        A mix of marginable and non-marginable assets cannot be written
+        to the same HDF5 file, since they have different marginability
+        types. Handling marginable and non-marginable assets is not
+        supported in the library.
+
         Args:
-            file_path (str | os.PathLike): The file path of the HDF5
-            file to save the data. dataset_name (str): The name of the
-            dataset to create in the HDF5 file. dataset_type
-            (DatasetType): The type of dataset to download. Either
-            'BAR', 'TRADE', or 'QUOTE'. symbols (List[str]): The list of
-            symbol names to download features data for. resolution
-            (str): The frequency at which to sample the data. One of
-            '1Min', '5Min', '15Min', or '30Min'. start_date (str |
-            datetime): The start date to download data for, inclusive.
-            If a string, it should be in
-                the format 'YYYY-MM-DD'.
-            end_date (str | datetime): The end date to download data
-            for, inclusive. If a string, it should be in
-                the format 'YYYY-MM-DD'.
-                
-        Returns:
-            metadata (DatasetMetadata): The metadata of the saved
-            dataset.
+        ----------
+            file_path (str | os.PathLike):
+                The file path of the HDF5 file to write to.
+            dataset_name (str):
+                The name of the dataset to write to in the HDF5 file.
+            dataset_type (DatasetType):
+            
         """
 
         validate_path(file_path=file_path)
