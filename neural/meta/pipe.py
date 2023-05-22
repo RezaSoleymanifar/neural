@@ -168,7 +168,7 @@ class MarginAccountPipe(AbstractPipe):
         """
         Applies a stack of market wrappers successively to an environment.
         Wrappers are addedd successively akin to layers in PyTorch. state of
-        wrappers are seved to an attribute of the Pipe class so that they can
+        wrappers are saved to an attribute of the Pipe class so that they can
         be restored later.
 
         Args:
