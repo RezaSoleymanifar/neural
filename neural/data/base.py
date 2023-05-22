@@ -1291,6 +1291,25 @@ class DatasetMetadata(AbstractDataMetaData):
                                 calendar_type=self.calendar_type)
 
         return stream
+    
+    @property
+    def days(self):
+        
+    @property
+    def n_rows(self):
+
+        resolution = self.resolution
+        resolution_offset = pd.to_timedelta(resolution)
+        market_durations = (self.schedule['end'] - self.schedule['start'])
+
+        intervals_per_day = (market_durations / resolution_offset).astype(int)
+        cumulative_intervals = intervals_per_day.cumsum()
+
+        # Find the day corresponding to the current index
+        day = (self.index < cumulative_intervals).argmax() + 1
+
+        return day
+
 
 
 class AbstractDataFeeder(ABC):
