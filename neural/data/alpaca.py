@@ -108,7 +108,8 @@ class AlpacaDataDownloader():
     def download_dataset(
         self,
         dataset_type: AlpacaDataSource.DatasetType,
-        assets: List[AlpacaAsset],
+        asset_type: AssetType,
+        symbols: List[AlpacaAsset],
         resolution: str,
         start: datetime,
         end: datetime,
@@ -126,6 +127,9 @@ class AlpacaDataDownloader():
             dataset_type (DatasetType):
                 The type of dataset to download. Either 'BAR', 'TRADE',
                 or 'QUOTE'.
+            asset_type (AssetType):
+                The type of asset to download data for. Either 'STOCK'
+                or 'CRYPTOCURRENCY'.
             symbols (List[str]):
                 The list of symbol names to download features data for.
             resolution (str):
@@ -150,27 +154,14 @@ class AlpacaDataDownloader():
                 If there is no data in the requested range.
         """
 
-        if not assets:
-            raise ValueError(
-                'symbols argument cannot be an empty sequence.')
-
-        duplicate_symbols = [
-            symbol for symbol in set(assets) if assets.count(symbol) > 1]
-        if duplicate_symbols:
-            raise ValueError(f'Duplicate symbols found: {duplicate_symbols}.')
-
-        asset_types = set(asset.asset_type for asset in assets)
-        if len(asset_types) != 1:
-            raise ValueError(f'Non-homogenous asset types: {asset_types}.')
-        
         resolution = to_timeframe(resolution)
 
         downloader, request = self.data_client.get_downloader_and_request(
             dataset_type=dataset_type,
-            asset_type=AssetType)
+            asset_type=asset_type)
 
         data = downloader(request(
-            symbol_or_symbols=assets,
+            symbol_or_symbols=symbols,
             timeframe=resolution,
             start=start,
             end=end))
@@ -222,15 +213,25 @@ class AlpacaDataDownloader():
 
         validate_path(file_path=file_path)
         self._validate_resolution(resolution=resolution)
+
+        if not symbols:
+            raise ValueError(
+                'symbols argument cannot be an empty sequence.')
+        duplicate_symbols = [
+            symbol for symbol in set(symbols) if symbols.count(symbol) > 1]
+        if duplicate_symbols:
+            raise ValueError(f'Duplicate symbols found: {duplicate_symbols}.')
+        
         assets = self.data_client.symbols_to_assets(symbols)
-
+        asset_types = set(asset.asset_type for asset in assets)
         marginability_types = set(asset.marginable for asset in assets)
-
+        if len(asset_types) != 1:
+            raise ValueError(f'Non-homogenous asset types: {asset_types}.')
         if len(marginability_types) != 1:
             raise ValueError(
                 f'Non-homogenous marginability types: {marginability_types}.')
         
-        asset_type = assets[0].asset_type
+        asset_type = asset_types.pop()
         calendar_type_map = {AssetType.STOCK: CalendarType.NEW_YORK_STOCK_EXCHANGE,
                         AssetType.CRYPTOCURRENCY: CalendarType.TWENTY_FOUR_SEVEN}
         calendar_type = calendar_type_map[asset_type]
@@ -256,7 +257,8 @@ class AlpacaDataDownloader():
 
             dataset = self.download_dataset(
                 dataset_type=dataset_type,
-                assets=symbols,
+                asset_type=asset_type,
+                symbols=symbols,
                 resolution=resolution,
                 start=start,
                 end=end)
