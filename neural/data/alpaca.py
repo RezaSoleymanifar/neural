@@ -22,10 +22,10 @@ class AlpacaDataDownloader():
     """
     A class to download and process financial data using the Alpaca API.
 
-    The AlpacaDataFetcher class handles validation of symbols and resolutions,
-    data downloading, and data processing tasks. It works in conjunction with
-    the AlpacaClient class to fetch the required data from the Alpaca API
-    and process it for further use.
+    The AlpacaDataFetcher class handles validation of symbols and
+    resolutions, data downloading, and data processing tasks. It works
+    in conjunction with the AlpacaClient class to fetch the required
+    data from the Alpaca API and process it for further use.
     """
 
     def __init__(self, data_client: AlpacaDataClient) -> None:
@@ -34,7 +34,8 @@ class AlpacaDataDownloader():
         Initializes the AlpacaDataFetcher class.
 
         Args:
-            client (AlpacaClient): An instance of the AlpacaClient class.
+            client (AlpacaClient): An instance of the AlpacaClient
+            class.
 
         Returns:
             None
@@ -48,24 +49,24 @@ class AlpacaDataDownloader():
     def _validate_resolution(self, resolution):
         
         """
-        Validates the resolution of the dataset. Resolutions not accepted can
-        potentially lead to incoherencies in the end to end process, due to 
-        irregular aggregation output from the Alpaca API. For example resoluion = 43Min
-        can shift the start and end times of the trading day in a way that
-        is unpredictable and inconsistent with other resoluions.
+        Validates the resolution of the dataset. Resolutions not
+        accepted can potentially lead to incoherencies in the end to end
+        process, due to irregular aggregation output from the Alpaca
+        API. For example resoluion = 43Min can shift the start and end
+        times of the trading day in a way that is unpredictable and
+        inconsistent with other resoluions.
 
-        Parameters:
-        resolution (str): The resolution of the dataset.
+        Parameters: resolution (str): The resolution of the dataset.
 
-        Returns:
-        None.
+        Returns: None.
 
-        Raises:
-        ValueError: If the resolution is not one of the accepted resolutions.
+        Raises: ValueError: If the resolution is not one of the accepted
+        resolutions.
         """
 
         if resolution not in ALPACA_ACCEPTED_DOWNLOAD_RESOLUTIONS:
-            raise ValueError(f'Accepted resolutions: {ALPACA_ACCEPTED_DOWNLOAD_RESOLUTIONS}.')
+            raise ValueError(
+                f'Accepted resolutions: {ALPACA_ACCEPTED_DOWNLOAD_RESOLUTIONS}.')
 
         return
 
@@ -80,19 +81,22 @@ class AlpacaDataDownloader():
         ) -> None:
 
         """
-        Downloads raw dataset from the Alpaca API. This is a dataframe downloaded
-        from the API. Typically daily data is downloaded in chunks using this method
-        and saved to disk day by day. This is because the Alpaca API has a limit
-        on the number of rows that can be downloaded at once and also to save progress.
+        Downloads raw dataset from the Alpaca API. This is a dataframe
+        downloaded from the API. Typically daily data is downloaded in
+        chunks using this method and saved to disk day by day. This is
+        because the Alpaca API has a limit on the number of rows that
+        can be downloaded at once and also to save progress.
 
         Args:
-            dataset_type (DatasetType): The type of dataset to download (bar, quote, or trade).
-            symbols (List[str]): A list of symbols to download. Note that API does
-            not preserve the order of the symbols in the output dataframe. 
-            asset_class (AssetClass): The asset class to download.
-            resolution (str): The resolution of the dataset to download (e.g., "1Min", "15Min").
-            start (datetime): The start date and time of the dataset to download.
-            end (datetime): The end date and time of the dataset to download.
+            dataset_type (DatasetType): The type of dataset to download
+            (bar, quote, or trade). symbols (List[str]): A list of
+            symbols to download. Note that API does not preserve the
+            order of the symbols in the output dataframe. asset_class
+            (AssetClass): The asset class to download. resolution (str):
+            The resolution of the dataset to download (e.g., "1Min",
+            "15Min"). start (datetime): The start date and time of the
+            dataset to download. end (datetime): The end date and time
+            of the dataset to download.
 
         Returns:
             pd.DataFrame: The downloaded dataset as a pandas DataFrame.
@@ -140,28 +144,47 @@ class AlpacaDataDownloader():
         ) -> DatasetMetadata:
 
         """
-        Downloads financial features data for the given symbols and saves it in an HDF5 file format.
+        Downloads financial features data for the given symbols and
+        saves it in an HDF5 file format.
         
         Args:
-            file_path (str | os.PathLike): The file path of the HDF5 file to save the data.
-            dataset_name (str): The name of the dataset to create in the HDF5 file.
-            dataset_type (DatasetType): The type of dataset to download. Either 'BAR', 'TRADE', or 'QUOTE'.
-            symbols (List[str]): The list of symbol names to download features data for.
-            resolution (str): The frequency at which to sample the data. One of '1Min', '5Min', '15Min', or '30Min'.
-            start_date (str | datetime): The start date to download data for, inclusive. If a string, it should be in
+            file_path (str | os.PathLike): The file path of the HDF5
+            file to save the data. dataset_name (str): The name of the
+            dataset to create in the HDF5 file. dataset_type
+            (DatasetType): The type of dataset to download. Either
+            'BAR', 'TRADE', or 'QUOTE'. symbols (List[str]): The list of
+            symbol names to download features data for. resolution
+            (str): The frequency at which to sample the data. One of
+            '1Min', '5Min', '15Min', or '30Min'. start_date (str |
+            datetime): The start date to download data for, inclusive.
+            If a string, it should be in
                 the format 'YYYY-MM-DD'.
-            end_date (str | datetime): The end date to download data for, inclusive. If a string, it should be in
+            end_date (str | datetime): The end date to download data
+            for, inclusive. If a string, it should be in
                 the format 'YYYY-MM-DD'.
                 
         Returns:
-            metadata (DatasetMetadata): The metadata of the saved dataset.
+            metadata (DatasetMetadata): The metadata of the saved
+            dataset.
         """
 
         validate_path(file_path=file_path)
 
-        asset_class = self._validate_symbols(symbols)
+        asset_class = self.data_client._get_symbols(symbols)
         self._validate_resolution(resolution=resolution)
 
+        asset_types = set(asset_type_map[self.symbols[symbol].asset_class]
+                          for symbol in symbols)
+        marginability_types = set(self.symbols[symbol].marginable
+                                  for symbol in symbols)
+
+        if len(asset_types) != 1:
+            raise ValueError(f'Non-homogenous asset types: {asset_types}.')
+
+        if len(marginability_types) != 1:
+            raise ValueError(
+                f'Non-homogenous marginability types: {marginability_types}.')
+        
         calendar = Calendar(asset_class=asset_class)
         schedule = calendar.schedule(
             start_date=start_date, end_date=end_date)
@@ -197,7 +220,8 @@ class AlpacaDataDownloader():
                 raise ValueError(
                     f'No data for symbols {missing_symbols} in {market_open}, {market_close} time range.')
 
-            # reordering rows to symbols. API does not maintain symbol order.
+            # reordering rows to symbols. API does not maintain symbol
+            # order.
             raw_dataset = raw_dataset.reindex(
                 index=pd.MultiIndex.from_product([
                     symbols, raw_dataset.index.levels[1]]))
@@ -269,31 +293,35 @@ class AlpacaDataProcessor:
             close: datetime,
             resolution: str):
         """
-        Reindexes and forward-fills missing rows in the given DataFrame in the [open, close) range based on the given
-        resolution. Returns the processed DataFrame.
+        Reindexes and forward-fills missing rows in the given DataFrame
+        in the [open, close) range based on the given resolution.
+        Returns the processed DataFrame.
 
         :param data: The DataFrame to be processed.
         :type data: pd.DataFrame
-        :param open: The open time of the market data interval to process.
+        :param open: The open time of the market data interval to
+            process.
         :type open: datetime
-        :param close: The close time of the market data interval to process.
+        :param close: The close time of the market data interval to
+            process.
         :type close: datetime
-        :param resolution: The frequency of the time intervals in the processed data.
+        :param resolution: The frequency of the time intervals in the
+            processed data.
         :type resolution: str
         :return: The processed DataFrame.
         :rtype: pd.DataFrame
         """
 
-        # resamples and forward fills missing rows in [open, close) range, i.e.
-        # time index = open means open <= time < close.
+        # resamples and forward fills missing rows in [open, close)
+        # range, i.e. time index = open means open <= time < close.
         index = pd.date_range(
             start=open, end=close, freq=resolution, inclusive='left')
 
         # creates rows for missing intervals
         processed = data.reindex(index)
 
-        # compute fullness of reindexed dataset
-        # drop symbols or move date range if density is low
+        # compute fullness of reindexed dataset drop symbols or move
+        # date range if density is low
         non_nan_count = processed.notna().sum().sum()
         total_count = processed.size
         density = non_nan_count/total_count
