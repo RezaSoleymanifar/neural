@@ -180,24 +180,21 @@ class MarginAccountPipe(AbstractPipe):
 
         env = self.metadata_wrapper(env)
         env = self.render(env, verbosity=self.verbosity)
-
+        env = self.initial_margin(env)
+        env = self.excess_margin(
+            env,
+            excess_margin_ratio_threshold=self.excess_margin_ratio_threshold)
+        
         env = self.observation_pipe(
             buffer_size=self.buffer_size,
             stack_size=self.stack_size,
             observation_statistics=self.observation_statistics,
             track_statistics=self.track_statistics).pipe(env)
-
         env = self.action_pipe(min_trade=self.min_trade, integer=self.integer)
-
-        env = self.initial_margin(env)
-        env = self.excess_margin(
-            env,
-            excess_margin_ratio_threshold=self.excess_margin_ratio_threshold)
+        env = self.reward_pipe(reward_statistics=self.reward_statistics,
+                               track_statistics=self.track_statistics).pipe(env)
 
         env = self.action_interpreter(env, trade_ratio=self.trade_equity_ratio)
         env = self.clip(env)
-
-        env = self.reward_pipe(reward_statistics=self.reward_statistics,
-                               track_statistics=self.track_statistics).pipe(env)
 
         return env
