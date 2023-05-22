@@ -212,11 +212,13 @@ class AlpacaDataClient(AlpacaClient, AbstractDataClient):
             },
             AlpacaDataSource.DatasetType.QUOTE: {
                 AssetType.STOCK: ('get_stock_quotes', StockQuotesRequest),
-                AssetType.CRYPTOCURRENCY: ('get_crypto_quotes', CryptoQuotesRequest)
+                AssetType.CRYPTOCURRENCY:
+                ('get_crypto_quotes', CryptoQuotesRequest)
             },
             AlpacaDataSource.DatasetType.TRADE: {
                 AssetType.STOCK: ('get_stock_trades', StockTradesRequest),
-                AssetType.CRYPTOCURRENCY: ('get_crypto_trades', CryptoTradesRequest)
+                AssetType.CRYPTOCURRENCY:
+                ('get_crypto_trades', CryptoTradesRequest)
             }
         }
 
@@ -266,10 +268,15 @@ class AlpacaDataClient(AlpacaClient, AbstractDataClient):
 
         asset_types = set(asset_type_map[self.symbols[symbol].asset_class]
                           for symbol in symbols)
-        marginable_types = set(self.symbols[symbol].marginable for symbol in)
+        marginability_types = set(self.symbols[symbol].marginable
+                                  for symbol in symbols)
 
         if len(asset_types) != 1:
             raise ValueError(f'Non-homogenous asset types: {asset_types}.')
+
+        if len(marginability_types) != 1:
+            raise ValueError(
+                f'Non-homogenous marginability types: {marginability_types}.')
 
         for symbol in symbols:
 
