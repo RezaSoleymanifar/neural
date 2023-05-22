@@ -7,7 +7,8 @@ import numpy as np
 
 from neural.client.alpaca import AlpacaDataClient
 from neural.common import logger
-from neural.common.constants import ALPACA_ACCEPTED_DOWNLOAD_RESOLUTIONS
+from neural.common.constants import (
+    ALPACA_ACCEPTED_DOWNLOAD_RESOLUTIONS, GLOBAL_DATA_TYPE)
 from neural.data.base import DatasetMetadata, AlpacaDataSource, CalendarType
 from neural.data.enums import AssetType, AlpacaDataSource
 from neural.utils.time import Calendar
@@ -186,8 +187,8 @@ class AlpacaDataDownloader():
         asset_type = asset_types.pop()
         calendar_type_map = {AssetType.STOCK: CalendarType.NEW_YORK_STOCK_EXCHANGE,
                         AssetType.CRYPTOCURRENCY: CalendarType.TWENTY_FOUR_SEVEN}
-        calendar = calendar_type_map[asset_type]
-        schedule = calendar.schedule(
+        calendar_type = calendar_type_map[asset_type]
+        schedule = calendar_type.schedule(
             start_date=start_date, end_date=end_date)
         
         if len(schedule) == 0:
@@ -244,21 +245,19 @@ class AlpacaDataDownloader():
 
             feature_schema = DatasetMetadata.create_feature_schema(
                 data=features_df)
-            data_schema = Dict[dataset_type, tuple(assets)]
+            data_schema = {dataset_type: tuple(assets)}
 
-            features_np = features_df.to_numpy(dtype=np.float32)
-            n_rows, n_columns = features_np.shape
+            features_np = features_df.to_numpy(dtype=GLOBAL_DATA_TYPE)
+            n_rows = len(features_np)
 
             metadata = DatasetMetadata(
-                dataset_type=[dataset_type],
-                column_schema=feature_schema,
-                asset_class=asset_class,
-                assets=symbols,
-                start=start,
-                end=end,
+                data_schema=data_schema,
+                feature_schema=feature_schema,
                 resolution=resolution,
-                n_rows=n_rows,
-                n_columns=n_columns,
+                calendar_type = calendar_type,
+                start = start,
+                end = end,
+                n_rows=n_rows
             )
 
             IOHandler.write_to_hdf5(
