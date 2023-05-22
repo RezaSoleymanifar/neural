@@ -11,10 +11,9 @@ from neural.common.constants import (
     ALPACA_ACCEPTED_DOWNLOAD_RESOLUTIONS, GLOBAL_DATA_TYPE)
 from neural.data.base import DatasetMetadata, AlpacaDataSource, CalendarType
 from neural.data.enums import AssetType, AlpacaDataSource
-from neural.utils.time import Calendar
 from neural.utils.io import to_hdf5
 from neural.utils.base import (
-    progress_bar, validate_path, Calendar, RunningStatistics)
+    progress_bar, validate_path, RunningStatistics)
 from neural.utils.misc import to_timeframe
 
 
@@ -23,11 +22,17 @@ class AlpacaDataDownloader():
 
     """
     A class to download and process financial data using the Alpaca API.
+    This includes bar, quote, and trade data. The data is downloaded and
+    processed from the Alpaca API on a daily basis and saved to disk in
+    an HDF5. The download later can be resume for consecutive market 
+    days. The data is downloaded in chunks to avoid exceeding the
+    memory limit and saving progress.
 
-    The AlpacaDataFetcher class handles validation of symbols and
-    resolutions, data downloading, and data processing tasks. It works
-    in conjunction with the AlpacaClient class to fetch the required
-    data from the Alpaca API and process it for further use.
+    Attributes:
+        data_client (AlpacaDataClient): An instance of the
+        AlpacaDataClient class. This is responsible for communicating
+        
+
     """
 
     def __init__(self, data_client: AlpacaDataClient) -> None:
