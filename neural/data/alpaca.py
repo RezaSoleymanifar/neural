@@ -8,7 +8,7 @@ import numpy as np
 from neural.client.alpaca import AlpacaDataClient
 from neural.common import logger
 from neural.common.constants import ALPACA_ACCEPTED_DOWNLOAD_RESOLUTIONS
-from neural.data.base import DatasetMetadata, AlpacaDataSource
+from neural.data.base import DatasetMetadata, AlpacaDataSource, CalendarType
 from neural.data.enums import AssetType, AlpacaDataSource
 from neural.utils.time import Calendar
 from neural.utils.io import IOHandler
@@ -138,9 +138,9 @@ class AlpacaDataDownloader():
         dataset_name: str,
         dataset_type: AlpacaDataSource.DatasetType,
         symbols: List[str],
-        resolution: Optional[str] = None,
         start_date: str | datetime,
-        end_date: str | datetime
+        end_date: str | datetime,
+        resolution: Optional[str] = None,
         ) -> DatasetMetadata:
 
         """
@@ -172,20 +172,8 @@ class AlpacaDataDownloader():
         self._validate_resolution(resolution=resolution)
         assets = self.data_client.symbols_to_assets(symbols)
         
-
-        asset_types = set(asset_type_map[self.symbols[symbol].asset_class]
-                          for symbol in symbols)
-        marginability_types = set(self.symbols[symbol].marginable
-                                  for symbol in symbols)
-
-        if len(asset_types) != 1:
-            raise ValueError(f'Non-homogenous asset types: {asset_types}.')
-
-        if len(marginability_types) != 1:
-            raise ValueError(
-                f'Non-homogenous marginability types: {marginability_types}.')
-        
-        calendar = Calendar(asset_class=asset_class)
+        calendar_type_map = {AssetType.STOCK: ,
+                        AssetType.CRYPTO: Calendar.CRYPTO}
         schedule = calendar.schedule(
             start_date=start_date, end_date=end_date)
 
