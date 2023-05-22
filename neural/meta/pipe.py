@@ -53,6 +53,7 @@ class AbstractPipe(ABC):
         raise NotImplementedError
 
 
+class MarketPipe(AbstractPipe):
 class ObservationPipe(AbstractPipe):
 
     def __init__(
@@ -66,6 +67,7 @@ class ObservationPipe(AbstractPipe):
         self.buffer_size = buffer_size
         self.stack_size = stack_size
         self.observation_statistics = observation_statistics
+        self.track_statistics = track_statistics
 
         self.flatten = FlattenToNUmpyObservationWrapper
         self.buffer = ObservationBufferWrapper
@@ -81,6 +83,17 @@ class ObservationPipe(AbstractPipe):
         env = self.normalize_observation(
             env, observation_statistics=self.observation_statistics,
             track_statistics=self.track_statistics)
+        
+    def pipe(self, env):
+        env = self.flatten(env)
+        env = self.buffer(env, buffer_size= self.buffer_size)
+        env = self.stacker(env, stack_size = self.stack_size)
+
+        env = self.normalize_observation(
+            env, observation_statistics=self.observation_statistics,
+            track_statistics=self.track_statistics)
+        
+        return env
         
 class MarginAccountPipe(AbstractPipe):
 
@@ -169,7 +182,7 @@ class MarginAccountPipe(AbstractPipe):
         env = self.min_trade(env, min_action=self.min_trade)
         env = self.integer_sizing(env, self.integer)
         env = self.margin_sizing(env, initial_margin=self.initial_margin)
-        env = self.short_sizing(env, short_ratio=self.short_ratio)
+        env = self.shorting(env, short_ratio=self.short_ratio)
         env = self.action_interpreter(env, trade_ratio=self.trade_ratio)
 
         env = self.normalize_reward(
