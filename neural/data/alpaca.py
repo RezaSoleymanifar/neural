@@ -12,7 +12,7 @@ from neural.common.constants import (
 from neural.data.base import DatasetMetadata, AlpacaDataSource, CalendarType
 from neural.data.enums import AssetType, AlpacaDataSource
 from neural.utils.time import Calendar
-from neural.utils.io import IOHandler
+from neural.utils.io import to_hdf5
 from neural.utils.base import (
     progress_bar, validate_path, Calendar, RunningStatistics)
 from neural.utils.misc import to_timeframe
@@ -197,7 +197,7 @@ class AlpacaDataDownloader():
         
         days = len(schedule)
         n_assets = len(assets)
-        logger.info('Downloading dataset...'
+        logger.info('Downloading dataset:'
                     f'\n\t start = {start_date}'
                     f'\n\t end = {end_date}'
                     f'\n\t days = {days}'
@@ -248,7 +248,6 @@ class AlpacaDataDownloader():
             data_schema = {dataset_type: tuple(assets)}
 
             features_np = features_df.to_numpy(dtype=GLOBAL_DATA_TYPE)
-            n_rows = len(features_np)
 
             metadata = DatasetMetadata(
                 data_schema=data_schema,
@@ -257,17 +256,21 @@ class AlpacaDataDownloader():
                 calendar_type = calendar_type,
                 start = start,
                 end = end,
-                n_rows=n_rows
             )
 
-            IOHandler.write_to_hdf5(
+            to_hdf5(
                 file_path=file_path,
                 data_to_write=features_np,
                 metadata=metadata,
                 dataset_name=dataset_name)
 
+            processing_statistics = data_processor.processing_statistics
+            low = processing_statistics.minimum
+            high = processing_statistics.maximum
+            mean = processing_statistics.mean
+
             progress_bar_.set_description(
-                f"Density: {AlpacaDataProcessor.running_dataset_density:.0%}")
+                f"low:{low:.0%}/high:{high:.0%}/mean:{mean:.0%}")
 
             progress_bar_.update(1)
 
