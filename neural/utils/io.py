@@ -61,8 +61,9 @@ def to_hdf5(file_path: str | os.PathLike, numpy_array: np.ndarray,
                                                     numpy_array.shape[1]),
                                           chunks=True)
 
-            serialized_metadata = dill.dumps(dataset_metadata, protocol=0)
-            dataset.attrs['metadata'] = serialized_metadata
+            serialized_dataset_metadata = dill.dumps(dataset_metadata,
+                                                     protocol=0)
+            dataset.attrs['metadata'] = serialized_dataset_metadata
 
         else:
             dataset_metadata_, dataset = extract_hdf5_dataset(
@@ -75,7 +76,7 @@ def to_hdf5(file_path: str | os.PathLike, numpy_array: np.ndarray,
             dataset[dataset_metadata_.n_rows:new_dataset_metadata.
                     n_rows, :] = numpy_array
             serialized_new_dataset_metadata = dill.dumps(new_dataset_metadata,
-                                                 protocol=0)
+                                                         protocol=0)
 
             dataset.attrs['metadata'] = serialized_new_dataset_metadata
 
@@ -121,7 +122,22 @@ def extract_hdf5_dataset(
         hdf5_file: h5.File,
         dataset_name: str) -> Tuple[DatasetMetadata, h5.Dataset]:
     """
-    
+    Extracts a dataset from an HDF5 file and returns the dataset and its
+    metadata. 
+
+    Args:
+    -------
+        hdf5_file (h5.File):
+            The HDF5 file to extract the dataset from.
+        dataset_name (str):
+            The name of the dataset to extract.
+    Raises:
+    ------- 
+        ValueError:
+            If the dataset does not exist in the file.
+        CorruptDataError:   
+            If the number of rows or columns in the dataset does not
+            match the number of rows or columns in the metadata.    
     """
 
     try:
@@ -129,25 +145,27 @@ def extract_hdf5_dataset(
     except KeyError:
         raise ValueError(f'Dataset {dataset_name} does not exist in file.')
 
-    serialized_metadata = dataset.attrs['metadata']
-    metadata = dill.loads(serialized_metadata.encode())
+    serialized_dataset_metadata = dataset.attrs['metadata']
+    dataset_metadata = dill.loads(serialized_dataset_metadata.encode())
 
-    # sanity checking considtency between metadata and dataset
-    if metadata.n_rows != len(dataset):
+    if dataset_metadata.n_rows != len(dataset):
         raise CorruptDataError(f'Rows in {dataset_name}: {len(dataset)}.'
-                               f'Rows in metadata: {metadata.n_rows}')
+                               f'Rows in metadata: {dataset_metadata.n_rows}')
+    if dataset_metadata.n_columns != dataset.shape[1]:
+        raise CorruptDataError(
+            f'Columns in {dataset_name}: {dataset.shape[1]}.'
+            f'Columns in metadata: {dataset_metadata.n_columns}')
 
-    if metadata.n_columns != dataset.shape[1]:
-        raise CorruptDataError(f'Columns in {dataset_name}: {dataset.shape[1]}.'
-                               f'Columns in metadata: {metadata.n_columns}')
-
-    return metadata, dataset
+    return dataset_metadata, dataset
 
 
 def get_file_like(object: object,
                   file_name: str) -> Tuple[tarfile.TarInfo, dill.BytesIO]:
-    # creates a file-like object from an object and tar info for that
-    # object. can be used to add an object to a tarfile as a file.
+    """
+    Creates a file-like object and its tar info from an object. This can
+    be used to add an object to a tarfile as a file.
+    """
+
 
     if isinstance(object, os.PathLike):
         path = object
