@@ -61,9 +61,7 @@ class NetWorthRelativeShortMarginPipe(AbstractPipe):
 
     def __init__(
         self,
-        trade_ratio: float = 0.02,
-        short_ratio: float = 0,
-        initial_margin: float = 1,
+        trade_equity_ratio: float = 0.02,
         min_trade: float = 1,
         integer: bool = False,
         buffer_size: int = 10,
@@ -74,7 +72,7 @@ class NetWorthRelativeShortMarginPipe(AbstractPipe):
         track_statistics: bool = True
         ) -> None:
     
-        self.trade_ratio = trade_ratio
+        self.trade_ratio = trade_equity_ratio
         self.short_ratio = short_ratio
         self.initial_margin = initial_margin
         self.min_trade = min_trade
@@ -92,9 +90,11 @@ class NetWorthRelativeShortMarginPipe(AbstractPipe):
         
         self.min_trade = MinTradeSizeActionWrapper
         self.integer_sizing = IntegerAssetQuantityActionWrapper
-        self.margin_sizing = FixedMarginActionWrapper
-        self.short_sizing = NetWorthRelativeMaximumShortSizing
-        self.position_sizing = EquityBasedUniformActionInterpreter
+        self.position_close = PositionCloseActionWrapper
+        self.initial_margin = InitialMarginActionWrapper
+        self.excess_margin = ExcessMarginActionWrapper
+        self.shorting = ShortingActionWrapper
+        self.action_interpreter = EquityBasedUniformActionInterpreter
         self.clip = ActionClipperWrapper
         
         self.flatten = FlattenToNUmpyObservationWrapper
@@ -140,7 +140,7 @@ class NetWorthRelativeShortMarginPipe(AbstractPipe):
         env = self.integer_sizing(env, self.integer)
         env = self.margin_sizing(env, initial_margin=self.initial_margin)
         env = self.short_sizing(env, short_ratio=self.short_ratio)
-        env = self.position_sizing(env, trade_ratio=self.trade_ratio)
+        env = self.action_interpreter(env, trade_ratio=self.trade_ratio)
 
         env = self.normalize_reward(
             env, self.reward_statistics, track_statistics=self.track_statistics)
