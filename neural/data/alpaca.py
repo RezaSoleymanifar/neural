@@ -186,7 +186,7 @@ class AlpacaDataDownloader():
         symbols: List[str],
         start_date: str | datetime,
         end_date: str | datetime,
-        resolution: Optional[str] = None,
+        resolution: Optional[str] = '1Min',
         ) -> None:
 
         """
@@ -219,10 +219,20 @@ class AlpacaDataDownloader():
                 The list of symbol names to download features data for.
                 Example: 'AAPL', 'MSFT', 'GOOG', 'BTC/USD', 'ETH/USD'.
             start_date (str | datetime):
-                The start date to download data for, inclusive.
-                example: '2020-01-01', or datetime(2020, 1, 1), or 
-                '05/01/2020'. This should be a format accepted by pandas
-                to_datetime function.
+                The start date to download data for, inclusive. example:
+                '2020-01-01', or datetime(2020, 1, 1), or '05/01/2020'.
+                This should be a format accepted by pandas to_datetime
+                function. More info here:
+                https://pandas.pydata.org/docs/reference/api/pandas.to_datetime.html
+            end_date (str | datetime):
+                The end date to download data for, inclusive. example:
+                '2020-01-01', or datetime(2020, 1, 1), or '05/01/2020'.
+                This should be a format accepted by pandas to_datetime
+            resolution (str):
+                The frequency at which to sample the data. One of
+                '1Min', '5Min', '15Min', or '30Min'. If None, the
+                resolution is set to '1Min'.
+            
 
         """
 
