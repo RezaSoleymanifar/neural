@@ -128,11 +128,11 @@ class NormalizeRewardWrapper(RewardWrapper):
 
         return normalized_reward
 
-
+@metadata
 class LiabilityInterstRewardWrapper(RewardWrapper):
     """
     This wrapper charges an interest rate at the end of the day on the
-    liability of the agent. The liabilities include borrowed cash, or
+    liabilities of the agent. The liabilities include borrowed cash, or
     borrowed assets. The interest rate is calculated as a percentage of
     the liability. Apply this wrapper prior to normalization of rewards
     as this substracts the notional value of interest from the reward.
@@ -142,6 +142,10 @@ class LiabilityInterstRewardWrapper(RewardWrapper):
         super().__init__(env)
         self.interest_rate = interest_rate
         self.previous_day = None
+
+    @property
+    def daily_interest_rate(self):
+        return self.interest_rate / 360
 
     def reset(self):
         observation = self.env.reset()
@@ -159,15 +163,15 @@ class LiabilityInterstRewardWrapper(RewardWrapper):
 
     def compute_interest(self):
         cash_debt = abs(min(self.market_metadata_wrapper.cash, 0))
-        cash_interest = cash_debt * self.interest_rate
+        cash_interest = cash_debt * self.daily_interest_rate
 
         positions = self.market_metadata_wrapper.positions
         asset_quantitties = self.market_metadata_wrapper.asset_quantities
-        
+
         asset_debt = sum(
             position for position, quantity in zip(positions, asset_quantitties)
             if quantity < 0)
-        asset_interest = asset_debt * self.interest_rate
+        asset_interest = asset_debt * self.daily_interest_rate
 
         return cash_interest + asset_interest
 
