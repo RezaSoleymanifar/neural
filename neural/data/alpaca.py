@@ -98,6 +98,9 @@ class AlpacaDataDownloader():
             pd.DataFrame: The downloaded dataset as a pandas DataFrame.
         """
 
+        if not symbols:
+            raise ValueError(
+                'symbols argument cannot be an empty sequence.')
 
         duplicate_symbols = [
             symbol for symbol in set(symbols) if symbols.count(symbol) > 1]
@@ -105,7 +108,6 @@ class AlpacaDataDownloader():
             raise ValueError(f'Duplicate symbols found: {duplicate_symbols}.')
 
         resolution = to_timeframe(resolution)
-
 
         downloader, request = self.data_client.get_downloader_and_request(
             dataset_type=dataset_type,
