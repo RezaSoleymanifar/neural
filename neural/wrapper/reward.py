@@ -49,7 +49,13 @@ class RewardGeneratorWrapper(RewardWrapper):
 
 class NormalizeRewardWrapper(RewardWrapper):
     """
-    This wrapper will normalize immediate rewards. 
+    This wrapper will normalize immediate rewards. This should typically
+    be the last wrapper in the reward wrapper chain. This wrapper
+    normalizes immediate rewards so that rewards have mean 0 and
+    standard deviation 1. If track is True the reward_statistics
+    argument will be set equal reward_statistics attribute. This is
+    useful if you want to track the reward statistics from the outer
+    scope.
 
     Usage:
     -------
@@ -176,16 +182,6 @@ class LiabilityInterstRewardWrapper(RewardWrapper):
         return cash_interest + asset_interest
 
 
-class PenalizeMarginCallRewardShaperWrapper(RewardWrapper):
-    """
-    In the event of a margin call this wrapper applies a penalty to the
-    reward signal. If enough cusion provided in sizing the liabilities,
-    the agent should be able to avoid margin calls, however if the agent
-    is unable to avoid margin calls, due to adverse price change this
-    penalty can help it learn to avoid margin calls better.
-    """
-
-
 class AbstractRewardShaperWrapper(RewardWrapper, ABC):
     """
     A blueprint class for reward shaping wrappers.
@@ -300,10 +296,17 @@ class AbstractRewardShaperWrapper(RewardWrapper, ABC):
             factor parameter can be used to adjust the strength of the
             scaling.
         """
+        # turn following into raise error
 
-        assert value >= 0, "Value must be a positive number."
-        assert threshold > 0, "Threshold must be a positive number."
-        assert base >= 1, "Base must be greater than or equal to 1."
+        if value < 0:
+            raise ValueError("Value must be a positive number.")
+        
+        if threshold <= 0:
+            raise ValueError("Threshold must be a positive number.")
+        
+        if base < 1:
+            raise ValueError("Base must be greater than or equal to 1.")
+    
 
         deviation_ratio = value / threshold
         scale = deviation_ratio * factor if deviation_ratio > 1 else 0
