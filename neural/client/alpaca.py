@@ -266,8 +266,8 @@ class AlpacaDataClient(AlpacaClient, AbstractDataClient):
 
         asset_types = set(asset_type_map[self.symbols[symbol].asset_class]
                           for symbol in symbols)
+        marginable_types = set(self.symbols[symbol].marginable for symbol in)
 
-        # checks if symbols have the same asset class
         if len(asset_types) != 1:
             raise ValueError(f'Non-homogenous asset types: {asset_types}.')
 
