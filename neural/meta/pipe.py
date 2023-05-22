@@ -33,8 +33,15 @@ class AbstractPipe(ABC):
     wrappers, you can make that state a constructor argument of both
     wrapper class and and the pipe and set the argument passed to
     wrapper equal to state of wrapper. If both satate are immutable, the
-    values will be synchronized. Pipes can be combined to create more
-    complex pipes.
+    values will be synchronized pointing at same memory space. This way
+    When saving the pipe, the state of the wrappers will be saved as
+    well. The pipe class is an abstract class and must be subclassed.
+
+    Notes:
+    -----
+        Pipes can be combined to create more complex pipes. For example,
+        you can save and reuse a predefined set of wrappers as a pipe
+        for convenience.
     """
 
     @abstractmethod
@@ -42,13 +49,23 @@ class AbstractPipe(ABC):
         """
         Abstract method for piping an environment. Wrappers
         are added successively akin to layers in PyTorch.
+        By calling pipe, the environment is wrapped in a stack
+        of wrappers.
         """
 
         raise NotImplementedError
 
 
 class RewardPipe(AbstractPipe):
+    """
+    This pipe adds reward generation, interest on debt, and
+    normalization to the base market environment. The pipe adds the
+    following functionality to the base environment:
+        - Reward generation
+        - Interest on debt (cash/asset liability)
+        - Reward normalization
 
+    """
     def __init__(self,
                  reward_statistics: Optional[RunningStatistics] = None,
                  track_statistics=True) -> None:
@@ -57,10 +74,12 @@ class RewardPipe(AbstractPipe):
         self.track_statistics = track_statistics
 
         self.reward_generator = RewardGeneratorWrapper
+        self.interest = LiabilityInterstRewardWrapper
         self.reward_normalizer = RewardNormalizerWrapper
 
     def pipe(self, env):
         env = self.reward_generator(env)
+        env = self.interest(env)
         env = self.reward_normalizer(env,
                                      reward_statistics=self.reward_statistics,
                                      track_statistics=self.track_statistics)
