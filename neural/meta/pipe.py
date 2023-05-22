@@ -19,9 +19,11 @@ from neural.wrapper.observation import (
     ObservationStackerWrapper,
     ObservationBufferWrapper,
     FlattenToNUmpyObservationWrapper,
-    NormalizeObservationWrapper)
+    ObservationNormalizerWrapper)
 
-from neural.wrapper.reward import NormalizeRewardWrapper
+from neural.wrapper.reward import (RewardNormalizerWrapper, 
+    RewardGeneratorWrapper, 
+    LiabilityInterstRewardWrapper)
 from neural.utils.base import RunningStatistics
 
 
@@ -53,7 +55,10 @@ class AbstractPipe(ABC):
         raise NotImplementedError
 
 
-class MarketPipe(AbstractPipe):
+class RewardPipe(AbstractPipe):
+    def __init__(self) -> None:
+        self.reward_generator = RewardGeneratorWrapper
+        self.normalize_reward = RewardNormalizerWrapper
 class ObservationPipe(AbstractPipe):
 
     def __init__(
@@ -72,7 +77,7 @@ class ObservationPipe(AbstractPipe):
         self.flatten = FlattenToNUmpyObservationWrapper
         self.buffer = ObservationBufferWrapper
         self.stacker = ObservationStackerWrapper
-        self.normalize_observation = NormalizeObservationWrapper
+        self.normalize_observation = ObservationNormalizerWrapper
 
 
         # observation wrappers
@@ -140,9 +145,10 @@ class MarginAccountPipe(AbstractPipe):
         self.action_interpreter = EquityBasedUniformActionInterpreter
         self.clip = ActionClipperWrapper
         
-        self.observation_pipe = 
+        self.observation_pipe = ObservationPipe
 
-        self.normalize_reward = NormalizeRewardWrapper
+
+        self.normalize_reward = RewardNormalizerWrapper
 
         return None
 

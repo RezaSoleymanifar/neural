@@ -1190,7 +1190,7 @@ class RunningStatisticsObservationWrapper(ObservationWrapper):
 
 
 @observation
-class NormalizeObservationWrapper(RunningStatisticsObservationWrapper):
+class ObservationNormalizerWrapper(RunningStatisticsObservationWrapper):
     """
     A wrapper class that normalizes the observations received from the environment
     using running mean standard deviation.

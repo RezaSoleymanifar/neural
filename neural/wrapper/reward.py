@@ -47,7 +47,7 @@ class RewardGeneratorWrapper(RewardWrapper):
         return reward
 
 
-class NormalizeRewardWrapper(RewardWrapper):
+class RewardNormalizerWrapper(RewardWrapper):
     """
     This wrapper will normalize immediate rewards. This should typically
     be the last wrapper in the reward wrapper chain. This wrapper
