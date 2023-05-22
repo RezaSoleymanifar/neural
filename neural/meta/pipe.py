@@ -108,11 +108,13 @@ class ActionPipe(AbstractPipe):
         self.min_trade = MinTradeSizeActionWrapper
         self.integer_quantity = IntegerAssetQuantityActionWrapper
         self.position_close = PositionCloseActionWrapper
+        self.shorting = ShortingActionWrapper
 
     def pipe(self, env):
         env = self.min_trade(env, min_trade = self.min_trade)
         env = self.integer_quantity(env, integer = self.integer)
         env = self.position_close(env)
+        env = self.shorting(env)
 
 class MarginAccountPipe(AbstractPipe):
     """
@@ -152,7 +154,7 @@ class MarginAccountPipe(AbstractPipe):
 
         self.initial_margin = InitialMarginActionWrapper
         self.excess_margin = ExcessMarginActionWrapper
-        self.shorting = ShortingActionWrapper
+
         self.action_interpreter = EquityBasedUniformActionInterpreter
         self.clip = ActionClipperWrapper
 

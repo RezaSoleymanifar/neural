@@ -307,13 +307,13 @@ class IntegerAssetQuantityActionWrapper(ActionWrapper):
     quantities are allowed. This is useful for trading environments that
     do not allow fractional quantities of assets or modifying actions
     for assets that are inherently non-fractionable even on platforms
-    that do allow fractional trading. Thus actions of assets that are not
-    fractionable are modified to correspond integer number shares.
+    that do allow fractional trading. Thus actions of assets that are
+    not fractionable are modified to correspond integer number shares.
 
     The modification of the agent's actions to enforce integer
     quantities may not be valid in live trading environments due to
-    price slippage. Trader object is responsible for handling this
-    type of anomalies.
+    price slippage and computing actions in terms of notional values.
+    Trader object is responsible for handling this type of anomalies.
 
     Args:
     -----------
@@ -941,14 +941,10 @@ class EquityBasedUniformActionInterpreter(ActionWrapper):
         np.ndarray[float]: 
             The parsed actions.
         """
-        assets = self.market_metadata_wrapper.assets
-        asset_prices = self.market_metadata_wrapper.asset_prices
-        for asset, action, asset_, price in enumerate(
-                zip(actions, assets, asset_prices)):
+        for asset, action in enumerate(actions):
             action = self.parse_action(action)
-            actions[asset] = action if asset_.fractionable else (action //
-                                                                 price) * price
-        return actions
+            actions[asset] = action
+        return actions.astype(GLOBAL_DATA_TYPE)
 
 
 @action
