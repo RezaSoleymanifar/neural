@@ -200,7 +200,7 @@ class AlpacaDataClient(AlpacaClient, AbstractDataClient):
 
         client_map = {
             AssetType.STOCK: self.clients['stocks'],
-            AssetType.CRYPTO: self.clients['crypto']
+            AssetType.CRYPTOCURRENCY: self.clients['crypto']
         }
 
         client = client_map[asset_type]
@@ -208,15 +208,15 @@ class AlpacaDataClient(AlpacaClient, AbstractDataClient):
         downloader_request_map = {
             AlpacaDataSource.DatasetType.TRADE: {
                 AssetType.STOCK: ('get_stock_bars', StockBarsRequest),
-                AssetType.CRYPTO: ('get_crypto_bars', CryptoBarsRequest)
+                AssetType.CRYPTOCURRENCY: ('get_crypto_bars', CryptoBarsRequest)
             },
             AlpacaDataSource.DatasetType.QUOTE: {
                 AssetType.STOCK: ('get_stock_quotes', StockQuotesRequest),
-                AssetType.CRYPTO: ('get_crypto_quotes', CryptoQuotesRequest)
+                AssetType.CRYPTOCURRENCY: ('get_crypto_quotes', CryptoQuotesRequest)
             },
             AlpacaDataSource.DatasetType.TRADE: {
                 AssetType.STOCK: ('get_stock_trades', StockTradesRequest),
-                AssetType.CRYPTO: ('get_crypto_trades', CryptoTradesRequest)
+                AssetType.CRYPTOCURRENCY: ('get_crypto_trades', CryptoTradesRequest)
             }
         }
 
@@ -239,15 +239,15 @@ class AlpacaDataClient(AlpacaClient, AbstractDataClient):
         stream_map = {
             AlpacaDataSource.StreamType.BAR: {
                 AssetType.STOCK: ('subscribe_bars', StockDataStream),
-                AssetType.CRYPTO: ('subscribe_bars', CryptoDataStream)
+                AssetType.CRYPTOCURRENCY: ('subscribe_bars', CryptoDataStream)
             },
             AlpacaDataSource.StreamType.QUOTE: {
                 AssetType.STOCK: ('subscribe_quotes', StockDataStream),
-                AssetType.CRYPTO: ('subscribe_quotes', CryptoDataStream)
+                AssetType.CRYPTOCURRENCY: ('subscribe_quotes', CryptoDataStream)
             },
             AlpacaDataSource.StreamType.TRADE: {
                 AssetType.STOCK: ('subscribe_trades', StockDataStream),
-                AssetType.CRYPTO: ('subscribe_trades', CryptoDataStream)
+                AssetType.CRYPTOCURRENCY: ('subscribe_trades', CryptoDataStream)
             }
         }
 
@@ -262,7 +262,7 @@ class AlpacaDataClient(AlpacaClient, AbstractDataClient):
 
         asset_type_map = {
             AssetClass.US_EQUITY: AssetType.STOCK,
-            AssetClass.CRYPTO: AssetType.CRYPTO
+            AssetClass.CRYPTO: AssetType.CRYPTOCURRENCY
         }
 
         assets = list()
