@@ -1086,54 +1086,54 @@ class DatasetMetadata(AbstractDataMetaData):
 
     Attributes:
     -----------
-        data_schema: Dict[AbstractDataSource.DatasetType:Tuple[Asset]]
-            A dictionary mapping dataset types to tuples of assets. The
-            data schema defines the structure and format of the data for
-            each asset in the dataset.
-        feature_schema: Dict[FeatureType, Tuple[bool]]
-            A dictionary mapping feature types to tuples of booleans,
-            where each boolean indicates whether the corresponding
-            feature is present in the data.
-        resolution: str
-            A string representing the resolution of the data, which is
-            the fixed length of each time interval in the dataset.
-        start: datetime
-            A datetime object representing the start time of the
-            dataset. Note start and end times are inclusive.
-        end: datetime
-            A datetime object representing the end time of the dataset.
-            Note start and end times are inclusive.
-        n_rows: int
-            An integer representing the number of rows in the dataset.
-            This is useful for checking if the dataset has been
-            downloaded correctly and reporting end of dataset to the
-            market environment.
+    data_schema: Dict[AbstractDataSource.DatasetType:Tuple[Asset]]
+        A dictionary mapping dataset types to tuples of assets. The
+        data schema defines the structure and format of the data for
+        each asset in the dataset.
+    feature_schema: Dict[FeatureType, Tuple[bool]]
+        A dictionary mapping feature types to tuples of booleans,
+        where each boolean indicates whether the corresponding
+        feature is present in the data.
+    resolution: str
+        A string representing the resolution of the data, which is
+        the fixed length of each time interval in the dataset.
+    start: datetime
+        A datetime object representing the start time of the
+        dataset. Note start and end times are inclusive.
+    end: datetime
+        A datetime object representing the end time of the dataset.
+        Note start and end times are inclusive.
+    n_rows: int
+        An integer representing the number of rows in the dataset.
+        This is useful for checking if the dataset has been
+        downloaded correctly and reporting end of dataset to the
+        market environment.
 
     Properties:
     -----------
-        stream: StreamMetaData
-            Returns a StreamMetaData object that corresponds to the
-            current dataset metadata. This is useful for mapping the 
-            dataset metadata to a stream metadata for live streaming
-            when traders want to deploy their trained agents in a live
-            trading environment.
+    stream: StreamMetaData
+        Returns a StreamMetaData object that corresponds to the
+        current dataset metadata. This is useful for mapping the 
+        dataset metadata to a stream metadata for live streaming
+        when traders want to deploy their trained agents in a live
+        trading environment.
     
     Methods:
     --------
-        __or__(self, other: AbstractDataMetaData, **kwargs) ->
-        AbstractDataMetaData
-            Merges two metadata objects. This is useful for joining
-            datasets that are large to download in one go. Each 
-            sub-dataset is downloaded for a fixed time interval and
-            each can correponds to differnt data sources, feature types
-            and symbols. Joining datasets and validating the process is
-            done automatically using this method.
-        __add__(self, other: AbstractDataMetaData, **kwargs) ->
-        AbstractDataMetaData
-            Appends two metadata objects. Downloading large datasets 
-            can be split across nonoverlapping time intervals and
-            appended to each other. This method facilitates updating the
-            metadata object automatically and validating the process.
+    __or__(self, other: AbstractDataMetaData, **kwargs) ->
+    AbstractDataMetaData
+        Merges two metadata objects. This is useful for joining
+        datasets that are large to download in one go. Each 
+        sub-dataset is downloaded for a fixed time interval and
+        each can correponds to differnt data sources, feature types
+        and symbols. Joining datasets and validating the process is
+        done automatically using this method.
+    __add__(self, other: AbstractDataMetaData, **kwargs) ->
+    AbstractDataMetaData
+        Appends two metadata objects. Downloading large datasets 
+        can be split across nonoverlapping time intervals and
+        appended to each other. This method facilitates updating the
+        metadata object automatically and validating the process.
     """
     data_schema: Dict[AbstractDataSource.DatasetType:Tuple[AlpacaAsset]]
     feature_schema: Dict[FeatureType, Tuple[bool]]
@@ -1143,6 +1143,64 @@ class DatasetMetadata(AbstractDataMetaData):
     end: datetime
     n_rows: int
 
+    @property
+    def stream(self):
+        """
+        Returns a StreamMetaData object that corresponds to the current
+        dataset metadata. This is useful for mapping the dataset
+        metadata to a stream metadata for live streaming when traders
+        want to deploy their trained agents in a live trading
+        environment.
+        """
+
+        data_schema = {
+            dataset_type.stream: data_schema[dataset_type]
+            for dataset_type in self.data_schema
+        }
+        stream = StreamMetaData(data_schema=self.data_schema,
+                                feature_schema=self.feature_schema,
+                                resolution=self.resolution,
+                                calendar_type=self.calendar_type)
+
+        return stream
+    
+    @property
+    def schedule(self):
+        """
+        Returns a DataFrame representing the schedule of the dataset.
+        This is useful for checking if the dataset has been downloaded
+        correctly.
+        """
+
+        start_date = self.start.date()
+        end_date = self.end.date()
+
+        schedule = self.calendar_type.schedule(start_date=start_date,
+                                               end_date=end_date)
+
+        return schedule
+    
+    @property
+    def days(self):
+        """
+        Returns the number of days in the dataset. This is useful for
+        checking if the dataset has been downloaded correctly.
+        """
+
+        days = len(self.schedule)
+        return days
+    
+    @property
+    def n_rows(self):
+
+        resolution = self.resolution
+        resolution_offset = pd.to_timedelta(resolution)
+        market_durations = (self.schedule['end'] - self.schedule['start'])
+
+        intervals_per_day = (market_durations / resolution_offset).astype(int)
+        n_rows = sum(intervals_per_day)
+        return n_rows
+    
     def __or__(self, other: AbstractDataMetaData) -> AbstractDataMetaData:
         """
         This is useful for joining datasets that are large to download
@@ -1270,46 +1328,6 @@ class DatasetMetadata(AbstractDataMetaData):
 
         conscutive = True if len(schedule) == 2 else False
         return conscutive
-
-    @property
-    def stream(self):
-        """
-        Returns a StreamMetaData object that corresponds to the current
-        dataset metadata. This is useful for mapping the dataset
-        metadata to a stream metadata for live streaming when traders
-        want to deploy their trained agents in a live trading
-        environment.
-        """
-
-        data_schema = {
-            dataset_type.stream: data_schema[dataset_type]
-            for dataset_type in self.data_schema
-        }
-        stream = StreamMetaData(data_schema=self.data_schema,
-                                feature_schema=self.feature_schema,
-                                resolution=self.resolution,
-                                calendar_type=self.calendar_type)
-
-        return stream
-    
-    @property
-    def days(self):
-        
-    @property
-    def n_rows(self):
-
-        resolution = self.resolution
-        resolution_offset = pd.to_timedelta(resolution)
-        market_durations = (self.schedule['end'] - self.schedule['start'])
-
-        intervals_per_day = (market_durations / resolution_offset).astype(int)
-        cumulative_intervals = intervals_per_day.cumsum()
-
-        # Find the day corresponding to the current index
-        day = (self.index < cumulative_intervals).argmax() + 1
-
-        return day
-
 
 
 class AbstractDataFeeder(ABC):
