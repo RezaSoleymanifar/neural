@@ -324,7 +324,7 @@ class AlpacaDataDownloader():
 
             for symbol, group in dataset.groupby('symbol'):
                 processed_group = data_processor.reindex_and_forward_fill(
-                    data=group, open=start,
+                    dataset=group, open=start,
                     close=end, resolution=resolution)
 
                 symbol_groups.append(processed_group)
@@ -399,15 +399,17 @@ class AlpacaDataProcessor:
     for NYSE stocks, the market opens at 9:30 AM and closes at 4:00 PM.
     If resolution = 1Min, then the data is sampled every minute. This
     means that the data is sampled at 9:30 AM, 9:31 AM, 9:32 AM, ...,
-    3:59 PM, 4:00 PM. If there is no trade at 9:31 AM, then the data
-    will be missing for that minute. In this case forward filling is
-    used to indicate that the features has not changed over time when no
-    trade occurs. If data at first interval is missing, then forward
-    filling won't work, since there is no data to forward fill from. In
-    this case backward filling is used to fill the missing value with
-    closes non-missing value row. If after forward/backward filling
-    there is still missing data, then the entire dataset is empty, 
-    namely there is not data for the given time range.
+    3:59 PM, 4:00 PM. Dataset is then reindex such that rows
+    corresponding to each interval are matched. If for example there is
+    no trade at 9:31 AM, then the data will be missing for that interval.
+    In this case forward filling is used to indicate that the features
+    has not changed over time when no trade occurs. If data at first
+    interval is missing, then forward filling won't work, since there is
+    no data to forward fill from. In this case backward filling is used
+    to fill the missing value with closes non-missing value row. If
+    after forward/backward filling there is still missing data, then the
+    entire dataset is empty, namely there is no data for the given time
+    range.
     """
     def __init__(self):
 
@@ -415,7 +417,7 @@ class AlpacaDataProcessor:
 
     def reindex_and_forward_fill(
             self,
-            data: pd.DataFrame,
+            dataset: pd.DataFrame,
             open: datetime,
             close: datetime,
             resolution: str):
@@ -446,7 +448,7 @@ class AlpacaDataProcessor:
         index = pd.date_range(
             start=open, end=close, freq=resolution, inclusive='left')
 
-        processed = data.reindex(index)
+        processed = dataset.reindex(index)
 
         non_nan_count = processed.notna().sum().sum()
         total_count = processed.size
