@@ -290,11 +290,12 @@ class AlpacaDataClient(AlpacaClient, AbstractDataClient):
             assets.append(
                 AlpacaAsset(symbol=symbol,
                             asset_type=asset_type,
-                            marginable=alpaca_asset.marginable,
                             fractionable=alpaca_asset.fractionable,
+                            marginable=alpaca_asset.marginable,
+                            maintenance_margin=alpaca_asset.
+                            maintenance_margin_requirement,
                             shortable=alpaca_asset.shortable,
-                            required_margin=alpaca_asset.initial_margin,
-                            maintenance_margin=alpaca_asset.maintenance_margin))
+                            easy_to_borrow=alpaca_asset.easy_to_borrow))
 
         return assets
 
