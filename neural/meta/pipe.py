@@ -1,34 +1,27 @@
 from abc import abstractmethod, ABC
 from typing import Optional
 
-from neural.wrapper.base import (
-    MarginAccountMetaDataWrapper,
-    ConsoleTearsheetRenderWrapper)
+from neural.wrapper.base import (MarginAccountMetaDataWrapper,
+                                 ConsoleTearsheetRenderWrapper)
 
 from neural.wrapper.action import (
-    MinTradeSizeActionWrapper,
-    IntegerAssetQuantityActionWrapper,
-    PositionCloseActionWrapper,
-    InitialMarginActionWrapper,
-    ExcessMarginActionWrapper,
-    ShortingActionWrapper,
-    EquityBasedUniformActionInterpreter,
-    ActionClipperWrapper)
+    MinTradeSizeActionWrapper, IntegerAssetQuantityActionWrapper,
+    PositionCloseActionWrapper, InitialMarginActionWrapper,
+    ExcessMarginActionWrapper, ShortingActionWrapper,
+    EquityBasedUniformActionInterpreter, ActionClipperWrapper)
 
-from neural.wrapper.observation import (
-    ObservationStackerWrapper,
-    ObservationBufferWrapper,
-    FlattenToNUmpyObservationWrapper,
-    ObservationNormalizerWrapper)
+from neural.wrapper.observation import (ObservationStackerWrapper,
+                                        ObservationBufferWrapper,
+                                        FlattenToNUmpyObservationWrapper,
+                                        ObservationNormalizerWrapper)
 
-from neural.wrapper.reward import (RewardNormalizerWrapper, 
-    RewardGeneratorWrapper, 
-    LiabilityInterstRewardWrapper)
+from neural.wrapper.reward import (RewardNormalizerWrapper,
+                                   RewardGeneratorWrapper,
+                                   LiabilityInterstRewardWrapper)
 from neural.utils.base import RunningStatistics
 
 
 class AbstractPipe(ABC):
-
     """
     Abstract class for environment pipes, which add extended
     functionality to an existing environment by applying wrappers
@@ -44,7 +37,6 @@ class AbstractPipe(ABC):
     complex pipes.
     """
 
-
     @abstractmethod
     def pipe(self, env):
         """
@@ -56,9 +48,9 @@ class AbstractPipe(ABC):
 
 
 class RewardPipe(AbstractPipe):
-    def __init__(
-        self,
-        reward_statistics: Optional[RunningStatistics] = None) -> None:
+
+    def __init__(self,
+                 reward_statistics: Optional[RunningStatistics] = None) -> None:
 
         self.reward_statistics = reward_statistics
         self.reward_generator = RewardGeneratorWrapper
@@ -67,13 +59,11 @@ class RewardPipe(AbstractPipe):
 
 class ObservationPipe(AbstractPipe):
 
-    def __init__(
-        self,
-        buffer_size: int = 10,
-        stack_size: int = None,
-        observation_statistics: Optional[RunningStatistics] = None,
-        track_statistics: bool = True
-        ) -> None:
+    def __init__(self,
+                 buffer_size: int = 10,
+                 stack_size: int = None,
+                 observation_statistics: Optional[RunningStatistics] = None,
+                 track_statistics: bool = True) -> None:
 
         self.buffer_size = buffer_size
         self.stack_size = stack_size
@@ -85,45 +75,36 @@ class ObservationPipe(AbstractPipe):
         self.stacker = ObservationStackerWrapper
         self.normalize_observation = ObservationNormalizerWrapper
 
-        env = self.flatten(env)
-        env = self.buffer(env, buffer_size= self.buffer_size)
-        env = self.stacker(env, stack_size = self.stack_size)
-
-        env = self.normalize_observation(
-            env, observation_statistics=self.observation_statistics,
-            track_statistics=self.track_statistics)
-        
     def pipe(self, env):
         env = self.flatten(env)
-        env = self.buffer(env, buffer_size= self.buffer_size)
-        env = self.stacker(env, stack_size = self.stack_size)
+        env = self.buffer(env, buffer_size=self.buffer_size)
+        env = self.stacker(env, stack_size=self.stack_size)
 
         env = self.normalize_observation(
-            env, observation_statistics=self.observation_statistics,
+            env,
+            observation_statistics=self.observation_statistics,
             track_statistics=self.track_statistics)
-        
-        return env
-        
-class MarginAccountPipe(AbstractPipe):
 
+        return env
+
+
+class MarginAccountPipe(AbstractPipe):
     """
     A pipe for margin account environments. The pipe adds the trading
     logics of a margin account to the base market environment.
     """
 
-    def __init__(
-        self,
-        trade_equity_ratio: float = 0.02,
-        min_trade: float = 1,
-        integer: bool = False,
-        buffer_size: int = 10,
-        stack_size: int = None,
-        verbosity: int = 20,
-        observation_statistics: Optional[RunningStatistics] = None,
-        reward_statistics: Optional[RunningStatistics] = None,
-        track_statistics: bool = True
-        ) -> None:
-    
+    def __init__(self,
+                 trade_equity_ratio: float = 0.02,
+                 min_trade: float = 1,
+                 integer: bool = False,
+                 buffer_size: int = 10,
+                 stack_size: int = None,
+                 verbosity: int = 20,
+                 observation_statistics: Optional[RunningStatistics] = None,
+                 reward_statistics: Optional[RunningStatistics] = None,
+                 track_statistics: bool = True) -> None:
+
         self.trade_ratio = trade_equity_ratio
 
         self.min_trade = min_trade
@@ -139,7 +120,6 @@ class MarginAccountPipe(AbstractPipe):
         self.metadata_wrapper = MarginAccountMetaDataWrapper
         self.render = ConsoleTearsheetRenderWrapper
 
-        
         self.min_trade = MinTradeSizeActionWrapper
         self.integer_sizing = IntegerAssetQuantityActionWrapper
         self.position_close = PositionCloseActionWrapper
@@ -148,17 +128,14 @@ class MarginAccountPipe(AbstractPipe):
         self.shorting = ShortingActionWrapper
         self.action_interpreter = EquityBasedUniformActionInterpreter
         self.clip = ActionClipperWrapper
-        
-        self.observation_pipe = ObservationPipe
 
+        self.observation_pipe = ObservationPipe
 
         self.normalize_reward = RewardNormalizerWrapper
 
         return None
 
-
     def pipe(self, env):
-
         """
         Applies a stack of market wrappers successively to an environment.
         Wrappers are addedd successively akin to layers in PyTorch. state of
@@ -172,17 +149,21 @@ class MarginAccountPipe(AbstractPipe):
         - env (gym.Env): the wrapped environment.
         """
 
-        # helper wrappers
         env = self.metadata_wrapper(env)
         env = self.render(env, verbosity=self.verbosity)
 
-        # observation wrappers
+        env = self.observation_pipe(
+            buffer_size=self.buffer_size,
+            stack_size=self.stack_size,
+            observation_statistics=self.observation_statistics,
+            track_statistics=self.track_statistics)
         env = self.flatten(env)
-        env = self.buffer(env, buffer_size= self.buffer_size)
-        env = self.stacker(env, stack_size = self.stack_size)
+        env = self.buffer(env, buffer_size=self.buffer_size)
+        env = self.stacker(env, stack_size=self.stack_size)
 
         env = self.normalize_observation(
-            env, observation_statistics=self.observation_statistics,
+            env,
+            observation_statistics=self.observation_statistics,
             track_statistics=self.track_statistics)
 
         # action wrappers
@@ -192,7 +173,8 @@ class MarginAccountPipe(AbstractPipe):
         env = self.shorting(env, short_ratio=self.short_ratio)
         env = self.action_interpreter(env, trade_ratio=self.trade_ratio)
 
-        env = self.normalize_reward(
-            env, self.reward_statistics, track_statistics=self.track_statistics)
-                
+        env = self.normalize_reward(env,
+                                    self.reward_statistics,
+                                    track_statistics=self.track_statistics)
+
         return env
