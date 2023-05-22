@@ -96,12 +96,11 @@ class ObservationPipe(AbstractPipe):
 
         return env
 
+
 class ActionPipe(AbstractPipe):
-    def __init__(self, 
-                 min_trade: float = 1,
-                 integer: bool = False
-                 ) -> None:
-        
+
+    def __init__(self, min_trade: float = 1, integer: bool = False) -> None:
+
         self.min_trade = min_trade
         self.integer = integer
 
@@ -111,10 +110,11 @@ class ActionPipe(AbstractPipe):
         self.shorting = ShortingActionWrapper
 
     def pipe(self, env):
-        env = self.min_trade(env, min_trade = self.min_trade)
-        env = self.integer_quantity(env, integer = self.integer)
+        env = self.min_trade(env, min_trade=self.min_trade)
+        env = self.integer_quantity(env, integer=self.integer)
         env = self.position_close(env)
         env = self.shorting(env)
+
 
 class MarginAccountPipe(AbstractPipe):
     """
@@ -159,7 +159,7 @@ class MarginAccountPipe(AbstractPipe):
         self.clip = ActionClipperWrapper
 
         self.observation_pipe = ObservationPipe
-
+        self.action_pipe = ActionPipe
         self.reward_pipe = RewardPipe
 
         return None
@@ -187,18 +187,15 @@ class MarginAccountPipe(AbstractPipe):
             observation_statistics=self.observation_statistics,
             track_statistics=self.track_statistics).pipe(env)
 
-        # action wrappers
-        env = self.min_trade(env, min_action=self.min_trade)
-        env = self.integer_sizing(env, self.integer)
-        env = self.position_close(env)
+        env = self.action_pipe(min_trade=self.min_trade, integer=self.integer)
 
         env = self.initial_margin(env)
         env = self.excess_margin(
             env,
             excess_margin_ratio_threshold=self.excess_margin_ratio_threshold)
-        env = self.shorting(env)
 
         env = self.action_interpreter(env, trade_ratio=self.trade_equity_ratio)
+        env = self.clip(env)
 
         env = self.reward_pipe(reward_statistics=self.reward_statistics,
                                track_statistics=self.track_statistics).pipe(env)
