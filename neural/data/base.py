@@ -637,6 +637,10 @@ class AbstractDataMetaData:
         metadata can validate itself using this property. This is used
         by data feeders to validate input before feeding data to the
         market environments.
+    schedule:
+        Returns a DataFrame representing the schedule of the dataset.
+        This is useful for checking if the dataset has been downloaded 
+        correctly.
 
     Methods:
     --------
@@ -752,6 +756,22 @@ class AbstractDataMetaData:
             self.assets) == self.asset_prices_mask.count(True) else False
         return valid
 
+    @property
+    def schedule(self):
+        """
+        Returns a DataFrame representing the schedule of the dataset.
+        This is useful for checking if the dataset has been downloaded
+        correctly.
+        """
+
+        start_date = self.start.date()
+        end_date = self.end.date()
+
+        schedule = self.calendar_type.schedule(start_date=start_date,
+                                               end_date=end_date)
+
+        return schedule
+    
     @staticmethod
     def create_feature_schema(dataframe: pd.DataFrame):
         """
@@ -1141,7 +1161,6 @@ class DatasetMetadata(AbstractDataMetaData):
     calendar_type: CalendarType
     start: datetime
     end: datetime
-    n_rows: int
 
     @property
     def stream(self):
@@ -1163,22 +1182,6 @@ class DatasetMetadata(AbstractDataMetaData):
                                 calendar_type=self.calendar_type)
 
         return stream
-    
-    @property
-    def schedule(self):
-        """
-        Returns a DataFrame representing the schedule of the dataset.
-        This is useful for checking if the dataset has been downloaded
-        correctly.
-        """
-
-        start_date = self.start.date()
-        end_date = self.end.date()
-
-        schedule = self.calendar_type.schedule(start_date=start_date,
-                                               end_date=end_date)
-
-        return schedule
     
     @property
     def days(self):

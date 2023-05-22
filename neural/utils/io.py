@@ -38,6 +38,11 @@ def to_hdf5(
 
     validate_path(file_path=file_path)
 
+    if len(numpy_array) != dataset_metadata.n_rows:
+        raise ValueError(
+            f'Number of rows in numpy array: {len(numpy_array)}.'
+            f'Number of rows in metadata: {dataset_metadata.n_rows}')
+
     with h5.File(file_path, 'a') as hdf5:
 
         if dataset_name not in hdf5:

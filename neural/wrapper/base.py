@@ -315,10 +315,7 @@ class AbstractMarketEnvMetadataWrapper(Wrapper, ABC):
         """
         The schedule of the market environment.
         """
-        calendar = self.data_metadata.calendar_type
-        start_date = self.data_metadata.start.date()
-        end_date = self.data_metadata.end.date()
-        schedule = calendar.schedule(start_date=start_date, end_date=end_date)
+        schedule = self.data_metadata.schedule
 
         return schedule
     
