@@ -25,7 +25,6 @@ from neural.wrapper.reward import NormalizeRewardWrapper
 from neural.utils.base import RunningStatistics
 
 
-
 class AbstractPipe(ABC):
 
     """
@@ -39,7 +38,8 @@ class AbstractPipe(ABC):
     wrappers, you can make that state a constructor argument of both
     wrapper class and and the pipe and set the argument passed to
     wrapper equal to state of wrapper. If both satate are immutable, the
-    values will be synchronized.
+    values will be synchronized. Pipes can be combined to create more
+    complex pipes.
     """
 
 
@@ -53,19 +53,35 @@ class AbstractPipe(ABC):
         raise NotImplementedError
 
 
-class ObservationPipe(AbstractPipe)
+class ObservationPipe(AbstractPipe):
 
     def __init__(
         self,
-        trade_equity_ratio: float = 0.02,
-        min_trade: float = 1,
-        integer: bool = False,
         buffer_size: int = 10,
         stack_size: int = None,
         observation_statistics: Optional[RunningStatistics] = None,
         track_statistics: bool = True
         ) -> None:
 
+        self.buffer_size = buffer_size
+        self.stack_size = stack_size
+        self.observation_statistics = observation_statistics
+
+        self.flatten = FlattenToNUmpyObservationWrapper
+        self.buffer = ObservationBufferWrapper
+        self.stacker = ObservationStackerWrapper
+        self.normalize_observation = NormalizeObservationWrapper
+
+
+        # observation wrappers
+        env = self.flatten(env)
+        env = self.buffer(env, buffer_size= self.buffer_size)
+        env = self.stacker(env, stack_size = self.stack_size)
+
+        env = self.normalize_observation(
+            env, observation_statistics=self.observation_statistics,
+            track_statistics=self.track_statistics)
+        
 class MarginAccountPipe(AbstractPipe):
 
     """
