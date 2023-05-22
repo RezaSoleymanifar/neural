@@ -56,9 +56,15 @@ class AbstractPipe(ABC):
 
 
 class RewardPipe(AbstractPipe):
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        reward_statistics: Optional[RunningStatistics] = None) -> None:
+
+        self.reward_statistics = reward_statistics
         self.reward_generator = RewardGeneratorWrapper
-        self.normalize_reward = RewardNormalizerWrapper
+        self.reward_normalizer = RewardNormalizerWrapper
+
+
 class ObservationPipe(AbstractPipe):
 
     def __init__(
@@ -79,8 +85,6 @@ class ObservationPipe(AbstractPipe):
         self.stacker = ObservationStackerWrapper
         self.normalize_observation = ObservationNormalizerWrapper
 
-
-        # observation wrappers
         env = self.flatten(env)
         env = self.buffer(env, buffer_size= self.buffer_size)
         env = self.stacker(env, stack_size = self.stack_size)
@@ -121,16 +125,16 @@ class MarginAccountPipe(AbstractPipe):
         ) -> None:
     
         self.trade_ratio = trade_equity_ratio
-        self.short_ratio = short_ratio
-        self.initial_margin = initial_margin
+
         self.min_trade = min_trade
         self.integer = integer
+
         self.buffer_size = buffer_size
         self.stack_size = stack_size
-        self.verbosity = verbosity
         self.observation_statistics = observation_statistics
-        self.reward_statistics = reward_statistics
         self.track_statistics = track_statistics
+
+        self.verbosity = verbosity
 
         self.metadata_wrapper = MarginAccountMetaDataWrapper
         self.render = ConsoleTearsheetRenderWrapper
