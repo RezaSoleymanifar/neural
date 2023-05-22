@@ -140,10 +140,7 @@ class MarginAccountPipe(AbstractPipe):
         self.action_interpreter = EquityBasedUniformActionInterpreter
         self.clip = ActionClipperWrapper
         
-        self.flatten = FlattenToNUmpyObservationWrapper
-        self.buffer = ObservationBufferWrapper
-        self.stacker = ObservationStackerWrapper
-        self.normalize_observation = NormalizeObservationWrapper
+        self.observation_pipe = 
 
         self.normalize_reward = NormalizeRewardWrapper
 
