@@ -29,10 +29,33 @@ class AlpacaDataDownloader():
     memory limit and saving progress.
 
     Attributes:
+    ----------
         data_client (AlpacaDataClient): An instance of the
         AlpacaDataClient class. This is responsible for communicating
-        
+        with the Alpaca API and providing the basic facility to download
+        data.
 
+    Methods:
+    -------
+        __init__:
+            Initializes the AlpacaDataFetcher class.
+        _validate_resolution:
+            Validates the resolution of the dataset. Resolutions not
+            accepted can potentially lead to incoherencies in the end to
+            end process, due to irregular aggregation output from the
+            Alpaca API. For example resoluion = 43Min can shift the
+            start and end times of the trading day in a way that is
+            unpredictable and inconsistent with other resoluions.
+        download_dataset: 
+            Downloads raw dataset from the Alpaca API. This is a
+            dataframe downloaded from the API. Typically daily data is
+            downloaded in chunks using this method and saved to disk day
+            by day. This is to avoid memory issues and to save progress.
+        download_to_hdf5: 
+            Downloads financial features data for the
+            given symbols and saves it in an HDF5 file format. Ensures
+            the data is downloaded in a consistent way and that the data
+            is saved in a consistent format, supported by the library.
     """
 
     def __init__(self, data_client: AlpacaDataClient) -> None:
@@ -41,11 +64,11 @@ class AlpacaDataDownloader():
         Initializes the AlpacaDataFetcher class.
 
         Args:
-            client (AlpacaClient): An instance of the AlpacaClient
-            class.
-
-        Returns:
-            None
+        ----------
+            data_client (AlpacaDataClient): An instance of the
+            AlpacaDataClient class. This is responsible for
+            communicating with the Alpaca API and providing the basic
+            facility to download data.
         """
 
         self.data_client = data_client
@@ -63,7 +86,10 @@ class AlpacaDataDownloader():
         times of the trading day in a way that is unpredictable and
         inconsistent with other resoluions.
 
-        Parameters: resolution (str): The resolution of the dataset.
+        Args: 
+        -
+        resolution (str): 
+            The resolution of the dataset.
 
         Returns: None.
 
