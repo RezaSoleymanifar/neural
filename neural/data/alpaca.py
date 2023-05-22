@@ -171,18 +171,30 @@ class AlpacaDataDownloader():
         validate_path(file_path=file_path)
         self._validate_resolution(resolution=resolution)
         assets = self.data_client.symbols_to_assets(symbols)
+
+        asset_types = set(asset.asset_type for asset in assets)
+        marginability_types = set(asset.marginable for asset in assets)
+
+        if len(asset_types) != 1:
+            raise ValueError(f'Non-homogenous asset types: {asset_types}.')
+
+        if len(marginability_types) != 1:
+            raise ValueError(
+                f'Non-homogenous marginability types: {marginability_types}.')
         
-        calendar_type_map = {AssetType.STOCK: ,
-                        AssetType.CRYPTO: Calendar.CRYPTO}
+        asset_type = asset_types.pop()
+        calendar_type_map = {AssetType.STOCK: CalendarType.NEW_YORK_STOCK_EXCHANGE,
+                        AssetType.CRYPTOCURRENCY: CalendarType.TWENTY_FOUR_SEVEN}
+        calendar = calendar_type_map[asset_type]
         schedule = calendar.schedule(
             start_date=start_date, end_date=end_date)
-
+        
         if len(schedule) == 0:
             raise ValueError(
-                'No market hours in date range provided.')
+                f'No market hours in date range {start_date}-{end_date}.')
 
         logger.info(
-            f"Downloading dataset for {len(symbols)} symbols | resolution: {resolution} |"
+            f"Downloading dataset for {len(symbols)} symbols |"
             f" {len(schedule)} market days from {start_date} to {end_date}")
 
         # shows dataset download progress bar
