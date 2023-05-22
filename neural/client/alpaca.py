@@ -257,7 +257,7 @@ class AlpacaDataClient(AlpacaClient, AbstractDataClient):
 
         return streamer
 
-    def _get_assets(self, symbols: List[str]):
+    def symbols_to_assets(self, symbols: List[str]):
 
         asset_type_map = {
             AssetClass.US_EQUITY: AssetType.STOCK,

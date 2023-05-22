@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List
+from typing import List, Optional
 import os
 
 import pandas as pd
@@ -138,7 +138,7 @@ class AlpacaDataDownloader():
         dataset_name: str,
         dataset_type: AlpacaDataSource.DatasetType,
         symbols: List[str],
-        resolution: str,
+        resolution: Optional[str] = None,
         start_date: str | datetime,
         end_date: str | datetime
         ) -> DatasetMetadata:
@@ -169,9 +169,9 @@ class AlpacaDataDownloader():
         """
 
         validate_path(file_path=file_path)
-
-        asset_class = self.data_client._get_symbols(symbols)
         self._validate_resolution(resolution=resolution)
+        assets = self.data_client.symbols_to_assets(symbols)
+        
 
         asset_types = set(asset_type_map[self.symbols[symbol].asset_class]
                           for symbol in symbols)
