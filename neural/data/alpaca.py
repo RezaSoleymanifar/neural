@@ -194,8 +194,18 @@ class AlpacaDataDownloader():
                 f'No market hours in date range {start_date}-{end_date}.')
 
         logger.info(
-            f"Downloading dataset for {len(symbols)} symbols |"
-            f" {len(schedule)} market days from {start_date} to {end_date}")
+            f'Downloading dataset for {len(symbols)} symbols\n'
+            f'resolution: {resolution}\n{len(schedule)} market days\n'
+            f'from {start_date} to {end_date}')
+        
+        days = len(schedule)
+        n_assets = len(assets)
+        logger.info('Downloading dataset...'
+                    f'\n\t start = {start_date}'
+                    f'\n\t end = {end_date}'
+                    f'\n\t days = {days}'
+                    f'\n\t resolution = {resolution}'
+                    f'\n\t n_assets = {n_assets}')
 
         # shows dataset download progress bar
         progress_bar_ = progress_bar(len(schedule))
