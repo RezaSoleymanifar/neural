@@ -12,7 +12,8 @@ from neural.data.base import DatasetMetadata, AlpacaDataSource, CalendarType
 from neural.data.enums import AssetType, AlpacaDataSource
 from neural.utils.time import Calendar
 from neural.utils.io import IOHandler
-from neural.utils.base import progress_bar, validate_path, Calendar, RunningStatistics
+from neural.utils.base import (
+    progress_bar, validate_path, Calendar, RunningStatistics)
 from neural.utils.misc import to_timeframe
 
 
@@ -227,10 +228,11 @@ class AlpacaDataDownloader():
                     symbols, dataset.index.levels[1]]))
             dataset = dataset.reset_index(level=0, names='symbol')
 
+            data_processor = AlpacaDataProcessor()
             symbol_groups = list()
             for symbol, group in dataset.groupby('symbol'):
 
-                processed_group = AlpacaDataProcessor.reindex_and_forward_fill(
+                processed_group = data_processor.reindex_and_forward_fill(
                     data=group, open=start,
                     close=end, resolution=resolution)
 
@@ -281,7 +283,7 @@ class AlpacaDataProcessor:
 
     def __init__(self):
 
-        self.processing_statistics = None
+        self.processing_statistics = RunningStatistics()
 
     def reindex_and_forward_fill(
             self,
@@ -317,21 +319,14 @@ class AlpacaDataProcessor:
         # creates rows for missing intervals
         processed = data.reindex(index)
 
-        # compute fullness of reindexed dataset drop symbols or move
-        # date range if density is low
         non_nan_count = processed.notna().sum().sum()
         total_count = processed.size
         density = non_nan_count/total_count
+        self.processing_statistics.update(density)
 
-        AlpacaDataProcessor.processing_statistics = (
-            AlpacaDataProcessor.processing_statistics + density
-        ) / 2 if AlpacaDataProcessor.processing_statistics else density
-
-        # backward fills if first row is nan
         if processed.isna().any().any():
             processed = processed.ffill()
 
-        # backward fills if first row is nan
         if processed.isna().any().any():
             processed = processed.bfill()
 
