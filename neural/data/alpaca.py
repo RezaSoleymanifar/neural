@@ -192,11 +192,6 @@ class AlpacaDataDownloader():
         if len(schedule) == 0:
             raise ValueError(
                 f'No market hours in date range {start_date}-{end_date}.')
-
-        logger.info(
-            f'Downloading dataset for {len(symbols)} symbols\n'
-            f'resolution: {resolution}\n{len(schedule)} market days\n'
-            f'from {start_date} to {end_date}')
         
         days = len(schedule)
         n_assets = len(assets)
@@ -207,28 +202,25 @@ class AlpacaDataDownloader():
                     f'\n\t resolution = {resolution}'
                     f'\n\t n_assets = {n_assets}')
 
-        # shows dataset download progress bar
         progress_bar_ = progress_bar(len(schedule))
 
-        # fetches and saves data on a daily basis
-        for market_open, market_close in schedule.values:
+        for start, end in schedule.values:
 
             raw_dataset = self.download_dataset(
                 dataset_type=dataset_type,
                 symbols=symbols,
-                asset_class=asset_class,
                 resolution=resolution,
-                start=market_open,
-                end=market_close)
+                start=start,
+                end=end)
 
-            # check for missing symbols
             dataset_symbols = raw_dataset.index.get_level_values(
                 'symbol').unique().tolist()
             missing_symbols = set(dataset_symbols) ^ set(symbols)
 
             if missing_symbols:
                 raise ValueError(
-                    f'No data for symbols {missing_symbols} in {market_open}, {market_close} time range.')
+                    f'No data for symbols {missing_symbols} in '
+                    f'{start}, {end} time range.')
 
             # reordering rows to symbols. API does not maintain symbol
             # order.
@@ -244,8 +236,8 @@ class AlpacaDataDownloader():
             for symbol, group in raw_dataset.groupby('symbol'):
 
                 processed_group = AlpacaDataProcessor.reindex_and_forward_fill(
-                    data=group, open=market_open,
-                    close=market_close, resolution=resolution)
+                    data=group, open=start,
+                    close=end, resolution=resolution)
 
                 processed_groups.append(processed_group)
 
@@ -262,8 +254,8 @@ class AlpacaDataDownloader():
                 column_schema=column_schema,
                 asset_class=asset_class,
                 assets=symbols,
-                start=market_open,
-                end=market_close,
+                start=start,
+                end=end,
                 resolution=resolution,
                 n_rows=n_rows,
                 n_columns=n_columns,
