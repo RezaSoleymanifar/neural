@@ -184,7 +184,7 @@ class MarginAccountPipe(AbstractPipe):
         env = self.excess_margin(
             env,
             excess_margin_ratio_threshold=self.excess_margin_ratio_threshold)
-        
+
         env = self.observation_pipe(
             buffer_size=self.buffer_size,
             stack_size=self.stack_size,
