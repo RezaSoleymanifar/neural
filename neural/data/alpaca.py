@@ -392,7 +392,22 @@ class AlpacaDataProcessor:
     data. This is important, since even with a perfect data collection
     process there can be missing rows in the data, due to trading halt
     events, or other anomalies. In this case forward filling is used to
-    indicate no feature change when no data is available.
+    indicate features has not changed over time when no trade occurs.
+
+    Example:
+    ----------
+    for NYSE stocks, the market opens at 9:30 AM and closes at 4:00 PM.
+    If resolution = 1Min, then the data is sampled every minute. This
+    means that the data is sampled at 9:30 AM, 9:31 AM, 9:32 AM, ...,
+    3:59 PM, 4:00 PM. If there is no trade at 9:31 AM, then the data
+    will be missing for that minute. In this case forward filling is
+    used to indicate that the features has not changed over time when no
+    trade occurs. If data at first interval is missing, then forward
+    filling won't work, since there is no data to forward fill from. In
+    this case backward filling is used to fill the missing value with
+    closes non-missing value row. If after forward/backward filling
+    there is still missing data, then the entire dataset is empty, 
+    namely there is not data for the given time range.
     """
     def __init__(self):
 
@@ -406,9 +421,9 @@ class AlpacaDataProcessor:
             resolution: str):
         """
         Reindexes and forward fills missing rows in [open, close)
-        range, i.e. time index = open means any tie with open <= time <
-        open + resolution will be included in the time index interval.
-        The final time index will be close - resolution.
+        range, i.e. time_index = open means any time with open <= time <
+        open + resolution will be included in the time_index interval.
+        The final interval will have time_index = close - resolution.
 
         Args:
         ----------
@@ -428,12 +443,9 @@ class AlpacaDataProcessor:
                 The reindexed and forward filled data.
         """
 
-        # resamples and forward fills missing rows in [open, close)
-        # range, i.e. time index = open means open <= time < close.
         index = pd.date_range(
             start=open, end=close, freq=resolution, inclusive='left')
 
-        # creates rows for missing intervals
         processed = data.reindex(index)
 
         non_nan_count = processed.notna().sum().sum()
