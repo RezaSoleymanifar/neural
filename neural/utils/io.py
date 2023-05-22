@@ -10,7 +10,8 @@ import h5py as h5
 import torch
 from torch import nn
 
-from neural.common.constants import HDF5_DEFAULT_MAX_ROWS
+from neural.common.constants import (
+    HDF5_DEFAULT_MAX_ROWS, GLOBAL_DATA_TYPE)
 from neural.common.exceptions import CorruptDataError
 from neural.data.base import DatasetMetadata
 from neural.meta.pipe import AbstractPipe
@@ -26,7 +27,9 @@ def to_hdf5(
         dataset_name: str):
 
     """
-    Saves a numpy array to an HDF5 file. If the file does not exist, it
+    Saves a numpy array to an HDF5 file. If file exists and dataset
+    already exists, the new data will be appended to the existing
+    dataset. If the file exists but the dataset does not, a new dataset
     will be created.
     
     Args:
@@ -66,7 +69,6 @@ def to_hdf5(
             dataset.attrs['metadata'] = serialized_metadata
 
         else:
-
             dataset_metadata_, dataset = extract_hdf5_dataset(
                 hdf5_file=hdf5, dataset_name=dataset_name)
 
@@ -159,7 +161,11 @@ def extract_hdf5_dataset(
             target dataset.
     """
 
-    dataset = hdf5_file[dataset_name]
+    try:
+        dataset = hdf5_file[dataset_name]
+    except KeyError:
+        raise ValueError(f'Dataset {dataset_name} does not exist in file.')
+    
     serialized_metadata = dataset.attrs['metadata']
     metadata = dill.loads(serialized_metadata.encode())
 
