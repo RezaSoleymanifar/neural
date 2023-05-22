@@ -120,7 +120,19 @@ class AlpacaDataDownloader():
         downloaded from the API. Typically daily data is downloaded in
         chunks using this method and saved to disk day by day. This is
         because the Alpaca API has a limit on the number of rows that
-        can be downloaded at once and also to save progress.
+        can be downloaded at once and also to save progress. Note that
+        in Alpaca API the download clients are asset type specific. This
+        means that the data for stocks and cryptocurrencies are
+        downloaded separately. A mix of stocks and cryptocurrencies
+        cannot be written to the same HDF5 file, since they have
+        different calendar types and trading hours. The dataset requires
+        underlying data to have identical trading hours and calendar
+        types. This also can restricts the assets that can be traded 
+        concurrently even for stocks, since some stocks have different
+        trading hours and calendar types due to being listed on
+        different exchanges. In Alpaca API however all stock tickers are
+        traded in New York Stock Exchange, so this is not an issue for
+        stocks. 
 
         Args:
         ----------
@@ -144,14 +156,6 @@ class AlpacaDataDownloader():
         ----------
             dataset_dataframe (pd.DataFrame):
                 The raw dataset downloaded from the Alpaca API.
-            
-        Raises:
-        ----------
-            ValueError:
-                If the symbols argument is empty or if there are
-                duplicate symbols in the symbols argument.
-            KeyError:
-                If there is no data in the requested range.
         """
 
         resolution = to_timeframe(resolution)
@@ -167,12 +171,12 @@ class AlpacaDataDownloader():
             end=end))
 
         try:
-            dataset_dataframe = data.df
+            dataset = data.df
 
         except KeyError:
             raise KeyError(f'No data in requested range {start}-{end}')
 
-        return dataset_dataframe
+        return dataset
 
 
     def download_to_hdf5(
@@ -184,7 +188,7 @@ class AlpacaDataDownloader():
         start_date: str | datetime,
         end_date: str | datetime,
         resolution: Optional[str] = None,
-        ) -> DatasetMetadata:
+        ) -> None:
 
         """
         Downloads financial features data for the given symbols and
