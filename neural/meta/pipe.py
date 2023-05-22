@@ -51,8 +51,7 @@ class RewardPipe(AbstractPipe):
 
     def __init__(self,
                  reward_statistics: Optional[RunningStatistics] = None,
-                track_statistics = True
-                ) -> None:
+                 track_statistics=True) -> None:
 
         self.reward_statistics = reward_statistics
         self.track_statistics = track_statistics
@@ -62,10 +61,10 @@ class RewardPipe(AbstractPipe):
 
     def pipe(self, env):
         env = self.reward_generator(env)
-        env = self.reward_normalizer(env, 
-            reward_statistics = self.reward_statistics, 
-            track_statistics= self.track_statistics
-                                     )
+        env = self.reward_normalizer(env,
+                                     reward_statistics=self.reward_statistics,
+                                     track_statistics=self.track_statistics)
+
 
 class ObservationPipe(AbstractPipe):
 
@@ -97,7 +96,12 @@ class ObservationPipe(AbstractPipe):
 
         return env
 
-
+class ActionPipe(AbstractPipe):
+    def __init__(self) -> None:
+        pass
+    def pipe(self, env):
+        pass
+    
 class MarginAccountPipe(AbstractPipe):
     """
     A pipe for margin account environments. The pipe adds the trading
@@ -172,18 +176,20 @@ class MarginAccountPipe(AbstractPipe):
             observation_statistics=self.observation_statistics,
             track_statistics=self.track_statistics).pipe(env)
 
-
         # action wrappers
         env = self.min_trade(env, min_action=self.min_trade)
         env = self.integer_sizing(env, self.integer)
         env = self.position_close(env)
-        
+
         env = self.initial_margin(env)
         env = self.excess_margin(
-            env, excess_margin_ratio_threshold = self.excess_margin_ratio_threshold)
+            env,
+            excess_margin_ratio_threshold=self.excess_margin_ratio_threshold)
         env = self.shorting(env)
+
         env = self.action_interpreter(env, trade_ratio=self.trade_ratio)
 
-        env = self.reward_pipe()
+        env = self.reward_pipe(reward_statistics=self.reward_statistics,
+                               track_statistics=self.track_statistics).pipe(env)
 
         return env
