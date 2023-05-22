@@ -29,8 +29,17 @@ from neural.utils.base import RunningStatistics
 class AbstractPipe(ABC):
 
     """
-    Abstract class for environment pipes, which add extended functionality to an
-    existing environment by applying wrappers successively.
+    Abstract class for environment pipes, which add extended
+    functionality to an existing environment by applying wrappers
+    successively. A pipe is a stack of wrappers applied in a
+    non-conflicting way. Use wrappers to customize the base market env,
+    manipulate actions and observations, impose trading logic, etc.
+    according to your specific needs. Wrappers are intantiated every
+    time the pipe method is called. If you need to restore state of some
+    wrappers, you can make that state a constructor argument of both
+    wrapper class and and the pipe and set the argument passed to
+    wrapper equal to state of wrapper. If both satate are immutable, the
+    values will be synchronized.
     """
 
 
@@ -44,19 +53,24 @@ class AbstractPipe(ABC):
         raise NotImplementedError
 
 
+class ObservationPipe(AbstractPipe)
 
+    def __init__(
+        self,
+        trade_equity_ratio: float = 0.02,
+        min_trade: float = 1,
+        integer: bool = False,
+        buffer_size: int = 10,
+        stack_size: int = None,
+        observation_statistics: Optional[RunningStatistics] = None,
+        track_statistics: bool = True
+        ) -> None:
 
-class NetWorthRelativeShortMarginPipe(AbstractPipe):
+class MarginAccountPipe(AbstractPipe):
 
     """
-    A pipe is a stack of wrappers applied in a non-conflicting way. Use
-    wrappers to customize the base market env, manipulate actions and
-    observations, impose trading logic, etc. according to your specific needs.
-    Wrappers are intantiated every time the pipe method is called. If you need 
-    to restore state of some wrappers, you can make that state a constructor
-    argument of both wrapper class and and the pipe and set the argument passed
-    to wrapper equal to state of wrapper. If both satate are immutable, the
-    values will be synchronized.
+    A pipe for margin account environments. The pipe adds the trading
+    logics of a margin account to the base market environment.
     """
 
     def __init__(
