@@ -50,9 +50,11 @@ class AbstractPipe(ABC):
 class RewardPipe(AbstractPipe):
 
     def __init__(self,
-                 reward_statistics: Optional[RunningStatistics] = None) -> None:
+                 reward_statistics: Optional[RunningStatistics] = None,
+                ) -> None:
 
         self.reward_statistics = reward_statistics
+
         self.reward_generator = RewardGeneratorWrapper
         self.reward_normalizer = RewardNormalizerWrapper
 
@@ -116,7 +118,7 @@ class MarginAccountPipe(AbstractPipe):
         self.observation_statistics = observation_statistics
         self.track_statistics = track_statistics
 
-        self.delta = excess_margin_ratio_threshold
+        self.excess_margin_ratio_threshold = excess_margin_ratio_threshold
         self.verbosity = verbosity
 
         self.metadata_wrapper = MarginAccountMetaDataWrapper
@@ -125,6 +127,7 @@ class MarginAccountPipe(AbstractPipe):
         self.min_trade = MinTradeSizeActionWrapper
         self.integer_sizing = IntegerAssetQuantityActionWrapper
         self.position_close = PositionCloseActionWrapper
+
         self.initial_margin = InitialMarginActionWrapper
         self.excess_margin = ExcessMarginActionWrapper
         self.shorting = ShortingActionWrapper
@@ -133,7 +136,7 @@ class MarginAccountPipe(AbstractPipe):
 
         self.observation_pipe = ObservationPipe
 
-        self.normalize_reward = RewardNormalizerWrapper
+        self.reward_pipe = RewardPipe
 
         return None
 
@@ -164,12 +167,13 @@ class MarginAccountPipe(AbstractPipe):
         # action wrappers
         env = self.min_trade(env, min_action=self.min_trade)
         env = self.integer_sizing(env, self.integer)
-        env = self.excess_margin(env)
-        env = self.shorting(env, short_ratio=self.short_ratio)
+
+        env = self.initial_margin(env)
+        env = self.excess_margin(
+            env, excess_margin_ratio_threshold = self.excess_margin_ratio_threshold)
+        env = self.shorting(env)
         env = self.action_interpreter(env, trade_ratio=self.trade_ratio)
 
-        env = self.normalize_reward(env,
-                                    self.reward_statistics,
-                                    track_statistics=self.track_statistics)
+        env = self.reward_pipe()
 
         return env
