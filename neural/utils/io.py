@@ -26,14 +26,25 @@ def to_hdf5(
         dataset_name: str):
 
     """
-    Write data to an HDF5 file and update metadata.
+    Saves a numpy array to an HDF5 file. If the file does not exist, it
+    will be created.
+    
     Args:
-        file_path (str | os.PathLike): The file path of the HDF5 file.
-        data_to_write (np.ndarray): The data to write to the HDF5 file.
-        metadata (DatasetMetadata): The metadata of the dataset being written.
-        target_dataset_name (str): The name of the dataset to write to in the HDF5 file.
-    Returns:
-        None
+    -------
+        file_path (str | os.PathLike): 
+            The path to the HDF5 file to save the dataset to.
+        numpy_array (np.ndarray): 
+            The numpy array to save. The number of rows must match the
+            number of rows
+        dataset_metadata (DatasetMetadata):
+            The metadata object for the dataset.
+        dataset_name (str):
+            The name of the dataset to save.
+    Raises:
+    -------
+        ValueError: 
+            If the number of rows in the numpy array does not match the
+            number of rows in the metadata object.
     """
 
     validate_path(file_path=file_path)
@@ -46,10 +57,9 @@ def to_hdf5(
     with h5.File(file_path, 'a') as hdf5:
 
         if dataset_name not in hdf5:
-            # Create a fixed-size dataset with a predefined data type and dimensions
             dataset = hdf5.create_dataset(
                 name=dataset_name, data=numpy_array,
-                dtype=np.float32, maxshape=(HDF5_DEFAULT_MAX_ROWS,
+                dtype=GLOBAL_DATA_TYPE, maxshape=(HDF5_DEFAULT_MAX_ROWS,
                                             numpy_array.shape[1]), chunks=True)
 
             serialized_metadata = dill.dumps(dataset_metadata, protocol=0)
@@ -79,20 +89,25 @@ def from_hdf5(
     ) -> Tuple[DatasetMetadata, List[h5.Dataset]]:
     
     """
-    Loads one or more datasets from an HDF5 file and returns a tuple containing their metadata
-    and the datasets themselves as h5py dataset objects.
-    Args:
-        file_path (str | os.PathLike): The path to the HDF5 file to load the dataset(s) from.
-        target_dataset_name (Optional[str]): The name of the target dataset to load. If not
+    Loads one or more datasets from an HDF5 file and returns a tuple
+    containing their metadata and the datasets themselves as h5py
+    dataset objects. Args:
+        file_path (str | os.PathLike): The path to the HDF5 file to load
+        the dataset(s) from. target_dataset_name (Optional[str]): The
+        name of the target dataset to load. If not
             provided, all datasets in the file will be loaded.
     Returns:
-        Tuple[DatasetMetadata, List[h5.Dataset]]: A tuple containing the metadata object for the
-            loaded dataset(s) and the loaded dataset(s) as h5py dataset objects.
+        Tuple[DatasetMetadata, List[h5.Dataset]]: A tuple containing the
+        metadata object for the
+            loaded dataset(s) and the loaded dataset(s) as h5py dataset
+            objects.
     Raises:
-        CorruptDataError: If the number of rows or columns specified in the metadata object
-            does not match the actual number of rows or columns in the target dataset.
-        FileNotFoundError: If the file_path does not exist.
-        ValueError: If the file_path is not a valid HDF5 file.
+        CorruptDataError: If the number of rows or columns specified in
+        the metadata object
+            does not match the actual number of rows or columns in the
+            target dataset.
+        FileNotFoundError: If the file_path does not exist. ValueError:
+        If the file_path is not a valid HDF5 file.
     """
 
     validate_path(file_path=file_path)
@@ -128,16 +143,20 @@ def extract_hdf5_dataset(
     ) -> Tuple[DatasetMetadata, h5.Dataset]:
 
     """
-    Extracts a target dataset and its metadata from an HDF5 file.
-    Args:
-        hdf5 (h5.File): The HDF5 file object to extract the dataset from.
-        target_dataset_name (str): The name of the target dataset to extract.
+    Extracts a target dataset and its metadata from an HDF5 file. Args:
+        hdf5 (h5.File): The HDF5 file object to extract the dataset
+        from. target_dataset_name (str): The name of the target dataset
+        to extract.
     Returns:
-        Tuple[DatasetMetadata, h5.Dataset]: A tuple containing the metadata object for the
-            target dataset and the target dataset object as a h5py dataset object.
+        Tuple[DatasetMetadata, h5.Dataset]: A tuple containing the
+        metadata object for the
+            target dataset and the target dataset object as a h5py
+            dataset object.
     Raises:
-        CorruptDataError: If the number of rows or columns specified in the metadata object
-            does not match the actual number of rows or columns in the target dataset.
+        CorruptDataError: If the number of rows or columns specified in
+        the metadata object
+            does not match the actual number of rows or columns in the
+            target dataset.
     """
 
     dataset = hdf5_file[dataset_name]
@@ -159,8 +178,8 @@ def extract_hdf5_dataset(
 
 
 def get_file_like(object: object, file_name: str) -> Tuple[tarfile.TarInfo, dill.BytesIO]:
-    # creates a file-like object from an object and tar info for that object.
-    # can be used to add an object to a tarfile as a file.
+    # creates a file-like object from an object and tar info for that
+    # object. can be used to add an object to a tarfile as a file.
 
     if isinstance(object, os.PathLike):
         path = object
@@ -178,8 +197,8 @@ def get_file_like(object: object, file_name: str) -> Tuple[tarfile.TarInfo, dill
 
 
 def add_to_tarfile(file_path, file_tar_info, file_like):
-    # adds a file to a tarfile. Useful for organizing files
-    # that need to be bundled together for storage or transfer.
+    # adds a file to a tarfile. Useful for organizing files that need to
+    # be bundled together for storage or transfer.
     validate_path(file_path=file_path)
     with tarfile.open(file_path, 'w') as file:
 
