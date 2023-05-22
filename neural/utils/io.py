@@ -88,7 +88,34 @@ def from_hdf5(
     dataset_name: Optional[str] = None
 ) -> Tuple[DatasetMetadata, List[h5.Dataset]]:
     """
+    Loads a dataset from an HDF5 file. If dataset_name is not specified,
+    all datasets in the file will be loaded. If dataset_name is
+    specified, only the dataset with the specified name will be loaded.
+    If all datasets are loaded, the datasets will be returned in a list
+    and the metadata will be joined. If only one dataset is loaded, the 
+    dataset will be returned as a list and the metadata will be returned
+    as a single object.
+
+    Args:
+    -------
+        file_path (str | os.PathLike):
+            The path to the HDF5 file to load the dataset from.
+        dataset_name (Optional[str]):
+            The name of the dataset to load. If None, all datasets in
+            the
+    Returns:
+    --------
+        dataset_metadata (DatasetMetadata):
+            The metadata of the dataset(s).
+        dataset_list (List[h5.Dataset]):
+            The dataset(s) loaded from the file.
     
+    Examples:
+    ---------
+        Assume x, y are metadata objects corresponding to two datasets
+        in the hdf5 file. Then the loaded metadata will be x | y and the
+        loaded datasets will be [dataset_x, dataset_y].
+        More on joining metadata objects: neural/data/base.py
     """
 
     validate_path(file_path=file_path)
@@ -272,7 +299,15 @@ def load_agent(
     Args:
     -------
         file_path (str | os.PathLike):
-        
+            The path to the tarfile to load the agent from.
+    Returns:
+    --------
+        model (nn.Module):
+            The model of the agent.
+        pipe (AbstractPipe):
+            The pipe of the agent.
+        dataset_metadata (DatasetMetadata):
+            The metadata of the dataset used to train the agent.
     """
     with tarfile.open(file_path, 'r') as agent_file:
 
