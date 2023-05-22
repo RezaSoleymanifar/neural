@@ -266,6 +266,7 @@ class AlpacaDataDownloader():
         assets = self.data_client.symbols_to_assets(symbols)
         asset_types = set(asset.asset_type for asset in assets)
         marginability_types = set(asset.marginable for asset in assets)
+
         if len(asset_types) != 1:
             raise ValueError(f'Non-homogenous asset types: {asset_types}.')
         if len(marginability_types) != 1:
@@ -303,9 +304,9 @@ class AlpacaDataDownloader():
                 start=start,
                 end=end)
 
-            dataset_symbols = dataset.index.get_level_values(
+            symbols_in_dataset = dataset.index.get_level_values(
                 'symbol').unique().tolist()
-            missing_symbols = set(dataset_symbols) ^ set(symbols)
+            missing_symbols = set(symbols_in_dataset) ^ set(symbols)
 
             if missing_symbols:
                 raise ValueError(
@@ -319,8 +320,8 @@ class AlpacaDataDownloader():
 
             data_processor = AlpacaDataProcessor()
             symbol_groups = list()
-            for symbol, group in dataset.groupby('symbol'):
 
+            for symbol, group in dataset.groupby('symbol'):
                 processed_group = data_processor.reindex_and_forward_fill(
                     data=group, open=start,
                     close=end, resolution=resolution)
@@ -334,7 +335,6 @@ class AlpacaDataDownloader():
             feature_schema = DatasetMetadata.create_feature_schema(
                 data=features_df)
             data_schema = {dataset_type: tuple(assets)}
-
             features_np = features_df.to_numpy(dtype=GLOBAL_DATA_TYPE)
 
             metadata = DatasetMetadata(
