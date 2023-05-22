@@ -207,17 +207,37 @@ def add_to_tarfile(file_path, file_tar_info, file_like):
     -------
         file_path (str | os.PathLike):
             The path to the tarfile to add the file to.
-            
+        file_tar_info (tarfile.TarInfo):
+            The tar info of the file to add.
+        file_like (dill.BytesIO):
+            The file-like object to add.
     """
 
     validate_path(file_path=file_path)
     with tarfile.open(file_path, 'w') as file:
 
         file.addfile(tarinfo=file_tar_info, fileobj=file_like)
+    
+    return None
 
 
 def save_agent(file_path: str | os.PathLike, agent: Agent):
+    """
+    A function to save an agent to a tarfile. The agent is saved as a
+    tarfile with the following structure:
+    agent.tar
+    ├── dataset_metadata
+    ├── pipe
+    └── model.tar
+        └── model
 
+    Args:
+    -------
+        file_path (str | os.PathLike):
+            The path to the tarfile to save the agent to.
+        agent (Agent):
+            The agent to save.
+    """
     model = agent.model
     pipe = agent.pipe
     dataset_metadata = agent.dataset_metadata
@@ -226,7 +246,7 @@ def save_agent(file_path: str | os.PathLike, agent: Agent):
         dataset_metadata, 'dataset_metadata')
     add_to_tarfile(file_path, dataset_metadata_tar_info, dataset_metadata_file)
 
-    pipe_tar_info, pipe_file = get_file_like(dataset_metadata, 'pipe')
+    pipe_tar_info, pipe_file = get_file_like(pipe, 'pipe')
     add_to_tarfile(file_path, pipe_tar_info, pipe_file)
 
     model_file_path = os.path.join(os.path.dirname(file_path), 'model')
@@ -234,32 +254,38 @@ def save_agent(file_path: str | os.PathLike, agent: Agent):
     model_tar_info, model_file = get_file_like(model_file_path, 'model')
     add_to_tarfile(file_path, model_tar_info, model_file)
 
-    # a copy model file is now in the agent file_path.
     os.remove(os.path.join(os.path.dirname(file_path), 'model'))
 
 
 def load_agent(
     file_path: str | os.PathLike,
 ) -> Tuple[nn.Module, AbstractPipe, DatasetMetadata]:
+    """
+    Loads an agent from a tarfile. The agent is saved as a tarfile with
+    the following structure:
+    agent.tar
+    ├── dataset_metadata
+    ├── pipe
+    └── model.tar
+        └── model
 
+    Args:
+    -------
+        file_path (str | os.PathLike):
+        
+    """
     with tarfile.open(file_path, 'r') as agent_file:
 
-        # Load dataset metadata
         dataset_metadata_file = agent_file.extractfile('dataset_metadata')
         dataset_metadata_bytes = dataset_metadata_file.read()
         dataset_metadata = dill.loads(dataset_metadata_bytes)
 
-        # Load pipe class definition
         pipe_file = agent_file.extractfile('pipe')
         pipe_bytes = pipe_file.read()
-        pipe_class = dill.loads(pipe_bytes)
+        pipe = dill.loads(pipe_bytes)
 
-        # Load model
         with tarfile.open(mode='r', fileobj=agent_file) as inner_tar:
             model_file = inner_tar.extractfile('model')
             model = torch.load(model_file)
-
-    # Initialize pipe
-    pipe = pipe_class()
 
     return Agent(model=model, pipe=pipe, dataset_metadata=dataset_metadata)
