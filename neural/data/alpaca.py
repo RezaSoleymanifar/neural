@@ -9,7 +9,8 @@ from neural.client.alpaca import AlpacaDataClient
 from neural.common import logger
 from neural.common.constants import (
     ALPACA_ACCEPTED_DOWNLOAD_RESOLUTIONS, GLOBAL_DATA_TYPE)
-from neural.data.base import DatasetMetadata, AlpacaDataSource, CalendarType
+from neural.data.base import (
+    DatasetMetadata, AlpacaDataSource, CalendarType, AlpacaAsset)
 from neural.data.enums import AssetType, AlpacaDataSource
 from neural.utils.io import to_hdf5
 from neural.utils.base import (
@@ -107,7 +108,7 @@ class AlpacaDataDownloader():
     def download_dataset(
         self,
         dataset_type: AlpacaDataSource.DatasetType,
-        symbols: List[str],
+        assets: List[AlpacaAsset],
         resolution: str,
         start: datetime,
         end: datetime,
@@ -149,15 +150,19 @@ class AlpacaDataDownloader():
                 If there is no data in the requested range.
         """
 
-        if not symbols:
+        if not assets:
             raise ValueError(
                 'symbols argument cannot be an empty sequence.')
 
         duplicate_symbols = [
-            symbol for symbol in set(symbols) if symbols.count(symbol) > 1]
+            symbol for symbol in set(assets) if assets.count(symbol) > 1]
         if duplicate_symbols:
             raise ValueError(f'Duplicate symbols found: {duplicate_symbols}.')
 
+        asset_types = set(asset.asset_type for asset in assets)
+        if len(asset_types) != 1:
+            raise ValueError(f'Non-homogenous asset types: {asset_types}.')
+        
         resolution = to_timeframe(resolution)
 
         downloader, request = self.data_client.get_downloader_and_request(
@@ -165,7 +170,7 @@ class AlpacaDataDownloader():
             asset_type=AssetType)
 
         data = downloader(request(
-            symbol_or_symbols=symbols,
+            symbol_or_symbols=assets,
             timeframe=resolution,
             start=start,
             end=end))
@@ -219,17 +224,13 @@ class AlpacaDataDownloader():
         self._validate_resolution(resolution=resolution)
         assets = self.data_client.symbols_to_assets(symbols)
 
-        asset_types = set(asset.asset_type for asset in assets)
         marginability_types = set(asset.marginable for asset in assets)
-
-        if len(asset_types) != 1:
-            raise ValueError(f'Non-homogenous asset types: {asset_types}.')
 
         if len(marginability_types) != 1:
             raise ValueError(
                 f'Non-homogenous marginability types: {marginability_types}.')
         
-        asset_type = asset_types.pop()
+        asset_type = assets[0].asset_type
         calendar_type_map = {AssetType.STOCK: CalendarType.NEW_YORK_STOCK_EXCHANGE,
                         AssetType.CRYPTOCURRENCY: CalendarType.TWENTY_FOUR_SEVEN}
         calendar_type = calendar_type_map[asset_type]
@@ -255,7 +256,7 @@ class AlpacaDataDownloader():
 
             dataset = self.download_dataset(
                 dataset_type=dataset_type,
-                symbols=symbols,
+                assets=symbols,
                 resolution=resolution,
                 start=start,
                 end=end)
