@@ -213,7 +213,17 @@ class AlpacaDataDownloader():
             dataset_name (str):
                 The name of the dataset to write to in the HDF5 file.
             dataset_type (DatasetType):
-            
+                The type of dataset to download. Either 'BAR', 'TRADE',
+                or 'QUOTE'.
+            symbols (List[str]):
+                The list of symbol names to download features data for.
+                Example: 'AAPL', 'MSFT', 'GOOG', 'BTC/USD', 'ETH/USD'.
+            start_date (str | datetime):
+                The start date to download data for, inclusive.
+                example: '2020-01-01', or datetime(2020, 1, 1), or 
+                '05/01/2020'. This should be a format accepted by pandas
+                to_datetime function.
+
         """
 
         validate_path(file_path=file_path)
