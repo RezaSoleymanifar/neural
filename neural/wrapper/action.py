@@ -307,7 +307,8 @@ class IntegerAssetQuantityActionWrapper(ActionWrapper):
     quantities are allowed. This is useful for trading environments that
     do not allow fractional quantities of assets or modifying actions
     for assets that are inherently non-fractionable even on platforms
-    that do allow fractional trading.
+    that do allow fractional trading. Thus actions of assets that are not
+    fractionable are modified to correspond integer number shares.
 
     The modification of the agent's actions to enforce integer
     quantities may not be valid in live trading environments due to
@@ -385,11 +386,12 @@ class IntegerAssetQuantityActionWrapper(ActionWrapper):
             quantity is an integer multiple of its price.
         """
 
-        if self.integer:
-            asset_prices = self.market_metadata_wrapper.asset_prices
-            for asset, action, price in enumerate(actions, asset_prices):
-                action = (action // price) * price
-                actions[asset] = action
+        asset_prices = self.market_metadata_wrapper.asset_prices
+        assets = self.market_metadata_wrapper.assets
+        for asset, action, asset_, price in enumerate(
+                zip(actions, assets, asset_prices)):
+            if self.integer or not asset_.fractionable:
+                actions[asset] = action // price * price
 
         return actions.astype(GLOBAL_DATA_TYPE)
 
