@@ -163,7 +163,22 @@ def get_file_like(object: object,
                   file_name: str) -> Tuple[tarfile.TarInfo, dill.BytesIO]:
     """
     Creates a file-like object and its tar info from an object. This can
-    be used to add an object to a tarfile as a file.
+    be used to add an object to a tarfile as a file. Similarly if object
+    is a path (file path) then it can create a file like object for the
+    existing file in path and its tar info.
+
+    Args:
+    -------
+        object (object | os.PathLike):
+            The object to create a file-like object from.
+        file_name (str):
+            The name of the file to create.
+    Returns:
+    --------
+        file_tar_info (tarfile.TarInfo):
+            The tar info of the file.
+        file (dill.BytesIO):
+            The file-like object.
     """
 
 
@@ -183,8 +198,18 @@ def get_file_like(object: object,
 
 
 def add_to_tarfile(file_path, file_tar_info, file_like):
-    # adds a file to a tarfile. Useful for organizing files that need to
-    # be bundled together for storage or transfer.
+    """
+    Adds a file-like object to a tarfile. The file-like object can be
+    created using the get_file_like function. Then this function can be
+    used to add the file to the tarfile specified by file_path.
+
+    Args:
+    -------
+        file_path (str | os.PathLike):
+            The path to the tarfile to add the file to.
+            
+    """
+
     validate_path(file_path=file_path)
     with tarfile.open(file_path, 'w') as file:
 
