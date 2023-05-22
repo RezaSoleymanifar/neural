@@ -51,13 +51,21 @@ class RewardPipe(AbstractPipe):
 
     def __init__(self,
                  reward_statistics: Optional[RunningStatistics] = None,
+                track_statistics = True
                 ) -> None:
 
         self.reward_statistics = reward_statistics
+        self.track_statistics = track_statistics
 
         self.reward_generator = RewardGeneratorWrapper
         self.reward_normalizer = RewardNormalizerWrapper
 
+    def pipe(self, env):
+        env = self.reward_generator(env)
+        env = self.reward_normalizer(env, 
+            reward_statistics = self.reward_statistics, 
+            track_statistics= self.track_statistics
+                                     )
 
 class ObservationPipe(AbstractPipe):
 
@@ -116,6 +124,7 @@ class MarginAccountPipe(AbstractPipe):
         self.buffer_size = buffer_size
         self.stack_size = stack_size
         self.observation_statistics = observation_statistics
+        self.reward_statistics = reward_statistics
         self.track_statistics = track_statistics
 
         self.excess_margin_ratio_threshold = excess_margin_ratio_threshold
@@ -167,7 +176,8 @@ class MarginAccountPipe(AbstractPipe):
         # action wrappers
         env = self.min_trade(env, min_action=self.min_trade)
         env = self.integer_sizing(env, self.integer)
-
+        env = self.position_close(env)
+        
         env = self.initial_margin(env)
         env = self.excess_margin(
             env, excess_margin_ratio_threshold = self.excess_margin_ratio_threshold)
