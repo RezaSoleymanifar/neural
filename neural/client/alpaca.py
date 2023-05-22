@@ -206,7 +206,7 @@ class AlpacaDataClient(AlpacaClient, AbstractDataClient):
         client = client_map[asset_type]
 
         downloader_request_map = {
-            AlpacaDataSource.DatasetType.TRADE: {
+            AlpacaDataSource.DatasetType.BAR: {
                 AssetType.STOCK: ('get_stock_bars', StockBarsRequest),
                 AssetType.CRYPTOCURRENCY: ('get_crypto_bars', CryptoBarsRequest)
             },
@@ -229,9 +229,6 @@ class AlpacaDataClient(AlpacaClient, AbstractDataClient):
 
     def get_streamer(
         self,
-
-        # callable take an async handler that receiVes the data and a
-        # list of symbols async def handler(data): print(data)
         stream_type: AlpacaDataSource.StreamType,
         asset_type: AssetType,
     ) -> Callable:
