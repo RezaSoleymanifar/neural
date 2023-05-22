@@ -241,14 +241,17 @@ class AlpacaDataDownloader():
             features_df = pd.concat(symbol_groups, axis=1)
             features_df = features_df.select_dtypes(include=np.number)
 
-            column_schema = create_column_schema(data=features_df)
+
+            feature_schema = DatasetMetadata.create_feature_schema(
+                data=features_df)
+            data_schema = Dict[dataset_type, tuple(assets)]
 
             features_np = features_df.to_numpy(dtype=np.float32)
             n_rows, n_columns = features_np.shape
 
             metadata = DatasetMetadata(
                 dataset_type=[dataset_type],
-                column_schema=column_schema,
+                column_schema=feature_schema,
                 asset_class=asset_class,
                 assets=symbols,
                 start=start,
