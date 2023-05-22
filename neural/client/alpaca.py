@@ -13,7 +13,7 @@ from alpaca.data.live import StockDataStream, CryptoDataStream
 from alpaca.trading import TradingClient, MarketOrderRequest
 from alpaca.trading.enums import OrderSide, TimeInForce
 from alpaca.trading.models import Order, TradeAccount, Position
-from alpaca.trading.models import Asset as AlpacaAsset
+from alpaca.trading.models import Asset
 from alpaca.data.requests import BaseTimeseriesDataRequest
 
 from alpaca.data.requests import (CryptoBarsRequest, CryptoTradesRequest,
@@ -145,7 +145,7 @@ class AlpacaClient(AbstractClient):
         return assets_dataframe
 
     @property
-    def symbols(self) -> Dict[str, AlpacaAsset]:
+    def symbols(self) -> Dict[str, Asset]:
         """
         Returns a dictionary of all symbols available on Alpaca API. The
         corresponding values are the Asset objects.
