@@ -149,7 +149,7 @@ class MarginAccountPipe(AbstractPipe):
 
         self.verbosity = verbosity
 
-        self.metadata_wrapper = MarginAccountMetaDataWrapper
+        self.margin_account_metadata = MarginAccountMetaDataWrapper
         self.render = ConsoleTearsheetRenderWrapper
 
         self.initial_margin = InitialMarginActionWrapper
@@ -178,7 +178,7 @@ class MarginAccountPipe(AbstractPipe):
         - env (gym.Env): the wrapped environment.
         """
 
-        env = self.metadata_wrapper(env)
+        env = self.margin_account_metadata(env)
         env = self.render(env, verbosity=self.verbosity)
         env = self.initial_margin(env)
         env = self.excess_margin(
