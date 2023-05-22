@@ -34,17 +34,18 @@ class RewardGeneratorWrapper(RewardWrapper):
         reward(reward: float) -> float:
             Generate the reward signal.
     """
+
     def __init__(self, env: Env) -> None:
         """
         Initializes 
         """
         super().__init__(env)
         self.equity_history = self.market_metadata_wrapper.equity_history
-    
+
     def reward(self, reward: float) -> float:
         reward = self.equity_history[-1] - self.equity_history[-2]
         return reward
-    
+
 
 class NormalizeRewardWrapper(RewardWrapper):
     """
@@ -136,7 +137,8 @@ class LiabilityInterstRewardWrapper(RewardWrapper):
     the liability. Apply this wrapper prior to normalization of rewards
     as this substracts the notional value of interest from the reward.
     """
-    def __init__(self, env, interest_rate = 0.08):
+
+    def __init__(self, env, interest_rate=0.08):
         super().__init__(env)
         self.interest_rate = interest_rate
         self.previous_day = None
@@ -152,18 +154,23 @@ class LiabilityInterstRewardWrapper(RewardWrapper):
             interest = self.compute_interest()
             reward -= interest
             self.previous_day = current_day
-        
+
         return reward
 
     def compute_interest(self):
         cash_debt = abs(min(self.market_metadata_wrapper.cash, 0))
         cash_interest = cash_debt * self.interest_rate
+
         positions = self.market_metadata_wrapper.positions
         asset_quantitties = self.market_metadata_wrapper.asset_quantities
-        asset_debt = sum(position for position and qauntity in zip(positions, asset_quantitties) if quantity < 0)
+        
+        asset_debt = sum(
+            position for position, quantity in zip(positions, asset_quantitties)
+            if quantity < 0)
         asset_interest = asset_debt * self.interest_rate
 
         return cash_interest + asset_interest
+
 
 class PenalizeMarginCallRewardShaperWrapper(RewardWrapper):
     """
