@@ -12,7 +12,7 @@ from neural.data.base import DatasetMetadata, AlpacaDataSource, CalendarType
 from neural.data.enums import AssetType, AlpacaDataSource
 from neural.utils.time import Calendar
 from neural.utils.io import IOHandler
-from neural.utils.base import progress_bar, validate_path, Calendar
+from neural.utils.base import progress_bar, validate_path, Calendar, RunningStatistics
 from neural.utils.misc import to_timeframe
 
 
@@ -206,14 +206,14 @@ class AlpacaDataDownloader():
 
         for start, end in schedule.values:
 
-            raw_dataset = self.download_dataset(
+            dataset = self.download_dataset(
                 dataset_type=dataset_type,
                 symbols=symbols,
                 resolution=resolution,
                 start=start,
                 end=end)
 
-            dataset_symbols = raw_dataset.index.get_level_values(
+            dataset_symbols = dataset.index.get_level_values(
                 'symbol').unique().tolist()
             missing_symbols = set(dataset_symbols) ^ set(symbols)
 
@@ -222,26 +222,21 @@ class AlpacaDataDownloader():
                     f'No data for symbols {missing_symbols} in '
                     f'{start}, {end} time range.')
 
-            # reordering rows to symbols. API does not maintain symbol
-            # order.
-            raw_dataset = raw_dataset.reindex(
+            dataset = dataset.reindex(
                 index=pd.MultiIndex.from_product([
-                    symbols, raw_dataset.index.levels[1]]))
+                    symbols, dataset.index.levels[1]]))
+            dataset = dataset.reset_index(level=0, names='symbol')
 
-            # resets multilevel symbol index
-            raw_dataset = raw_dataset.reset_index(level=0, names='symbol')
-
-            processed_groups = list()
-            # raw data is processed symbol by symbol
-            for symbol, group in raw_dataset.groupby('symbol'):
+            symbol_groups = list()
+            for symbol, group in dataset.groupby('symbol'):
 
                 processed_group = AlpacaDataProcessor.reindex_and_forward_fill(
                     data=group, open=start,
                     close=end, resolution=resolution)
 
-                processed_groups.append(processed_group)
+                symbol_groups.append(processed_group)
 
-            features_df = pd.concat(processed_groups, axis=1)
+            features_df = pd.concat(symbol_groups, axis=1)
             features_df = features_df.select_dtypes(include=np.number)
 
             column_schema = create_column_schema(data=features_df)
@@ -286,7 +281,7 @@ class AlpacaDataProcessor:
 
     def __init__(self):
 
-        self.dataset_density = None
+        self.processing_statistics = None
 
     def reindex_and_forward_fill(
             self,
@@ -328,9 +323,9 @@ class AlpacaDataProcessor:
         total_count = processed.size
         density = non_nan_count/total_count
 
-        AlpacaDataProcessor.dataset_density = (
-            AlpacaDataProcessor.dataset_density + density
-        ) / 2 if AlpacaDataProcessor.dataset_density else density
+        AlpacaDataProcessor.processing_statistics = (
+            AlpacaDataProcessor.processing_statistics + density
+        ) / 2 if AlpacaDataProcessor.processing_statistics else density
 
         # backward fills if first row is nan
         if processed.isna().any().any():
