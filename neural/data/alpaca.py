@@ -186,7 +186,7 @@ class AlpacaDataDownloader():
         symbols: List[str],
         start_date: str | datetime,
         end_date: str | datetime,
-        resolution: Optional[str] = '1Min',
+        resolution: Optional[str],
         ) -> None:
 
         """
@@ -230,10 +230,26 @@ class AlpacaDataDownloader():
                 This should be a format accepted by pandas to_datetime
             resolution (str):
                 The frequency at which to sample the data. One of
-                '1Min', '5Min', '15Min', or '30Min'. If None, the
-                resolution is set to '1Min'.
-            
-
+                '1Min', '5Min', '15Min', or '30Min'.
+        
+        Raises:
+        ----------
+            ValueError:
+                If the resolution is not accepted.
+            ValueError:
+                If the symbols argument is an empty sequence.
+            ValueError:
+                If the symbols argument contains duplicate symbols.
+            ValueError:
+                If the asset types of the symbols are not homogenous.
+            ValueError:
+                If the marginability types of the symbols are not
+                homogenous.
+            ValueError:
+                If there are no market hours in the given date range.
+            ValueError:
+                If there is no data for some symbols in the given date
+                range.
         """
 
         validate_path(file_path=file_path)
@@ -256,9 +272,9 @@ class AlpacaDataDownloader():
             raise ValueError(
                 f'Non-homogenous marginability types: {marginability_types}.')
         
-        asset_type = asset_types.pop()
         calendar_type_map = {AssetType.STOCK: CalendarType.NEW_YORK_STOCK_EXCHANGE,
                         AssetType.CRYPTOCURRENCY: CalendarType.TWENTY_FOUR_SEVEN}
+        asset_type = asset_types.pop()
         calendar_type = calendar_type_map[asset_type]
         schedule = calendar_type.schedule(
             start_date=start_date, end_date=end_date)
@@ -275,11 +291,10 @@ class AlpacaDataDownloader():
                     f'\n\t days = {days}'
                     f'\n\t resolution = {resolution}'
                     f'\n\t n_assets = {n_assets}')
-
+        
         progress_bar_ = progress_bar(len(schedule))
 
         for start, end in schedule.values:
-
             dataset = self.download_dataset(
                 dataset_type=dataset_type,
                 asset_type=asset_type,

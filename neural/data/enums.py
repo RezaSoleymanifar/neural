@@ -112,8 +112,9 @@ class CalendarType(Enum):
 
         Returns:
         ---------
-            function: A function that returns a dataframe with trading
-            dates and times.
+            function: 
+                A function that returns a dataframe with trading dates
+                and times.
             
         Examples:
         ---------
