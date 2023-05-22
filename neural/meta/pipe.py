@@ -110,8 +110,9 @@ class ActionPipe(AbstractPipe):
         self.position_close = PositionCloseActionWrapper
 
     def pipe(self, env):
-        env = self.min_trade(min_trade = self.min_trade)
-        env = self.integer_quantity
+        env = self.min_trade(env, min_trade = self.min_trade)
+        env = self.integer_quantity(env, integer = self.integer)
+        env = self.position_close(env)
 
 class MarginAccountPipe(AbstractPipe):
     """
@@ -131,7 +132,8 @@ class MarginAccountPipe(AbstractPipe):
                  track_statistics: bool = True,
                  verbosity: int = 20) -> None:
 
-        self.trade_ratio = trade_equity_ratio
+        self.trade_equity_ratio = trade_equity_ratio
+        self.excess_margin_ratio_threshold = excess_margin_ratio_threshold
 
         self.min_trade = min_trade
         self.integer = integer
@@ -139,10 +141,10 @@ class MarginAccountPipe(AbstractPipe):
         self.buffer_size = buffer_size
         self.stack_size = stack_size
         self.observation_statistics = observation_statistics
+
         self.reward_statistics = reward_statistics
         self.track_statistics = track_statistics
 
-        self.excess_margin_ratio_threshold = excess_margin_ratio_threshold
         self.verbosity = verbosity
 
         self.metadata_wrapper = MarginAccountMetaDataWrapper
@@ -194,7 +196,7 @@ class MarginAccountPipe(AbstractPipe):
             excess_margin_ratio_threshold=self.excess_margin_ratio_threshold)
         env = self.shorting(env)
 
-        env = self.action_interpreter(env, trade_ratio=self.trade_ratio)
+        env = self.action_interpreter(env, trade_ratio=self.trade_equity_ratio)
 
         env = self.reward_pipe(reward_statistics=self.reward_statistics,
                                track_statistics=self.track_statistics).pipe(env)
