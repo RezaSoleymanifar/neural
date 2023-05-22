@@ -375,7 +375,8 @@ class AlpacaDataStreamer:
     way with the downloaded dataset. This is important, since the
     downloaded dataset is used to train the model and the streamed data
     is used to deploy the model. If the data is not processed in a
-    
+    consistent way, the model will not be able to make predictions on
+    the streamed data.
     """
     def __init__(self, data_client: AlpacaDataClient) -> None:
         """
@@ -385,7 +386,14 @@ class AlpacaDataStreamer:
 
 
 class AlpacaDataProcessor:
-
+    """
+    A class to process financial data downloaded from the Alpaca API.
+    This includes reindexing and forward filling missing rows in the
+    data. This is important, since even with a perfect data collection
+    process there can be missing rows in the data, due to trading halt
+    events, or other anomalies. In this case forward filling is used to
+    indicate no feature change when no data is available.
+    """
     def __init__(self):
 
         self.processing_statistics = RunningStatistics()
@@ -397,23 +405,27 @@ class AlpacaDataProcessor:
             close: datetime,
             resolution: str):
         """
-        Reindexes and forward-fills missing rows in the given DataFrame
-        in the [open, close) range based on the given resolution.
-        Returns the processed DataFrame.
+        Reindexes and forward fills missing rows in [open, close)
+        range, i.e. time index = open means any tie with open <= time <
+        open + resolution will be included in the time index interval.
+        The final time index will be close - resolution.
 
-        :param data: The DataFrame to be processed.
-        :type data: pd.DataFrame
-        :param open: The open time of the market data interval to
-            process.
-        :type open: datetime
-        :param close: The close time of the market data interval to
-            process.
-        :type close: datetime
-        :param resolution: The frequency of the time intervals in the
-            processed data.
-        :type resolution: str
-        :return: The processed DataFrame.
-        :rtype: pd.DataFrame
+        Args:
+        ----------
+            data (pd.DataFrame):
+                The data to reindex and forward fill.
+            open (datetime):
+                The open time of the time index.
+            close (datetime):
+                The close time of the time index.
+            resolution (str):
+                The frequency at which to sample the data. One of
+                '1Min', '5Min', '15Min', or '30Min'.
+
+        Returns:
+        ----------
+            processed (pd.DataFrame):
+                The reindexed and forward filled data.
         """
 
         # resamples and forward fills missing rows in [open, close)
