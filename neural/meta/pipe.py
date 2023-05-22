@@ -7,10 +7,12 @@ from neural.wrapper.base import (
 
 from neural.wrapper.action import (
     MinTradeSizeActionWrapper,
-    FixedMarginActionWrapper,
-    NetWorthRelativeMaximumShortSizing,
-    EquityBasedUniformActionInterpreter,
     IntegerAssetQuantityActionWrapper,
+    PositionCloseActionWrapper,
+    InitialMarginActionWrapper,
+    ExcessMarginActionWrapper,
+    ShortingActionWrapper,
+    EquityBasedUniformActionInterpreter,
     ActionClipperWrapper)
 
 from neural.wrapper.observation import (
@@ -87,8 +89,9 @@ class NetWorthRelativeShortMarginPipe(AbstractPipe):
         self.metadata_wrapper = MarginAccountMetaDataWrapper
         self.render = ConsoleTearsheetRenderWrapper
 
-        self.integer_sizing = IntegerAssetQuantityActionWrapper
+        
         self.min_trade = MinTradeSizeActionWrapper
+        self.integer_sizing = IntegerAssetQuantityActionWrapper
         self.margin_sizing = FixedMarginActionWrapper
         self.short_sizing = NetWorthRelativeMaximumShortSizing
         self.position_sizing = EquityBasedUniformActionInterpreter
