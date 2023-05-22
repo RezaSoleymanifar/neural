@@ -319,6 +319,7 @@ class AlpacaDataDownloader():
             dataset = dataset.reset_index(level=0, names='symbol')
 
             data_processor = AlpacaDataProcessor()
+            processing_statistics = data_processor.processing_statistics
             symbol_groups = list()
 
             for symbol, group in dataset.groupby('symbol'):
@@ -335,9 +336,9 @@ class AlpacaDataDownloader():
             feature_schema = DatasetMetadata.create_feature_schema(
                 data=features_df)
             data_schema = {dataset_type: tuple(assets)}
-            features_np = features_df.to_numpy(dtype=GLOBAL_DATA_TYPE)
+            features_array = features_df.to_numpy(dtype=GLOBAL_DATA_TYPE)
 
-            metadata = DatasetMetadata(
+            dataset_metadata = DatasetMetadata(
                 data_schema=data_schema,
                 feature_schema=feature_schema,
                 resolution=resolution,
@@ -348,17 +349,14 @@ class AlpacaDataDownloader():
 
             to_hdf5(
                 file_path=file_path,
-                data_to_write=features_np,
-                metadata=metadata,
+                numpy_array=features_array,
+                dataset_metadata=dataset_metadata,
                 dataset_name=dataset_name)
 
-            processing_statistics = data_processor.processing_statistics
-            low = processing_statistics.minimum
-            high = processing_statistics.maximum
-            mean = processing_statistics.mean
-
             progress_bar_.set_description(
-                f"low:{low:.0%}/high:{high:.0%}/mean:{mean:.0%}")
+                f'low:{processing_statistics.minimum:.0%}/'
+                f'high:{processing_statistics.maximum:.0%}/'
+                f'mean:{processing_statistics.mean:.0%}')
 
             progress_bar_.update(1)
 
@@ -368,7 +366,21 @@ class AlpacaDataDownloader():
 
 
 class AlpacaDataStreamer:
+    """
+    This class is responsible for streaming data from the Alpaca API.
+    Usually a dataset is downloaded from the Alpaca API and saved to
+    disk in an HDF5 file format. This class is responsible for
+    streaming the live data that matches the downloaded dataset. This
+    class is also responsible for processing the data in a consistent
+    way with the downloaded dataset. This is important, since the
+    downloaded dataset is used to train the model and the streamed data
+    is used to deploy the model. If the data is not processed in a
+    
+    """
     def __init__(self, data_client: AlpacaDataClient) -> None:
+        """
+        Initializes the AlpacaDataStreamer class. 
+        """
         pass
 
 
