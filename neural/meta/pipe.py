@@ -97,11 +97,22 @@ class ObservationPipe(AbstractPipe):
         return env
 
 class ActionPipe(AbstractPipe):
-    def __init__(self) -> None:
-        pass
+    def __init__(self, 
+                 min_trade: float = 1,
+                 integer: bool = False
+                 ) -> None:
+        
+        self.min_trade = min_trade
+        self.integer = integer
+
+        self.min_trade = MinTradeSizeActionWrapper
+        self.integer_quantity = IntegerAssetQuantityActionWrapper
+        self.position_close = PositionCloseActionWrapper
+
     def pipe(self, env):
-        pass
-    
+        env = self.min_trade(min_trade = self.min_trade)
+        env = self.integer_quantity
+
 class MarginAccountPipe(AbstractPipe):
     """
     A pipe for margin account environments. The pipe adds the trading
@@ -110,15 +121,15 @@ class MarginAccountPipe(AbstractPipe):
 
     def __init__(self,
                  trade_equity_ratio: float = 0.02,
+                 excess_margin_ratio_threshold: float = 0.1,
                  min_trade: float = 1,
                  integer: bool = False,
                  buffer_size: int = 10,
                  stack_size: int = None,
-                 excess_margin_ratio_threshold: float = 0.1,
-                 verbosity: int = 20,
                  observation_statistics: Optional[RunningStatistics] = None,
                  reward_statistics: Optional[RunningStatistics] = None,
-                 track_statistics: bool = True) -> None:
+                 track_statistics: bool = True,
+                 verbosity: int = 20) -> None:
 
         self.trade_ratio = trade_equity_ratio
 
@@ -136,10 +147,6 @@ class MarginAccountPipe(AbstractPipe):
 
         self.metadata_wrapper = MarginAccountMetaDataWrapper
         self.render = ConsoleTearsheetRenderWrapper
-
-        self.min_trade = MinTradeSizeActionWrapper
-        self.integer_sizing = IntegerAssetQuantityActionWrapper
-        self.position_close = PositionCloseActionWrapper
 
         self.initial_margin = InitialMarginActionWrapper
         self.excess_margin = ExcessMarginActionWrapper
