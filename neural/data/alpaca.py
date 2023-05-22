@@ -87,21 +87,21 @@ class AlpacaDataDownloader():
         inconsistent with other resoluions.
 
         Args: 
-        -
+        ----------
         resolution (str): 
             The resolution of the dataset.
 
-        Returns: None.
-
-        Raises: ValueError: If the resolution is not one of the accepted
-        resolutions.
+        Raises:
+        ----------
+        ValueError:
+            If the resolution is not accepted.
         """
 
         if resolution not in ALPACA_ACCEPTED_DOWNLOAD_RESOLUTIONS:
             raise ValueError(
                 f'Accepted resolutions: {ALPACA_ACCEPTED_DOWNLOAD_RESOLUTIONS}.')
 
-        return
+        return None
 
 
     def download_dataset(
@@ -121,18 +121,32 @@ class AlpacaDataDownloader():
         can be downloaded at once and also to save progress.
 
         Args:
-            dataset_type (DatasetType): The type of dataset to download
-            (bar, quote, or trade). symbols (List[str]): A list of
-            symbols to download. Note that API does not preserve the
-            order of the symbols in the output dataframe. asset_class
-            (AssetClass): The asset class to download. resolution (str):
-            The resolution of the dataset to download (e.g., "1Min",
-            "15Min"). start (datetime): The start date and time of the
-            dataset to download. end (datetime): The end date and time
-            of the dataset to download.
+        ----------
+            dataset_type (DatasetType):
+                The type of dataset to download. Either 'BAR', 'TRADE',
+                or 'QUOTE'.
+            symbols (List[str]):
+                The list of symbol names to download features data for.
+            resolution (str):
+                The frequency at which to sample the data. One of
+                '1Min', '5Min', '15Min', or '30Min'.
+            start (datetime):
+                The start date to download data for, inclusive.
+            end (datetime):
+                The end date to download data for, inclusive.
 
         Returns:
-            pd.DataFrame: The downloaded dataset as a pandas DataFrame.
+        ----------
+            dataset_dataframe (pd.DataFrame):
+                The raw dataset downloaded from the Alpaca API.
+            
+        Raises:
+        ----------
+            ValueError:
+                If the symbols argument is empty or if there are
+                duplicate symbols in the symbols argument.
+            KeyError:
+                If there is no data in the requested range.
         """
 
         if not symbols:
