@@ -447,44 +447,6 @@ class AlpacaDataClient(AlpacaClient, AbstractDataClient):
             API. Defaults to False. If using paper account credentials,
             this should be set to True.
 
-    Methods:
-    --------
-        connect:
-            Connect to the Alpaca API and set up the REST clients. Will
-            be called automatically when the client is instantiated.
-        _validate_credentials:
-            Ensure that the API key and secret are valid.
-        _get_clients:
-            Gets the rest client objects from Alpaca API. Rest clients
-            include the trading client, the stock historical data
-            client, and the crypto historical data client. The trading
-            client is used to place orders and perform account related
-            tasks. The stock historical data client is used to retrieve
-            historical stock data. The crypto historical data client is
-            used to retrieve historical crypto data. The clients are
-            stored in a dictionary with the keys 'trade', 'stocks', and
-            'crypto'.
-        safe_method_call:
-            A helper method to safely call a method on an object. If the
-            object does not have the specified method, an AttributeError
-            will be raised.
-        get_downloader_and_request:
-            Returns the downloader and the request object for the
-            specified dataset type and asset type.
-        get_streamer:
-            A method to get the streamer for the specified stream type
-            and asset type. The streamer is used to retrieve live data.
-        symbols_to_assets:
-            This method converts a list of symbols to a list of Asset   
-            objects. AlpacaAsset objects have the flowing attributes:
-                - symbol
-                - asset_type
-                - fractionable
-                - marginable
-                - maintenance_margin
-                - shortable
-                - easy_to_borrow
-
     Properties:
     -----------
         clients:
@@ -540,21 +502,44 @@ class AlpacaDataClient(AlpacaClient, AbstractDataClient):
         data_source:
             The data source for the Alpaca API. The data source is used
             to retrieve data from the Alpaca API.
-        data_source_type:
-            The data source type for the Alpaca API. The data source
-            type is used to retrieve data from the Alpaca API.
-        data_source_name:
-            The data source name for the Alpaca API. The data source
-            
-        _get_account:
-            The account object is used to perform account related tasks
-            such as checking the account status, getting the account
-            balance, and getting the account positions.
+
+    Methods:
+    --------
+        connect:
+            Connect to the Alpaca API and set up the REST clients. Will
+            be called automatically when the client is instantiated.
+        _validate_credentials:
+            Ensure that the API key and secret are valid.
+        _get_clients:
+            Gets the rest client objects from Alpaca API. Rest clients
+            include the trading client, the stock historical data
+            client, and the crypto historical data client. The trading
+            client is used to place orders and perform account related
+            tasks. The stock historical data client is used to retrieve
+            historical stock data. The crypto historical data client is
+            used to retrieve historical crypto data. The clients are
+            stored in a dictionary with the keys 'trade', 'stocks', and
+            'crypto'.
+        safe_method_call:
+            A helper method to safely call a method on an object. If the
+            object does not have the specified method, an AttributeError
+            will be raised.
         get_downloader_and_request:
             Returns the downloader and the request object for the
             specified dataset type and asset type.
-
-
+        get_streamer:
+            A method to get the streamer for the specified stream type
+            and asset type. The streamer is used to retrieve live data.
+        symbols_to_assets:
+            This method converts a list of symbols to a list of Asset   
+            objects. AlpacaAsset objects have the flowing attributes:
+                - symbol
+                - asset_type
+                - fractionable
+                - marginable
+                - maintenance_margin
+                - shortable
+                - easy_to_borrow
         
     Examples:
     ---------
@@ -851,7 +836,11 @@ class AlpacaDataClient(AlpacaClient, AbstractDataClient):
 
 
 class AlpacaTradeClient(AlpacaClient, AbstractTradeClient):
-
+    """
+    This is an extension of the AlpacaClient class. It provides a
+    simple interface for placing orders, in addition to the
+    functionalities provided by the AlpacaClient class.
+    """
     def __init__(self, *args, **kwargs):
 
         super().__init__(*args, **kwargs)
