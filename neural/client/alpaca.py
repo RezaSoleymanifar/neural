@@ -41,14 +41,7 @@ class AlpacaClient(AbstractClient):
         secret key for the Alpaca API. paper (bool): Whether to use the
         paper trading API or the live
             trading API. Defaults to False.
-    
-    Attributes:
-    -----------
-        key (str): 
-            The API key for the Alpaca API.
-        secret (str): 
-            The secret key for the Alpaca API.   
-        paper (bool):
+
 
     Methods:
     --------
@@ -194,7 +187,6 @@ class AlpacaClient(AbstractClient):
                 live trading API. Defaults to False. If using
                 paper account credentials, this should be set
                 to True.
-
         """
 
         self.key = key if key is not None else API_KEY
@@ -215,7 +207,8 @@ class AlpacaClient(AbstractClient):
     def connect(self):
         """
         Connect to the Alpaca API and set up the client. Will be called
-        automatically when the client is instantiated.
+        automatically when the client is instantiated. Sets up the
+        trading client, and the account object.
         """
         self._validate_credentials()
         self._clients = self._get_clients()
@@ -225,7 +218,12 @@ class AlpacaClient(AbstractClient):
 
     def _validate_credentials(self) -> bool:
         """
-        Ensure that the API key and secret are valid.
+        Ensure that the API key and secret are valid. If the API key and
+        secret are not valid, an exception will be raised.
+
+        Raises:
+        -------
+            ValueError: If the API key and secret are not valid.
         """
         if self.key is None or self.secret is None:
             raise ValueError(
@@ -240,8 +238,8 @@ class AlpacaClient(AbstractClient):
 
         TradingClient functionalities:
             - Submit order
-            - Get orders
             - Cancel order
+            - Get orders
             - Get positions
             - Get account
             - Get clock
@@ -250,7 +248,8 @@ class AlpacaClient(AbstractClient):
 
         Notes:
         ------
-        Crypto does not need key, and secret but will be faster if provided.
+        Crypto does not need key, and secret but download will be faster if
+        provided.
         """
         clients = dict()
         clients['trade'] = TradingClient(api_key=self.key,
@@ -264,6 +263,10 @@ class AlpacaClient(AbstractClient):
         The account object is used to perform account related tasks such
         as checking the account status, getting the account balance, and
         getting the account positions.
+
+        Raises:
+        -------
+            Exception: If the account setup fails.
 
         Returns:
         ---------
@@ -435,13 +438,41 @@ class AlpacaDataClient(AlpacaClient, AbstractDataClient):
 
     Args:
     ------
-        key (str): 
-            The API key for the Alpaca API. 
-        secret (str): The secret key for the Alpaca API.
+        key (str):
+            The API key for the Alpaca API.
+        secret (str):
+            The secret key for the Alpaca API.
         paper (bool):
-            Whether to use the paper trading API or the live
-            trading API. Defaults to False. If using paper account
-            credentials, this should be set to True.
+            Whether to use the paper trading API or the live trading
+            API. Defaults to False. If using paper account credentials,
+            this should be set to True.
+
+    Methods:
+    --------
+        connect:
+            Connect to the Alpaca API and set up the REST clients. Will
+            be called automatically when the client is instantiated.
+        _validate_credentials:
+            Ensure that the API key and secret are valid.
+        _get_clients:
+            Gets the rest client objects from Alpaca API. Rest clients
+            include the trading client, the stock historical data
+            client, and the crypto historical data client. The trading
+            client is used to place orders and perform account related
+            tasks. The stock historical data client is used to retrieve
+            historical stock data. The crypto historical data client is
+            used to retrieve historical crypto data. The clients are
+            stored in a dictionary with the keys 'trade', 'stocks', and
+            'crypto'.
+        _get_account:
+            The account object is used to perform account related tasks
+            such as checking the account status, getting the account
+            balance, and getting the account positions.
+        get_downloader_and_request:
+            Returns the downloader and the request object for the
+            specified dataset type and asset type.
+            
+
         
     Examples:
     ---------
