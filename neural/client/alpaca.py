@@ -716,6 +716,11 @@ class AlpacaDataClient(AlpacaClient, AbstractDataClient):
             list: 
                 A list of Asset objects.
 
+        Raises:
+        ------- 
+            ValueError: 
+                If a symbol is not a known symbol.  
+
         """
         asset_type_map = {
             AssetClass.US_EQUITY: AssetType.STOCK,
