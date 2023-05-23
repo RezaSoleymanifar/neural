@@ -286,7 +286,42 @@ class MarginAccountPipe(AbstractPipe):
             whether to track and update the observation statistics
             during training. If False, the statistics will not be   
             tracked and updated during training. If yes statistics are
-            
+            tracked as pipe attribute and can be saved and loaded with
+            the pipe object.
+        verbosity (int):
+            verbosity level of the console tearsheet render. Set to 20
+            at construction.
+
+        margin_account_metadata (MarginAccountMetaDataWrapper):
+            margin account metadata wrapper. Set to
+            MarginAccountMetaDataWrapper at construction.   
+        render (ConsoleTearsheetRenderWrapper):
+            console tearsheet render wrapper. Set to
+            ConsoleTearsheetRenderWrapper at construction.
+        initial_margin (InitialMarginActionWrapper):
+            initial margin wrapper. Set to InitialMarginActionWrapper
+            at construction.
+        excess_margin (ExcessMarginActionWrapper):
+            excess margin wrapper. Set to ExcessMarginActionWrapper at
+            construction.
+        action_interpreter (EquityBasedUniformActionInterpreter):
+            equity based uniform action interpreter wrapper. Set to
+            EquityBasedUniformActionInterpreter at construction.
+        clip (ActionClipperWrapper):
+            action clipper wrapper. Set to ActionClipperWrapper at
+            construction.
+        observation_pipe (ObservationPipe):
+            observation pipe. Set to ObservationPipe at construction.
+        action_pipe (ActionPipe):
+            action pipe. Set to ActionPipe at construction.
+        reward_pipe (RewardPipe):
+            reward pipe. Set to RewardPipe at construction.
+        
+    Methods:
+    --------
+        pipe(env):
+            Applies a stack of market wrappers successively to an
+            environment.
     """
 
     def __init__(self,
@@ -309,9 +344,7 @@ class MarginAccountPipe(AbstractPipe):
         self.stack_size = stack_size
         self.observation_statistics = None
 
-        self.reward_statistics = None
         self.track_statistics = track_statistics
-
         self.verbosity = verbosity
 
         self.margin_account_metadata = MarginAccountMetaDataWrapper
@@ -331,10 +364,8 @@ class MarginAccountPipe(AbstractPipe):
 
     def pipe(self, env):
         """
-        Applies a stack of market wrappers successively to an environment.
-        Wrappers are addedd successively akin to layers in PyTorch. state of
-        wrappers are saved to an attribute of the Pipe class so that they can
-        be restored later.
+        Applies a stack of market wrappers successively to an
+        environment.
 
         Args:
         ------
@@ -360,8 +391,7 @@ class MarginAccountPipe(AbstractPipe):
             track_statistics=self.track_statistics).pipe(env)
         env = self.action_pipe(min_trade=self.min_trade,
                                integer=self.integer).pipe(env)
-        env = self.reward_pipe(reward_statistics=self.reward_statistics,
-                               track_statistics=self.track_statistics).pipe(env)
+        env = self.reward_pipe().pipe(env)
 
         env = self.action_interpreter(env, trade_ratio=self.trade_equity_ratio)
         env = self.clip(env)
