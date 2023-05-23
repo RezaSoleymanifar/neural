@@ -45,9 +45,95 @@ class AlpacaClient(AbstractClient):
     Methods:
     --------
         connect: 
-            Connect to the Alpaca API and set up the client. clients:
-            Returns a dictionary of all clients available on
-
+            Connect to the Alpaca API and set up the REST clients. Will
+            be called automatically when the client is instantiated.
+        _get_clients:
+            Gets the rest client objects from Alpaca API. Rest clients
+            include the trading client, the stock historical data
+            client, and the crypto historical data client. The trading
+            client is used to place orders and perform account related
+            tasks. The stock historical data client is used to retrieve
+            historical stock data. The crypto historical data client is
+            used to retrieve historical crypto data. The clients are
+            stored in a dictionary with the keys 'trade', 'stocks', and
+            'crypto'.
+        _get_account:
+            The account object is used to perform account related tasks
+            such as checking the account status, getting the account
+            balance, and getting the account positions.
+        _validate_credentials:
+            Ensure that the API key and secret are valid.
+        
+    Properties:
+    -----------
+        clients:
+            Returns a dictionary of all clients available on Alpaca API.
+            The corresponding values are the RESTClient objects.
+        account:
+            A TradeAccount object that contains information about the
+            account. Functionalities of TradeAccount:
+                - Get account status
+                - Get account balance
+                - Get account positions
+                - Get account portfolio value
+                - Get account pattern day trader status
+                - Get account equity
+                - Get account maintenance margin
+                - Get account initial margin
+                - Get account buying power
+        assets:
+            Returns a dataframe of all assets available on Alpaca API.
+            Asset objects have the flowing attributes:
+                - symbol
+                - asset_class
+                - exchange
+                - status
+                - tradable
+                - marginable
+                - shortable
+                - easy_to_borrow
+                - fractionable
+                - maintenance_margin
+                - initial_margin
+                - day_trade_ratio
+                - last_updated_at
+        symbols:
+            Returns a dictionary of all symbols available on Alpaca API.
+            The corresponding values are the Asset objects. Asset
+            objects have the flowing attributes:
+                - symbol
+                - asset_class
+                - exchange
+                - status
+                - tradable
+                - marginable
+                - shortable
+                - easy_to_borrow
+                - fractionable
+                - maintenance_margin
+                - initial_margin
+                - day_trade_ratio
+                - last_updated_at
+        asset_types:
+            Returns the asset types available on Alpaca API. The asset
+            types are:
+                - STOCK
+                - CRYPTOCURRENCY    
+        exchanges:
+            A list of exchanges available on Alpaca API. The exchanges
+            are:
+                - AMEX
+                - ARCA
+                - BATS
+                - NYSE
+                - NASDAQ
+                - NYSEARCA
+                - FTXU
+                - CBSE
+                - GNSS
+                - ERSX
+                - OTC
+                - CRYPTO
 
     Examples:
     ---------
