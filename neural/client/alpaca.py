@@ -227,11 +227,7 @@ class AlpacaClient(AbstractClient):
     def _get_clients(self) -> RESTClient:
         """
         Gets the rest client objects from Alpaca API. The trading REST client
-        is used to place orders and perform account related tasks. The stock
-        historical data client is used to retrieve historical stock data. The
-        crypto historical data client is used to retrieve historical crypto
-        data. The clients are stored in a dictionary with the keys 'trade',
-        'stocks', and 'crypto'.
+        is used to place orders and perform account related tasks.
 
         TradingClient functionalities:
             - Submit order
@@ -478,8 +474,11 @@ class AlpacaDataClient(AlpacaClient, AbstractDataClient):
 
     def _get_clients(self) -> RESTClient:
         """
-        Adds the stock historical data client and the crypto historical
-        data client to the clients dictionary.
+        Adds the stock historical data client and the crypto historical data
+        client to the clients dictionary. The stock historical data client is
+        used to retrieve historical stock data. The crypto historical data
+        client is used to retrieve historical crypto data.
+
 
         CryptoHistoricalDataClient functionalities:
             - Get crypto bars
