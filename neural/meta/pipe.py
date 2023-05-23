@@ -91,7 +91,18 @@ class RewardPipe(AbstractPipe):
             environment.
     """
     def __init__(self, track_statistics=True) -> None:
+        """
+        Initializes the reward pipe.
 
+        Args:
+        ------
+        track_statistics (bool):    
+            whether to track and update the reward statistics during
+            training. If False, the statistics will not be tracked and
+            updated during training. If yes statistics are tracked as   
+            pipe attribute and can be saved and loaded with the pipe
+            object.
+        """
         self.reward_statistics = None
         self.track_statistics = track_statistics
 
@@ -148,7 +159,25 @@ class ObservationPipe(AbstractPipe):
                  buffer_size: int = 10,
                  stack_size: int = None,
                  track_statistics: bool = True) -> None:
+        """
+        Initializes the observation pipe.
 
+        Args:
+        ------
+        buffer_size (int):
+            size of the buffer for buffering observations. Set to 10 at
+            construction.
+        stack_size (int):
+            size of the stack for stacking observations. Set to None at 
+            construction. If None, the stack size will be set to the
+            buffer size.
+        track_statistics (bool):
+            whether to track and update the observation statistics
+            during training. If False, the statistics will not be
+            tracked and updated during training. If yes statistics are
+            tracked as pipe attribute and can be saved and loaded with
+            the pipe object.
+        """
         self.buffer_size = buffer_size
         self.stack_size = stack_size
         self.observation_statistics = None
@@ -189,9 +218,26 @@ class ActionPipe(AbstractPipe):
         integer (bool):
             whether to modify notional value of trades to match integer
             number of assets. Set to False at construction.
+    
+    Methods:
+    --------
+        pipe(env):
+            Applies a stack of market wrappers successively to an
+            environment.
     """
     def __init__(self, min_trade: float = 1, integer: bool = False) -> None:
+        """
+        Initializes the action pipe.
 
+        Args:
+        ------
+        min_trade (float):
+            minimum trade size in terms of notional value of base
+            currency. Set to 1 at construction.
+        integer (bool):
+            whether to modify notional value of trades to match integer
+            number of assets. Set to False at construction.
+        """
         self.min_trade = min_trade
         self.integer = integer
 
@@ -209,8 +255,55 @@ class ActionPipe(AbstractPipe):
 
 class MarginAccountPipe(AbstractPipe):
     """
-    A pipe for margin account environments. The pipe adds the trading
-    logics of a margin account to the base market environment.
+    A pipe to simulate a margin account environment. The pipe adds the
+    trading logics of a margin account to the base market environment.
+    This pipe is a combination of the following pipes:
+        - ObservationPipe
+        - ActionPipe
+        - RewardPipe
+
+    and following functionalities:
+        - Margin account metadata
+        - Console tearsheet render
+        - Initial margin
+        - Excess margin
+        - Equity based uniform action interpreter
+        - Action clipper
+
+    Attributes:
+    -----------
+        trade_equity_ratio (float):
+            ratio of equity to be traded. Set to 0.02 at construction.
+        excess_margin_ratio_threshold (float):
+            threshold for excess margin ratio. Set to 0.1 at
+            construction.
+        min_trade (float):
+            minimum trade size in terms of notional value of base
+            currency. Set to 1 at construction.
+        integer (bool):
+            whether to modify notional value of trades to match integer
+            number of assets. Set to False at construction.
+        buffer_size (int):
+            size of the buffer for buffering observations. Set to 10 at
+            construction.
+        stack_size (int):
+            size of the stack for stacking observations. Set to None at
+            construction. If None, the stack size will be set to the    
+            buffer size.
+        observation_statistics (RunningStatistics):
+            statistics of the observation distribution. Set to None at
+            construction. If track_statistics is True, the statistics
+            will be synchronized with the statistics of the observation
+            normalizer wrapper. This will be reused with the wrapper
+            when the pipe is saved and loaded.
+        reward_statistics (RunningStatistics):
+            statistics of the reward distribution. Set to None at
+            construction. If track_statistics is True, the statistics
+            will be synchronized with the statistics of the reward
+            normalizer wrapper. This will be reused with the wrapper
+
+
+
     """
 
     def __init__(self,
@@ -220,8 +313,6 @@ class MarginAccountPipe(AbstractPipe):
                  integer: bool = False,
                  buffer_size: int = 10,
                  stack_size: int = None,
-                 observation_statistics: Optional[RunningStatistics] = None,
-                 reward_statistics: Optional[RunningStatistics] = None,
                  track_statistics: bool = True,
                  verbosity: int = 20) -> None:
 
@@ -233,9 +324,9 @@ class MarginAccountPipe(AbstractPipe):
 
         self.buffer_size = buffer_size
         self.stack_size = stack_size
-        self.observation_statistics = observation_statistics
+        self.observation_statistics = None
 
-        self.reward_statistics = reward_statistics
+        self.reward_statistics = None
         self.track_statistics = track_statistics
 
         self.verbosity = verbosity
