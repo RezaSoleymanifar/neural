@@ -226,24 +226,12 @@ class AlpacaClient(AbstractClient):
 
     def _get_clients(self) -> RESTClient:
         """
-        Gets the rest client objects from Alpaca API. Rest clients
-        include the trading client, the stock historical data client,
-        and the crypto historical data client. The trading client is
-        used to place orders and perform account related tasks. The
-        stock historical data client is used to retrieve historical
-        stock data. The crypto historical data client is used to
-        retrieve historical crypto data. The clients are stored in a
-        dictionary with the keys 'trade', 'stocks', and 'crypto'.
-
-        CryptoHistoricalDataClient functionalities:
-            - Get crypto bars
-            - Get crypto quotes
-            - Get crypto trades
-
-        StockHistoricalDataClient functionalities:
-            - Get stock bars
-            - Get stock quotes
-            - Get stock trades
+        Gets the rest client objects from Alpaca API. The trading REST client
+        is used to place orders and perform account related tasks. The stock
+        historical data client is used to retrieve historical stock data. The
+        crypto historical data client is used to retrieve historical crypto
+        data. The clients are stored in a dictionary with the keys 'trade',
+        'stocks', and 'crypto'.
 
         TradingClient functionalities:
             - Submit order
@@ -257,15 +245,9 @@ class AlpacaClient(AbstractClient):
 
         Notes:
         ------
-        Crypto does not need key, and secret but will be faster if
-        provided.
+        Crypto does not need key, and secret but will be faster if provided.
         """
         clients = dict()
-
-        clients['crypto'] = CryptoHistoricalDataClient(api_key=self.key,
-                                                       secret_key=self.secret)
-        clients['stocks'] = StockHistoricalDataClient(api_key=self.key,
-                                                      secret_key=self.secret)
         clients['trade'] = TradingClient(api_key=self.key,
                                          secret_key=self.secret,
                                          paper=self.paper)
@@ -494,6 +476,29 @@ class AlpacaDataClient(AlpacaClient, AbstractDataClient):
 
         return AlpacaDataSource
 
+    def _get_clients(self) -> RESTClient:
+        """
+        Adds the stock historical data client and the crypto historical
+        data client to the clients dictionary.
+
+        CryptoHistoricalDataClient functionalities:
+            - Get crypto bars
+            - Get crypto quotes
+            - Get crypto trades
+
+        StockHistoricalDataClient functionalities:
+            - Get stock bars
+            - Get stock quotes
+            - Get stock trades
+        """
+        clients = super()._get_clients()
+
+        clients['crypto'] = CryptoHistoricalDataClient(api_key=self.key,
+                                                       secret_key=self.secret)
+        clients['stocks'] = StockHistoricalDataClient(api_key=self.key,
+                                                      secret_key=self.secret)
+        return clients
+    
     @staticmethod
     def safe_method_call(object, method_name):
 
