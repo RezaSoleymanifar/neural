@@ -142,8 +142,26 @@ class AlpacaClient(AbstractClient):
         retrieve historical crypto data. The clients are stored in a
         dictionary with the keys 'trade', 'stocks', and 'crypto'.
 
-        CryptoHis
-        
+        CryptoHistoricalDataClient functionalities:
+            - Get crypto bars
+            - Get crypto quotes
+            - Get crypto trades
+
+        StockHistoricalDataClient functionalities:
+            - Get stock bars
+            - Get stock quotes
+            - Get stock trades
+
+        TradingClient functionalities:
+            - Submit order
+            - Get orders
+            - Cancel order
+            - Get positions
+            - Get account
+            - Get clock
+            - Get calendar
+            - Get assets
+
         Notes:
         ------
         Crypto does not need key, and secret but will be faster if
@@ -316,7 +334,11 @@ class AlpacaClient(AbstractClient):
         Returns:
         ---------
             list: A list of exchanges available on Alpaca API.
-
+        
+        Notes:
+        ------
+        As of 05/23/2023, all stocks on Alpaca API are traded on NYSE
+        timezone.
         """
         if self._exchanges is None:
             self._exchanges = [item for item in AssetExchange]
@@ -326,7 +348,9 @@ class AlpacaClient(AbstractClient):
 
 
 class AlpacaDataClient(AlpacaClient, AbstractDataClient):
-
+    """
+    
+    """
     def __init__(self, *args, **kwargs):
 
         super().__init__(*args, **kwargs)
