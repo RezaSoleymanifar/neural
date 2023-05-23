@@ -133,14 +133,14 @@ class AlpacaClient(AbstractClient):
 
     def _get_clients(self) -> RESTClient:
         """
-        Gets the client objects from Alpaca API. Clients include the
-        trading client, the stock historical data client, and the crypto
-        historical data client. The trading client is used to place
-        orders and perform account related tasks. The stock historical
-        data client is used to retrieve historical stock data. The
-        crypto historical data client is used to retrieve historical
-        crypto data. The clients are stored in a dictionary with the
-        keys 'trade', 'stocks', and 'crypto'.
+        Gets the rest client objects from Alpaca API. Rest clients
+        include the trading client, the stock historical data client,
+        and the crypto historical data client. The trading client is
+        used to place orders and perform account related tasks. The
+        stock historical data client is used to retrieve historical
+        stock data. The crypto historical data client is used to
+        retrieve historical crypto data. The clients are stored in a
+        dictionary with the keys 'trade', 'stocks', and 'crypto'.
         
         Notes:
         ------
@@ -174,19 +174,43 @@ class AlpacaClient(AbstractClient):
             if not self.account.status == AccountStatus.ACTIVE:
                 logger.warning(f'Account Status: {self.account.status}')
 
-        except Exception as e:
-            logger.exception(f'Account setup failed: {e}')
+        except Exception as exception:
+            logger.exception(f'Account setup failed: {exception}')
 
         return account
 
     @property
     def clients(self) -> Dict[str:RESTClient]:
+        """
+        Returns a dictionary of all clients available on Alpaca API. The
+        corresponding values are the RESTClient objects.
 
+        Returns:
+        ---------
+            dict: A dictionary mapping client names to RESTClient
+            objects.
+        """
         return self._clients
 
     @property
     def account(self) -> TradeAccount:
+        """
+        A TradeAccount object that contains information about the
+        account. Functionalities of TradeAccount:
+            - Get account status
+            - Get account balance
+            - Get account positions
+            - Get account orders
+            - Get account activities
+            - Get account history
+            
 
+
+
+        Returns:
+        ---------
+            Account: The account object.
+        """
         return self._account
 
     @property
