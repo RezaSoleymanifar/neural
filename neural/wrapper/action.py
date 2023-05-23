@@ -698,13 +698,13 @@ class ExcessMarginActionWrapper(ActionWrapper):
 @metadata
 class ShortingActionWrapper(ActionWrapper):
     """
-    A wrapper that implements the shorting logic of the margin account.
-    This wrapper modifies the agent's actions to ensure that if new
-    short positions are opened then they are for shortable assets only.
-    If shorting is not allowed for an asset then the action is modified
-    to be zero. By default integer quantities are enforced for short
-    actions. In other words fractional shorting is not allowed. This is
-    Alpaca API default behavior.
+    A wrapper that implements the shorting logic. This wrapper modifies
+    the agent's actions to ensure that if new short positions are opened
+    then they are for shortable assets only. If shorting is not allowed
+    for an asset then the action is modified to be zero. By default
+    integer quantities are enforced for short actions. In other words
+    fractional shorting is not allowed. This is Alpaca API default
+    behavior.
 
     Args:
     ----------

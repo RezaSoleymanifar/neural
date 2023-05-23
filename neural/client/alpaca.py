@@ -31,6 +31,20 @@ from neural.utils.misc import objects_to_dataframe
 
 class AlpacaClient(AbstractClient):
     """
+    The AlpacaClient class is a wrapper for the Alpaca API. It provides
+    a simple interface for connecting to the Alpaca API and retrieving
+    data. It also provides a simple interface for placing orders.
+
+    Args:
+    ------
+        key (str): The API key for the Alpaca API. secret (str): The
+        secret key for the Alpaca API. paper (bool): Whether to use the
+        paper trading API or the live
+            trading API. Defaults to False.
+
+    Examples:
+    ---------
+
     Option 1: Instantiate an instance of the AlpacaClient class with
     your API key and secret.
 
@@ -48,13 +62,15 @@ class AlpacaClient(AbstractClient):
     Option 3: Instantiate an instance of the AlpacaClient class with
     environment variables.
 
-    # Set the environment variables for API key and secret # on
-    Unix-like operating systems (Linux, macOS, etc.): BASH: export
-    API_KEY = <your_api_key> BASH: export API_SECRET = <your_secret_key>
+    # Set the environment variables for API key and secret on #
+    Unix-like operating systems (Linux, macOS, etc.): 
+        BASH: export API_KEY = <your_api_key> BASH: export API_SECRET =
+        <your_secret_key>
 
-    # Instantiate an instance of the AlpacaClient class >>> from
-    neural.connect.alpaca import AlpacaClient >>> client =
-    AlpacaClient()
+    # Instantiate an instance of the AlpacaClient class 
+    
+    >>> from neural.connect.alpaca import AlpacaClient 
+    >>> client = AlpacaClient()
     """
 
     def __init__(self,
