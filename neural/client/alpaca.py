@@ -200,12 +200,12 @@ class AlpacaClient(AbstractClient):
             - Get account status
             - Get account balance
             - Get account positions
-            - Get account orders
-            - Get account activities
-            - Get account history
-            
-
-
+            - Get account portfolio value
+            - Get account pattern day trader status
+            - Get account equity
+            - Get account maintenance margin
+            - Get account initial margin
+            - Get account buying power
 
         Returns:
         ---------
@@ -217,6 +217,11 @@ class AlpacaClient(AbstractClient):
     def assets(self) -> pd.DataFrame:
         """
         Returns a dataframe of all assets available on Alpaca API.
+        
+        Returns:
+        ---------
+            DataFrame: A dataframe of all assets available on Alpaca
+            API.
         """
 
         if self._assets is None:
@@ -230,7 +235,25 @@ class AlpacaClient(AbstractClient):
     def symbols(self) -> Dict[str, Asset]:
         """
         Returns a dictionary of all symbols available on Alpaca API. The
-        corresponding values are the Asset objects.
+        corresponding values are the Asset objects. Asset objects have
+        the flowing attributes:
+            - symbol
+            - asset_class
+            - exchange
+            - status
+            - tradable
+            - marginable
+            - shortable
+            - easy_to_borrow
+            - fractionable
+            - maintenance_margin
+            - initial_margin
+            - day_trade_ratio
+            - last_updated_at
+
+        Returns:
+        ---------
+            dict: A dictionary mapping symbols to Asset objects.
         """
         if self._symbols is None:
             self._symbols = {asset.symbol: asset for asset in self.assets}
@@ -238,10 +261,18 @@ class AlpacaClient(AbstractClient):
         return self._symbols
 
     @property
-    def asset_classes(self) -> List[str]:
+    def asset_types(self) -> List[str]:
+        """
+        
+        """
 
+            asset_type_map = {AssetClass.US_EQUITY: AssetType.STOCK,
+                               AssetClass.CRYPTO: AssetType.CRYPTOCURRENCY}
+        
         if self._asset_classes is None:
             self._asset_classes = [item for item in AssetClass]
+
+
 
         asset_classes = [item.value for item in self._asset_classes]
         return asset_classes

@@ -23,7 +23,7 @@ class TestClient(BaseConnectionTest):
         f"""
         assets: {self.client.assets.head()}
         positions: {self.client.positions.head()}
-        asset classes: {self.client.asset_classes}
+        asset classes: {self.client.asset_types}
         exchange: {self.client.exchanges}
         """)
         logger.info(
