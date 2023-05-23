@@ -18,7 +18,6 @@ from neural.wrapper.observation import (ObservationStackerWrapper,
 from neural.wrapper.reward import (RewardNormalizerWrapper,
                                    RewardGeneratorWrapper,
                                    LiabilityInterstRewardWrapper)
-from neural.utils.base import RunningStatistics
 
 
 class AbstractPipe(ABC):
@@ -72,17 +71,15 @@ class RewardPipe(AbstractPipe):
     
     Attributes:
     -----------
-    reward_statistics (RunningStatistics):
-        statistics of the reward distribution. Set to None at
-        construction. If track_statistics is True, the statistics will
-        be synchronized with the statistics of the reward normalizer
-        wrapper. This will be reused with the wrapper when the pipe is
-        saved and loaded.
-    track_statistics (bool):
-        whether to track and update the reward statistics during
-        training. If False, the statistics will not be tracked and
-        updated during training. If yes statistics are tracked as pipe
-        attribute and can be saved and loaded with the pipe object.
+        reward_generator (RewardGeneratorWrapper):
+            reward generator wrapper. Set to RewardGeneratorWrapper at
+            construction.
+        interest (LiabilityInterstRewardWrapper):
+            interest on debt wrapper. Set to
+            LiabilityInterstRewardWrapper at construction.
+        reward_normalizer (RewardNormalizerWrapper):
+            reward normalizer wrapper. Set to RewardNormalizerWrapper at
+            construction.
 
     Methods:
     --------
@@ -90,21 +87,10 @@ class RewardPipe(AbstractPipe):
             Applies a stack of market wrappers successively to an
             environment.
     """
-    def __init__(self, track_statistics=True) -> None:
+    def __init__(self) -> None:
         """
         Initializes the reward pipe.
-
-        Args:
-        ------
-        track_statistics (bool):    
-            whether to track and update the reward statistics during
-            training. If False, the statistics will not be tracked and
-            updated during training. If yes statistics are tracked as   
-            pipe attribute and can be saved and loaded with the pipe
-            object.
         """
-        self.reward_statistics = None
-        self.track_statistics = track_statistics
 
         self.reward_generator = RewardGeneratorWrapper
         self.interest = LiabilityInterstRewardWrapper
@@ -296,14 +282,11 @@ class MarginAccountPipe(AbstractPipe):
             will be synchronized with the statistics of the observation
             normalizer wrapper. This will be reused with the wrapper
             when the pipe is saved and loaded.
-        reward_statistics (RunningStatistics):
-            statistics of the reward distribution. Set to None at
-            construction. If track_statistics is True, the statistics
-            will be synchronized with the statistics of the reward
-            normalizer wrapper. This will be reused with the wrapper
-
-
-
+        track_statistics (bool):
+            whether to track and update the observation statistics
+            during training. If False, the statistics will not be   
+            tracked and updated during training. If yes statistics are
+            
     """
 
     def __init__(self,

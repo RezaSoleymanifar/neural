@@ -77,14 +77,10 @@ class RewardNormalizerWrapper(RewardWrapper):
                  env: Env,
                  epsilon: float = 1e-8,
                  clip_threshold: float = np.inf,
-                 reward_statistics: Optional[RunningStatistics] = None,
-                 track_statistics: bool = True) -> None:
+                 ) -> None:
         """
         This wrapper normalizes immediate rewards so that rewards have
-        mean 0 and standard deviation 1. If track is True the
-        reward_statistics argument will be set equal reward_statistics
-        attribute. This is useful if you want to track the reward
-        statistics from the outer scope.
+        mean 0 and standard deviation 1.
 
         Args:
         -------
@@ -105,13 +101,8 @@ class RewardNormalizerWrapper(RewardWrapper):
 
         super().__init__(env)
 
-        self.reward_statistics = (reward_statistics if reward_statistics
-                                  is not None else RunningStatistics())
         self.epsilon = epsilon
         self.clip_threshold = clip_threshold
-
-        if track_statistics:
-            reward_statistics = self.reward_statistics
 
         return None
 
