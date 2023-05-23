@@ -103,7 +103,7 @@ class AlpacaClient(AbstractClient):
         self._account = None
         self._assets = None
         self._symbols = None
-        self._asset_classes = None
+        self._asset_types = None
         self._exchanges = None
 
         super().__init__()
@@ -141,6 +141,8 @@ class AlpacaClient(AbstractClient):
         stock data. The crypto historical data client is used to
         retrieve historical crypto data. The clients are stored in a
         dictionary with the keys 'trade', 'stocks', and 'crypto'.
+
+        CryptoHis
         
         Notes:
         ------
@@ -216,7 +218,21 @@ class AlpacaClient(AbstractClient):
     @property
     def assets(self) -> pd.DataFrame:
         """
-        Returns a dataframe of all assets available on Alpaca API.
+        Returns a dataframe of all assets available on Alpaca API. Asset
+        objects have the flowing attributes:
+            - symbol
+            - asset_class
+            - exchange
+            - status
+            - tradable
+            - marginable
+            - shortable
+            - easy_to_borrow
+            - fractionable
+            - maintenance_margin
+            - initial_margin
+            - day_trade_ratio
+            - last_updated_at
         
         Returns:
         ---------
@@ -261,25 +277,47 @@ class AlpacaClient(AbstractClient):
         return self._symbols
 
     @property
-    def asset_types(self) -> List[str]:
+    def asset_types(self) -> List[AssetType]:
         """
-        
+        Returns the asset types available on Alpaca API. The asset types
+        are:
+            - STOCK
+            - CRYPTOCURRENCY    
+
+        Returns:
+        ---------
+            list: A list of asset types available on Alpaca API.
         """
-
-            asset_type_map = {AssetClass.US_EQUITY: AssetType.STOCK,
-                               AssetClass.CRYPTO: AssetType.CRYPTOCURRENCY}
+        asset_type_map = {AssetClass.US_EQUITY: AssetType.STOCK,
+                            AssetClass.CRYPTO: AssetType.CRYPTOCURRENCY}
         
-        if self._asset_classes is None:
-            self._asset_classes = [item for item in AssetClass]
+        if self._asset_types is None:
+            self._asset_types = [asset_type_map[item] for item in AssetClass]
 
-
-
-        asset_classes = [item.value for item in self._asset_classes]
-        return asset_classes
+        return self._asset_types
 
     @property
-    def exchanges(self) -> List[str]:
+    def exchanges(self) -> List[AssetExchange]:
+        """
+        A list of exchanges available on Alpaca API. The exchanges are:
+            - AMEX
+            - ARCA
+            - BATS
+            - NYSE
+            - NASDAQ
+            - NYSEARCA
+            - FTXU
+            - CBSE
+            - GNSS
+            - ERSX
+            - OTC
+            - CRYPTO
 
+        Returns:
+        ---------
+            list: A list of exchanges available on Alpaca API.
+
+        """
         if self._exchanges is None:
             self._exchanges = [item for item in AssetExchange]
 
