@@ -67,23 +67,26 @@ class RewardPipe(AbstractPipe):
     
     Attributes:
     -----------
-    reward_statistics (RunningStatistics): 
-        statistics of the reward distribution. Useful for restoring 
-        state of the pipe after loading from a file. State of the pipe 
-        is saved as attributes of the pipe object.
+    reward_statistics (RunningStatistics):
+        statistics of the reward distribution. Set to None at
+        construction. If track_statistics is True, the statistics will
+        be synchronized with the statistics of the reward normalizer
+        wrapper. This will be reused with the wrapper when the pipe is
+        saved and loaded.
     track_statistics (bool):
         whether to track and update the reward statistics during
-        training. If False, the statistics will be tracked and updated
-        during training.
+        training. If False, the statistics will not be tracked and
+        updated during training. If yes statistics are tracked as pipe
+        attribute and can be saved and loaded with the pipe object.
 
 
 
     """
     def __init__(self,
-                 reward_statistics: Optional[RunningStatistics] = None,
-                 track_statistics=True) -> None:
+                 track_statistics=True
+                 ) -> None:
 
-        self.reward_statistics = reward_statistics
+        self.reward_statistics = None
         self.track_statistics = track_statistics
 
         self.reward_generator = RewardGeneratorWrapper
@@ -107,7 +110,17 @@ class ObservationPipe(AbstractPipe):
         - Observation stacking (dict/numpy array)
         - Observation normalization (dict/numpy array)
     
-
+    Attributes:
+    -----------
+        buffer_size (int):
+            size of the buffer for buffering observations. Set to 10 at
+            construction.
+        stack_size (int):
+            size of the stack for stacking observations. Set to None at
+            construction. If None, the stack size will be set to the
+            buffer size.
+        observation_statistics (RunningStatistics):
+        
     """
     def __init__(self,
                  buffer_size: int = 10,
