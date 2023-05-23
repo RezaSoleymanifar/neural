@@ -42,11 +42,21 @@ class AlpacaClient(AbstractClient):
         paper trading API or the live
             trading API. Defaults to False.
     
+    Attributes:
+    -----------
+        key (str): 
+            The API key for the Alpaca API.
+        secret (str): 
+            The secret key for the Alpaca API.   
+        paper (bool):
+
     Methods:
     --------
         connect: 
             Connect to the Alpaca API and set up the REST clients. Will
             be called automatically when the client is instantiated.
+        _validate_credentials:
+            Ensure that the API key and secret are valid.
         _get_clients:
             Gets the rest client objects from Alpaca API. Rest clients
             include the trading client, the stock historical data
@@ -61,14 +71,13 @@ class AlpacaClient(AbstractClient):
             The account object is used to perform account related tasks
             such as checking the account status, getting the account
             balance, and getting the account positions.
-        _validate_credentials:
-            Ensure that the API key and secret are valid.
         
     Properties:
     -----------
         clients:
             Returns a dictionary of all clients available on Alpaca API.
             The corresponding values are the RESTClient objects.
+
         account:
             A TradeAccount object that contains information about the
             account. Functionalities of TradeAccount:
