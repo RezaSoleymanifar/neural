@@ -576,12 +576,36 @@ class AlpacaDataClient(AlpacaClient, AbstractDataClient):
         Get the downloader and the request object for the specified dataset
         type and asset type. The request object is used to specify the
         parameters for the data request. The downloader is used to retrieve
-        the data. Request object has the following attributes:
+        the data. Request object for bars has the following attributes:
             - symbol_or_symbols
             - start
             - end
             - timeframe
-
+        Request object for quotes and trades has the following attributes:
+            - symbol_or_symbols
+            - start
+            - end
+        
+        Args:
+        ------
+            dataset_type:
+                The type of dataset to retrieve. The dataset types are:
+                    - BAR
+                    - QUOTE 
+                    - TRADE
+            asset_type:
+                The type of asset to retrieve. The asset types are:
+                    - STOCK
+                    - CRYPTOCURRENCY
+            
+        Returns:
+        ---------
+            tuple: A tuple containing the downloader and the request
+            object.
+        
+        Raises:
+        -------
+            ValueError: If the dataset type or asset type is not valid.
         """
         client_map = {
             AssetType.STOCK: self.clients['stocks'],
