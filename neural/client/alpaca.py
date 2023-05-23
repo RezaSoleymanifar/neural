@@ -111,6 +111,10 @@ class AlpacaClient(AbstractClient):
         return None
 
     def connect(self):
+        """
+        Connect to the Alpaca API and set up the client. Will be called
+        automatically when the client is instantiated.
+        """
         self._validate_credentials()
         self._clients = self._get_clients()
         self._account = self._get_account()
@@ -118,7 +122,9 @@ class AlpacaClient(AbstractClient):
         return None
 
     def _validate_credentials(self) -> bool:
-
+        """
+        Ensure that the API key and secret are valid.
+        """
         if self.key is None or self.secret is None:
             raise ValueError(
                 'API key and secret are required to connect to Alpaca API.')
@@ -126,9 +132,21 @@ class AlpacaClient(AbstractClient):
         return None
 
     def _get_clients(self) -> RESTClient:
-
-        # crypto does not need key, and secret but will be faster if
-        # provided
+        """
+        Gets the client objects from Alpaca API. Clients include the
+        trading client, the stock historical data client, and the crypto
+        historical data client. The trading client is used to place
+        orders and perform account related tasks. The stock historical
+        data client is used to retrieve historical stock data. The
+        crypto historical data client is used to retrieve historical
+        crypto data. The clients are stored in a dictionary with the
+        keys 'trade', 'stocks', and 'crypto'.
+        
+        Notes:
+        ------
+        Crypto does not need key, and secret but will be faster if
+        provided.
+        """
         clients = dict()
 
         clients['crypto'] = CryptoHistoricalDataClient(api_key=self.key,
@@ -142,11 +160,18 @@ class AlpacaClient(AbstractClient):
         return clients
 
     def _get_account(self) -> TradeAccount:
+        """
+        The account object is used to perform account related tasks such
+        as checking the account status, getting the account balance, and
+        getting the account positions.
 
+        Returns:
+        ---------
+            Account: The account object.
+        """
         try:
             account = self.clients['trading'].get_account()
             if not self.account.status == AccountStatus.ACTIVE:
-
                 logger.warning(f'Account Status: {self.account.status}')
 
         except Exception as e:
