@@ -37,6 +37,11 @@ class AbstractPipe(ABC):
     When saving the pipe, the state of the wrappers will be saved as
     well. The pipe class is an abstract class and must be subclassed.
 
+    Methods:
+    --------
+        pipe(env):
+            Applies a stack of market wrappers successively to an
+            environment.
     Notes:
     -----
         Pipes can be combined to create more complex pipes. For example,
@@ -79,12 +84,13 @@ class RewardPipe(AbstractPipe):
         updated during training. If yes statistics are tracked as pipe
         attribute and can be saved and loaded with the pipe object.
 
-
-
+    Methods:
+    --------
+        pipe(env):
+            Applies a stack of market wrappers successively to an
+            environment.
     """
-    def __init__(self,
-                 track_statistics=True
-                 ) -> None:
+    def __init__(self, track_statistics=True) -> None:
 
         self.reward_statistics = None
         self.track_statistics = track_statistics
@@ -120,17 +126,32 @@ class ObservationPipe(AbstractPipe):
             construction. If None, the stack size will be set to the
             buffer size.
         observation_statistics (RunningStatistics):
-        
+            statistics of the observation distribution. Set to None at
+            construction. If track_statistics is True, the statistics
+            will be synchronized with the statistics of the observation
+            normalizer wrapper. This will be reused with the wrapper
+            when the pipe is saved and loaded.
+        track_statistics (bool):
+            whether to track and update the observation statistics
+            during training. If False, the statistics will not be
+            tracked and updated during training. If yes statistics are
+            tracked as pipe attribute and can be saved and loaded with
+            the pipe object.
+    
+    Methods:
+    --------
+        pipe(env):
+            Applies a stack of market wrappers successively to an
+            environment.
     """
     def __init__(self,
                  buffer_size: int = 10,
                  stack_size: int = None,
-                 observation_statistics: Optional[RunningStatistics] = None,
                  track_statistics: bool = True) -> None:
 
         self.buffer_size = buffer_size
         self.stack_size = stack_size
-        self.observation_statistics = observation_statistics
+        self.observation_statistics = None
         self.track_statistics = track_statistics
 
         self.flatten = FlattenToNUmpyObservationWrapper
@@ -152,7 +173,23 @@ class ObservationPipe(AbstractPipe):
 
 
 class ActionPipe(AbstractPipe):
+    """
+    Action pipe for market environments. The pipe adds the following
+    functionality to the base environment:
+        - Minimum trade size
+        - Integer asset quantity
+        - Position close
+        - Shorting
 
+    Attributes:
+    -----------
+        min_trade (float):
+            minimum trade size in terms of notional value of base
+            currency. Set to 1 at construction.
+        integer (bool):
+            whether to modify notional value of trades to match integer
+            number of assets. Set to False at construction.
+    """
     def __init__(self, min_trade: float = 1, integer: bool = False) -> None:
 
         self.min_trade = min_trade
