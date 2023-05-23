@@ -77,6 +77,23 @@ class AlpacaClient(AbstractClient):
                  key: Optional[str] = None,
                  secret: Optional[str] = None,
                  paper: bool = False) -> None:
+        
+        """
+        Initialize an instance of the AlpacaClient class.
+
+        Args:
+        ------
+            key (str): 
+                The API key for the Alpaca API.
+            secret (str): 
+                The secret key for the Alpaca API.
+            paper (bool): 
+                Whether to use the paper trading API or the
+                live trading API. Defaults to False. If using
+                paper account credentials, this should be set
+                to True.
+
+        """
 
         self.key = key if key is not None else API_KEY
         self.secret = secret if secret is not None else API_SECRET
