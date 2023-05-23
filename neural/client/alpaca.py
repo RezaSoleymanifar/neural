@@ -23,7 +23,7 @@ from alpaca.data.requests import (CryptoBarsRequest, CryptoTradesRequest,
                                   StockTradesRequest)
 
 from neural.common.log import logger
-from neural.common.constants import API_KEY, API_SECRET
+from neural.common.constants import API_KEY, API_SECRET, GLOBAL_DATA_TYPE
 from neural.client.base import (AbstractClient, AbstractTradeClient,
                                 AbstractDataClient)
 from neural.data.base import AlpacaDataSource, AlpacaAsset
@@ -953,8 +953,8 @@ class AlpacaTradeClient(AlpacaClient, AbstractTradeClient):
     @property
     def asset_quantities(self, assets: List[AlpacaAsset]) -> np.ndarray[float]:
         """
-        Returns a dictionary of symbols and asset quantities for the
-        trader's current positions.
+        Returns a numpy array of symbols and asset quantities for the
+        specified list of assets.
 
         Returns:
         ---------
@@ -976,12 +976,19 @@ class AlpacaTradeClient(AlpacaClient, AbstractTradeClient):
             quantity = row['qty'] if row['side'] == 'long' else -1 * row['qty']
 
             asset_quantities.append(quantity)
-        return asset_quantities
+            asset_quantities = np.array(asset_quantities)
+        return asset_quantities.astype(GLOBAL_DATA_TYPE)
 
     @property
     def equity(self) -> float:
         """
-        The current net worth of the trader.
+        The current net worth of the trader. More concretely, the equity
+        in a margin account is defined as E = L + C - S where 
+            - E is equity
+            - L is long market value
+            - C is cash balance
+            - S is short market value
+            
 
         Returns:
             float: The current net worth of the trader.
