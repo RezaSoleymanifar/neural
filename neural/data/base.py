@@ -102,7 +102,7 @@ class AbstractAsset(ABC):
     asset_type: AssetType
     fractionable: bool
 
-dataclass(frozen=True)
+@dataclass(frozen=True)
 class AlpacaAsset(AbstractAsset):
     """
     A dataclass representing a financial asset in Alpaca API:

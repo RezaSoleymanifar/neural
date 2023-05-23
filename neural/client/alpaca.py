@@ -697,7 +697,7 @@ class AlpacaDataClient(AlpacaClient, AbstractDataClient):
     def symbols_to_assets(self, symbols: List[str]):
         """
         This method converts a list of symbols to a list of Asset objects.
-        Asset objects have the flowing attributes:
+        AlpacaAsset objects have the flowing attributes:
             - symbol
             - asset_type
             - fractionable
@@ -721,6 +721,10 @@ class AlpacaDataClient(AlpacaClient, AbstractDataClient):
             ValueError: 
                 If a symbol is not a known symbol.  
 
+        Notes:
+        ------
+            Asset objects are client dependent. This method is specific
+            to the Alpaca API client.
         """
         asset_type_map = {
             AssetClass.US_EQUITY: AssetType.STOCK,
@@ -731,7 +735,7 @@ class AlpacaDataClient(AlpacaClient, AbstractDataClient):
 
         for symbol in symbols:
 
-            alpaca_asset = self.client.symbols[symbol]
+            alpaca_asset = self.symbols[symbol]
 
             if alpaca_asset is None:
                 raise ValueError(f'Symbol {symbol} is not a known symbol.')
@@ -759,7 +763,6 @@ class AlpacaDataClient(AlpacaClient, AbstractDataClient):
                             maintenance_margin_requirement,
                             shortable=alpaca_asset.shortable,
                             easy_to_borrow=alpaca_asset.easy_to_borrow))
-
         return assets
 
 
