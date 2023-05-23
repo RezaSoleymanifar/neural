@@ -254,7 +254,7 @@ class MarginAccountPipe(AbstractPipe):
         - ObservationPipe
         - ActionPipe
         - RewardPipe
-        
+
     and following action interpreter:
         - Equity based uniform action interpreter
 
