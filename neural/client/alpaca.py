@@ -464,6 +464,88 @@ class AlpacaDataClient(AlpacaClient, AbstractDataClient):
             used to retrieve historical crypto data. The clients are
             stored in a dictionary with the keys 'trade', 'stocks', and
             'crypto'.
+        safe_method_call:
+            A helper method to safely call a method on an object. If the
+            object does not have the specified method, an AttributeError
+            will be raised.
+        get_downloader_and_request:
+            Returns the downloader and the request object for the
+            specified dataset type and asset type.
+        get_streamer:
+            A method to get the streamer for the specified stream type
+            and asset type. The streamer is used to retrieve live data.
+        symbols_to_assets:
+            This method converts a list of symbols to a list of Asset   
+            objects. AlpacaAsset objects have the flowing attributes:
+                - symbol
+                - asset_type
+                - fractionable
+                - marginable
+                - maintenance_margin
+                - shortable
+                - easy_to_borrow
+
+    Properties:
+    -----------
+        clients:
+            Returns a dictionary of all clients available on Alpaca API.
+            The corresponding values are the RESTClient objects.
+        account:
+            A TradeAccount object that contains information about the
+            account. Functionalities of TradeAccount:
+                - Get account status
+                - Get account balance
+                - Get account positions
+                - Get account portfolio value
+
+        assets:
+            Returns a dataframe of all assets available on Alpaca API.
+            Asset objects have the flowing attributes:
+                - symbol
+                - asset_class
+                - exchange
+                - status
+                - tradable
+                - marginable
+                - shortable
+                - easy_to_borrow
+                - fractionable
+                - maintenance_margin
+                - initial_margin
+                - day_trade_ratio
+                - last_updated_at
+        symbols:
+            Returns a dictionary of all symbols available on Alpaca API.
+            The corresponding values are the Asset objects.
+        asset_types:
+            Returns the asset types available on Alpaca API. The asset
+            types are:
+                - STOCK
+                - CRYPTOCURRENCY
+        exchanges:
+            A list of exchanges available on Alpaca API. The exchanges
+            are:
+                - AMEX
+                - ARCA
+                - BATS
+                - NYSE
+                - NASDAQ
+                - NYSEARCA
+                - FTXU
+                - CBSE
+                - GNSS
+                - ERSX
+                - OTC
+                - CRYPTO
+        data_source:
+            The data source for the Alpaca API. The data source is used
+            to retrieve data from the Alpaca API.
+        data_source_type:
+            The data source type for the Alpaca API. The data source
+            type is used to retrieve data from the Alpaca API.
+        data_source_name:
+            The data source name for the Alpaca API. The data source
+            
         _get_account:
             The account object is used to perform account related tasks
             such as checking the account status, getting the account
@@ -696,8 +778,8 @@ class AlpacaDataClient(AlpacaClient, AbstractDataClient):
 
     def symbols_to_assets(self, symbols: List[str]):
         """
-        This method converts a list of symbols to a list of Asset objects.
-        AlpacaAsset objects have the flowing attributes:
+        This method converts a list of symbols to a list of Asset
+        objects. AlpacaAsset objects have the flowing attributes:
             - symbol
             - asset_type
             - fractionable
@@ -723,8 +805,10 @@ class AlpacaDataClient(AlpacaClient, AbstractDataClient):
 
         Notes:
         ------
-            Asset objects are client dependent. This method is specific
-            to the Alpaca API client.
+            Asset objects are client dependent as each client can have
+            individual representation/specifications for the same
+            underlying asset. This method is specific to the Alpaca API
+            client.
         """
         asset_type_map = {
             AssetClass.US_EQUITY: AssetType.STOCK,
