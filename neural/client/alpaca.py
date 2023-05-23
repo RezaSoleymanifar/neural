@@ -471,7 +471,7 @@ class AlpacaDataClient(AlpacaClient, AbstractDataClient):
         get_downloader_and_request:
             Returns the downloader and the request object for the
             specified dataset type and asset type.
-            
+
 
         
     Examples:
@@ -540,7 +540,29 @@ class AlpacaDataClient(AlpacaClient, AbstractDataClient):
     
     @staticmethod
     def safe_method_call(object, method_name):
+        """"
+        A helper method to safely call a method on an object. If the
+        object does not have the specified method, an AttributeError
+        will be raised.
 
+        Args:
+        ------
+            object: 
+                The object to call the method on.
+            method_name:
+                The name of the method to call.
+            
+        Returns:
+        ---------
+            The result of calling the method on the object. If the
+            object does not have the specified method, an
+            AttributeError will be raised.
+        
+        Raises:
+        -------
+            AttributeError: If the object does not have the specified
+            method.
+        """
         if hasattr(object, method_name):
             return getattr(object, method_name)
         else:
@@ -550,7 +572,17 @@ class AlpacaDataClient(AlpacaClient, AbstractDataClient):
             self,
             dataset_type: AlpacaDataSource.DatasetType,
             asset_type=AssetType) -> Tuple[Callable, BaseTimeseriesDataRequest]:
+        """
+        Get the downloader and the request object for the specified dataset
+        type and asset type. The request object is used to specify the
+        parameters for the data request. The downloader is used to retrieve
+        the data. Request object has the following attributes:
+            - symbol_or_symbols
+            - start
+            - end
+            - timeframe
 
+        """
         client_map = {
             AssetType.STOCK: self.clients['stocks'],
             AssetType.CRYPTOCURRENCY: self.clients['crypto']
