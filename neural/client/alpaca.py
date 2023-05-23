@@ -620,9 +620,7 @@ class AlpacaDataClient(AlpacaClient, AbstractDataClient):
                 AssetType.CRYPTOCURRENCY: ('get_crypto_bars', CryptoBarsRequest)
             },
             AlpacaDataSource.DatasetType.QUOTE: {
-                AssetType.STOCK: ('get_stock_quotes', StockQuotesRequest),
-                AssetType.CRYPTOCURRENCY:
-                ('get_crypto_quotes', CryptoQuotesRequest)
+                AssetType.STOCK: ('get_stock_quotes', StockQuotesRequest)
             },
             AlpacaDataSource.DatasetType.TRADE: {
                 AssetType.STOCK: ('get_stock_trades', StockTradesRequest),
@@ -631,8 +629,13 @@ class AlpacaDataClient(AlpacaClient, AbstractDataClient):
             }
         }
 
-        downloader_method_name, request = downloader_request_map[dataset_type][
-            asset_type]
+        try:
+            downloader_method_name, request = downloader_request_map[dataset_type][
+                asset_type]
+        except KeyError:
+            raise ValueError(
+                f'Dataset type {dataset_type} or asset type {asset_type} is not valid.'
+            )
         downloader = AlpacaDataClient.safe_method_call(
             object=client, method_name=downloader_method_name)
 
