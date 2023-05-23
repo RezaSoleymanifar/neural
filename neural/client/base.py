@@ -108,7 +108,7 @@ class AbstractTradeClient(AbstractClient):
 
     @property
     @abstractmethod
-    def asset_quantities(self) -> np.ndarray[float]:
+    def asset_quantities(self, *args, **kwargs) -> np.ndarray[float]:
         """
         The current quantity of each asset held by the trader.
 

@@ -1,3 +1,6 @@
+"""
+
+"""
 from typing import Optional, Dict, List, Callable, Tuple
 
 import numpy as np
@@ -6,13 +9,12 @@ import pandas as pd
 from alpaca.trading.enums import (AccountStatus, AssetExchange, AssetClass,
                                   AssetStatus)
 from alpaca.common.rest import RESTClient
-from alpaca.common.websocket import BaseStream
 from alpaca.data.historical import (StockHistoricalDataClient,
                                     CryptoHistoricalDataClient)
 from alpaca.data.live import StockDataStream, CryptoDataStream
 from alpaca.trading import TradingClient, MarketOrderRequest
 from alpaca.trading.enums import OrderSide, TimeInForce
-from alpaca.trading.models import Order, TradeAccount, Position
+from alpaca.trading.models import Order, TradeAccount
 from alpaca.trading.models import Asset
 from alpaca.data.requests import BaseTimeseriesDataRequest
 
@@ -839,7 +841,41 @@ class AlpacaTradeClient(AlpacaClient, AbstractTradeClient):
     """
     This is an extension of the AlpacaClient class. It provides a
     simple interface for placing orders, in addition to the
-    functionalities provided by the AlpacaClient class.
+    functionalities provided by the AlpacaClient class. The Trader class
+    will use the functionality provided by this class to realize orders
+    specified by the agent in the environment.
+
+    Args:
+    ------
+        key (str):
+            The API key for the Alpaca API.
+        secret (str):
+            The secret key for the Alpaca API.
+        paper (bool):
+            Whether to use the paper trading API or the live trading
+            API. Defaults to False. If using paper account credentials,
+            this should be set to True.
+        
+    Properties:
+    -----------
+        clients:
+            Returns a dictionary of all clients available on Alpaca API.
+            The corresponding values are the RESTClient objects.
+        account:
+            A TradeAccount object that contains information about the
+            account. Functionalities of TradeAccount:
+                - Get account status
+                - Get account balance
+                - Get account positions
+                - Get account portfolio value
+                - Get account pattern day trader status
+                - Get account equity
+                - Get account maintenance margin
+                - Get account initial margin
+                - Get account buying power
+        assets:
+            Returns a dataframe of all assets available on Alpaca API.
+            Asset objects have the flowing attributes:
     """
     def __init__(self, *args, **kwargs):
 
@@ -861,7 +897,7 @@ class AlpacaTradeClient(AlpacaClient, AbstractTradeClient):
             float: The current amount of cash available to the trader.
         """
 
-        self._cash = self.client.account.cash
+        self._cash = self.account.cash
 
         return self._cash
 
