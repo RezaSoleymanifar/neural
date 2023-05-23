@@ -64,6 +64,19 @@ class RewardPipe(AbstractPipe):
         - Reward generation
         - Interest on debt (cash/asset liability)
         - Reward normalization
+    
+    Attributes:
+    -----------
+    reward_statistics (RunningStatistics): 
+        statistics of the reward distribution. Useful for restoring 
+        state of the pipe after loading from a file. State of the pipe 
+        is saved as attributes of the pipe object.
+    track_statistics (bool):
+        whether to track and update the reward statistics during
+        training. If False, the statistics will be tracked and updated
+        during training.
+
+
 
     """
     def __init__(self,
@@ -86,7 +99,16 @@ class RewardPipe(AbstractPipe):
 
 
 class ObservationPipe(AbstractPipe):
+    """
+    Observation pipe for market environments. The pipe adds the
+    following functionality to the base environment:
+        - Observation flattening (dict/numpy array)
+        - Observation buffering (dict/numpy array)
+        - Observation stacking (dict/numpy array)
+        - Observation normalization (dict/numpy array)
+    
 
+    """
     def __init__(self,
                  buffer_size: int = 10,
                  stack_size: int = None,
