@@ -606,6 +606,10 @@ class AlpacaDataClient(AlpacaClient, AbstractDataClient):
         Raises:
         -------
             ValueError: If the dataset type or asset type is not valid.
+        
+        Notes:
+        ------
+            Crypto does not have quotes historical data in Alpaca API.
         """
         client_map = {
             AssetType.STOCK: self.clients['stocks'],
@@ -650,7 +654,7 @@ class AlpacaDataClient(AlpacaClient, AbstractDataClient):
         """
         A method to get the streamer for the specified stream type and
         asset type. The streamer is used to retrieve live data.
-        
+
         """
         stream_map = {
             AlpacaDataSource.StreamType.BAR: {
