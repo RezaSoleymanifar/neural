@@ -243,18 +243,20 @@ class MarginAccountPipe(AbstractPipe):
     """
     A pipe to simulate a margin account environment. The pipe adds the
     trading logics of a margin account to the base market environment.
-    This pipe is a combination of the following pipes:
-        - ObservationPipe
-        - ActionPipe
-        - RewardPipe
 
-    and following functionalities:
+    It offers following functionalities:
         - Margin account metadata
         - Console tearsheet render
         - Initial margin
         - Excess margin
+
+    Also uses combination of the following pipes:
+        - ObservationPipe
+        - ActionPipe
+        - RewardPipe
+        
+    and following action interpreter:
         - Equity based uniform action interpreter
-        - Action clipper
 
     Attributes:
     -----------
@@ -304,18 +306,15 @@ class MarginAccountPipe(AbstractPipe):
         excess_margin (ExcessMarginActionWrapper):
             excess margin wrapper. Set to ExcessMarginActionWrapper at
             construction.
-        action_interpreter (EquityBasedUniformActionInterpreter):
-            equity based uniform action interpreter wrapper. Set to
-            EquityBasedUniformActionInterpreter at construction.
-        clip (ActionClipperWrapper):
-            action clipper wrapper. Set to ActionClipperWrapper at
-            construction.
         observation_pipe (ObservationPipe):
             observation pipe. Set to ObservationPipe at construction.
         action_pipe (ActionPipe):
             action pipe. Set to ActionPipe at construction.
         reward_pipe (RewardPipe):
             reward pipe. Set to RewardPipe at construction.
+        action_interpreter (EquityBasedUniformActionInterpreter):
+            equity based uniform action interpreter wrapper. Set to
+            EquityBasedUniformActionInterpreter at construction.
         
     Methods:
     --------
@@ -349,16 +348,14 @@ class MarginAccountPipe(AbstractPipe):
 
         self.margin_account_metadata = MarginAccountMetaDataWrapper
         self.render = ConsoleTearsheetRenderWrapper
-
         self.initial_margin = InitialMarginActionWrapper
         self.excess_margin = ExcessMarginActionWrapper
-
-        self.action_interpreter = EquityBasedUniformActionInterpreter
-        self.clip = ActionClipperWrapper
 
         self.observation_pipe = ObservationPipe
         self.action_pipe = ActionPipe
         self.reward_pipe = RewardPipe
+
+        self.action_interpreter = EquityBasedUniformActionInterpreter
 
         return None
 
@@ -378,7 +375,6 @@ class MarginAccountPipe(AbstractPipe):
 
         env = self.margin_account_metadata(env)
         env = self.render(env, verbosity=self.verbosity)
-
         env = self.initial_margin(env)
         env = self.excess_margin(
             env,
@@ -394,6 +390,5 @@ class MarginAccountPipe(AbstractPipe):
         env = self.reward_pipe().pipe(env)
 
         env = self.action_interpreter(env, trade_ratio=self.trade_equity_ratio)
-        env = self.clip(env)
 
         return env
