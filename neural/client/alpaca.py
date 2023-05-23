@@ -41,6 +41,13 @@ class AlpacaClient(AbstractClient):
         secret key for the Alpaca API. paper (bool): Whether to use the
         paper trading API or the live
             trading API. Defaults to False.
+    
+    Methods:
+    --------
+        connect: 
+            Connect to the Alpaca API and set up the client. clients:
+            Returns a dictionary of all clients available on
+
 
     Examples:
     ---------
@@ -349,7 +356,48 @@ class AlpacaClient(AbstractClient):
 
 class AlpacaDataClient(AlpacaClient, AbstractDataClient):
     """
+    This is an extension of the AlpacaClient class. It provides a
+    simple interface for retrieving data from the Alpaca API, in
+    addition to the functionalities provided by the AlpacaClient class.
+
+    Args:
+    ------
+        key (str): 
+            The API key for the Alpaca API. 
+        secret (str): The secret key for the Alpaca API.
+        paper (bool):
+            Whether to use the paper trading API or the live
+            trading API. Defaults to False. If using paper account
+            credentials, this should be set to True.
+        
+    Examples:
+    ---------
+    Option 1: Instantiate an instance of the AlpacaDataClient class
+    with your API key and secret.
+
+    >>> client = AlpacaDataClient(key=..., secret=...)
+    >>> assets = client.assets()
+
+    Option 2: Instantiate an instance of the AlpacaDataClient by
+    passing values to constants.
     
+    >>> from neural.common.constants import API_KEY, API_SECRET
+    >>> API_KEY = ...
+    >>> API_SECRET = ...
+    >>> client = AlpacaDataClient()
+
+    Option 3: Instantiate an instance of the AlpacaClient class with
+    environment variables.
+
+    # Set the environment variables for API key and secret on #
+    Unix-like operating systems (Linux, macOS, etc.): 
+        BASH: export API_KEY = <your_api_key> BASH: export API_SECRET =
+        <your_secret_key>
+
+    # Instantiate an instance of the AlpacaClient class 
+    
+    >>> from neural.connect.alpaca import AlpacaDataClient 
+    >>> client = AlpacaDataClient()
     """
     def __init__(self, *args, **kwargs):
 
