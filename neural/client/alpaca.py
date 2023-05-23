@@ -839,11 +839,11 @@ class AlpacaDataClient(AlpacaClient, AbstractDataClient):
 
 class AlpacaTradeClient(AlpacaClient, AbstractTradeClient):
     """
-    This is an extension of the AlpacaClient class. It provides a
-    simple interface for placing orders, in addition to the
-    functionalities provided by the AlpacaClient class. The Trader class
-    will use the functionality provided by this class to realize orders
-    specified by the agent in the environment.
+    This is an extension of the AlpacaClient class. It provides a simple
+    interface for placing orders, in addition to the functionalities
+    provided by the AlpacaClient class. The Trader class will use the
+    functionality provided by this class to realize orders specified by
+    the agent in the environment.
 
     Args:
     ------
@@ -876,6 +876,54 @@ class AlpacaTradeClient(AlpacaClient, AbstractTradeClient):
         assets:
             Returns a dataframe of all assets available on Alpaca API.
             Asset objects have the flowing attributes:
+                - symbol
+                - asset_class
+                - exchange
+                - status
+                - tradable
+                - marginable
+                - shortable
+                - easy_to_borrow
+                - fractionable
+                - maintenance_margin
+                - initial_margin
+                - day_trade_ratio
+                - last_updated_at
+        symbols:
+            Returns a dictionary of all symbols available on Alpaca API.
+            The corresponding values are the Asset objects. 
+        asset_types:
+            Returns the asset types available on Alpaca API. The asset
+            types are:
+                - STOCK
+                - CRYPTOCURRENCY
+        exchanges:
+            A list of exchanges available on Alpaca API. The exchanges
+            are:
+                - AMEX
+                - ARCA
+                - BATS
+                - NYSE
+                - NASDAQ
+                - NYSEARCA
+                - FTXU
+                - CBSE
+                - GNSS
+                - ERSX
+                - OTC
+        cash:
+            The current amount of cash available to the trader. This
+            will be used by agent to make decisions.
+        asset_quantities:
+            Returns a dictionary of symbols and asset quantities for the
+            trader's current positions. This will be used by agent to
+            make decisions.
+        equity:
+            The current net worth of the trader. This along with market
+            data will be used by agent to make decisions.
+        
+        
+        
     """
     def __init__(self, *args, **kwargs):
 
@@ -883,7 +931,7 @@ class AlpacaTradeClient(AlpacaClient, AbstractTradeClient):
 
         self._cash = None
         self._asset_quantities = None
-        self._net_worth = None
+        self._equity = None
         self._longs = None
         self._shorts = None
 
@@ -926,7 +974,7 @@ class AlpacaTradeClient(AlpacaClient, AbstractTradeClient):
         return asset_quantities
 
     @property
-    def net_worth(self) -> float:
+    def equity(self) -> float:
         """
         The current net worth of the trader.
 
@@ -934,36 +982,9 @@ class AlpacaTradeClient(AlpacaClient, AbstractTradeClient):
             float: The current net worth of the trader.
         """
 
-        self._net_worth = self.client.account.portfolio_value
+        self._equity = self.client.account.portfolio_value
 
-        return self._net_worth
-
-    @property
-    def longs(self) -> float:
-        """
-        The current long positions held by the trader.
-
-        Returns:
-            float: The current long positions held by the trader.
-        """
-
-        self._longs = self.client.account.long_market_value
-
-        return self._longs
-
-    @property
-    def shorts(self) -> float:
-        """
-        The total value of all short positions held by the trader.
-
-        Returns:
-            float: The total value of all short positions held by the
-            trader.
-        """
-
-        self._shorts = self.client.account.short_market_value
-
-        return self._shorts
+        return self._equity
 
     def get_positions_dataframe(self) -> pd.DataFrame:
         """
