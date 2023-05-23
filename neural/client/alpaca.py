@@ -634,7 +634,8 @@ class AlpacaDataClient(AlpacaClient, AbstractDataClient):
                 asset_type]
         except KeyError:
             raise ValueError(
-                f'Dataset type {dataset_type} or asset type {asset_type} is not valid.'
+                f'Dataset type {dataset_type}, asset type {asset_type} '
+                 'is not a valid combination of dataset type and asset type.'
             )
         downloader = AlpacaDataClient.safe_method_call(
             object=client, method_name=downloader_method_name)
@@ -646,7 +647,11 @@ class AlpacaDataClient(AlpacaClient, AbstractDataClient):
         stream_type: AlpacaDataSource.StreamType,
         asset_type: AssetType,
     ) -> Callable:
-
+        """
+        A method to get the streamer for the specified stream type and
+        asset type. The streamer is used to retrieve live data.
+        
+        """
         stream_map = {
             AlpacaDataSource.StreamType.BAR: {
                 AssetType.STOCK: ('subscribe_bars', StockDataStream),
