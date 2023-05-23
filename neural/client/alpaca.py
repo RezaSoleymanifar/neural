@@ -639,7 +639,7 @@ class AlpacaDataClient(AlpacaClient, AbstractDataClient):
         except KeyError:
             raise ValueError(
                 f'Dataset type {dataset_type}, asset type {asset_type} '
-                 'is not a valid combination of dataset type and asset type.'
+                 'is not a valid combination.'
             )
         downloader = AlpacaDataClient.safe_method_call(
             object=client, method_name=downloader_method_name)
@@ -655,6 +655,22 @@ class AlpacaDataClient(AlpacaClient, AbstractDataClient):
         A method to get the streamer for the specified stream type and
         asset type. The streamer is used to retrieve live data.
 
+        Args:
+        ------
+            stream_type:
+                The type of stream to retrieve. The stream types are:
+                    - BAR
+                    - QUOTE
+                    - TRADE
+            asset_type:
+                The type of asset to retrieve. The asset types are:
+                    - STOCK
+                    - CRYPTOCURRENCY
+
+        Returns:
+        ---------
+            Callable: The streamer for the specified stream type and
+            asset type.
         """
         stream_map = {
             AlpacaDataSource.StreamType.BAR: {
@@ -679,7 +695,28 @@ class AlpacaDataClient(AlpacaClient, AbstractDataClient):
         return streamer
 
     def symbols_to_assets(self, symbols: List[str]):
+        """
+        This method converts a list of symbols to a list of Asset objects.
+        Asset objects have the flowing attributes:
+            - symbol
+            - asset_type
+            - fractionable
+            - marginable
+            - maintenance_margin
+            - shortable
+            - easy_to_borrow
+        
+        Args:
+        ------
+            symbols:
+                A list of symbols to convert to Asset objects.
 
+        Returns:
+        ---------
+            list: 
+                A list of Asset objects.
+
+        """
         asset_type_map = {
             AssetClass.US_EQUITY: AssetType.STOCK,
             AssetClass.CRYPTO: AssetType.CRYPTOCURRENCY
