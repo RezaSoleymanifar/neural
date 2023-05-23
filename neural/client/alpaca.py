@@ -922,7 +922,8 @@ class AlpacaTradeClient(AlpacaClient, AbstractTradeClient):
             The current net worth of the trader. This along with market
             data will be used by agent to make decisions.
         
-        
+    Methods:
+    --------
         
     """
     def __init__(self, *args, **kwargs):
@@ -956,21 +957,25 @@ class AlpacaTradeClient(AlpacaClient, AbstractTradeClient):
         trader's current positions.
 
         Returns:
-            dict: A dictionary mapping symbols to asset quantities.
+        ---------
+            array: A numpy array of asset quantities for the specified 
+            list of assets.
         """
 
-        asset_quantities = dict()
+        asset_quantities = list()
 
         positions_dataframe = self.get_positions_dataframe()
-        symbols = positions_dataframe['symbol'].unique()
+        symbols_in_portfolio = positions_dataframe['symbol'].unique()
 
-        for symbol in symbols:
+        for asset in assets:
+            if asset.symbol not in symbols_in_portfolio:
+                asset_quantities.append(0)
+                continue
             row = positions_dataframe.loc[positions_dataframe['symbol'] ==
-                                          symbol].iloc[0]
+                                          asset.symbol].iloc[0]
             quantity = row['qty'] if row['side'] == 'long' else -1 * row['qty']
 
-            asset_quantities[symbol] = quantity
-
+            asset_quantities.append(quantity)
         return asset_quantities
 
     @property
