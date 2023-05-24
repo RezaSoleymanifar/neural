@@ -202,6 +202,13 @@ class ActionPipe(AbstractPipe):
         - Position close
         - Shorting
 
+    Minimum trade size ensures that the notional value of a trade is
+    greater than a minimum value. Integer asset quantity ensures that
+    the number of assets traded is an integer. Position close ensures
+    that the agent can close positions, before flipping the sign of the
+    quantity. Shorting ensures that the agent short actions map to
+    integer asset quantities.
+
     Attributes:
     -----------
         min_trade (float):
@@ -248,14 +255,21 @@ class ActionPipe(AbstractPipe):
 
 class HeadActionPipe(AbstractPipe):
     """
-    This pipe is responsible for parsing the actions of the model. It
-    is the first pipe in the action pipe stack. The pipe adds the
+    This pipe is responsible for parsing the immediate actions of the
+    model, hence the name head. It is the last pipe applied in the
+    action pipe stack (first pipe to receive actions). The pipe adds the
     following functionality to the base environment:
         - Action parsing
+        - Action mapping
         - Action clipping
     
     After parsing the actions should correspond the notional value of
-    trade in base currency (e.g. 100$ for USDT-BTC pair).
+    trade in base currency (e.g. 100$ for USDT-BTC pair). In general 
+    it is assumed that a fixed percentage of the equity is traded at
+    each interval. The percentage is fixed to 5% at construction. This 
+    trading budget so to speak can be distributed uniformly, or non-
+    uniformly across the assets. 
+        - (-1, 1) 
     """
 
     def __init__(self) -> None:
