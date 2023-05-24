@@ -1066,7 +1066,7 @@ class AlpacaTradeClient(AlpacaClient, AbstractTradeClient):
         quantity = abs(quantity) if quantity is not None else None
         action = abs(action) if action is not None else None
 
-        market_order_request = MarketOrderRequest(symbol=symbol,
+        market_order_request = MarketOrderRequest(symbol=asset.symbol,
                                                   qty=quantity,
                                                   notional=action,
                                                   side=side,
