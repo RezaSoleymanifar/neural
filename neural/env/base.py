@@ -150,21 +150,19 @@ class TrainMarketEnv(AbstractMarketEnv):
     allowes cash and asset quantities to be negative, accommodating
     short/margin trading by default. Use action wrappers to impose
     market logic such as margin account initial and maintenance margins.
-    Note that by default high frequency trading is only feasible with a
-    margin account. Cash accounts incur delays in depositing cash and
-    settling trades that makes high frequency trading infeasible.
     Inherits from AbstractMarketEnv. This class is intended to be used
     for training agents. For trading, use TradeMarketEnv. This class is
     not intended to be used directly. Instead, use the pipes in
     neural.meta.env.pipe to augment the environment with additional
     features. This enables the environment to respect real market
-    constraints for short selling and margin trading.
+    constraints (e.g. short selling and margin trading constraints).
 
     Attributes:
     -----------
         data_feeder: StaticDataFeeder
             The StaticDataFeeder instance providing the data to the
-            environment
+            environment. This is used to update the environment state
+            and construct the observation.
         initial_cash: float, optional
             The initial amount of cash to allocate to the environment.
             Default is 1e6.
