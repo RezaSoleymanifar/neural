@@ -255,33 +255,45 @@ class ActionPipe(AbstractPipe):
 
 class HeadActionPipe(AbstractPipe):
     """
-    This pipe is responsible for parsing the immediate actions of the
-    model, hence the name head. It is the last pipe applied in the
-    action pipe stack (first pipe to receive actions). The pipe adds the
-    following functionality to the base environment:
+    This pipe is responsible for parsing the immediate actions of the model,
+    hence the name head. It is the last pipe applied in the action pipe stack
+    (first pipe to receive actions). The pipe adds the following functionality
+    to the base environment:
         - Action parsing
         - Action mapping
         - Action clipping
     
-    After parsing the actions should correspond the notional value of
-    trade in base currency (e.g. 100$ for USDT-BTC pair). In general it
-    is assumed that a fixed percentage of the equity is traded at each
-    interval. The percentage is fixed to 5% at construction. This
-    trading budget so to speak can be distributed uniformly, or non-
-    uniformly across the assets. Models that produce discrete actions
-    are only compatible with uniform distribution of the trading budget.
-    The trading equity ratio can also be determined by the model, in
-    this case the trading budget is determined by the model and the
-    percentage at construction is ignored. Types of actions expected
-    from the model are:
-        - I: one neuron for each asset each with value (-1, 1).
-          Interpretation of this signal is left to an action
-          interpretter. This can be achieved by applying tanh to the
-          output of the model, for continuous models, or simply just
-          clipping the actions of the model to this range. For discrete
-          models, the output of the model is mapped to (-1, 1) using an
-          action mapper.
-        - II:
+    After parsing the actions should correspond the notional value of trade in
+    base currency (e.g. 100$ for USDT-BTC pair). In general it is assumed that
+    a fixed percentage of the equity is traded at each interval. The percentage
+    is fixed to 5% at construction. This trading budget so to speak can be
+    distributed uniformly, or non- uniformly across the assets. Models that
+    produce discrete actions are only compatible with uniform distribution of
+    the trading budget. The trading equity ratio can also be determined by the
+    model, in this case the trading budget is determined by the model and the
+    percentage at construction is ignored. Types of actions expected from the
+    model are:
+        - Uniform fixed ratio: 
+            one neuron for each asset each with value (-1, 1). This will be
+            used to infer both side and value of trade. Interpretation of this
+            signal is left to an action interpretter. This can be achieved by
+            applying tanh to the output of the model, for continuous models, or
+            simply just clipping the actions of the model to this range. For
+            discrete models, the output of the model is mapped to (-1, 1) using
+            an action mapper.
+        - Uniform variable ratio:
+            one neuron for each asset each with value (-1, 1). One neuron with 
+            value in (0,1) indicating the trade equi
+        - Non-uniform fixed ratio:
+            This is only viable for continuous models. The model should output
+            one neuron for each asset each with value (-1, 1), showing trade
+            side (buy/sell). Apply tanh to the output of the model. Also it has
+            one neuron for each asset each with value in (0,1) summing to 1,
+            showing the distribution of budget across assets. This can be
+            achieved by applying softmax to the corresponding outputs of the
+            model. An action interpreter then uses these 2n neurons to infer
+            the notional value of trade for each asset.
+        
     """
 
     def __init__(self) -> None:
