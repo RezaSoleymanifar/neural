@@ -280,31 +280,44 @@ class ActionPipe(AbstractPipe):
     functionality to the base environment:
         - Minimum trade size:
             Sets actions bellows a minimum trade size to zero.
-        - Integer asset quantity
-        - Position close
-        - Shorting
+        - Integer asset quantity:
+            Modifies actions so that they map to integer asset quantities.
+        - Position close:
+            Flipping sides long/short happens with closing the position first.
+        - Shorting:
+            Shorting is only possible with integer asset quantities.
 
-    Minimum trade size ensures that the notional value of a trade is
-    greater than a minimum value. Integer asset quantity ensures that
-    the number of assets traded is an integer. Position close ensures
-    that the agent can close positions, before flipping the sign of the
-    quantity. Shorting ensures that the agent short actions map to
-    integer asset quantities.
+    Minimum trade size ensures that the notional value of a trade is greater
+    than a minimum value. Integer asset quantity ensures that the number of
+    assets traded is an integer. Position close ensures that the agent can
+    close positions, before flipping the sign of the quantity. Shorting ensures
+    that the agent short actions map to integer asset quantities.
 
     Attributes:
     -----------
         min_trade (float):
-            minimum trade size in terms of notional value of base
-            currency. Set to 1 at construction.
+            minimum trade size in terms of notional value of base currency. Set
+            to 1 at construction.
         integer (bool):
-            whether to modify notional value of trades to match integer
-            number of assets. Set to False at construction.
+            whether to modify notional value of trades to match integer number
+            of assets. Set to False at construction.
+        min_trade (MinTradeSizeActionWrapper):
+            minimum trade size wrapper. Set to MinTradeSizeActionWrapper at
+            construction.
+        integer_quantity (IntegerAssetQuantityActionWrapper):   
+            integer asset quantity wrapper. Set to
+            IntegerAssetQuantityActionWrapper at construction.
+        position_close (PositionCloseActionWrapper):
+            position close wrapper. Set to PositionCloseActionWrapper at
+            construction.
+        shorting (ShortingActionWrapper):   
+            Allows shorting wrapper. Set to ShortingActionWrapper at
+            construction.
     
     Methods:
     --------
         pipe(env):
-            Applies a stack of market wrappers successively to an
-            environment.
+            Applies a stack of market wrappers successively to an environment.
     """
     def __init__(self, min_trade: float = 1, integer: bool = False) -> None:
         """
@@ -335,26 +348,33 @@ class ActionPipe(AbstractPipe):
 
         return env
 
+
 class HeadActionPipe(AbstractPipe):
     """
     This pipe is responsible for parsing the immediate actions of the model,
     hence the name head. It is the last pipe applied in the action pipe stack
     (first pipe to receive actions). The pipe adds the following functionality
     to the base environment:
-        - Action parsing
-        - Action mapping
-        - Action clipping
+        - Action parsing:
+            maps actions from neural network output to notional value of trade
+            in base currency.
+        - Action mapping:
+            maps action of discrete values neural network output to expected
+            range of continuous actions.
+        - Action clipping:
+            clips actions to expected range of continuous actions. Do not use
+            with discrete actions.
     
     After parsing the actions should correspond the notional value of trade in
     base currency (e.g. 100$ for USDT-BTC pair). In general it is assumed that
-    a fixed percentage of the equity is traded at each interval. The percentage
-    is fixed at construction. This trading budget so to speak can be
-    distributed uniformly, or non-uniformly across the assets. Models that
-    produce discrete actions are only compatible with uniform distribution of
-    the trading budget. The trading equity ratio can also be determined by the
-    model, in this case the trading budget is determined by the model and the
-    percentage at construction is ignored. Types of actions expected from the
-    model are:
+    a fixed percentage of the equity (trade equity ratio) is traded at each
+    interval. The percentage can be fixed at construction. This trading budget
+    so to speak can be distributed uniformly, or non-uniformly across the
+    assets. Models that produce discrete actions are only compatible with
+    uniform distribution of the trading budget. The trading equity ratio can
+    also be determined by the model, in this case the trading budget is
+    determined by the model and the percentage at construction is ignored.
+    Types of actions expected from the model are:
         - Uniform fixed ratio: 
             one neuron for each asset each with value (-1, 1). This will be
             used to infer both side and value of trade. Interpretation of this
@@ -410,7 +430,8 @@ class HeadActionPipe(AbstractPipe):
         hold_threshold (float):
             threshold for holding an asset. Set to 0.15 at construction.
         clip (bool):
-            whether to clip actions to (low, high). Set to False at construction.
+            whether to clip actions to (low, high). Set to False at
+            construction.
         low (float):
             lower bound for clipping actions. Set to -1 at construction.
         high (float):
@@ -427,8 +448,7 @@ class HeadActionPipe(AbstractPipe):
     Methods:
     --------
         pipe(env):
-            Applies a stack of market wrappers successively to an
-            environment.
+            Applies a stack of market wrappers successively to an environment.
     
     Raises:
     -------
