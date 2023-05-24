@@ -283,7 +283,11 @@ class HeadActionPipe(AbstractPipe):
             an action mapper.
         - Uniform variable ratio:
             one neuron for each asset each with value (-1, 1). One neuron with 
-            value in (0,1) indicating the trade equi
+            value in (0,1) indicating the trade equity ratio. This can be
+            achieved by applying sigmoid to the corresponding neuron. For 
+            discrete models, the output of the model for each asset is mapped
+            to (-1, 1) using an action mapper. Similarly output of the model for the
+            trade equity ratio is mapped to (0, 1) using the same action mapper.
         - Non-uniform fixed ratio:
             This is only viable for continuous models. The model should output
             one neuron for each asset each with value (-1, 1), showing trade
@@ -292,7 +296,14 @@ class HeadActionPipe(AbstractPipe):
             showing the distribution of budget across assets. This can be
             achieved by applying softmax to the corresponding outputs of the
             model. An action interpreter then uses these 2n neurons to infer
-            the notional value of trade for each asset.
+            the notional value of trade for each asset. The trade equity ratio
+            is fixed at construction.
+        - Non-uniform variable ratio:
+            This is only viable for continuous models. The model is identical 
+            to the non-uniform fixed ratio model, except that the trade equity
+            ratio is determined by the model. A neuron with value in (0,1)
+            is responsible for determining the trade equity ratio. This can be
+            achieved by applying sigmoid to the corresponding neuron.
         
     """
 
@@ -442,7 +453,6 @@ class MarginAccountPipe(AbstractPipe):
         env = self.observation_pipe(
             buffer_size=self.buffer_size,
             stack_size=self.stack_size,
-            observation_statistics=self.observation_statistics,
             track_statistics=self.track_statistics).pipe(env)
         env = self.action_pipe(min_trade=self.min_trade,
                                integer=self.integer).pipe(env)
