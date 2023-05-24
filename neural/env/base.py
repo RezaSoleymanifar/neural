@@ -584,15 +584,20 @@ class TrainMarketEnv(AbstractMarketEnv):
 class TradeMarketEnv(TrainMarketEnv):
     """
     This is a subclass of TrainMarketEnv. It is intended to be used for
-    trading. It is identical to TrainMarketEnv except that it is
+    trading. It is almost identical to TrainMarketEnv except that it is
     connected to a trader instance. This allows the environment to
     interact with the trader and place orders in the market. This class
     is not intended to be used directly. Instead, use the pipes in
     neural.meta.env.pipe to augment the environment with additional
     features. Typically the same pipe used for training is used for
-    trading. Pipe is saved as an attribute of the agent that was
-    used for training. The agent can then be loaded and used for
-    trading using this environment.
+    trading. Pipe is saved as an attribute of the agent that was used
+    for training. The agent can then be loaded and used for trading
+    using this environment.
+
+    Attributes:
+    -----------
+        trader: AbstractTrader
+            The trader instance to connect to the environment.
     """
 
     def __init__(
@@ -634,9 +639,7 @@ class TradeMarketEnv(TrainMarketEnv):
         """
         super().update_env()
         self._cash = self.trader.cash
-        self._asset_quantities = [
-            self.trader.asset_quantities(self.assets)
-        ]
+        self._asset_quantities = self.trader.asset_quantities(self.assets)
 
         return None
 
@@ -652,10 +655,7 @@ class TradeMarketEnv(TrainMarketEnv):
                 An array of actions to be taken for each asset in the
                 environment. action = 200 means buy 200 dollars worth of
                 the asset, while action = -200 means sell 200 dollars
-                worth of the asset, given currncy is USD. Trader may
-                place orders in the notional amount of the action or
-                convert to quantity and place orders, depending on the
-                facilities that the associated trade client provides.
+                worth of the asset, given currncy is USD.
         """
 
         self.trader.place_orders(actions)
