@@ -281,9 +281,9 @@ class TrainMarketEnv(AbstractMarketEnv):
         asset quantities, holds (time steps an asset has been held), and
         features of the current time step.
     place_orders(actions):
-        Places orders on the assets based on the given actions. Updates
-        internal variables such as cash, asset quantities, and holds
-        accordingly.
+        Places orders on the assets based on the given actions. Performs
+        the book keeping internally by updating variables such as cash,
+        asset quantities, and holds.
     reset():
         Resets the market environment to its initial state. Sets initial
         values for cash, asset quantities, and holds. Returns the
