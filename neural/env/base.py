@@ -66,13 +66,6 @@ class AbstractMarketEnv(Env, ABC):
     on resolution of the dataset and placing orders based on actions
     received from the agent.
 
-    Subclasses should implement the following abstract methods:
-
-    Parameters:
-    -----------
-    Env (Env): 
-        OpenAI Gym Environment. ABC (ABC): Abstract Base Class from the
-        abc module.
 
     Methods:
     --------

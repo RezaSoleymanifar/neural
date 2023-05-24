@@ -117,7 +117,7 @@ GLOBAL_DATA_TYPE = np.float32
 ALPACA_MINIMUM_SHORT_MARRGIN_EQUITY = 2_000
 
 # Set the minimum net worth for a pattern day trader
-PATTERN_DAY_TRADER_MINIMUM_NET_WORTH = 25_000
+PATTERN_DAY_TRADER_MINIMUM_EQUITY = 25_000
 
 # Dow Jones Industrial Average symbols
 DOW_JONES_SYMBOLS = [

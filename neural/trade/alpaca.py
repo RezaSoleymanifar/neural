@@ -2,7 +2,7 @@ from typing import Callable
 
 from neural.client.alpaca import AlpacaTradeClient
 from neural.common.exceptions import TradeConstraintViolationError
-from neural.common.constants import PATTERN_DAY_TRADER_MINIMUM_NET_WORTH
+from neural.common.constants import PATTERN_DAY_TRADER_MINIMUM_EQUITY
 from neural.meta.agent import Agent
 from neural.trade.base import AbstractTrader, AbstractDataClient
 
@@ -67,7 +67,7 @@ class AlpacaTraderFactory(AbstractTrader):
 
         pattern_day_trader_constraint = (
             True if not patttern_day_trader else net_worth >
-            PATTERN_DAY_TRADER_MINIMUM_NET_WORTH)
+            PATTERN_DAY_TRADER_MINIMUM_EQUITY)
 
         if not pattern_day_trader_constraint:
             raise TradeConstraintViolationError(
