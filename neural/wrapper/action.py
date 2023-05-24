@@ -751,7 +751,7 @@ class ShortingActionWrapper(ActionWrapper):
 
 @action
 @metadata
-class EquityBasedFixedUniformActionInterpreter(ActionWrapper):
+class EquityBasedFixedUniformActionParser(ActionWrapper):
     """
     Transforms the actions produced by the agent that is in (-1, 1)
     range to be in (-max_trade_per_asset, max_trade_per_asset) range

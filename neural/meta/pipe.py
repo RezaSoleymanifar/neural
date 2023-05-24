@@ -13,7 +13,7 @@ from neural.wrapper.action import (
     MinTradeSizeActionWrapper, IntegerAssetQuantityActionWrapper,
     PositionCloseActionWrapper, InitialMarginActionWrapper,
     ExcessMarginActionWrapper, ShortingActionWrapper,
-    EquityBasedFixedUniformActionInterpreter, ActionClipperWrapper)
+    EquityBasedFixedUniformActionParser, ActionClipperWrapper)
 
 from neural.wrapper.observation import (ObservationStackerWrapper,
                                         ObservationBufferWrapper,
@@ -342,7 +342,7 @@ class HeadActionPipe(AbstractPipe):
         self.low = low
         self.high = high
 
-        self.fixed_uniform  = EquityBasedFixedUniformActionInterpreter
+        self.fixed_uniform  = EquityBasedFixedUniformActionParser
         self.variable_uniform = None
         self.fixed_nonuniform = None
         self.variable_nonuniform = None
@@ -361,16 +361,18 @@ class HeadActionPipe(AbstractPipe):
         """
         if self.fixed:
             if self.uniform:
-                return self.fixed_uniform(
-                    self.trade_equity_ratio, self.hold_threshold)
+                parser = lambda env: self.fixed_uniform(
+                    self.trade_equity_ratio, self.hold_threshold, env)
             else:
-                return self.fixed_nonuniform
+                parser = self.fixed_nonuniform
         else:
             if self.uniform:
-                return self.variable_uniform
+                parser = self.variable_uniform
             else:
-                return self.variable_nonuniform
+                parser = self.variable_nonuniform
 
+        return parser
+    
     @property
     def mapper(self):
         """
@@ -380,7 +382,10 @@ class HeadActionPipe(AbstractPipe):
         Examples:
         ---------
         Model produces k actions for buy orders, k actions for sell orders
-        and 1 action for hold. 
+        and 1 action for hold. The mapper will map the k buy actions to
+        the range (hold_threshold, 1) and k sell actions to the range
+        (-1, -hold_threshold). The hold action will be mapped to 0. This 
+        is the expected input of the uniform action parser.
         """
         if self.uniform:
             return self.fixed_uniform_action_mapper
@@ -388,7 +393,7 @@ class HeadActionPipe(AbstractPipe):
             return self.fixed_nonuniform_action_mapper
 
     def pipe(self, env):
-        env = self.parser()
+        env = self.parser(env)
         if self.discete:
             env = self.fixed_uniform_action_mapper(env)
 
