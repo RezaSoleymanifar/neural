@@ -332,8 +332,6 @@ class HeadActionPipe(AbstractPipe):
             raise ValueError(
                 'Discrete models can only be used with uniform trading '
                 'budget distribution.')
-
-        if 
         
         self.uniform = uniform
         self.fixed = fixed
@@ -354,7 +352,13 @@ class HeadActionPipe(AbstractPipe):
         self.action_clipper = ActionClipperWrapper
 
     @property
-    def head(self):
+    def parser(self):
+        """
+        Parser is the first pipe to receive actions. It is responsible for
+        parsing the actions of the model. If model is discrete, it may be 
+        preceded by an action mapper wrapper to map discrete actions to
+        the expected action space.
+        """
         if self.fixed:
             if self.uniform:
                 return self.fixed_uniform(
@@ -369,14 +373,22 @@ class HeadActionPipe(AbstractPipe):
 
     @property
     def mapper(self):
+        """
+        Used with discrete models to map the actions to the expected action
+        space.
 
+        Examples:
+        ---------
+        Model produces k actions for buy orders, k actions for sell orders
+        and 1 action for hold. 
+        """
         if self.uniform:
             return self.fixed_uniform_action_mapper
         else:
             return self.fixed_nonuniform_action_mapper
 
     def pipe(self, env):
-        env = self.head()
+        env = self.parser()
         if self.discete:
             env = self.fixed_uniform_action_mapper(env)
 
