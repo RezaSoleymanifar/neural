@@ -317,8 +317,10 @@ class HeadActionPipe(AbstractPipe):
             self,
             uniform: bool = True,
             fixed: bool = True,
-            trade_equity_ratio: float = 0.1
+            discrete: bool = True,
+            trade_equity_ratio: float = 0.1,
             hold_threshold: float = 0.15,
+            clip: bool = False,
             low: float = -1,
             high: float = 1
             ) -> None:
@@ -328,23 +330,41 @@ class HeadActionPipe(AbstractPipe):
     
         self.uniform = uniform
         self.fixed = fixed
+
+        self.trade_equity_ratio = trade_equity_ratio
+        self.hold_threshold = hold_threshold
+
+        self.low = low
+        self.high = high
     
-        self.action_parser = ActionParserWrapper
         self.fixed_uniform  = EquityBasedFixedUniformActionInterpreter
         self.variable_uniform = None
         self.fixed_nonuniform = None
         self.variable_nonuniform = None
+
         self.fixed_uniform_action_mapper = None
         self.fixed_nonuniform_action_mapper = None
         self.action_clipper = ActionClipperWrapper
 
     @property
     def head(self):
-        if 
+        if self.fixed:
+            if self.uniform:
+                return self.fixed_uniform(
+                    self.trade_equity_ratio, self.hold_threshold)
+            else:
+                return self.fixed_nonuniform
+        else:
+            if self.uniform:
+                return self.variable_uniform
+            else:
+                return self.variable_nonuniform
+
 
     def pipe(self, env):
-        
-
+        env = self.head()
+        if self.discete:
+            env = self.fixed_uniform_action_mapper(env)
 
         return env
     
