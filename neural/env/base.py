@@ -458,9 +458,10 @@ class TrainMarketEnv(AbstractMarketEnv):
 
         Returns:
         -------
-        observation: Dict[str, np.ndarray[float]]
-            The observation dictionary containing the current cash
-            balance, asset quantities, holds, and features.
+        observation: 
+            Dict[str, np.ndarray[float]] The observation dictionary
+            containing the current cash balance, asset quantities,
+            holds, and features.
         """
 
         observation = {
@@ -565,25 +566,6 @@ class TrainMarketEnv(AbstractMarketEnv):
                 is finished.
             info : dict
                 Additional information related to the current step.
-
-        Notes
-        -----
-        `actions` are represented as the notional value of assets to buy
-        or sell. A zero value means no action is taken. Buys are
-        represented as positive values, while sells are represented as
-        negative values. action = 200 means buy 200 dollars worth of the
-        asset, while action = -200 means sell 200 dollars worth of the
-        asset, given currncy is USD.
-
-        The `step()` method updates the environment state by moving to
-        the next time step and updating the environment variables such
-        as features, asset prices, and holds. It then places
-        orders on the assets based on the given actions, and updates the
-        environment state again. Finally, it constructs the current
-        observation from the environment's state variables and computes
-        the reward. If the current episode is finished, it sets `done`
-        to `True`.
-
         """
 
         self.place_orders(actions)
