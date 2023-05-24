@@ -201,8 +201,9 @@ class AbstractDataClient(AbstractClient):
     Data source is the name of the data source. This will be used to map
     clients to constituents of stream metadata that specify a data
     source. For example a Trader class may use multiple data clients at
-    construction. The Trader class will use the data source attribute of
-    each client to map the client to the corresponding stream metadata.
+    construction (e.g. one borker data client and one twitter data
+    client). The Trader class will use the data source attribute of each
+    client to map the client to the corresponding stream metadata.
     """
 
     def __init__(self, *args, **kwargs):
