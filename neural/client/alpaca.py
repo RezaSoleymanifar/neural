@@ -1037,33 +1037,31 @@ class AlpacaTradeClient(AlpacaClient, AbstractTradeClient):
     def place_order(
         self,
         symbol: str,
-        quantity: Optional[float] = None,
-        notional: Optional[float] = None,
+        action: Optional[float] = None,
         time_in_force: str = 'fok',
     ) -> Order:
 
-        # this is a market order. Other order types should be
-        # implemented by user. time in force options: Day order = "day"
+        # time in force options: Day order = "day"
         # Good 'til cancelled = "gtc" Opoening order = "opg" Closing
         # order = "cls" Immediate or cancel = "ioc" Fill or kill = "fok"
 
-        if quantity is None and notional is None:
+        if quantity is None and action is None:
             raise ValueError('Either quantity or notional must be specified.')
-        if quantity is not None and notional is not None:
+        if quantity is not None and action is not None:
             raise ValueError(
                 'Only one of quantity or notional can be specified.')
 
-        sign = np.sign(quantity) if quantity is not None else np.sign(notional)
+        sign = np.sign(quantity) if quantity is not None else np.sign(action)
 
         side = OrderSide.BUY if sign > 0 else OrderSide.SELL
         time_in_force = TimeInForce(time_in_force)
 
         quantity = abs(quantity) if quantity is not None else None
-        notional = abs(notional) if notional is not None else None
+        action = abs(action) if action is not None else None
 
         market_order_request = MarketOrderRequest(symbol=symbol,
                                                   qty=quantity,
-                                                  notional=notional,
+                                                  notional=action,
                                                   side=side,
                                                   time_in_force=time_in_force)
 
