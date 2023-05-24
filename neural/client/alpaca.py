@@ -1023,9 +1023,12 @@ class AlpacaTradeClient(AlpacaClient, AbstractTradeClient):
 
     def check_connection(self):
         """
-        Check the connection to the Alpaca API.
+        Check if the connection to the Alpaca API is active. Used by 
+        trader to before letting agent start trading.
 
-        :return: True if the account status is active, False otherwise.
+        Returns:
+        ---------
+            bool: True if the connection is active, False otherwise.
         """
 
         status = True if self.account.status == AccountStatus.ACTIVE else False
