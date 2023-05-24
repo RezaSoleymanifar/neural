@@ -584,9 +584,11 @@ class MarginAccountPipe(AbstractPipe):
         self.initial_margin = InitialMarginActionWrapper
         self.excess_margin = ExcessMarginActionWrapper
 
+
+        self.reward_pipe = RewardPipe
         self.observation_pipe = ObservationPipe
         self.action_pipe = ActionPipe
-        self.reward_pipe = RewardPipe
+        self.head = HeadActionPipe
 
         return None
 
@@ -611,15 +613,14 @@ class MarginAccountPipe(AbstractPipe):
             env,
             excess_margin_ratio_threshold=self.excess_margin_ratio_threshold)
 
+        env = self.reward_pipe().pipe(env)
         env = self.observation_pipe(
             buffer_size=self.buffer_size,
             stack_size=self.stack_size,
             track_statistics=self.track_statistics).pipe(env)
         env = self.action_pipe(min_trade=self.min_trade,
                                integer=self.integer).pipe(env)
-        env = self.reward_pipe().pipe(env)
 
-        env = self.action_interpreter(
-            env, trade_quity_ratio=self.trade_equity_ratio)
+        env = self.head().pipe(env)
 
         return env
