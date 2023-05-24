@@ -2,19 +2,19 @@
 base.py
 
 Base data module for defining data sources, data feeders and data
-metadata. Data sources are responsible for providing access to data
-from different sources. Data feeders are responsible for feeding data
-to market environments. Data metadata is responsible for providing
+metadata. Data sources are responsible for providing access to data from
+different sources. Data feeders are responsible for feeding data to
+market environments. Data metadata is responsible for providing
 information about the data such as the data schema, feature schema,
 resolution, calendar type, etc. Data metadata is also responsible for
 validating the data and ensuring that the data is consistent with the
 metadata. Data metadata is also responsible for joining and appending
 datasets and streams. This is useful for downloading large datasets in
-chunks and validating the process. Data metadata is also responsible
-for providing a universal representation of data throughout the
-framework. This is useful for abstracting away the construction of data
-from the representation of data. Data metadata also provides a
-consistent interface for accessing data from different sources.
+chunks and validating the process. Data metadata is also responsible for
+providing a universal representation of data throughout the framework.
+This is useful for abstracting away the construction of data from the
+representation of data. Data metadata also provides a consistent
+interface for accessing data from different sources.
 
 Classes:
 --------
@@ -279,13 +279,13 @@ class AlpacaAsset(AbstractAsset):
     @property
     def shortable(self) -> bool | None:
         """
-        A boolean indicating whether the asset can be sold short
-        (i.e., sold before buying to profit from a price decrease). In 
-        Alpaca API shorted assets cannot have faractional quantities.
-        Also if asset is not marginable it cannot be shorted. There are 
-        rare cases where non-marginable assets can be shorted, but this
-        is not supported by this library due to the complexity of the
-        process. A mix of marginable and non-marginable assets in 
+        A boolean indicating whether the asset can be sold short (i.e.,
+        sold before buying to profit from a price decrease). In Alpaca
+        API shorted assets cannot have faractional quantities. Also if
+        asset is not marginable it cannot be shorted. There are rare
+        cases where non-marginable assets can be shorted, but this is
+        not supported by this library due to the complexity of the
+        process. A mix of marginable and non-marginable assets in
         portoflio is not supporeted either to the same level of
         irregularities.
         """
@@ -359,7 +359,7 @@ class AbstractDataSource(ABC):
 
     class DatasetType(Enum):
         """
-        Enumeration class that defines constants for the different types 
+        Enumeration class that defines constants for the different types
         of datasets.
 
         Attributes:
@@ -484,14 +484,14 @@ class AbstractDataSource(ABC):
         Args:
         ---------
             dataset_type (DatasetType): 
-                A member of the DatasetType enum that represents the 
+                A member of the DatasetType enum that represents the
                 type of dataset.
 
         Returns:
         --------
             StreamType: 
-                A member of the StreamType enum that corresponds to 
-                the given dataset_type.
+                A member of the StreamType enum that corresponds to the
+                given dataset_type.
 
         Raises: 
         -------
@@ -524,7 +524,7 @@ class AbstractDataSource(ABC):
 
 class AlpacaDataSource(AbstractDataSource):
     """
-    Represents Alpaca API as a data source. Provides standardized enums 
+    Represents Alpaca API as a data source. Provides standardized enums
     for historical and live data from Alpaca API.
     """
 
@@ -552,8 +552,8 @@ class AlpacaDataSource(AbstractDataSource):
 
     class StreamType(AbstractDataSource.StreamType):
         """
-        Enumeration class that defines constants for the different 
-        types of data streams.
+        Enumeration class that defines constants for the different types
+        of data streams.
 
         Attributes
         ----------
@@ -578,41 +578,39 @@ class AbstractDataMetaData:
     corresponds to a feature of the data for a time interval. The
     boolean mask indicates where the columns of the corresponding
     feature types are located in the data. Lenght of boolean mask is
-    equal to the number columns in the data. Difference between
-    dataset and stream is that dataset is static and can be loaded in
-    memory, while stream is dynamic and can only be accessed in an
-    iterator like fashion, where each iteration returns a new row of
-    data and takes time equal to the resolution of the data. The
-    metadata allows fusion of data from multiple data sources into a
-    coehsive representation. This is useful for market simulations and
-    trading abstracting away the construction of data from the
-    representation of data. Metadata also offers automatic validation
-    and updating of joined or appended data making joining multiple
-    source of data a self-contained process. Note that market
-    environments require price mask to be present for all symbols in
-    the data schema. if this property is violated an error will be
-    raised by the data feeder that uses this metadata before the
-    simulation starts.
+    equal to the number columns in the data. Difference between dataset
+    and stream is that dataset is static and can be loaded in memory,
+    while stream is dynamic and can only be accessed in an iterator like
+    fashion, where each iteration returns a new row of data and takes
+    time equal to the resolution of the data. The metadata allows fusion
+    of data from multiple data sources into a coehsive representation.
+    This is useful for market simulations and trading abstracting away
+    the construction of data from the representation of data. Metadata
+    also offers automatic validation and updating of joined or appended
+    data making joining multiple source of data a self-contained
+    process. Note that market environments require price mask to be
+    present for all symbols in the data schema. if this property is
+    violated an error will be raised by the data feeder that uses this
+    metadata before the simulation starts.
 
     Attributes:
     -----------
     data_schema:
-        A dictionary mapping data source types to tuples of assets.
-        The data schema defines the structure and format of the
-        data for each asset in the dataset or stream.
+        A dictionary mapping data source types to tuples of assets. The
+        data schema defines the structure and format of the data for
+        each asset in the dataset or stream.
     feature_schema Dict[FeatureType, Tuple[bool]]]:
-        A dictionary mapping feature types to tuples of booleans,
-        where each boolean indicates whether the corresponding
-        feature is present in the data.
+        A dictionary mapping feature types to tuples of booleans, where
+        each boolean indicates whether the corresponding feature is
+        present in the data.
     resolution (str):
-        A string representing the resolution of the data, which
-        is the fixed length of each time interval in the dataset
-        or stream.
+        A string representing the resolution of the data, which is the
+        fixed length of each time interval in the dataset or stream.
     calendar_type (CalendarType):
-        An instance of the `CalendarType` enum class that
-        represents the type of calendar used to organize the
-        data. The calendar type can affect how data is grouped
-        and sorted in the dataset or stream.
+        An instance of the `CalendarType` enum class that represents the
+        type of calendar used to organize the data. The calendar type
+        can affect how data is grouped and sorted in the dataset or
+        stream.
 
     Properties:
     -----------
@@ -639,7 +637,7 @@ class AbstractDataMetaData:
         market environments.
     schedule:
         Returns a DataFrame representing the schedule of the dataset.
-        This is useful for checking if the dataset has been downloaded 
+        This is useful for checking if the dataset has been downloaded
         correctly.
 
     Methods:
@@ -737,13 +735,13 @@ class AbstractDataMetaData:
     @property
     def valid(self) -> bool:
         """
-        ensures that all assets have a price mask associated with
-        them. This property can be violated during merging, since some
-        feature types may not have a price mask associated with them,
-        due to not being a price related feature type. However post
-        merging the metadata can validate itself using this property.
-        used by data feeders to validaete input before feeding data to
-        the market environments.
+        ensures that all assets have a price mask associated with them.
+        This property can be violated during merging, since some feature
+        types may not have a price mask associated with them, due to not
+        being a price related feature type. However post merging the
+        metadata can validate itself using this property. used by data
+        feeders to validaete input before feeding data to the market
+        environments.
 
         Returns:
         --------
@@ -836,13 +834,13 @@ class AbstractDataMetaData:
         Raises:
         -------
             ValueError: 
-                if the data schemas of the two metadata objects
-                are not compatible.
+                if the data schemas of the two metadata objects are not
+                compatible.
             ValueError: 
-                if the resolutions of the two metadata objects are 
-                not the same.
+                if the resolutions of the two metadata objects are not
+                the same.
             ValueError: 
-                if the calendar types of the two metadata objects are 
+                if the calendar types of the two metadata objects are
                 not the same.
         """
 
@@ -898,14 +896,14 @@ class AbstractDataMetaData:
         Raises:
         -------
             ValueError: 
-                if the data schemas of the two metadata objects are 
-                not compatible.
+                if the data schemas of the two metadata objects are not
+                compatible.
             ValueError:
                 if the feature schemas of the two metadata objects are
                 not compatible.
             ValueError:
-                if the resolutions of the two metadata objects are
-                not the same.
+                if the resolutions of the two metadata objects are not
+                the same.
             ValueError:
                 if the calendar types of the two metadata objects are
                 not the same.
@@ -939,10 +937,10 @@ class AbstractDataMetaData:
     def _validate_data_schema(self, data_schema):
         """
         Checks if all stream or all datasets. This is useful for
-        validating the data schema of the metadata object before
-        joining or appending. This is used by the __or__ and __add__
-        methods to validate the data schema of the metadata object
-        before joining or appending.
+        validating the data schema of the metadata object before joining
+        or appending. This is used by the __or__ and __add__ methods to
+        validate the data schema of the metadata object before joining
+        or appending.
 
         Args:
         ------
@@ -965,8 +963,8 @@ class AbstractDataMetaData:
     def _join_feature_schemas(self, other):
         """
         joins feature schemas of two datasets or streams. The boolean
-        masks are simply concatenated to indicate the features type locations
-        in the joind dataset/stream.
+        masks are simply concatenated to indicate the features type
+        locations in the joind dataset/stream.
 
         Args:
         ------
@@ -988,8 +986,8 @@ class AbstractDataMetaData:
         ------
             This method is used by the __or__ method to join two
             metadata objects. It is not used by the __add__ method
-            because the feature schemas of the two metadata objects
-            must be identical for appending to be valid.
+            because the feature schemas of the two metadata objects must
+            be identical for appending to be valid.
         """
         if set(self.feature_schema.keys()) != set(other.data_schema.keys()):
             raise ValueError('Datasets do not have matching feature schemas.')
@@ -1089,71 +1087,71 @@ class StreamMetaData(AbstractDataMetaData):
 @dataclass
 class DatasetMetadata(AbstractDataMetaData):
     """
-    Subclass of AbstractDataMetaData that provides metadata for
-    static datasets. This class is used to represent datasets that are
+    Subclass of AbstractDataMetaData that provides metadata for static
+    datasets. This class is used to represent datasets that are
     downloaded and stored in memory. It provides a consistent interface
     for accessing the data and metadata. It also provides methods for
     joining and appending datasets. This is useful for joining datasets
-    that are large to download in one go. Each sub-dataset is
-    downloaded for a fixed time interval and each can correponds to
-    differnt data sources, feature types and symbols. Joining datasets
-    and validating the process is done automatically using this method.
-    This is also useful for appending datasets that are large to
-    downolad in one go. At each iteration the user can download the
-    data in chunks corresponding to a fixed time interval shared
-    between all other chunks and automatically validate the process and
-    update the metadata.
+    that are large to download in one go. Each sub-dataset is downloaded
+    for a fixed time interval and each can correponds to differnt data
+    sources, feature types and symbols. Joining datasets and validating
+    the process is done automatically using this method. This is also
+    useful for appending datasets that are large to downolad in one go.
+    At each iteration the user can download the data in chunks
+    corresponding to a fixed time interval shared between all other
+    chunks and automatically validate the process and update the
+    metadata.
 
     Attributes:
     -----------
     data_schema: Dict[AbstractDataSource.DatasetType:Tuple[Asset]]
-        A dictionary mapping dataset types to tuples of assets. The
-        data schema defines the structure and format of the data for
-        each asset in the dataset.
+        A dictionary mapping dataset types to tuples of assets. The data
+        schema defines the structure and format of the data for each
+        asset in the dataset.
     feature_schema: Dict[FeatureType, Tuple[bool]]
-        A dictionary mapping feature types to tuples of booleans,
-        where each boolean indicates whether the corresponding
-        feature is present in the data.
+        A dictionary mapping feature types to tuples of booleans, where
+        each boolean indicates whether the corresponding feature is
+        present in the data.
     resolution: str
-        A string representing the resolution of the data, which is
-        the fixed length of each time interval in the dataset.
+        A string representing the resolution of the data, which is the
+        fixed length of each time interval in the dataset.
     start: datetime
-        A datetime object representing the start time of the
-        dataset. Note start and end times are inclusive.
-    end: datetime
-        A datetime object representing the end time of the dataset.
+        A datetime object representing the start time of the dataset.
         Note start and end times are inclusive.
+    end: datetime
+        A datetime object representing the end time of the dataset. Note
+        start and end times are inclusive.
     n_rows: int
-        An integer representing the number of rows in the dataset.
-        This is useful for checking if the dataset has been
-        downloaded correctly and reporting end of dataset to the
-        market environment.
+        An integer representing the number of rows in the dataset. This
+        is useful for checking if the dataset has been downloaded
+        correctly and reporting end of dataset to the market
+        environment.
 
     Properties:
     -----------
     stream: StreamMetaData
-        Returns a StreamMetaData object that corresponds to the
-        current dataset metadata. This is useful for mapping the 
-        dataset metadata to a stream metadata for live streaming
-        when traders want to deploy their trained agents in a live
-        trading environment.
+        Returns a StreamMetaData object that corresponds to the current
+        dataset metadata. This is useful for mapping the dataset
+        metadata to a stream metadata for live streaming when traders
+        want to deploy their trained agents in a live trading
+        environment.
     
     Methods:
     --------
     __or__(self, other: AbstractDataMetaData, **kwargs) ->
     AbstractDataMetaData
-        Merges two metadata objects. This is useful for joining
-        datasets that are large to download in one go. Each 
-        sub-dataset is downloaded for a fixed time interval and
-        each can correponds to differnt data sources, feature types
-        and symbols. Joining datasets and validating the process is
-        done automatically using this method.
+        Merges two metadata objects. This is useful for joining datasets
+        that are large to download in one go. Each sub-dataset is
+        downloaded for a fixed time interval and each can correponds to
+        differnt data sources, feature types and symbols. Joining
+        datasets and validating the process is done automatically using
+        this method.
     __add__(self, other: AbstractDataMetaData, **kwargs) ->
     AbstractDataMetaData
-        Appends two metadata objects. Downloading large datasets 
-        can be split across nonoverlapping time intervals and
-        appended to each other. This method facilitates updating the
-        metadata object automatically and validating the process.
+        Appends two metadata objects. Downloading large datasets can be
+        split across nonoverlapping time intervals and appended to each
+        other. This method facilitates updating the metadata object
+        automatically and validating the process.
     """
     data_schema: Dict[AbstractDataSource.DatasetType:Tuple[AlpacaAsset]]
     feature_schema: Dict[FeatureType, Tuple[bool]]
@@ -1370,8 +1368,8 @@ class StaticDataFeeder(AbstractDataFeeder):
     provides a consistent interface for loading data from different
     sources. It also provides methods for splitting the dataset into
     multiple non-overlapping contiguous sub-feeders that span the
-    dataset. Common use case is it use in stable baselines vector env
-    to parallelize running multiple trading environments, leading to
+    dataset. Common use case is it use in stable baselines vector env to
+    parallelize running multiple trading environments, leading to
     significant speedup of training process.
 
     Attributes:
@@ -1419,8 +1417,8 @@ class StaticDataFeeder(AbstractDataFeeder):
         start_index (int, optional): Specifies the starting index to
             load the data from. Default is 0. 
         end_index (int, optional): Specifies the ending index to load
-            the data from. If not provided, defaults to the number of rows
-            indicated in the metadata object. Default is None. 
+            the data from. If not provided, defaults to the number of
+            rows indicated in the metadata object. Default is None. 
         n_chunks (int, optional): 
             Indicates the number of chunks to divide the dataset into
             for loading. Loads one chunk at a time. Useful if datasets
