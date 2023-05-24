@@ -1,5 +1,6 @@
+
+
 from abc import abstractmethod, ABC
-from typing import Optional
 
 from neural.wrapper.base import (MarginAccountMetaDataWrapper,
                                  ConsoleTearsheetRenderWrapper)
