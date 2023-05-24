@@ -1045,29 +1045,39 @@ class AlpacaTradeClient(AlpacaClient, AbstractTradeClient):
         to buy or sell. If quantity is positive, the order is a buy
         order. If quantity is negative, the order is a sell order. 
 
-        All order are market orders. Market orders are the most likely 
+        All order are market orders. Market orders are the most likely
         type of order to be executed. A market order is an order to buy
-        
+        or sell a security at current market price. This type of
         Time in force options:
-            Day order = "day"
-            Good 'til cancelled = "gtc"
-            Opoening order = "opg"
-            Closing order = "cls"
-            Immediate or cancel = "ioc"
-            Fill or kill = "fok"
+        
+           - Day order = "day"
+           - Good 'til cancelled = "gtc"
+           - Immediate or cancel = "ioc"
+           - Fill or kill = "fok"
+
+        Day order is the default time in force option. Day order is an
+        order that is valid until the end of the trading day on which it
+        was placed. If the order is not filled by the end of the trading
+        day, it will be cancelled. Opening and closing orders are only
+        valid at the market open and market close respectively. If the
+        order is not filled at the market open or market close, it will
 
         Notes:
         ------
         Time in force options for crypto assets:
-            Good 'til cancelled = "gtc"
-            Immediate or cancel = "ioc"
+            Good 'til cancelled = "gtc" Immediate or cancel = "ioc"
         """
+
+        if time_in_force not in ['day', 'gtc', 'ioc', 'fok']:
+            raise ValueError(
+                f'Time in force {time_in_force} is not valid.'
+                'valid options are: "day", "gtc", "ioc", "fok"')
 
         if asset.asset_type == AssetType.CRYPTOCURRENCY:
             if time_in_force not in ['gtc', 'ioc']:
                 raise ValueError(
                     f'Time in force {time_in_force} is not valid for '
-                    'crypto assets.')
+                    'cryptocurrency assets.')
 
         sign = np.sign(quantity) if quantity is not None else np.sign(action)
 
