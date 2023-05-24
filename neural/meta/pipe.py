@@ -1,5 +1,9 @@
 
+"""
+pipes.py
 
+This module defines pipes for market environments.
+"""
 from abc import abstractmethod, ABC
 
 from neural.wrapper.base import (MarginAccountMetaDataWrapper,
@@ -104,6 +108,7 @@ class RewardPipe(AbstractPipe):
                                      reward_statistics=self.reward_statistics,
                                      track_statistics=self.track_statistics)
 
+        return env
 
 class ObservationPipe(AbstractPipe):
     """
@@ -239,7 +244,19 @@ class ActionPipe(AbstractPipe):
         env = self.position_close(env)
         env = self.shorting(env)
 
+        return env
 
+class HeadActionPipe(AbstractPipe):
+    """
+    This pipe is responsible for parsing the actions of the model. It
+    is the first pipe in the action pipe stack. The pipe adds the
+    following functionality to the base environment:
+        - Action parsing
+        - Action clipping
+    
+    After parsing the actions should correspond the notional value of
+    trade in base currency (e.g. 100$ for USDT-BTC pair).
+    """
 class MarginAccountPipe(AbstractPipe):
     """
     A pipe to simulate a margin account environment. The pipe adds the
