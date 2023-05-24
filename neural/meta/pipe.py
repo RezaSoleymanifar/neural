@@ -373,13 +373,13 @@ class HeadActionPipe(AbstractPipe):
     assets. Models that produce discrete actions are only compatible with
     uniform distribution of the trading budget. The trading equity ratio can
     also be determined by the model, in this case the trading budget is
-    determined by the model and the percentage at construction is ignored.
-    Types of actions expected from the model are:
+    determined by the model and the trade equity ratio at construction is
+    ignored. Types of actions expected from the model are:
         - Uniform fixed ratio: 
             one neuron for each asset each with value (-1, 1). This will be
-            used to infer both side and value of trade. Interpretation of this
-            signal is left to an action interpretter. This can be achieved by
-            applying tanh to the output of the model, for continuous models, or
+            used to infer both side and value of trade. Interpretting this
+            signal is left to an action parser. This can be achieved by
+            applying tanh() to the output of the model, or
             simply just clipping the actions of the model to this range. For
             discrete models, the output of the model is mapped to (-1, 1) using
             an action mapper.
@@ -394,7 +394,7 @@ class HeadActionPipe(AbstractPipe):
         - Non-uniform fixed ratio:
             This is only viable for continuous models. The model should output
             one neuron for each asset each with value (-1, 1), showing trade
-            side (buy/sell). Apply tanh to the relevant output of the model.
+            side (buy/sell). Apply tanh() to the relevant output of the model.
             Also it has one neuron for each asset each with value in (0, 1)
             summing to 1, showing the distribution of budget across assets.
             This can be achieved by applying softmax to the corresponding
@@ -412,7 +412,7 @@ class HeadActionPipe(AbstractPipe):
     uniform/fixed ratio models. This is because the model is dealing with a
     larger action space primarily. Moreover model can produce actions that lead
     to more frequent trading anomalies. It is recommended to use a tiered
-    training approach with restrctions on the degrees of freedom of the model
+    training approach with restrictions on the degrees of freedom of the model
     and gradually removing them at each tier.
 
     Attributes:
