@@ -257,6 +257,9 @@ class HeadActionPipe(AbstractPipe):
     After parsing the actions should correspond the notional value of
     trade in base currency (e.g. 100$ for USDT-BTC pair).
     """
+
+    def __init__(self) -> None:
+        super().__init__()
 class MarginAccountPipe(AbstractPipe):
     """
     A pipe to simulate a margin account environment. The pipe adds the
