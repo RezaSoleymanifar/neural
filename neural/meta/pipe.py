@@ -13,7 +13,7 @@ from neural.wrapper.action import (
     MinTradeSizeActionWrapper, IntegerAssetQuantityActionWrapper,
     PositionCloseActionWrapper, InitialMarginActionWrapper,
     ExcessMarginActionWrapper, ShortingActionWrapper,
-    EquityBasedUniformActionInterpreter, ActionClipperWrapper)
+    EquityBasedFixedUniformActionInterpreter, ActionClipperWrapper)
 
 from neural.wrapper.observation import (ObservationStackerWrapper,
                                         ObservationBufferWrapper,
@@ -313,18 +313,38 @@ class HeadActionPipe(AbstractPipe):
     training approach with restrctions on the degrees of freedom of the model
     and gradually removing them at each tier.
     """
-    def __init__(self) -> None:
+    def __init__(
+            self,
+            uniform: bool = True,
+            fixed: bool = True,
+            trade_equity_ratio: float = 0.1
+            hold_threshold: float = 0.15,
+            low: float = -1,
+            high: float = 1
+            ) -> None:
         """
         Initializes the head action pipe.
         """
+    
+        self.uniform = uniform
+        self.fixed = fixed
+    
         self.action_parser = ActionParserWrapper
-        self.action_mapper = ActionMapperWrapper
+        self.fixed_uniform  = EquityBasedFixedUniformActionInterpreter
+        self.variable_uniform = None
+        self.fixed_nonuniform = None
+        self.variable_nonuniform = None
+        self.fixed_uniform_action_mapper = None
+        self.fixed_nonuniform_action_mapper = None
         self.action_clipper = ActionClipperWrapper
 
+    @property
+    def head(self):
+        if 
+
     def pipe(self, env):
-        env = self.action_parser(env)
-        env = self.action_mapper(env)
-        env = self.action_clipper(env)
+        
+
 
         return env
     
@@ -443,8 +463,6 @@ class MarginAccountPipe(AbstractPipe):
         self.observation_pipe = ObservationPipe
         self.action_pipe = ActionPipe
         self.reward_pipe = RewardPipe
-
-        self.action_interpreter = EquityBasedUniformActionInterpreter
 
         return None
 
