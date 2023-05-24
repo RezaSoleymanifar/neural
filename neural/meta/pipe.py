@@ -292,20 +292,26 @@ class HeadActionPipe(AbstractPipe):
         - Non-uniform fixed ratio:
             This is only viable for continuous models. The model should output
             one neuron for each asset each with value (-1, 1), showing trade
-            side (buy/sell). Apply tanh to the output of the model. Also it has
-            one neuron for each asset each with value in (0,1) summing to 1,
-            showing the distribution of budget across assets. This can be
-            achieved by applying softmax to the corresponding outputs of the
-            model. An action interpreter then uses these 2n neurons to infer
-            the notional value of trade for each asset. The trade equity ratio
-            is fixed at construction.
+            side (buy/sell). Apply tanh to the relevant output of the model.
+            Also it has one neuron for each asset each with value in (0, 1)
+            summing to 1, showing the distribution of budget across assets.
+            This can be achieved by applying softmax to the corresponding
+            outputs of the model. An action interpreter then uses these 2n
+            neurons to infer the notional value of trade for each asset. The
+            trade equity ratio is fixed at construction.
         - Non-uniform variable ratio:
             This is only viable for continuous models. The model is identical
             to the non-uniform fixed ratio model, except that the trade equity
             ratio is determined by the model. A neuron with value in (0,1) is
             responsible for determining the trade equity ratio. This can be
-            achieved by applying sigmoid to the corresponding neuron.
+            achieved by applying sigmoid to a corresponding neuron.
         
+    Training the non-uniform/variable ratio models is more difficult than the
+    uniform/fixed ratio models. This is because the model is dealing with a
+    larger action space primarily. Moreover model can produce actions that lead
+    to more frequent trading anomalies. It is recommended to use a tiered
+    training approach with restrctions on the degrees of freedom of the model
+    and gradually removing them at each tier.
     """
     def __init__(self) -> None:
         """
