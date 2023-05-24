@@ -61,38 +61,70 @@ class AbstractTradeClient(AbstractClient):
 
     """
     Abstract base class for a client that connects to a trading service
-    or API.
+    or API. Trade clients are enforced to provide the bare minimum
+    functionality required for agent to make trading decisions. This is 
+    an extension of the AbstractClient class that in addition to
+    connectivity, provides trading functionality. The Trader class
+    expects the client to provide the following information:
+        - cash
+        - asset_quantities
 
-    This class defines the required methods for setting credentials and
-    checking the connection to the service. Derived classes must
-    implement these methods to provide the necessary functionality for
-    connecting to a specific service.
+    And also following functionality:
+        - check_connection
+        - place_order
 
-    Attributes:
-    ------------
-        cash (float): The current amount of cash available to the
-        trader. asset_quantities (ndarray[float]): The current quantity
-        of each asset held by the trader. positions (float): The current
-        positions (notional base currency value) of each asset held by
-        the trader. net_worth (float): The current net worth of the
-        trader. longs (float): Sum of current notional value of long
-        positions held by the trader. shorts (float): Sum of current
-        notional value of short positions held by the trader.
 
-    Methods:
+    Attributes
+    ----------
+    cash : float
+        The current amount of cash available to the trader.
+    asset_quantities : np.ndarray[float]
+        The current quantity of each asset held by the trader.
+
+    Raises
     ------
-        check_connection(*args, **kwargs) -> bool:
-            Check the connection to the service. If the connection is
-            successful, the method should return True, otherwise False.
-            The Trader class will use this method to check the
-            connection before executing any trades.
-        place_order(*args, **kwargs):
-            Abstract method for placing an order for a single asset.
+    NotImplementedError
+        If the `cash` or `asset_quantities` properties are not
+        implemented in the subclass.
 
-    Raises:
+    Methods
+    -------
+    check_connection
+        Check the connection to the service. If the connection is
+        successful, the method should return True, otherwise False. The
+        Trader class will use this method to check the connection before
+        execution of trading process.
+    place_order
+        Place an order for a single asset.
 
-        NotImplementedError: If the method is not implemented in the
-        derived class.
+    Examples
+    --------
+    To create a new trade client:
+
+    >>> class MyTradeClient(AbstractTradeClient):
+    ...     def connect(self, *args, **kwargs):
+    ...         # Connect to the API
+    ...         pass
+    ...     @property
+    ...     def cash(self) -> float:
+    ...         # Return the current amount of cash available to the
+    ...         # trader.
+    ...         pass
+    ...     @property
+    ...     def asset_quantities(self) -> np.ndarray[float]:
+    ...         # Return the current quantity of each asset held by the
+    ...         # trader.
+    ...         pass
+    ...     def check_connection(self, *args, **kwargs):
+    ...         # Check the connection to the service. If the connection    
+    ...         # is successful, the method should return True, otherwise   
+    ...         # False. The Trader class will use this method to check the
+    ...         # connection before execution of trading process.
+    ...         pass
+    ...     def place_order(self, *args, **kwargs): 
+    ...         # Place an order for a single asset.    
+    ...         pass
+    
     """
 
     def __init__(self, *args, **kwargs):
