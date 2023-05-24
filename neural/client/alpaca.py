@@ -1036,14 +1036,21 @@ class AlpacaTradeClient(AlpacaClient, AbstractTradeClient):
 
     def place_order(
         self,
-        symbol: str,
-        action: Optional[float] = None,
+        asset: AlpacaAsset,
+        quantity: float,
         time_in_force: str = 'fok',
     ) -> Order:
+        """
+        Time in force options:
+            Day order = "day"
+            Good 'til cancelled = "gtc"
+            Opoening order = "opg"
+            Closing order = "cls"
+            Immediate or cancel = "ioc"
+            Fill or kill = "fok"
 
-        # time in force options: Day order = "day"
-        # Good 'til cancelled = "gtc" Opoening order = "opg" Closing
-        # order = "cls" Immediate or cancel = "ioc" Fill or kill = "fok"
+        """
+
 
         if quantity is None and action is None:
             raise ValueError('Either quantity or notional must be specified.')
