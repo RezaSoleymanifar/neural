@@ -1041,6 +1041,13 @@ class AlpacaTradeClient(AlpacaClient, AbstractTradeClient):
         time_in_force: str = 'fok',
     ) -> Order:
         """
+        This method places orders in Alpaca API uses quantity of asset
+        to buy or sell. If quantity is positive, the order is a buy
+        order. If quantity is negative, the order is a sell order. 
+
+        All order are market orders. Market orders are the most likely 
+        type of order to be executed. A market order is an order to buy
+        
         Time in force options:
             Day order = "day"
             Good 'til cancelled = "gtc"
@@ -1051,10 +1058,16 @@ class AlpacaTradeClient(AlpacaClient, AbstractTradeClient):
 
         Notes:
         ------
-        
-
+        Time in force options for crypto assets:
+            Good 'til cancelled = "gtc"
+            Immediate or cancel = "ioc"
         """
 
+        if asset.asset_type == AssetType.CRYPTOCURRENCY:
+            if time_in_force not in ['gtc', 'ioc']:
+                raise ValueError(
+                    f'Time in force {time_in_force} is not valid for '
+                    'crypto assets.')
 
         sign = np.sign(quantity) if quantity is not None else np.sign(action)
 
