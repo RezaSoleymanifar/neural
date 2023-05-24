@@ -1038,7 +1038,7 @@ class AlpacaTradeClient(AlpacaClient, AbstractTradeClient):
         self,
         asset: AlpacaAsset,
         quantity: float,
-        time_in_force: str = 'fok',
+        time_in_force: str = 'ioc',
     ) -> Order:
         """
         This method places orders in Alpaca API uses quantity of asset
@@ -1047,8 +1047,8 @@ class AlpacaTradeClient(AlpacaClient, AbstractTradeClient):
 
         All order are market orders. Market orders are the most likely
         type of order to be executed. A market order is an order to buy
-        or sell a security at current market price. This type of
-        Time in force options:
+        or sell a security at current market price. This type of Time in
+        force options:
         
            - Day order = "day"
            - Good 'til cancelled = "gtc"
@@ -1058,14 +1058,21 @@ class AlpacaTradeClient(AlpacaClient, AbstractTradeClient):
         Day order is the default time in force option. Day order is an
         order that is valid until the end of the trading day on which it
         was placed. If the order is not filled by the end of the trading
-        day, it will be cancelled. Opening and closing orders are only
-        valid at the market open and market close respectively. If the
-        order is not filled at the market open or market close, it will
+        day, it will be cancelled. Good 'til cancelled is an order that
+        is valid until it is filled or cancelled. Immediate or cancel is
+        an order that must be filled immediately or cancelled. Fill or
+        kill is an order that must be filled immediately or cancelled.
 
         Notes:
         ------
         Time in force options for crypto assets:
             Good 'til cancelled = "gtc" Immediate or cancel = "ioc"
+
+        Trader typically cancels all unfufilled orders before submitting
+        new orders for decisions that agent make. Thus for example 'day'
+        and 'gtc' orders will only stay open at most for a single
+        trading interval determined by the trading resolution (e.g.
+        '1Min', '1H').
         """
 
         if time_in_force not in ['day', 'gtc', 'ioc', 'fok']:
