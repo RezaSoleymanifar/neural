@@ -5,6 +5,7 @@ pipes.py
 This module defines pipes for market environments.
 """
 from abc import abstractmethod, ABC
+from typing import Callable
 
 from neural.wrapper.base import (MarginAccountMetaDataWrapper,
                                  ConsoleTearsheetRenderWrapper)
@@ -358,8 +359,8 @@ class HeadActionPipe(AbstractPipe):
             self,
             uniform: bool = True,
             fixed: bool = True,
-            discrete: bool = True,
-            trade_equity_ratio: float = 0.1,
+            discrete: bool = False,
+            trade_equity_ratio: float = 0.05,
             hold_threshold: float = 0.15,
             clip: bool = False,
             low: float = -1,
@@ -379,7 +380,7 @@ class HeadActionPipe(AbstractPipe):
             discrete (bool):
                 whether to use discrete actions. Set to True at construction.
             trade_equity_ratio (float):
-                fixed trading equity ratio. Set to 0.1 at construction.
+                fixed trading equity ratio. Set to 0.05 at construction.
             hold_threshold (float):
                 threshold for holding an asset. Set to 0.15 at construction.
             clip (bool):
@@ -411,12 +412,13 @@ class HeadActionPipe(AbstractPipe):
         self.fixed_nonuniform_parser = None
         self.variable_nonuniform_parser = None
 
-        self.fixed_uniform_action_mapper = None
-        self.fixed_nonuniform_action_mapper = None
+        self.fixed_uniform_mapper = None
+        self.fixed_nonuniform_mapper = None
+
         self.action_clipper = ActionClipperWrapper
 
     @property
-    def parser(self):
+    def parser(self) -> Callable:
         """
         Parser is the first pipe to receive actions. It is responsible for
         parsing the actions of the model. If model is discrete, it may be 
@@ -452,9 +454,9 @@ class HeadActionPipe(AbstractPipe):
         is the expected input of the uniform action parser.
         """
         if self.uniform:
-            return self.fixed_uniform_action_mapper
+            return self.fixed_uniform_mapper
         else:
-            return self.fixed_nonuniform_action_mapper
+            return self.fixed_nonuniform_mapper
 
     def pipe(self, env):
         """
@@ -469,6 +471,7 @@ class HeadActionPipe(AbstractPipe):
 
         return env
     
+
 class MarginAccountPipe(AbstractPipe):
     """
     A pipe to simulate a margin account environment. The pipe adds the
