@@ -240,8 +240,8 @@ class TrainMarketEnv(AbstractMarketEnv):
             The observation space is a dictionary containing the
             following keys:
                 - 'cash' (numpy.ndarray): 
-                    A numpy array representing the available cash in the
-                    account. 
+                    A scalar numpy array representing the available cash
+                    in the account. 
                 - 'asset_quantities' (numpy.ndarray): 
                     A numpy array representing the quantities of assets
                     held. 
