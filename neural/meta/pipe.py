@@ -81,6 +81,12 @@ class RewardPipe(AbstractPipe):
     
     Attributes:
     -----------
+        interest_rate (float):
+            interest rate on debt. Defaults to 0.08.
+        epsilon (float):
+            small number to avoid division by zero. Defaults to 1e-8.
+        clip_threshold (float):
+            threshold for clipping rewards. Defaults to 10.
         reward_generator (RewardGeneratorWrapper):
             reward generator wrapper. Set to RewardGeneratorWrapper at
             construction.
@@ -184,6 +190,18 @@ class ObservationPipe(AbstractPipe):
             training. If False, the statistics will not be tracked and updated
             during training. If yes statistics are tracked as pipe attribute
             and can be saved and loaded with the pipe object.
+        flatten (FlattenObservationWrapper):
+            observation flattening wrapper. Set to FlattenObservationWrapper at
+            construction.
+        buffer (BufferObservationWrapper):
+            observation buffering wrapper. Set to BufferObservationWrapper at
+            construction.
+        stack (StackObservationWrapper):
+            observation stacking wrapper. Set to StackObservationWrapper at
+            construction.
+        normalizer (NormalizeObservationWrapper):
+            observation normalizer wrapper. Set to NormalizeObservationWrapper
+            at construction.
     
     Methods:
     --------
@@ -221,14 +239,33 @@ class ObservationPipe(AbstractPipe):
         self.flatten = FlattenToNUmpyObservationWrapper
         self.buffer = ObservationBufferWrapper
         self.stacker = ObservationStackerWrapper
-        self.normalize_observation = ObservationNormalizerWrapper
+        self.normalizer = ObservationNormalizerWrapper
+
+        return None
 
     def pipe(self, env):
+        """
+        Applies the following functionalities to the base environment:
+            1. Observation flattening
+            2. Observation buffering
+            3. Observation stacking
+            4. Observation normalization
+
+        Args:
+        -----
+            env (gym.Env):
+                environment to be wrapped
+        
+        Returns:
+        --------
+            env (gym.Env):
+                wrapped environment
+        """
         env = self.flatten(env)
         env = self.buffer(env, buffer_size=self.buffer_size)
         env = self.stacker(env, stack_size=self.stack_size)
 
-        env = self.normalize_observation(
+        env = self.normalizer(
             env,
             observation_statistics=self.observation_statistics,
             track_statistics=self.track_statistics)
