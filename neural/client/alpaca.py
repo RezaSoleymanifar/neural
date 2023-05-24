@@ -977,7 +977,7 @@ class AlpacaTradeClient(AlpacaClient, AbstractTradeClient):
 
             asset_quantities.append(quantity)
             asset_quantities = np.array(asset_quantities)
-        return asset_quantities.astype(GLOBAL_DATA_TYPE)
+        return asset_quantities
 
     @property
     def equity(self) -> float:
@@ -1119,12 +1119,8 @@ class AlpacaTradeClient(AlpacaClient, AbstractTradeClient):
         side = OrderSide.BUY if np.sign(quantity) > 0 else OrderSide.SELL
         time_in_force = TimeInForce(time_in_force)
 
-        quantity = abs(quantity) if quantity is not None else None
-        action = abs(action) if action is not None else None
-
         market_order_request = MarketOrderRequest(symbol=asset.symbol,
-                                                  qty=quantity,
-                                                  notional=action,
+                                                  qty=abs(quantity),
                                                   side=side,
                                                   time_in_force=time_in_force)
 

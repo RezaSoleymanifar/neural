@@ -282,7 +282,6 @@ class TrainMarketEnv(AbstractMarketEnv):
         data_feeder: StaticDataFeeder,
         initial_cash: float = 1e6,
         initial_asset_quantities: Optional[np.ndarray] = None,
-        quantity_precision = 4
     ) -> None:
         """
         Initialize the TrainMarketEnv class.
