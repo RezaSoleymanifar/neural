@@ -170,27 +170,35 @@ class TrainMarketEnv(AbstractMarketEnv):
             The initial quantity of assets to allocate to the
             environment. Default is None.
         data_metadata: DatasetMetadata
-            Metadata about the dataset used
+            Metadata about the dataset used. This includes the feature
+            schema, asset names, and asset price mask.
         feature_schema: Dict[FeatureType, List[bool]] 
             A dictionary mapping feature types to their respective
-            boolean masks. Used to extract features from the dataset.
+            boolean masks. Used to extract targeet features from the
+            dataset.
         assets: List[str]
-            A list of asset names in the dataset.
-        asset_price_mask: List[bool]
-            A list of boolean values representing the asset price
-            features in the dataset.
+            A list of asset names in the dataset. features in the
+            dataset.
         n_steps: int
-            The number of steps in the environment
+            The number of steps in the environment. Corresponds to the
+            the total number of intervals in the market days of the
+            dataset calendar.
         n_features: int
-            The number of features in the dataset
+            The number of features in the dataset. For n_assets as
+            number of assets in the dataset, n_features is always
+            greater than or equal to n_assets, namely a price feature
+            for each asset plus additional features.
         n_assets: int
-            The number of assets in the dataset
+            The number of assets in the dataset.
         index: int
-            The current index of the environment
+            The current index of the environment. Shows the current time
+            step of the environment.
         holds: np.ndarray
             An integer array representing the number of steps each asset
-            has been held by the environment. As soon as a trade is
-            placed, the holds for that asset is reset to zero.
+            has been held by the environment. As soon as a trade
+            (buy/sell) is placed, the holds for that asset is reset to
+            zero. If asset is held (long/short) then hold is incremented
+            at e
         features: np.ndarray
             An array representing the current features of the
             environment. Features can include a wide swath of possible
