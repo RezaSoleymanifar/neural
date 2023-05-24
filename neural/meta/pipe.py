@@ -97,14 +97,33 @@ class RewardPipe(AbstractPipe):
             Applies a stack of market wrappers successively to an
             environment.
     """
-    def __init__(self) -> None:
+    def __init__(self,
+                interest_rate = 0.08,
+                epsilon = 1e-8,
+                clip_threshold = 10,
+                ) -> None:
         """
         Initializes the reward pipe.
+
+        Args:
+        -----
+            interest_rate (float):
+                interest rate on debt. Defaults to 0.08.
+            epsilon (float):
+                small number to avoid division by zero. Defaults to 1e-8.
+            clip_threshold (float):
+                threshold for clipping rewards. Defaults to 10.
         """
+
+        self.interest_rate = interest_rate
+        self.epsilon = epsilon
+        self.clip_threshold = clip_threshold
 
         self.reward_generator = RewardGeneratorWrapper
         self.interest = LiabilityInterstRewardWrapper
         self.reward_normalizer = RewardNormalizerWrapper
+
+        return None
 
     def pipe(self, env):
         """
@@ -115,26 +134,35 @@ class RewardPipe(AbstractPipe):
             3. Reward normalization
         """
         env = self.reward_generator(env)
-        env = self.interest(env)
-        env = self.reward_normalizer(env)
+        env = self.interest(env, interest_rate = self.interest_rate)
+        env = self.reward_normalizer(
+            env, epsilon = self.epsilon, clip_threshold = self.clip_threshold)
 
         return env
 
 class ObservationPipe(AbstractPipe):
     """
-    Observation pipe for market environments. The pipe adds the
-    following functionality to the base environment:
+    Observation pipe for market environments. Provides basic functionality for
+    manipulating observations. The pipe adds the following functionality to the
+    base environment:
         - Observation flattening:
-            If numpy array, flattens the observation to a 1D array. If 
-            dict, flattens the observation to a 1D array for each key.
-            then joins the arrays into a single 1D array.
+            If numpy array, flattens the observation to a 1D array. If dict,
+            flattens the observation to a 1D array for each key. then joins the
+            arrays into a single 1D array.
         - Observation buffering:
-            Buffers the last n observations. If numpy array, buffers the
-            last n observations in a deque. If dict, buffers the last n
-            observations in a deque for each key.
+            Buffers the last n observations. If numpy array, buffers the last n
+            observations in a deque. If dict, buffers the last n observations
+            in a deque for each key.
         - Observation stacking:
-            
-        - Observation normalization (dict/numpy array)
+            Stacks the last n observations. If numpy array, stacks the last n
+            observations along axis = 0. If dict, stacks the last n
+            observations along axis = 0 for each key.
+        - Observation normalization:
+            Ensures that the observation distribution has zero mean and unit
+            variance. If numpy array, normalizes the observation using a
+            running mean and standard deviation. If dict, normalizes the
+            observation using a running mean and standard deviation for each
+            key.
     
     Attributes:
     -----------
@@ -143,26 +171,24 @@ class ObservationPipe(AbstractPipe):
             construction.
         stack_size (int):
             size of the stack for stacking observations. Set to None at
-            construction. If None, the stack size will be set to the
-            buffer size.
+            construction. If None, the stack size will be set to the buffer
+            size.
         observation_statistics (RunningStatistics):
             statistics of the observation distribution. Set to None at
-            construction. If track_statistics is True, the statistics
-            will be synchronized with the statistics of the observation
-            normalizer wrapper. This will be reused with the wrapper
-            when the pipe is saved and loaded.
+            construction. If track_statistics is True, the statistics will be
+            synchronized with the statistics of the observation normalizer
+            wrapper. This will be reused with the wrapper when the pipe is
+            saved and loaded.
         track_statistics (bool):
-            whether to track and update the observation statistics
-            during training. If False, the statistics will not be
-            tracked and updated during training. If yes statistics are
-            tracked as pipe attribute and can be saved and loaded with
-            the pipe object.
+            whether to track and update the observation statistics during
+            training. If False, the statistics will not be tracked and updated
+            during training. If yes statistics are tracked as pipe attribute
+            and can be saved and loaded with the pipe object.
     
     Methods:
     --------
         pipe(env):
-            Applies a stack of market wrappers successively to an
-            environment.
+            Applies a stack of market wrappers successively to an environment.
     """
     def __init__(self,
                  buffer_size: int = 10,
