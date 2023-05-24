@@ -1039,7 +1039,7 @@ class AlpacaTradeClient(AlpacaClient, AbstractTradeClient):
         asset: AlpacaAsset,
         quantity: float,
         time_in_force: str = 'ioc',
-    ) -> Order:
+    ) -> None | Order:
         """
         This method places orders in Alpaca API uses quantity of asset
         to buy or sell. If quantity is positive, the order is a buy
@@ -1073,7 +1073,23 @@ class AlpacaTradeClient(AlpacaClient, AbstractTradeClient):
                 positive, the order is a buy order. If quantity is
                 negative, the order is a sell order.
             time_in_force:
-            
+                The time in force for the order. Defaults to "ioc". Time
+                in force options:
+                    - Day order = "day"
+                    - Good 'til cancelled = "gtc"
+                    - Immediate or cancel = "ioc"
+                    - Fill or kill = "fok"
+
+        Returns:
+        ---------
+            None | Order: The order object. if quantity is zero, None is
+            returned.
+        
+        Raises:
+        -------
+            ValueError: If the time in force is not valid.
+            ValueError: If the time in force is not valid for
+
         Notes:
         ------
         Time in force options for crypto assets:
@@ -1087,7 +1103,7 @@ class AlpacaTradeClient(AlpacaClient, AbstractTradeClient):
         """
 
         if quantity == 0:
-            raise ValueError('Quantity cannot be zero.')
+            return None
 
         if time_in_force not in ['day', 'gtc', 'ioc', 'fok']:
             raise ValueError(
