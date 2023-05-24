@@ -312,6 +312,47 @@ class HeadActionPipe(AbstractPipe):
     to more frequent trading anomalies. It is recommended to use a tiered
     training approach with restrctions on the degrees of freedom of the model
     and gradually removing them at each tier.
+
+    Attributes:
+    -----------
+        uniform (bool):
+            whether to use uniform distribution of trading budget. Set to True
+            at construction.
+        fixed (bool):
+            whether to use fixed trading equity ratio. Set to True at
+            construction.
+        discrete (bool):
+            whether to use discrete actions. Set to True at construction.
+        trade_equity_ratio (float):
+            fixed trading equity ratio. Set to 0.1 at construction.
+        hold_threshold (float):
+            threshold for holding an asset. Set to 0.15 at construction.
+        clip (bool):
+            whether to clip actions to (low, high). Set to False at construction.
+        low (float):
+            lower bound for clipping actions. Set to -1 at construction.
+        high (float):
+            upper bound for clipping actions. Set to 1 at construction.
+        fixed_uniform (EquityBasedFixedUniformActionParser):
+            action parser for fixed uniform ratio models.
+        variable_uniform ($$$):
+            action parser for variable uniform ratio models.
+        fixed_nonuniform ($$$):
+            action parser for fixed non-uniform ratio models.
+        variable_nonuniform ($$$):
+            action parser for variable non-uniform ratio models.
+            
+    Methods:
+    --------
+        pipe(env):
+            Applies a stack of market wrappers successively to an
+            environment.
+    
+    Raises:
+    -------
+        ValueError:
+            if discrete and non-uniform distribution of trading budget is
+            requested.
     """
     def __init__(
             self,
@@ -326,6 +367,28 @@ class HeadActionPipe(AbstractPipe):
             ) -> None:
         """
         Initializes the head action pipe.
+
+        Arguments:
+        ----------
+            uniform (bool):
+                whether to use uniform distribution of trading budget. Set to
+                True at construction.
+            fixed (bool):
+                whether to use fixed trading equity ratio. Set to True at
+                construction.
+            discrete (bool):
+                whether to use discrete actions. Set to True at construction.
+            trade_equity_ratio (float):
+                fixed trading equity ratio. Set to 0.1 at construction.
+            hold_threshold (float):
+                threshold for holding an asset. Set to 0.15 at construction.
+            clip (bool):
+                whether to clip actions to (low, high). Set to False at
+                construction.
+            low (float):
+                lower bound for clipping actions. Set to -1 at construction.
+            high (float):
+                upper bound for clipping actions. Set to 1 at construction.
         """
 
         if uniform and discrete:
@@ -339,13 +402,14 @@ class HeadActionPipe(AbstractPipe):
         self.trade_equity_ratio = trade_equity_ratio
         self.hold_threshold = hold_threshold
 
+        self.clip = clip
         self.low = low
         self.high = high
 
-        self.fixed_uniform  = EquityBasedFixedUniformActionParser
-        self.variable_uniform = None
-        self.fixed_nonuniform = None
-        self.variable_nonuniform = None
+        self.fixed_uniform_parser  = EquityBasedFixedUniformActionParser
+        self.variable_uniform_parser = None
+        self.fixed_nonuniform_parser = None
+        self.variable_nonuniform_parser = None
 
         self.fixed_uniform_action_mapper = None
         self.fixed_nonuniform_action_mapper = None
@@ -361,15 +425,15 @@ class HeadActionPipe(AbstractPipe):
         """
         if self.fixed:
             if self.uniform:
-                parser = lambda env: self.fixed_uniform(
+                parser = lambda env: self.fixed_uniform_parser(
                     self.trade_equity_ratio, self.hold_threshold, env)
             else:
-                parser = self.fixed_nonuniform
+                parser = self.fixed_nonuniform_parser
         else:
             if self.uniform:
-                parser = self.variable_uniform
+                parser = self.variable_uniform_parser
             else:
-                parser = self.variable_nonuniform
+                parser = self.variable_nonuniform_parser
 
         return parser
     
@@ -395,7 +459,7 @@ class HeadActionPipe(AbstractPipe):
     def pipe(self, env):
         """
         Applies the head pipe to the environment. Infers action parser from
-        
+
         """
         env = self.parser(env)
         if self.discete:
