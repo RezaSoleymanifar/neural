@@ -124,7 +124,6 @@ class AbstractTradeClient(AbstractClient):
     ...     def place_order(self, *args, **kwargs): 
     ...         # Place an order for a single asset.    
     ...         pass
-    
     """
 
     def __init__(self, *args, **kwargs):
@@ -134,7 +133,9 @@ class AbstractTradeClient(AbstractClient):
     @abstractmethod
     def cash(self) -> float:
         """
-        The current amount of cash available to the trader.
+        The current amount of cash available to the trader. Cash can be
+        positive or negative. Negative cash indicates that the trader is
+        in debt.
 
         Raises:
         --------
@@ -148,7 +149,10 @@ class AbstractTradeClient(AbstractClient):
     @abstractmethod
     def asset_quantities(self, *args, **kwargs) -> np.ndarray[float]:
         """
-        The current quantity of each asset held by the trader.
+        The current quantity of each asset held by the trader. Asset
+        quantities can be positive or negative. Negative quantities
+        indicate that the trader has shorted the asset, namely the
+        trader owes the asset to the broker.
 
         Raises:
         --------
@@ -166,6 +170,11 @@ class AbstractTradeClient(AbstractClient):
         successful, the method should return True, otherwise False. The
         Trader class will use this method to check the connection before
         execution of trading process.
+
+        Raises:
+        --------
+            NotImplementedError: This method must be implemented by a
+            subclass.
         """
 
         raise NotImplementedError
@@ -173,7 +182,8 @@ class AbstractTradeClient(AbstractClient):
     @abstractmethod
     def place_order(self, *args, **kwargs):
         """
-        Abstract method for placing an order for a single asset.
+        Abstract method for placing an order for a single asset. The 
+        restrictions of the API should be enforced in this method.
         """
 
         raise NotImplementedError
@@ -184,7 +194,15 @@ class AbstractDataClient(AbstractClient):
     """
     Abstract base class for a client that connects to a data service or
     API. This class defines a blueprint for clients that provide data
-    functionality.
+    functionality. In addition to connectivity, data clients are
+    enforced to provide the following information:
+        - data_source
+    
+    Data source is the name of the data source. This will be used to map
+    clients to constituents of stream metadata that specify a data
+    source. For example a Trader class may use multiple data clients at
+    construction. The Trader class will use the data source attribute of
+    each client to map the client to the corresponding stream metadata.
     """
 
     def __init__(self, *args, **kwargs):
