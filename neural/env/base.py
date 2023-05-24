@@ -87,7 +87,12 @@ class AbstractMarketEnv(Env, ABC):
         - Training environments
         - Trading environments
 
-    Training environments are used for training agents. Trading 
+    Training environments are used for training agents with historical
+    data and performs accounting for financial operations internally.
+    Trading environments are used with trained agents to stream live
+    market data and place orders in the market using a trading API. In
+    this case financial accounting is performed by the broker and
+    accounting data is read from the broker's API.
     """
 
     @abstractmethod
@@ -122,7 +127,18 @@ class AbstractMarketEnv(Env, ABC):
         Should be implemented by subclasses. This method should place
         orders on the assets based on the given actions.
         The exact effect on the environment is left to the
-        implementation of the subclass.
+        implementation of the subclass. actions are notional values
+        of assets to buy/sell. The sign of the action determines
+        whether to buy or sell. The magnitude of the action determines
+        the notional value of the order. The notional value of the
+        order is the product quantity and price. 
+
+        Example:
+        --------
+        Buy 100 shares of AAPL at $100 per share:
+            action = 100 * 100 = 10000
+        Sell 100 shares of AAPL at $100 per share:
+            action = -100 * 100 = -10000
         """
 
         raise NotImplementedError
