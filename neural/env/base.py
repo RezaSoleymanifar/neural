@@ -78,10 +78,16 @@ class AbstractMarketEnv(Env, ABC):
 
     Notes:
     ------
-    Market environments should be designed to interact with trading
-    algorithms or other agents in order to simulate the behavior of a
-    real-world market. This base class defines the minimum interface
-    required for an environment to be used for algorithmic trading.
+    Market environments should be designed to interact with agents in
+    order to simulate the behavior of a real-world market for training.
+    This base class defines the minimum interface required for an
+    environment to be used for algorithmic trading.
+
+    There are typically two types of market environments:
+        - Training environments
+        - Trading environments
+
+    Training environments are used for training agents. Trading 
     """
 
     @abstractmethod
