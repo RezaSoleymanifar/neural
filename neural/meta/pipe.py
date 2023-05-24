@@ -77,7 +77,7 @@ class RewardPipe(AbstractPipe):
             Reduces reward by amount of interest on debt. Computed at 
             end of day.
         - Reward normalization:
-            En
+            Ensures that the reward distribution has zero mean and unit.
     
     Attributes:
     -----------
@@ -107,11 +107,16 @@ class RewardPipe(AbstractPipe):
         self.reward_normalizer = RewardNormalizerWrapper
 
     def pipe(self, env):
+        """
+        A method for piping an environment. Applies a stack of market
+        wrappers successively to an environment:
+            1. Reward generation
+            2. Interest on debt
+            3. Reward normalization
+        """
         env = self.reward_generator(env)
         env = self.interest(env)
-        env = self.reward_normalizer(env,
-                                     reward_statistics=self.reward_statistics,
-                                     track_statistics=self.track_statistics)
+        env = self.reward_normalizer(env)
 
         return env
 
@@ -119,9 +124,16 @@ class ObservationPipe(AbstractPipe):
     """
     Observation pipe for market environments. The pipe adds the
     following functionality to the base environment:
-        - Observation flattening (dict/numpy array)
-        - Observation buffering (dict/numpy array)
-        - Observation stacking (dict/numpy array)
+        - Observation flattening:
+            If numpy array, flattens the observation to a 1D array. If 
+            dict, flattens the observation to a 1D array for each key.
+            then joins the arrays into a single 1D array.
+        - Observation buffering:
+            Buffers the last n observations. If numpy array, buffers the
+            last n observations in a deque. If dict, buffers the last n
+            observations in a deque for each key.
+        - Observation stacking:
+            
         - Observation normalization (dict/numpy array)
     
     Attributes:
