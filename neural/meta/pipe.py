@@ -393,9 +393,15 @@ class HeadActionPipe(AbstractPipe):
             return self.fixed_nonuniform_action_mapper
 
     def pipe(self, env):
+        """
+        Applies the head pipe to the environment. Infers action parser from
+        
+        """
         env = self.parser(env)
         if self.discete:
-            env = self.fixed_uniform_action_mapper(env)
+            env = self.mapper(env)
+        if self.clip:
+            env = self.action_clipper(self.low, self.high, env)
 
         return env
     
