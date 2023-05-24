@@ -71,9 +71,13 @@ class RewardPipe(AbstractPipe):
     This pipe adds reward generation, interest on debt, and
     normalization to the base market environment. The pipe adds the
     following functionality to the base environment:
-        - Reward generation
-        - Interest on debt (cash/asset liability)
-        - Reward normalization
+        - Reward generation:
+            This will be the change in equity of the account.
+        - Interest on debt
+            Reduces reward by amount of interest on debt. Computed at 
+            end of day.
+        - Reward normalization:
+            En
     
     Attributes:
     -----------
