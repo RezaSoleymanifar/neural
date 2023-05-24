@@ -266,8 +266,8 @@ class HeadActionPipe(AbstractPipe):
     After parsing the actions should correspond the notional value of trade in
     base currency (e.g. 100$ for USDT-BTC pair). In general it is assumed that
     a fixed percentage of the equity is traded at each interval. The percentage
-    is fixed to 5% at construction. This trading budget so to speak can be
-    distributed uniformly, or non- uniformly across the assets. Models that
+    is fixed at construction. This trading budget so to speak can be
+    distributed uniformly, or non-uniformly across the assets. Models that
     produce discrete actions are only compatible with uniform distribution of
     the trading budget. The trading equity ratio can also be determined by the
     model, in this case the trading budget is determined by the model and the
@@ -282,12 +282,13 @@ class HeadActionPipe(AbstractPipe):
             discrete models, the output of the model is mapped to (-1, 1) using
             an action mapper.
         - Uniform variable ratio:
-            one neuron for each asset each with value (-1, 1). One neuron with 
+            one neuron for each asset each with value (-1, 1). One neuron with
             value in (0,1) indicating the trade equity ratio. This can be
-            achieved by applying sigmoid to the corresponding neuron. For 
+            achieved by applying sigmoid to a corresponding neuron. For
             discrete models, the output of the model for each asset is mapped
-            to (-1, 1) using an action mapper. Similarly output of the model for the
-            trade equity ratio is mapped to (0, 1) using the same action mapper.
+            to (-1, 1) using an action mapper. Similarly output of the model
+            for the trade equity ratio is mapped to (0, 1) using the same
+            action mapper.
         - Non-uniform fixed ratio:
             This is only viable for continuous models. The model should output
             one neuron for each asset each with value (-1, 1), showing trade
@@ -299,16 +300,28 @@ class HeadActionPipe(AbstractPipe):
             the notional value of trade for each asset. The trade equity ratio
             is fixed at construction.
         - Non-uniform variable ratio:
-            This is only viable for continuous models. The model is identical 
+            This is only viable for continuous models. The model is identical
             to the non-uniform fixed ratio model, except that the trade equity
-            ratio is determined by the model. A neuron with value in (0,1)
-            is responsible for determining the trade equity ratio. This can be
+            ratio is determined by the model. A neuron with value in (0,1) is
+            responsible for determining the trade equity ratio. This can be
             achieved by applying sigmoid to the corresponding neuron.
         
     """
-
     def __init__(self) -> None:
-        super().__init__()
+        """
+        Initializes the head action pipe.
+        """
+        self.action_parser = ActionParserWrapper
+        self.action_mapper = ActionMapperWrapper
+        self.action_clipper = ActionClipperWrapper
+
+    def pipe(self, env):
+        env = self.action_parser(env)
+        env = self.action_mapper(env)
+        env = self.action_clipper(env)
+
+        return env
+    
 class MarginAccountPipe(AbstractPipe):
     """
     A pipe to simulate a margin account environment. The pipe adds the
@@ -458,6 +471,7 @@ class MarginAccountPipe(AbstractPipe):
                                integer=self.integer).pipe(env)
         env = self.reward_pipe().pipe(env)
 
-        env = self.action_interpreter(env, trade_ratio=self.trade_equity_ratio)
+        env = self.action_interpreter(
+            env, trade_quity_ratio=self.trade_equity_ratio)
 
         return env
