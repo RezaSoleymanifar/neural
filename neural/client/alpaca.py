@@ -1046,9 +1046,10 @@ class AlpacaTradeClient(AlpacaClient, AbstractTradeClient):
         order. If quantity is negative, the order is a sell order. 
 
         All order are market orders. Market orders are the most likely
-        type of order to be executed. A market order is an order to buy
-        or sell a security at current market price. This type of Time in
-        force options:
+        type of order to be executed. Link:
+        https://alpaca.markets/docs/trading/orders/. A market order is
+        an order to buy or sell an asset at current market price. Time
+        in force options:
         
            - Day order = "day"
            - Good 'til cancelled = "gtc"
@@ -1063,6 +1064,16 @@ class AlpacaTradeClient(AlpacaClient, AbstractTradeClient):
         an order that must be filled immediately or cancelled. Fill or
         kill is an order that must be filled immediately or cancelled.
 
+        Args:
+        ------
+            asset:
+                The asset to buy or sell.
+            quantity:
+                The quantity of the asset to buy or sell. If quantity is
+                positive, the order is a buy order. If quantity is
+                negative, the order is a sell order.
+            time_in_force:
+            
         Notes:
         ------
         Time in force options for crypto assets:
@@ -1075,6 +1086,9 @@ class AlpacaTradeClient(AlpacaClient, AbstractTradeClient):
         '1Min', '1H').
         """
 
+        if quantity == 0:
+            raise ValueError('Quantity cannot be zero.')
+
         if time_in_force not in ['day', 'gtc', 'ioc', 'fok']:
             raise ValueError(
                 f'Time in force {time_in_force} is not valid.'
@@ -1086,9 +1100,7 @@ class AlpacaTradeClient(AlpacaClient, AbstractTradeClient):
                     f'Time in force {time_in_force} is not valid for '
                     'cryptocurrency assets.')
 
-        sign = np.sign(quantity) if quantity is not None else np.sign(action)
-
-        side = OrderSide.BUY if sign > 0 else OrderSide.SELL
+        side = OrderSide.BUY if np.sign(quantity) > 0 else OrderSide.SELL
         time_in_force = TimeInForce(time_in_force)
 
         quantity = abs(quantity) if quantity is not None else None
