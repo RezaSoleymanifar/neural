@@ -988,21 +988,31 @@ class AlpacaTradeClient(AlpacaClient, AbstractTradeClient):
             - L is long market value
             - C is cash balance
             - S is short market value
-            
+        
+        Equity thus shows the total value of the account if all the
+        positions were closed at the current market prices. This along
+        with market data will be used by agent to make decisions.
 
         Returns:
-            float: The current net worth of the trader.
+        ---------
+            float: The current equity of the trader.
         """
 
-        self._equity = self.client.account.portfolio_value
+        self._equity = self.account.portfolio_value
 
         return self._equity
 
     def get_positions_dataframe(self) -> pd.DataFrame:
         """
-        Get all current positions in the account.
+        Get all current positions in the account. Position is defined as
+        the notional value of each asset in portfolio whether it is long
+        (owned), or short (borrowed). The position value is calculated
+        as the product of the asset price and the number of shares held.
 
-        :return: A DataFrame containing the positions.
+        Returns:
+        ---------
+            DataFrame: A dataframe of all current positions in the
+            account.
         """
 
         self._positions = self.clients['trading'].get_all_positions()
