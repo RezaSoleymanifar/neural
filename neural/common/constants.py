@@ -55,9 +55,10 @@ Constants:
         A custom list of stock symbols.
 """
 
+import logging
+
 import os
 import numpy as np
-import logging
 
 from neural.utils.time import Calendar
 
