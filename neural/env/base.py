@@ -198,15 +198,18 @@ class TrainMarketEnv(AbstractMarketEnv):
             has been held by the environment. As soon as a trade
             (buy/sell) is placed, the holds for that asset is reset to
             zero. If asset is held (long/short) then hold is incremented
-            at e
+            at each time step. If asset is not held, hold stays at zero.
         features: np.ndarray
             An array representing the current features of the
             environment. Features can include a wide swath of possible
             data, including market data such as open, high, low, close,
             volume, and other features such as sentiment scores, text
-            embeddings, or raw text.
+            embeddings, or raw text. Features is typically a long vector
+            with shape (n_features,). In order to extract individual
+            features, feature_schema is used.
         _cash: float
-            The current amount of cash in the environment
+            The current amount of cash in the environment. Cash can be
+            negative, allowing for margin trading.
         _asset_quantities: np.ndarray
             An array representing the quantities of each asset held by
             the environment. A positive value means the asset is held
@@ -217,12 +220,13 @@ class TrainMarketEnv(AbstractMarketEnv):
             An array representing the current asset prices of the
             environment.
         features_generator: Iterator[np.ndarray]
-            An iterator that yields the next row of the dataset. This
-            iterator is used to update the environment state by moving
-            to the next time step and updating the environment
+            An iterator that yields the next feature row of the dataset.
+            This iterator is used to update the environment state by
+            moving to the next time step and updating the environment
             variables.
         info: dict
-            A dictionary for storing additional information (unused)
+            A dictionary for storing additional information (unused for
+            now)
         action_space: gym.spaces.Box. Number of actions is equal to
             the number of assets in the dataset. Each action is the
             notional value of the asset to buy or sell. A zero value
