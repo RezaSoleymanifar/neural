@@ -1049,14 +1049,12 @@ class AlpacaTradeClient(AlpacaClient, AbstractTradeClient):
             Immediate or cancel = "ioc"
             Fill or kill = "fok"
 
+        Notes:
+        ------
+        
+
         """
 
-
-        if quantity is None and action is None:
-            raise ValueError('Either quantity or notional must be specified.')
-        if quantity is not None and action is not None:
-            raise ValueError(
-                'Only one of quantity or notional can be specified.')
 
         sign = np.sign(quantity) if quantity is not None else np.sign(action)
 
