@@ -327,7 +327,14 @@ class HeadActionPipe(AbstractPipe):
         """
         Initializes the head action pipe.
         """
-    
+
+        if uniform and discrete:
+            raise ValueError(
+                'Discrete models can only be used with uniform trading '
+                'budget distribution.')
+
+        if 
+        
         self.uniform = uniform
         self.fixed = fixed
 
@@ -336,7 +343,7 @@ class HeadActionPipe(AbstractPipe):
 
         self.low = low
         self.high = high
-    
+
         self.fixed_uniform  = EquityBasedFixedUniformActionInterpreter
         self.variable_uniform = None
         self.fixed_nonuniform = None
@@ -360,6 +367,13 @@ class HeadActionPipe(AbstractPipe):
             else:
                 return self.variable_nonuniform
 
+    @property
+    def mapper(self):
+
+        if self.uniform:
+            return self.fixed_uniform_action_mapper
+        else:
+            return self.fixed_nonuniform_action_mapper
 
     def pipe(self, env):
         env = self.head()
