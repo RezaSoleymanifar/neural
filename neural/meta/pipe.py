@@ -264,12 +264,24 @@ class HeadActionPipe(AbstractPipe):
         - Action clipping
     
     After parsing the actions should correspond the notional value of
-    trade in base currency (e.g. 100$ for USDT-BTC pair). In general 
-    it is assumed that a fixed percentage of the equity is traded at
-    each interval. The percentage is fixed to 5% at construction. This 
+    trade in base currency (e.g. 100$ for USDT-BTC pair). In general it
+    is assumed that a fixed percentage of the equity is traded at each
+    interval. The percentage is fixed to 5% at construction. This
     trading budget so to speak can be distributed uniformly, or non-
-    uniformly across the assets. 
-        - (-1, 1) 
+    uniformly across the assets. Models that produce discrete actions
+    are only compatible with uniform distribution of the trading budget.
+    The trading equity ratio can also be determined by the model, in
+    this case the trading budget is determined by the model and the
+    percentage at construction is ignored. Types of actions expected
+    from the model are:
+        - I: one neuron for each asset each with value (-1, 1).
+          Interpretation of this signal is left to an action
+          interpretter. This can be achieved by applying tanh to the
+          output of the model, for continuous models, or simply just
+          clipping the actions of the model to this range. For discrete
+          models, the output of the model is mapped to (-1, 1) using an
+          action mapper.
+        - II:
     """
 
     def __init__(self) -> None:
