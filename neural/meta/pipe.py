@@ -7,6 +7,7 @@ This module defines pipes for market environments.
 from abc import abstractmethod, ABC
 from typing import Callable
 
+from gym import Env
 from neural.wrapper.base import (MarginAccountMetaDataWrapper,
                                  ConsoleTearsheetRenderWrapper)
 
@@ -55,7 +56,7 @@ class AbstractPipe(ABC):
     """
 
     @abstractmethod
-    def pipe(self, env):
+    def pipe(self, env: Env) -> Env:
         """
         Abstract method for piping an environment. Wrappers
         are added successively akin to layers in PyTorch.
@@ -104,9 +105,9 @@ class RewardPipe(AbstractPipe):
             environment.
     """
     def __init__(self,
-                interest_rate = 0.08,
-                epsilon = 1e-8,
-                clip_threshold = 10,
+                interest_rate: float = 0.08,
+                epsilon: float = 1e-8,
+                clip_threshold: float = 10,
                 ) -> None:
         """
         Initializes the reward pipe.
@@ -131,7 +132,7 @@ class RewardPipe(AbstractPipe):
 
         return None
 
-    def pipe(self, env):
+    def pipe(self, env: Env) -> Env:
         """
         A method for piping an environment. Applies a stack of market
         wrappers successively to an environment:
@@ -243,7 +244,7 @@ class ObservationPipe(AbstractPipe):
 
         return None
 
-    def pipe(self, env):
+    def pipe(self, env: Env) -> Env:
         """
         Applies the following functionalities to the base environment:
             1. Observation flattening
@@ -277,7 +278,8 @@ class ActionPipe(AbstractPipe):
     """
     Action pipe for market environments. The pipe adds the following
     functionality to the base environment:
-        - Minimum trade size
+        - Minimum trade size:
+            Sets actions bellows a minimum trade size to zero.
         - Integer asset quantity
         - Position close
         - Shorting
