@@ -4,7 +4,7 @@ pipes.py
 This module defines pipes for market environments.
 """
 from abc import abstractmethod, ABC
-from typing import Callable, Optional
+from typing import Callable
 
 from gym import Env
 from neural.wrapper.base import (MarginAccountMetaDataWrapper,
@@ -25,35 +25,31 @@ from neural.wrapper.reward import (RewardNormalizerWrapper,
                                    RewardGeneratorWrapper,
                                    LiabilityInterstRewardWrapper)
 
-from neural.utils.base import RunningStatistics
-
 
 class AbstractPipe(ABC):
     """
-    Abstract class for environment pipes, which add extended
-    functionality to an existing environment by applying wrappers
-    successively. A pipe is a stack of wrappers applied in a
-    non-conflicting way. Use wrappers to customize the base market env,
-    manipulate actions and observations, impose trading logic, etc.
-    according to your specific needs. Wrappers are intantiated every
-    time the pipe method is called. If you need to restore state of some
-    wrappers, you can make that state a constructor argument of both
-    wrapper class and and the pipe and set the argument passed to
-    wrapper equal to state of wrapper. If both satate are immutable, the
-    values will be synchronized pointing at same memory space. This way
-    When saving the pipe, the state of the wrappers will be saved as
-    well. The pipe class is an abstract class and must be subclassed.
+    Abstract class for environment pipes, which add extended functionality to
+    an existing environment by applying wrappers successively. A pipe is a
+    stack of wrappers applied in a non-conflicting way. Use wrappers to
+    customize the base market env, manipulate actions and observations, impose
+    trading logic, etc. according to your specific needs. Wrappers are
+    intantiated every time the pipe method is called. If you need to restore
+    state of some wrappers, you can make that state a constructor argument of
+    both wrapper class and and the pipe and set the argument passed to wrapper
+    equal to state of wrapper. If both states are immutable, the values will be
+    synchronized pointing at the same memory space. This way When saving the
+    pipe, the state of the wrappers will be saved as well.
 
     Methods:
     --------
         pipe(env):
-            Applies a stack of market wrappers successively to an
-            environment.
+            Applies a stack of market wrappers successively to an environment.
     Notes:
     -----
-        Pipes can be combined to create more complex pipes. For example,
-        you can save and reuse a predefined set of wrappers as a pipe
-        for convenience.
+        Pipes can be combined to create more complex pipes. For example, you
+        can have separate pipes for wrappers that are commonly used together
+        like a set of action wrappers, observation wrappers, etc. You can then
+        combine these pipes to create a more complex pipe.
     """
 
     @abstractmethod
@@ -712,9 +708,6 @@ class MarginAccountPipe(BasePipe):
         - HeadActionPipe
         - RenderPipe
 
-    and following action interpreter:
-        - Equity based uniform action interpreter
-
     Attributes:
     -----------
         excess_margin_ratio_threshold (float):
@@ -799,6 +792,7 @@ class MarginAccountPipe(BasePipe):
 
         self.excess_margin_ratio_threshold = excess_margin_ratio_threshold
         BasePipe.__init__(self,
+                          trade_equity_ratio=trade_equity_ratio,
                           verbosity=verbosity,
                           interest_rate=interest_rate,
                           buffer_size=buffer_size,
