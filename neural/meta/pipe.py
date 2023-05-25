@@ -732,6 +732,31 @@ class BasePipe(RewardPipe, ObservationPipe, ActionPipe, HeadActionPipe,
         reward_normalizer (RewardNormalizerWrapper):    
             reward normalizer wrapper. Set to RewardNormalizerWrapper at
             construction.
+        buffer_size (int):
+            size of the buffer for buffering observations. Set to 10 at
+            construction.
+        stack_size (int):
+            size of the stack for stacking observations. Set to None at
+            construction. If None, the stack size will be set to the buffer
+            size.
+        observation_statistics (RunningStatistics):
+            statistics of the observation distribution. Set to None at
+            construction. If track_statistics is True, the statistics will be
+            synchronized with the statistics of the observation normalizer
+            wrapper. This will be reused with the wrapper when the pipe object
+            is saved and loaded.
+        flatten (FlattenObservationWrapper):
+            observation flattening wrapper. Set to FlattenObservationWrapper at
+            construction.
+        buffer (BufferObservationWrapper):
+            observation buffering wrapper. Set to BufferObservationWrapper at
+            construction.
+        stack (StackObservationWrapper):
+            observation stacking wrapper. Set to StackObservationWrapper at
+            construction.
+        normalizer (NormalizeObservationWrapper):
+            observation normalizer wrapper. Set to NormalizeObservationWrapper
+            at construction.
     Methods:
     --------
         pipe(env):
