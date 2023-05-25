@@ -323,7 +323,7 @@ class ActionPipe(AbstractPipe):
 
     Attributes:
     -----------
-        min_trade (float):
+        min_trade_threshold (float):
             minimum trade size in terms of notional value of base currency. Set
             to 1 at construction.
         integer (bool):
@@ -357,6 +357,21 @@ class ActionPipe(AbstractPipe):
         integer (bool):
             whether to modify notional value of trades to match integer
             number of assets. Set to False at construction.
+        
+        Attributes:
+        -----------
+        min_trade_threshold (MinTradeSizeActionWrapper):    
+            minimum trade size wrapper. Set to MinTradeSizeActionWrapper at
+            construction.
+        integer_quantity (IntegerAssetQuantityActionWrapper):
+            integer asset quantity wrapper. Set to
+            IntegerAssetQuantityActionWrapper at construction.
+        position_close (PositionCloseActionWrapper):    
+            position close wrapper. Set to PositionCloseActionWrapper at
+            construction.
+        shorting (ShortingActionWrapper):
+            Allows shorting wrapper. Set to ShortingActionWrapper at
+            construction.
         """
         self.min_trade_threshold = min_trade
         self.integer = integer
@@ -367,6 +382,28 @@ class ActionPipe(AbstractPipe):
         self.shorting = ShortingActionWrapper
 
     def pipe(self, env):
+        """
+        Adds the following functionality to the base environment:
+            - Minimum trade size:
+                Sets actions bellow a minimum trade size to zero.
+            - Integer asset quantity:
+                Modifies actions so that they map to integer asset quantities.
+            - Position close:
+                Flipping sides long/short happens with closing the position
+                first.
+            - Shorting:
+                Shorting is only possible with integer asset quantities.
+        
+        Args:
+        -----
+            env (gym.Env):
+                environment to be wrapped
+
+        Returns:
+        --------
+            env (gym.Env):
+                wrapped environment
+        """
         env = self.min_trade_threshold(env, min_trade=self.min_trade_threshold)
         env = self.integer_quantity(env, integer=self.integer)
         env = self.position_close(env)
