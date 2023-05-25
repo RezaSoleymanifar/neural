@@ -715,6 +715,23 @@ class BasePipe(RewardPipe, ObservationPipe, ActionPipe, HeadActionPipe,
         high (float):
             upper bound for clipping actions. Set to 1 at construction.
 
+    Attributes:
+    -----------
+        interest_rate (float):
+            interest rate on debt. Defaults to 0.08.
+        epsilon (float):
+            small number to avoid division by zero. Defaults to 1e-8.
+        clip_threshold (float):
+            threshold for clipping rewards. Defaults to 10.
+        reward_generator (RewardGeneratorWrapper):  
+            reward generator wrapper. Set to RewardGeneratorWrapper at
+            construction.
+        interest (LiabilityInterstRewardWrapper):
+            interest on debt wrapper. Set to LiabilityInterstRewardWrapper
+            at construction.
+        reward_normalizer (RewardNormalizerWrapper):    
+            reward normalizer wrapper. Set to RewardNormalizerWrapper at
+            construction.
     Methods:
     --------
         pipe(env):
@@ -814,30 +831,6 @@ class MarginAccountPipe(BasePipe):
         excess_margin_ratio_threshold (float):
             threshold for excess margin ratio (excess margin to portfolio
             value). Set to 0.1 at construction.
-        trade_equity_ratio (float):
-            ratio of equity to be traded at each interval.
-        min_trade (float):
-            minimum trade size in terms of notional value of base currency. Set
-            to 1 at construction.
-        integer (bool):
-            whether to modify notional value of trades to match integer number
-            of assets. Set to False at construction.
-        buffer_size (int):
-            size of the buffer for buffering observations. Set to 10 at
-            construction.
-        stack_size (int):
-            size of the stack for stacking observations. Set to None at
-            construction. If None, the stack size will be set to the buffer
-            size.
-        observation_statistics (RunningStatistics):
-            statistics of the observation distribution. Set to None at
-            construction. If track_statistics is True, the statistics will be
-            synchronized with the statistics of the observation normalizer
-            wrapper. This will be reused with the wrapper when the pipe is
-            saved and loaded.
-        verbosity (int):
-            verbosity level of the console tearsheet render. Set to 20 at
-            construction.
 
         margin_account_metadata (MarginAccountMetaDataWrapper):
             margin account metadata wrapper. Set to
