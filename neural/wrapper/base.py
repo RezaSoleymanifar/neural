@@ -303,8 +303,8 @@ class AbstractMarketEnvMetadataWrapper(Wrapper, ABC):
             The number of steps in the environment.
         history (defaultdict): 
             A defaultdict object for storing metadata during an episode.
-        
-    Attributes:
+
+    Properties:
     ----------
         schedule (pd.DataFrame):
             The schedule of the market environment.
@@ -319,19 +319,25 @@ class AbstractMarketEnvMetadataWrapper(Wrapper, ABC):
         asset_quantities (np.ndarray):
             The current quantities of assets available in the
             environment.
-        portfolio_value (float):
-            The current value of the portfolio.
-        equity (float):
-            The current equity of the portfolio.
-        longs (np.ndarray):
-            The current longs of the portfolio.
-        shorts (np.ndarray):
-            The current shorts of the portfolio.    
-        maintenance_margin (float):
-            The current maintenance margin of the portfolio.
-        margin (float):
-        
-        
+        asset_prices (np.ndarray):
+            The current prices of assets available in the environment.
+        progress (float):
+            The current progress of the episode.
+        profit (float):
+            The current profit of the episode.
+        return_ (float):
+            The current return of the episode.
+        sharpe (float):
+            The current sharpe ratio of the episode.
+    
+    Methods:
+    ----------
+        _cache_metadata():
+            Caches the metadata of the environment.
+        reset():
+            Resets the environment to the initial state.
+        step(action):
+            Steps the environment forward by one step.
     """
 
     def __init__(self, env: Env) -> None:
@@ -583,14 +589,29 @@ class MarginAccountMetaDataWrapper(AbstractMarketEnvMetadataWrapper):
 
     Properties:
     ----------
+        schedule (pd.DataFrame):
+            The schedule of the market environment.
         index (int):
             The current index of the episode.
+        day (int):
+            The current day of the episode.
+        date (pd.Timestamp):
+            The current date of the episode.
         cash (float):
-            The current amount of cash available to the trader.
-        asset_quantities (np.ndarray[float]):
-            The current quantity of each asset held by the trader.
-        asset_prices (np.ndarray[float]):
-            The current price of each asset held by the trader.
+            The current amount of cash available in the environment.
+        asset_quantities (np.ndarray):
+            The current quantities of assets available in the
+            environment.
+        asset_prices (np.ndarray):
+            The current prices of assets available in the environment.
+        progress (float):
+            The current progress of the episode.
+        profit (float):
+            The current profit of the episode.
+        return_ (float):
+            The current return of the episode.
+        sharpe (float):
+            The current sharpe ratio of the episode.
         longs (float):
             The current notional value of long positions held in the
             market environment.
@@ -650,20 +671,6 @@ class MarginAccountMetaDataWrapper(AbstractMarketEnvMetadataWrapper):
                     the excess margin, it also gurarantees that post
                     transaction the maintenance margin requirement is
                     also met.
-        progress (float | str):
-            If the underlying market env is a `TrainMarketEnv`, this
-            method returns the progress of the episode as a float in [0,
-            1]. If the underlying market env is a `TradeMarketEnv`, this
-            method returns current date and time.
-        profit (float):
-            The current profit of the trader. This is the difference
-            between the current equity and the initial equity.
-        return_ (float):
-            The current return of the trader. This is the ratio of the
-            current profit to the initial equity.
-        sharpe (float):
-            The current sharpe ratio of the trader. This is the ratio of
-            the current return to the current volatility of the equity.
 
     Methods:
     ----------
