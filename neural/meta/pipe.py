@@ -155,8 +155,9 @@ class RewardPipe(AbstractPipe):
         """
         env = self.reward_generator(env)
         env = self.interest(env, interest_rate=self.interest_rate)
-        env = self.reward_normalizer(
-            env, epsilon=self.epsilon, clip_threshold=self.clip_threshold)
+        env = self.reward_normalizer(env,
+                                     epsilon=self.epsilon,
+                                     clip_threshold=self.clip_threshold)
 
         return env
 
@@ -672,7 +673,52 @@ class BasePipe(RewardPipe, ObservationPipe, ActionPipe, HeadActionPipe,
                RenderPipe):
     """
     A basic pipe to provide fundamental trading and training functionalities to
-    the environment. 
+    the environment. It is a stack of pipes that can be applied to an
+    environment. The order of the pipes is as follows:
+    - reward pipe
+    - observation pipe
+    - action pipe
+    - head action pipe
+    - render pipe
+
+    Arguments:
+    ----------
+        trade_equity_ratio (float):
+            fixed trading equity ratio. Set to 0.05 at construction.
+        verbosity (int):
+            verbosity level. Set to 0 at construction.
+        interest_rate (float):
+            interest rate. Set to 0.08 at construction.
+        buffer_size (int):
+            size of the buffer. Set to 1 at construction.
+        stack_size (int):
+            size of the stack. Set to 1 at construction.
+        min_trade (float):
+            minimum trade size. Set to 0.01 at construction.
+        integer (bool):
+            whether to use integer actions. Set to False at construction.
+        uniform (bool):
+            whether to use uniform distribution of trading budget. Set to
+            True at construction.
+        fixed (bool):
+            whether to use fixed trading equity ratio. Set to True at
+            construction.
+        discrete (bool):
+            whether to use discrete actions. Set to True at construction.
+        hold_threshold (float):
+            threshold for holding an asset. Set to 0.15 at construction.
+        clip (bool):
+            whether to clip actions to (low, high). Set to False at
+            construction.
+        low (float):
+            lower bound for clipping actions. Set to -1 at construction.
+        high (float):
+            upper bound for clipping actions. Set to 1 at construction.
+
+    Methods:
+    --------
+        pipe(env):
+            applies the pipe to the environment.
     """
 
     def __init__(self,
