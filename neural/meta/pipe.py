@@ -587,15 +587,14 @@ class HeadActionPipe(AbstractPipe):
 
         return env
 
-class RendererPipe(AbstractPipe):
+class RenderPipe(AbstractPipe):
     """
     A pipe to render the environment. This usually is the last pipe in the
     stack of pipes. It is responsible for rendering the environment to the
     console, GUI or a file.
     """
 
-    def __init__(self, mode: str = 'human') -> None:
-        self.mode = mode
+    def __init__(self) -> None:
         self.render = ConsoleTearsheetRenderWrapper
 
     def pipe(self, env):
