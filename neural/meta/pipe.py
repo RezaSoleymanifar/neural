@@ -659,7 +659,7 @@ class RenderPipe(AbstractPipe):
         """
         env =  self.render(env)
         return env
-
+class BasePipe()
 class BasePipe(AbstractPipe):
     """
     A basic pipe to provide fundamental trading and training functionalities to
