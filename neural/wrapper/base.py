@@ -304,6 +304,7 @@ class AbstractMarketEnvMetadataWrapper(Wrapper, ABC):
         history (defaultdict): 
             A defaultdict object for storing metadata during an episode.
         
+    Attributes:
     
     """
 
