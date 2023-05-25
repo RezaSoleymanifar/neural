@@ -790,8 +790,16 @@ class MarginAccountPipe(BasePipe):
                 - maintenance_margin
                 - excess_margin
 
-        - Initial margin
-        - Excess margin
+        - Initial margin:
+            calculates initial margin for each asset based on the
+            notional value of the asset and the initial margin requirement
+            of the asset. Modifies actions if the initial margin is not
+            met.
+        - Excess margin:
+            Provides a cushion around maintenance margin. If the excess
+            margin threshold is violated, the actions are modified to
+            restore the excess margin. For non-marginable assets, the
+            cushion is provided around cash = 0.
 
     Also adds the base pipe functionalities:
         - RewardPipe
