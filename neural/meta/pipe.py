@@ -581,9 +581,11 @@ class HeadActionPipe(AbstractPipe):
         is the expected input of the uniform action parser.
         """
         if self.uniform:
-            mapper =  lambda env: self.fixed_uniform_mapper(env)
+            mapper = lambda env: self.fixed_uniform_mapper(env)
         else:
-            mapper =  lambda env: self.fixed_nonuniform_mapper(env)
+            mapper = lambda env: self.fixed_nonuniform_mapper(env)
+        
+        return mapper
 
     def pipe(self, env):
         """
