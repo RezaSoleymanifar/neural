@@ -687,32 +687,32 @@ class BasePipe(RewardPipe, ObservationPipe, ActionPipe, HeadActionPipe):
                  low: float = -1,
                  high: float = 1) -> None:
 
-        self.reward_pipe = RewardPipe.__init__(
+        RewardPipe.__init__(
             self, 
             interest_rate)
-        self.observation_pipe = ObservationPipe.__init__(
+        ObservationPipe.__init__(
             self, 
             buffer_size, 
             stack_size)
-        self.action_pipe = ActionPipe.__init__(
+        ActionPipe.__init__(
             self, 
             min_trade, 
             integer)
-        self.head_action_pipe = HeadActionPipe.__init__(
+        HeadActionPipe.__init__(
             self, 
-            verbosity, 
-            interest_rate, 
-            buffer_size, 
-            stack_size, 
-            min_trade,
-            integer, 
-            uniform, 
-            fixed, 
-            discrete, 
-            trade_equity_ratio,
-            hold_threshold, 
-            clip, 
-            low, 
+            verbosity = verbosity, 
+            interest_rate = interest_rate, 
+            buffer_size = buffer_size, 
+            stack_size = stack_size, 
+            min_trade = min_trade,
+            integer = integer, 
+            uniform = uniform, 
+            fixed = fixed, 
+            discrete = discrete, 
+            trade_equity_ratio = trade_equity_ratio,
+            hold_threshold = hold_threshold, 
+            clip = clip, 
+            low = low, 
             high)
 
         return None
