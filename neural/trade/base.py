@@ -1,3 +1,6 @@
+"""
+base.py
+"""
 from abc import ABC
 
 import numpy as np
@@ -26,14 +29,12 @@ class AbstractTrader(ABC):
     Attributes:
     ----------
         trade_client (AbstractTradeClient):
-            An instance of the client to connect to the trading
-            environment.
+            An instance of the trading client to connect to the trading
+            platform.
         data_client (AbstractDataClient):
             An instance of the data client to stream data.
         agent (Agent):
             An instance of the agent to perform decision making.
-        
-    
     """
 
     def __init__(
@@ -46,11 +47,25 @@ class AbstractTrader(ABC):
         Initializes an AbstractTrader object.
 
         Args:
-            client (AbstractClient): An instance of the client to
-            connect to the trading environment. data_client
-            (AbstractDataClient): An instance of the data client to
-            stream data. agent (Agent): An instance of the agent to
-            perform decision making.
+        ------
+            trade_client (AbstractTradeClient):
+                An instance of the trading client to connect to the
+                trading platform.
+            data_client (AbstractDataClient):
+                An instance of the data client to stream data.
+            agent (Agent):
+                An instance of the agent to perform decision making.
+        
+        Attributes:
+        ----------
+            trade_client (AbstractTradeClient):
+                An instance of the trading client to connect to the
+                trading platform.
+            data_client (AbstractDataClient):
+                An instance of the data client to stream data.
+            agent (Agent):
+                An instance of the agent to perform decision making.
+                
         """
 
         self.trade_client = trade_client
