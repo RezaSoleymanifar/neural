@@ -60,7 +60,7 @@ class AbstractPipe(ABC):
         """
         Abstract method for piping an environment. Wrappers
         are added successively akin to layers in PyTorch.
-        By calling pipe, the environment is wrapped in a stack
+        By applying pipe, the environment is wrapped in a stack
         of wrappers.
         """
 
@@ -106,8 +106,6 @@ class RewardPipe(AbstractPipe):
     """
     def __init__(self,
                 interest_rate: float = 0.08,
-                epsilon: float = 1e-8,
-                clip_threshold: float = 10,
                 ) -> None:
         """
         Initializes the reward pipe.
@@ -123,8 +121,6 @@ class RewardPipe(AbstractPipe):
         """
 
         self.interest_rate = interest_rate
-        self.epsilon = epsilon
-        self.clip_threshold = clip_threshold
 
         self.reward_generator = RewardGeneratorWrapper
         self.interest = LiabilityInterstRewardWrapper
@@ -134,11 +130,26 @@ class RewardPipe(AbstractPipe):
 
     def pipe(self, env: Env) -> Env:
         """
-        A method for piping an environment. Applies a stack of market
-        wrappers successively to an environment:
-            1. Reward generation
-            2. Interest on debt
-            3. Reward normalization
+        A method for piping an environment. Applies a stack of market wrappers
+        successively to an environment:
+            1. Reward generation:
+                This will be the change in equity of the account.
+            2. Interest on debt:
+                Reduces reward by amount of interest on debt (asset/cash).
+                Computed at end of day.
+            3. Reward normalization:
+                Ensures that the reward distribution has zero mean and unit
+                variance.
+            
+        Args:
+        -----
+            env (Env):
+                environment to be wrapped.
+            
+        Returns:
+        --------
+            env (Env):
+                wrapped environment.
         """
         env = self.reward_generator(env)
         env = self.interest(env, interest_rate = self.interest_rate)
@@ -580,12 +591,10 @@ class BasePipe(AbstractPipe):
 
     def __init__(
             self,
+            track_statistics: bool = True,
             interest_rate: float = 0.08,
-            epsilon: float = 1e-8,
-            clip_threshold: float = 10,
             buffer_size: int = 1,
             stack_size: int = 1,
-            track_statistics: bool = True,
             min_trade: float = 0.01,
             integer: bool = False,
             uniform: bool = True,
