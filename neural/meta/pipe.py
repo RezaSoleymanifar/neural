@@ -293,10 +293,10 @@ class ObservationPipe(AbstractPipe):
         env = self.stacker(env, stack_size=self.stack_size)
 
         env = self.normalizer(
-            env, 
-            observation_statistics=self.observation_statistics, 
-            epsilon=self.epsilon, 
-            clip_threshold=self.clip_threshold)
+            env,
+            epsilon=self.epsilon,
+            clip_threshold=self.clip_threshold,
+            observation_statistics=self.observation_statistics)
 
         return env
 
@@ -329,9 +329,6 @@ class ActionPipe(AbstractPipe):
         integer (bool):
             whether to modify notional value of trades to match integer number
             of assets. Set to False at construction.
-        min_trade (MinTradeSizeActionWrapper):
-            minimum trade size wrapper. Set to MinTradeSizeActionWrapper at
-            construction.
         integer_quantity (IntegerAssetQuantityActionWrapper):   
             integer asset quantity wrapper. Set to
             IntegerAssetQuantityActionWrapper at construction.
@@ -361,16 +358,16 @@ class ActionPipe(AbstractPipe):
             whether to modify notional value of trades to match integer
             number of assets. Set to False at construction.
         """
-        self.min_trade = min_trade
+        self.min_trade_threshold = min_trade
         self.integer = integer
 
-        self.min_trade = MinTradeSizeActionWrapper
+        self.min_trade_threshold = MinTradeSizeActionWrapper
         self.integer_quantity = IntegerAssetQuantityActionWrapper
         self.position_close = PositionCloseActionWrapper
         self.shorting = ShortingActionWrapper
 
     def pipe(self, env):
-        env = self.min_trade(env, min_trade=self.min_trade)
+        env = self.min_trade_threshold(env, min_trade=self.min_trade_threshold)
         env = self.integer_quantity(env, integer=self.integer)
         env = self.position_close(env)
         env = self.shorting(env)
@@ -843,7 +840,7 @@ class MarginAccountPipe(BasePipe):
                              interest_rate=self.interest_rate,
                              buffer_size=self.buffer_size,
                              stack_size=self.stack_size,
-                             min_trade=self.min_trade,
+                             min_trade=self.min_trade_threshold,
                              integer=self.integer,
                              uniform=self.uniform,
                              fixed=self.fixed,
