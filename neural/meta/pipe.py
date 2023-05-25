@@ -228,7 +228,7 @@ class ObservationPipe(AbstractPipe):
         self,
         buffer_size: int = 10,
         stack_size: int = None,
-        ) -> None:
+    ) -> None:
         """
         Initializes the observation pipe.
 
@@ -612,7 +612,7 @@ class RenderPipe(AbstractPipe):
     console, GUI or a file.
     """
 
-    def __init__(self, verbosity = 10) -> None:
+    def __init__(self, verbosity=10) -> None:
         self.verbosity = verbosity
         self.render = ConsoleTearsheetRenderWrapper
 
@@ -643,6 +643,7 @@ class BasePipe(RewardPipe, ObservationPipe, ActionPipe, HeadActionPipe,
     """
 
     def __init__(self,
+                 trade_equity_ratio: float = 0.05,
                  verbosity: int = 0,
                  interest_rate: float = 0.08,
                  buffer_size: int = 1,
@@ -652,7 +653,6 @@ class BasePipe(RewardPipe, ObservationPipe, ActionPipe, HeadActionPipe,
                  uniform: bool = True,
                  fixed: bool = True,
                  discrete: bool = False,
-                 trade_equity_ratio: float = 0.05,
                  hold_threshold: float = 0.15,
                  clip: bool = False,
                  low: float = -1,
@@ -705,21 +705,23 @@ class MarginAccountPipe(BasePipe):
         - Initial margin
         - Excess margin
 
-    Also uses combination of the following pipes:
+    Also adds the base pipe functionalities:
+        - RewardPipe
         - ObservationPipe
         - ActionPipe
-        - RewardPipe
+        - HeadActionPipe
+        - RenderPipe
 
     and following action interpreter:
         - Equity based uniform action interpreter
 
     Attributes:
     -----------
-        trade_equity_ratio (float):
-            ratio of equity to be traded. Set to 0.02 at construction.
         excess_margin_ratio_threshold (float):
             threshold for excess margin ratio. Set to 0.1 at
             construction.
+        trade_equity_ratio (float):
+            ratio of equity to be traded. Set to 0.02 at construction.
         min_trade (float):
             minimum trade size in terms of notional value of base
             currency. Set to 1 at construction.
@@ -779,8 +781,8 @@ class MarginAccountPipe(BasePipe):
     """
 
     def __init__(self,
-                 trade_equity_ratio: float = 0.02,
                  excess_margin_ratio_threshold: float = 0.1,
+                 trade_equity_ratio: float = 0.02,
                  verbosity: int = 0,
                  interest_rate: float = 0.08,
                  buffer_size: int = 1,
@@ -796,29 +798,20 @@ class MarginAccountPipe(BasePipe):
                  high: float = 1) -> None:
 
         self.excess_margin_ratio_threshold = excess_margin_ratio_threshold
-        self.verbosity = verbosity
-        self.interest_rate = interest_rate
-
-        self.buffer_size = buffer_size
-        self.stack_size = stack_size
-        self.observation_statistics = None
-
-        self.min_trade = min_trade
-        self.integer = integer
-
-        self.uniform = uniform
-        self.fixed = fixed
-        self.discrete = discrete
-
-        self.trade_equity_ratio = trade_equity_ratio
-        self.hold_threshold = hold_threshold
-
-        self.clip = clip
-        self.low = low
-        self.high = high
-
-        self.track_statistics = track_statistics
-        self.verbosity = verbosity
+        BasePipe.__init__(self,
+                          verbosity=verbosity,
+                          interest_rate=interest_rate,
+                          buffer_size=buffer_size,
+                          stack_size=stack_size,
+                          min_trade=min_trade,
+                          integer=integer,
+                          uniform=uniform,
+                          fixed=fixed,
+                          discrete=discrete,
+                          hold_threshold=hold_threshold,
+                          clip=clip,
+                          low=low,
+                          high=high)
 
         self.margin_account_metadata = MarginAccountMetaDataWrapper
         self.initial_margin = InitialMarginActionWrapper
@@ -835,11 +828,13 @@ class MarginAccountPipe(BasePipe):
 
         Args:
         ------
-        env (AbstractMarketEnv): the environment to be wrapped.
+        env (AbstractMarketEnv): 
+            the environment to be wrapped.
 
         Returns:
         ---------
-        env (gym.Env): the wrapped environment.
+        env (gym.Env): 
+            the wrapped environment.
         """
 
         env = self.margin_account_metadata(env)
