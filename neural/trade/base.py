@@ -16,16 +16,30 @@ class AbstractTrader(ABC):
     requires a trading client to connect to a trading environment, a
     data client to stream the live data and an agent to perform the
     decision making. The agent has a model to generate actions, a data
-    pipe to modify base environment, and metadata for the dataset
-    used to create aggregated data stream matching the training
-    data. TODO: support or multiple data clients for streaming from
-    multiple data stream sources.
+    pipe to modify base environment, and metadata for the dataset used
+    to train the agent.  Metadata will be used to create aggregated data
+    stream matching the training data. 
+    
+    TODO: support or multiple data clients for streaming from multiple
+    data stream sources.
+
+    Attributes:
+    ----------
+        trade_client (AbstractTradeClient):
+            An instance of the client to connect to the trading
+            environment.
+        data_client (AbstractDataClient):
+            An instance of the data client to stream data.
+        agent (Agent):
+            An instance of the agent to perform decision making.
+        
+    
     """
 
     def __init__(
         self, 
-        trade_client: AbstractTradeClient, 
-        data_client: AbstractDataClient, 
+        trade_client: AbstractTradeClient,
+        data_client: AbstractDataClient,
         agent: Agent
     ):
         """
