@@ -153,8 +153,7 @@ class RewardPipe(AbstractPipe):
         """
         env = self.reward_generator(env)
         env = self.interest(env, interest_rate = self.interest_rate)
-        env = self.reward_normalizer(
-            env, epsilon = self.epsilon, clip_threshold = self.clip_threshold)
+        env = self.reward_normalizer(env)
 
         return env
 
@@ -515,6 +514,7 @@ class HeadActionPipe(AbstractPipe):
         
         self.uniform = uniform
         self.fixed = fixed
+        self.discrete = discrete
 
         self.trade_equity_ratio = trade_equity_ratio
         self.hold_threshold = hold_threshold
@@ -587,6 +587,17 @@ class HeadActionPipe(AbstractPipe):
 
         return env
 
+class RendererPipe(AbstractPipe):
+    """
+    A pipe to render the environment.
+    """
+
+    def __init__(self, mode: str = 'human') -> None:
+        self.mode = mode
+
+    def pipe(self, env):
+        return RenderWrapper(env, self.mode)
+    
 class BasePipe(AbstractPipe):
     """
     A basic pipe to provide fundamental trading and training functionalities to
@@ -610,19 +621,18 @@ class BasePipe(AbstractPipe):
             high: float = 1
             ) -> None:
 
+        self.interest_rate = interest_rate
+
         self.buffer_size = buffer_size
         self.stack_size = stack_size
         self.observation_statistics = None
-
-        self.interest_rate = interest_rate
-        self.epsilon = epsilon
-        self.clip_threshold = clip_threshold
 
         self.min_trade = min_trade
         self.integer = integer
 
         self.uniform = uniform
         self.fixed = fixed
+        self.discrete = discrete
 
         self.trade_equity_ratio = trade_equity_ratio
         self.hold_threshold = hold_threshold
@@ -630,6 +640,9 @@ class BasePipe(AbstractPipe):
         self.clip = clip
         self.low = low
         self.high = high
+
+        self.verbosity = verbosity
+
         
         self.reward_pipe = RewardPipe
         self.observation_pipe = ObservationPipe
