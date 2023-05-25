@@ -599,8 +599,18 @@ class RendererPipe(AbstractPipe):
         def pipe(self, env):
             """ 
             Adds the following functionality to the environment:
-            - renders the environment
-                
+            - renders the environment:
+                - prints the current state of the environment to the console
+                includes:
+                    - progress
+                    - return
+                    - sharpe ratio
+                    - profit 
+                    - equity
+                    - cash
+                    - portfolio value
+                    - longs
+                    - shorts
             """
             env =  self.render(env, self.mode)
             return env
@@ -613,6 +623,7 @@ class BasePipe(AbstractPipe):
 
     def __init__(
             self,
+            verbosity: int = 0,
             interest_rate: float = 0.08,
             buffer_size: int = 1,
             stack_size: int = 1,
@@ -628,6 +639,7 @@ class BasePipe(AbstractPipe):
             high: float = 1
             ) -> None:
 
+        self.verbosity = verbosity
         self.interest_rate = interest_rate
 
         self.buffer_size = buffer_size
@@ -669,8 +681,7 @@ class BasePipe(AbstractPipe):
         env = self.reward_pipe().pipe(env)
         env = self.observation_pipe(
             buffer_size=self.buffer_size,
-            stack_size=self.stack_size,
-            track_statistics=self.track_statistics).pipe(env)
+            stack_size=self.stack_size).pipe(env)
         env = self.action_pipe(min_trade=self.min_trade,
                                integer=self.integer).pipe(env)
         env = self.head_pipe().pipe(env)
