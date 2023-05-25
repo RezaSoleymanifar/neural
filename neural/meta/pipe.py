@@ -578,12 +578,47 @@ class BasePipe(AbstractPipe):
     the environment.
     """
 
-    def __init__(self) -> None:
-        pass
-    
+    def __init__(
+            self,
+            buffer_size: int = 1,
+            stack_size: int = 1,
+            track_statistics: bool = True,
+            min_trade: float = 0.01,
+            interest_rate: float = 0.0,
+            uniform: bool = True,
+            fixed: bool = True,
+            discrete: bool = False,
+            trade_equity_ratio: float = 0.05,
+            hold_threshold: float = 0.15,
+            clip: bool = False,
+            low: float = -1,
+            high: float = 1
+            ) -> None:
+
+        self.uniform = uniform
+        self.fixed = fixed
+
+        self.trade_equity_ratio = trade_equity_ratio
+        self.hold_threshold = hold_threshold
+
+        self.clip = clip
+        self.low = low
+        self.high = high
+        
+        self.reward_pipe = RewardPipe
+        self.observation_pipe = ObservationPipe
+        self.action_pipe = ActionPipe
+        self.head = HeadActionPipe
+
     def pipe(self, env: Env) -> Env:
         """
-        
+        Adds the following functionalities to the environment:
+            - Reward pipe
+            - Observation pipe
+            - Action pipe
+            - Head action pipe
+            - Console tearsheet render
+            
         """
         env = self.reward_pipe().pipe(env)
         env = self.observation_pipe(
@@ -594,11 +629,6 @@ class BasePipe(AbstractPipe):
                                integer=self.integer).pipe(env)
         env = self.head().pipe(env)
         env = self.render(env, verbosity=self.verbosity)
-
-        self.reward_pipe = RewardPipe
-        self.observation_pipe = ObservationPipe
-        self.action_pipe = ActionPipe
-        self.head = HeadActionPipe
 
 class MarginAccountPipe(AbstractPipe):
     """
