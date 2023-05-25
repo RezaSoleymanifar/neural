@@ -584,6 +584,7 @@ class BasePipe(AbstractPipe):
             stack_size: int = 1,
             track_statistics: bool = True,
             min_trade: float = 0.01,
+            integer: bool = False,
             interest_rate: float = 0.0,
             uniform: bool = True,
             fixed: bool = True,
@@ -594,6 +595,14 @@ class BasePipe(AbstractPipe):
             low: float = -1,
             high: float = 1
             ) -> None:
+
+        self.buffer_size = buffer_size
+        self.stack_size = stack_size
+        self.observation_statistics = None
+        self.track_statistics = track_statistics
+
+        self.min_trade = min_trade
+        self.integer = integer
 
         self.uniform = uniform
         self.fixed = fixed
@@ -618,7 +627,6 @@ class BasePipe(AbstractPipe):
             - Action pipe
             - Head action pipe
             - Console tearsheet render
-            
         """
         env = self.reward_pipe().pipe(env)
         env = self.observation_pipe(
