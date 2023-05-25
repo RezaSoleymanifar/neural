@@ -10,7 +10,6 @@ from neural.trade.base import AbstractTrader, AbstractDataClient
 
 class AlpacaTraderFactory(AbstractTrader):
 
-
     def __init__(self,
         trade_client: AlpacaTradeClient,
         data_client: AbstractDataClient,

@@ -12,13 +12,14 @@ class AbstractTrader(ABC):
 
     """
     Abstract base class for defining a trader that can execute orders
-    based on model actions. This trader requires a client to connect to
-    a trading environment, a data client to stream the live data and an
-    agent to perform the decision making. The agent has a model to
-    generate actions, a data pipe to feed preprocessed to the model, and
-    metadata for the dataset being used to create aggregated data stream
-    matching the training data. TODO: support or multiple data clients
-    for streaming from multiple data stream sources.
+    using a trading client and a model to produce actions. This trader
+    requires a trading client to connect to a trading environment, a
+    data client to stream the live data and an agent to perform the
+    decision making. The agent has a model to generate actions, a data
+    pipe to modify base environment, and metadata for the dataset
+    used to create aggregated data stream matching the training
+    data. TODO: support or multiple data clients for streaming from
+    multiple data stream sources.
     """
 
     def __init__(

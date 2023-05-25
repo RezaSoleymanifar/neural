@@ -930,6 +930,9 @@ class MarginAccountPipe(BasePipe):
 
     Attributes:
     -----------
+        excess_margin_threshold (float):
+            excess margin threshold. Set to 0.1 at construction. This
+            is excess margin as a fraction of the portfolio value.
         interest_rate (float):
             interest rate on debt. Defaults to 0.08.
         epsilon (float):
