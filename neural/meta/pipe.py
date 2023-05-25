@@ -228,8 +228,7 @@ class ObservationPipe(AbstractPipe):
         self,
         buffer_size: int = 10,
         stack_size: int = None,
-        caller_pipe: Optional[AbstractPipe] = None,
-    ) -> None:
+        ) -> None:
         """
         Initializes the observation pipe.
 
@@ -248,12 +247,7 @@ class ObservationPipe(AbstractPipe):
         """
         self.buffer_size = buffer_size
         self.stack_size = stack_size
-        self.caller_pipe = caller_pipe
         self.observation_statistics = None
-
-        if not hasattr(caller_pipe, 'observation_statistics'):
-            raise ValueError('caller pipe must have observation statistics '
-                             'attribute.')
 
         self.flatten = FlattenToNUmpyObservationWrapper
         self.buffer = ObservationBufferWrapper
@@ -262,31 +256,6 @@ class ObservationPipe(AbstractPipe):
 
         return None
 
-    def caller(self, pipe: Callable) -> None:
-        """
-        A decorator for the pipe method. This decorator ensures that the
-        observation statistics of the caller pipe are synchronized with the
-        observation statistics of the observation pipe.
-
-        args:
-        -----
-            pipe (Callable):
-                pipe method of the caller pipe.
-            
-        returns:
-        --------
-            decorated_pipe (Callable):
-                decorated pipe method of the caller pipe.
-        """
-
-        def decorated_pipe(env):
-            env = self.pipe(env)
-            self.caller_pipe.observation_statistics = self.observation_statistics
-            return env
-
-        return decorated_pipe
-
-    @caller
     def pipe(self, env: Env) -> Env:
         """
         Applies the following functionalities to the base environment:
@@ -643,7 +612,8 @@ class RenderPipe(AbstractPipe):
     console, GUI or a file.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, verbosity = 10) -> None:
+        self.verbosity = verbosity
         self.render = ConsoleTearsheetRenderWrapper
 
     def pipe(self, env):
@@ -702,12 +672,18 @@ class BasePipe(RewardPipe, ObservationPipe, ActionPipe, HeadActionPipe,
                                 clip=clip,
                                 low=low,
                                 high=high)
+        RenderPipe.__init__(self, verbosity=verbosity)
 
         return None
 
     def pipe(self, env):
         """
-        
+        Adds the functionality of the following pipes to the environment:
+        - RewardPipe
+        - ObservationPipe
+        - ActionPipe
+        - HeadActionPipe
+        - RenderPipe
         """
         env = RewardPipe.pipe(self, env)
         env = ObservationPipe.pipe(self, env)
@@ -715,82 +691,10 @@ class BasePipe(RewardPipe, ObservationPipe, ActionPipe, HeadActionPipe,
         env = HeadActionPipe.pipe(self, env)
         env = RenderPipe.pipe(self, env)
 
-
-class BasePipe(AbstractPipe):
-    """
-    A basic pipe to provide fundamental trading and training functionalities to
-    the environment.
-    """
-
-    def __init__(self,
-                 verbosity: int = 0,
-                 interest_rate: float = 0.08,
-                 buffer_size: int = 1,
-                 stack_size: int = 1,
-                 min_trade: float = 0.01,
-                 integer: bool = False,
-                 uniform: bool = True,
-                 fixed: bool = True,
-                 discrete: bool = False,
-                 trade_equity_ratio: float = 0.05,
-                 hold_threshold: float = 0.15,
-                 clip: bool = False,
-                 low: float = -1,
-                 high: float = 1) -> None:
-
-        self.verbosity = verbosity
-        self.interest_rate = interest_rate
-
-        self.buffer_size = buffer_size
-        self.stack_size = stack_size
-        self.observation_statistics = None
-
-        self.min_trade = min_trade
-        self.integer = integer
-
-        self.uniform = uniform
-        self.fixed = fixed
-        self.discrete = discrete
-
-        self.trade_equity_ratio = trade_equity_ratio
-        self.hold_threshold = hold_threshold
-
-        self.clip = clip
-        self.low = low
-        self.high = high
-
-        self.reward_pipe = RewardPipe
-        self.observation_pipe = ObservationPipe
-        self.action_pipe = ActionPipe
-        self.head_pipe = HeadActionPipe
-        self.render_pipe = ConsoleTearsheetRenderWrapper
-
-        return None
-
-    def pipe(self, env: Env) -> Env:
-        """
-        Adds the following functionalities to the environment:
-            - Reward pipe
-            - Observation pipe
-            - Action pipe
-            - Head action pipe
-            - Console tearsheet render
-        """
-        env = self.reward_pipe().pipe(env)
-        env = self.observation_pipe(buffer_size=self.buffer_size,
-                                    stack_size=self.stack_size).pipe(env)
-        env = self.action_pipe(min_trade=self.min_trade,
-                               integer=self.integer).pipe(env)
-        env = self.head_pipe().pipe(env)
-        env = self.render_pipe(env, verbosity=self.verbosity)
-
-        self.observation_statistics = (
-            self.observation_pipe.observation_statistics)
-
         return env
 
 
-class MarginAccountPipe(AbstractPipe):
+class MarginAccountPipe(BasePipe):
     """
     A pipe to simulate a margin account environment. The pipe adds the
     trading logics of a margin account to the base market environment.
