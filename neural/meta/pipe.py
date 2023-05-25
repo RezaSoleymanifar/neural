@@ -757,6 +757,49 @@ class BasePipe(RewardPipe, ObservationPipe, ActionPipe, HeadActionPipe,
         normalizer (NormalizeObservationWrapper):
             observation normalizer wrapper. Set to NormalizeObservationWrapper
             at construction.
+        min_trade_threshold (float):
+            minimum trade size in terms of notional value of base currency. Set
+            to 1 at construction.
+        integer (bool):
+            whether to modify notional value of trades to match integer number
+            of assets. Set to False at construction.
+        integer_quantity (IntegerAssetQuantityActionWrapper):   
+            integer asset quantity wrapper. Set to
+            IntegerAssetQuantityActionWrapper at construction.
+        position_close (PositionCloseActionWrapper):
+            position close wrapper. Set to PositionCloseActionWrapper at
+            construction.
+        shorting (ShortingActionWrapper):   
+            Allows shorting wrapper. Set to ShortingActionWrapper at
+            construction.
+        uniform (bool):
+            whether to use uniform distribution of trading budget. Set to True
+            at construction.
+        fixed (bool):
+            whether to use fixed trading equity ratio. Set to True at
+            construction.
+        discrete (bool):
+            whether to use discrete actions. Set to True at construction.
+        trade_equity_ratio (float):
+            fixed trading equity ratio. Set to 0.1 at construction.
+        hold_threshold (float):
+            threshold for holding an asset. Set to 0.15 at construction.
+        clip (bool):
+            whether to clip actions to (low, high). Set to False at
+            construction.
+        low (float):
+            lower bound for clipping actions. Set to -1 at construction.
+        high (float):
+            upper bound for clipping actions. Set to 1 at construction.
+        fixed_uniform (EquityBasedFixedUniformActionParser):
+            action parser for fixed uniform ratio models.
+        variable_uniform ($$$):
+            action parser for variable uniform ratio models.
+        fixed_nonuniform ($$$):
+            action parser for fixed non-uniform ratio models.
+        variable_nonuniform ($$$):
+            action parser for variable non-uniform ratio models.
+    
     Methods:
     --------
         pipe(env):
@@ -851,33 +894,125 @@ class MarginAccountPipe(BasePipe):
         - HeadActionPipe
         - RenderPipe
 
+    Arguments:
+    ----------
+        trade_equity_ratio (float):
+            fixed trading equity ratio. Set to 0.05 at construction.
+        verbosity (int):
+            verbosity level. Set to 0 at construction.
+        interest_rate (float):
+            interest rate. Set to 0.08 at construction.
+        buffer_size (int):
+            size of the buffer. Set to 1 at construction.
+        stack_size (int):
+            size of the stack. Set to 1 at construction.
+        min_trade (float):
+            minimum trade size. Set to 0.01 at construction.
+        integer (bool):
+            whether to use integer actions. Set to False at construction.
+        uniform (bool):
+            whether to use uniform distribution of trading budget. Set to
+            True at construction.
+        fixed (bool):
+            whether to use fixed trading equity ratio. Set to True at
+            construction.
+        discrete (bool):
+            whether to use discrete actions. Set to True at construction.
+        hold_threshold (float):
+            threshold for holding an asset. Set to 0.15 at construction.
+        clip (bool):
+            whether to clip actions to (low, high). Set to False at
+            construction.
+        low (float):
+            lower bound for clipping actions. Set to -1 at construction.
+        high (float):
+            upper bound for clipping actions. Set to 1 at construction.
+
     Attributes:
     -----------
-        excess_margin_ratio_threshold (float):
-            threshold for excess margin ratio (excess margin to portfolio
-            value). Set to 0.1 at construction.
+        interest_rate (float):
+            interest rate on debt. Defaults to 0.08.
+        epsilon (float):
+            small number to avoid division by zero. Defaults to 1e-8.
+        clip_threshold (float):
+            threshold for clipping rewards. Defaults to 10.
+        reward_generator (RewardGeneratorWrapper):  
+            reward generator wrapper. Set to RewardGeneratorWrapper at
+            construction.
+        interest (LiabilityInterstRewardWrapper):
+            interest on debt wrapper. Set to LiabilityInterstRewardWrapper
+            at construction.
+        reward_normalizer (RewardNormalizerWrapper):    
+            reward normalizer wrapper. Set to RewardNormalizerWrapper at
+            construction.
+        buffer_size (int):
+            size of the buffer for buffering observations. Set to 10 at
+            construction.
+        stack_size (int):
+            size of the stack for stacking observations. Set to None at
+            construction. If None, the stack size will be set to the buffer
+            size.
+        observation_statistics (RunningStatistics):
+            statistics of the observation distribution. Set to None at
+            construction. If track_statistics is True, the statistics will be
+            synchronized with the statistics of the observation normalizer
+            wrapper. This will be reused with the wrapper when the pipe object
+            is saved and loaded.
+        flatten (FlattenObservationWrapper):
+            observation flattening wrapper. Set to FlattenObservationWrapper at
+            construction.
+        buffer (BufferObservationWrapper):
+            observation buffering wrapper. Set to BufferObservationWrapper at
+            construction.
+        stack (StackObservationWrapper):
+            observation stacking wrapper. Set to StackObservationWrapper at
+            construction.
+        normalizer (NormalizeObservationWrapper):
+            observation normalizer wrapper. Set to NormalizeObservationWrapper
+            at construction.
+        min_trade_threshold (float):
+            minimum trade size in terms of notional value of base currency. Set
+            to 1 at construction.
+        integer (bool):
+            whether to modify notional value of trades to match integer number
+            of assets. Set to False at construction.
+        integer_quantity (IntegerAssetQuantityActionWrapper):   
+            integer asset quantity wrapper. Set to
+            IntegerAssetQuantityActionWrapper at construction.
+        position_close (PositionCloseActionWrapper):
+            position close wrapper. Set to PositionCloseActionWrapper at
+            construction.
+        shorting (ShortingActionWrapper):   
+            Allows shorting wrapper. Set to ShortingActionWrapper at
+            construction.
+        uniform (bool):
+            whether to use uniform distribution of trading budget. Set to True
+            at construction.
+        fixed (bool):
+            whether to use fixed trading equity ratio. Set to True at
+            construction.
+        discrete (bool):
+            whether to use discrete actions. Set to True at construction.
+        trade_equity_ratio (float):
+            fixed trading equity ratio. Set to 0.1 at construction.
+        hold_threshold (float):
+            threshold for holding an asset. Set to 0.15 at construction.
+        clip (bool):
+            whether to clip actions to (low, high). Set to False at
+            construction.
+        low (float):
+            lower bound for clipping actions. Set to -1 at construction.
+        high (float):
+            upper bound for clipping actions. Set to 1 at construction.
+        fixed_uniform (EquityBasedFixedUniformActionParser):
+            action parser for fixed uniform ratio models.
+        variable_uniform ($$$):
+            action parser for variable uniform ratio models.
+        fixed_nonuniform ($$$):
+            action parser for fixed non-uniform ratio models.
+        variable_nonuniform ($$$):
+            action parser for variable non-uniform ratio models. 
 
-        margin_account_metadata (MarginAccountMetaDataWrapper):
-            margin account metadata wrapper. Set to
-            MarginAccountMetaDataWrapper at construction.   
-        render (ConsoleTearsheetRenderWrapper):
-            console tearsheet render wrapper. Set to
-            ConsoleTearsheetRenderWrapper at construction.
-        initial_margin (InitialMarginActionWrapper):
-            initial margin wrapper. Set to InitialMarginActionWrapper at
-            construction.
-        excess_margin (ExcessMarginActionWrapper):
-            excess margin wrapper. Set to ExcessMarginActionWrapper at
-            construction.
-        observation_pipe (ObservationPipe):
-            observation pipe. Set to ObservationPipe at construction.
-        action_pipe (ActionPipe):
-            action pipe. Set to ActionPipe at construction.
-        reward_pipe (RewardPipe):
-            reward pipe. Set to RewardPipe at construction.
-        action_interpreter (EquityBasedUniformActionInterpreter):
-            equity based uniform action interpreter wrapper. Set to
-            EquityBasedUniformActionInterpreter at construction.
         
     Methods:
     --------
