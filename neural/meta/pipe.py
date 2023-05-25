@@ -798,6 +798,7 @@ class MarginAccountPipe(AbstractPipe):
                 low: float = -1,
                 high: float = 1) -> None:
 
+        self.excess_margin_ratio_threshold = excess_margin_ratio_threshold
         self.verbosity = verbosity
         self.interest_rate = interest_rate
 
@@ -826,6 +827,8 @@ class MarginAccountPipe(AbstractPipe):
         self.initial_margin = InitialMarginActionWrapper
         self.excess_margin = ExcessMarginActionWrapper
 
+        self.base_pipe = BasePipe
+
         return None
 
     def pipe(self, env):
@@ -847,5 +850,20 @@ class MarginAccountPipe(AbstractPipe):
         env = self.excess_margin(
             env,
             excess_margin_ratio_threshold=self.excess_margin_ratio_threshold)
+        env = self.base_pipe(
+            verbosity=self.verbosity,
+            interest_rate=self.interest_rate,
+            buffer_size=self.buffer_size,
+            stack_size=self.stack_size,
+            min_trade=self.min_trade,
+            integer=self.integer,
+            uniform=self.uniform,
+            fixed=self.fixed,
+            discrete=self.discrete,
+            trade_equity_ratio=self.trade_equity_ratio,
+            hold_threshold=self.hold_threshold,
+            clip=self.clip,
+            low=self.low,
+            high=self.high).pipe(env)
 
         return env
