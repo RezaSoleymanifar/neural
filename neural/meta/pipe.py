@@ -665,12 +665,8 @@ class RenderPipe(AbstractPipe):
         return env
 
 
-class BasePipe(
-    RewardPipe,
-    ObservationPipe,
-    ActionPipe,
-    HeadActionPipe,
-    RenderPipe):
+class BasePipe(RewardPipe, ObservationPipe, ActionPipe, HeadActionPipe,
+               RenderPipe):
     """
     A basic pipe to provide fundamental trading and training functionalities to
     the environment.
@@ -692,32 +688,32 @@ class BasePipe(
                  low: float = -1,
                  high: float = 1) -> None:
 
-        RewardPipe.__init__(
-            self,
-            interest_rate = interest_rate)
-        ObservationPipe.__init__(
-            self,
-            buffer_size = buffer_size,
-            stack_size = stack_size)
-        ActionPipe.__init__(
-            self,
-            min_trade = min_trade,
-            integer = integer)
-        HeadActionPipe.__init__(
-            self, 
-            uniform = uniform,
-            fixed = fixed,
-            discrete = discrete,
-            trade_equity_ratio = trade_equity_ratio,
-            hold_threshold = hold_threshold,
-            clip = clip,
-            low = low,
-            high = high)
+        RewardPipe.__init__(self, interest_rate=interest_rate)
+        ObservationPipe.__init__(self,
+                                 buffer_size=buffer_size,
+                                 stack_size=stack_size)
+        ActionPipe.__init__(self, min_trade=min_trade, integer=integer)
+        HeadActionPipe.__init__(self,
+                                uniform=uniform,
+                                fixed=fixed,
+                                discrete=discrete,
+                                trade_equity_ratio=trade_equity_ratio,
+                                hold_threshold=hold_threshold,
+                                clip=clip,
+                                low=low,
+                                high=high)
 
         return None
 
     def pipe(self, env):
-        self.reward = RewardPipe.pipe(self, env)
+        """
+        
+        """
+        env = RewardPipe.pipe(self, env)
+        env = ObservationPipe.pipe(self, env)
+        env = ActionPipe.pipe(self, env)
+        env = HeadActionPipe.pipe(self, env)
+        env = RenderPipe.pipe(self, env)
 
 
 class BasePipe(AbstractPipe):
