@@ -66,14 +66,14 @@ class AbstractPipe(ABC):
 
 class RewardPipe(AbstractPipe):
     """
-    This pipe adds reward generation, interest on debt, and
-    normalization to the base market environment. The pipe adds the
-    following functionality to the base environment:
+    This pipe handles the specifics of reward generation, modification for the
+    base environment. The pipe adds the following functionality to the base
+    environment:
         - Reward generation:
             This will be the change in equity of the account.
         - Interest on debt
-            Reduces reward by amount of interest on debt. Computed at 
-            end of day.
+            Reduces reward by amount of interest on debt. Computed at end of
+            day.
         - Reward normalization:
             Ensures that the reward distribution has zero mean and unit.
     
@@ -89,8 +89,8 @@ class RewardPipe(AbstractPipe):
             reward generator wrapper. Set to RewardGeneratorWrapper at
             construction.
         interest (LiabilityInterstRewardWrapper):
-            interest on debt wrapper. Set to
-            LiabilityInterstRewardWrapper at construction.
+            interest on debt wrapper. Set to LiabilityInterstRewardWrapper at
+            construction.
         reward_normalizer (RewardNormalizerWrapper):
             reward normalizer wrapper. Set to RewardNormalizerWrapper at
             construction.
@@ -98,13 +98,14 @@ class RewardPipe(AbstractPipe):
     Methods:
     --------
         pipe(env):
-            Applies a stack of market wrappers successively to an
-            environment.
+            Applies a stack of market wrappers successively to an environment.
     """
 
     def __init__(
         self,
         interest_rate: float = 0.08,
+        epsilon: float = 1e-8,
+        clip_threshold: float = 10,
     ) -> None:
         """
         Initializes the reward pipe.
@@ -152,7 +153,8 @@ class RewardPipe(AbstractPipe):
         """
         env = self.reward_generator(env)
         env = self.interest(env, interest_rate=self.interest_rate)
-        env = self.reward_normalizer(env)
+        env = self.reward_normalizer(
+            env, epsilon=self.epsilon, clip_threshold=self.clip_threshold)
 
         return env
 
