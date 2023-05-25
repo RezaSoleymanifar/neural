@@ -221,9 +221,10 @@ class ObservationPipe(AbstractPipe):
             Applies a stack of market wrappers successively to an environment.
     """
     def __init__(self,
-                 buffer_size: int = 10,
-                 stack_size: int = None,
-                 ) -> None:
+                buffer_size: int = 10,
+                stack_size: int = None,
+                observation_statistics: Optional[RunningStatistics] = None,
+                ) -> None:
         """
         Initializes the observation pipe.
 
@@ -290,6 +291,7 @@ class ObservationPipe(AbstractPipe):
 
         env = self.normalizer(
             env, observation_statistics=self.observation_statistics)
+        self.observation_statistics = env.observation_statistics
 
         return env
 
