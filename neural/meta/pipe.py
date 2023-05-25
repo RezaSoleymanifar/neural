@@ -697,6 +697,9 @@ class BasePipe(AbstractPipe):
         env = self.head_pipe().pipe(env)
         env = self.render_pipe(env, verbosity=self.verbosity)
 
+        self.observation_statistics = (
+            self.observation_pipe.observation_statistics)
+        
         return env
 
 class MarginAccountPipe(AbstractPipe):
