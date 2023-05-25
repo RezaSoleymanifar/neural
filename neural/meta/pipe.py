@@ -673,8 +673,6 @@ class BasePipe(AbstractPipe):
         self.low = low
         self.high = high
 
-        self.verbosity = verbosity
-
         self.reward_pipe = RewardPipe
         self.observation_pipe = ObservationPipe
         self.action_pipe = ActionPipe
@@ -784,24 +782,42 @@ class MarginAccountPipe(AbstractPipe):
     """
 
     def __init__(self,
-                 trade_equity_ratio: float = 0.02,
-                 excess_margin_ratio_threshold: float = 0.1,
-                 min_trade: float = 1,
-                 integer: bool = False,
-                 buffer_size: int = 10,
-                 stack_size: int = None,
-                 track_statistics: bool = True,
-                 verbosity: int = 20) -> None:
+                trade_equity_ratio: float = 0.02,
+                excess_margin_ratio_threshold: float = 0.1,
+                verbosity: int = 0,
+                interest_rate: float = 0.08,
+                buffer_size: int = 1,
+                stack_size: int = 1,
+                min_trade: float = 0.01,
+                integer: bool = False,
+                uniform: bool = True,
+                fixed: bool = True,
+                discrete: bool = False,
+                hold_threshold: float = 0.15,
+                clip: bool = False,
+                low: float = -1,
+                high: float = 1) -> None:
 
-        self.trade_equity_ratio = trade_equity_ratio
-        self.excess_margin_ratio_threshold = excess_margin_ratio_threshold
-
-        self.min_trade = min_trade
-        self.integer = integer
+        self.verbosity = verbosity
+        self.interest_rate = interest_rate
 
         self.buffer_size = buffer_size
         self.stack_size = stack_size
         self.observation_statistics = None
+
+        self.min_trade = min_trade
+        self.integer = integer
+
+        self.uniform = uniform
+        self.fixed = fixed
+        self.discrete = discrete
+
+        self.trade_equity_ratio = trade_equity_ratio
+        self.hold_threshold = hold_threshold
+
+        self.clip = clip
+        self.low = low
+        self.high = high
 
         self.track_statistics = track_statistics
         self.verbosity = verbosity
