@@ -594,10 +594,17 @@ class RendererPipe(AbstractPipe):
 
     def __init__(self, mode: str = 'human') -> None:
         self.mode = mode
+        self.render = ConsoleTearsheetRenderWrapper
 
-    def pipe(self, env):
-        return RenderWrapper(env, self.mode)
-    
+        def pipe(self, env):
+            """ 
+            Adds the following functionality to the environment:
+            - renders the environment
+                
+            """
+            env =  self.render(env, self.mode)
+            return env
+
 class BasePipe(AbstractPipe):
     """
     A basic pipe to provide fundamental trading and training functionalities to
