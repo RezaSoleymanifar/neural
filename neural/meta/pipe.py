@@ -330,7 +330,11 @@ class ActionPipe(AbstractPipe):
         pipe(env):
             Applies a stack of market wrappers successively to an environment.
     """
-    def __init__(self, min_trade: float = 1, integer: bool = False) -> None:
+    def __init__(
+            self, 
+            min_trade: float = 1,
+            integer: bool = False
+            ) -> None:
         """
         Initializes the action pipe.
 
@@ -591,7 +595,6 @@ class BasePipe(AbstractPipe):
 
     def __init__(
             self,
-            track_statistics: bool = True,
             interest_rate: float = 0.08,
             buffer_size: int = 1,
             stack_size: int = 1,
@@ -610,7 +613,6 @@ class BasePipe(AbstractPipe):
         self.buffer_size = buffer_size
         self.stack_size = stack_size
         self.observation_statistics = None
-        self.track_statistics = track_statistics
 
         self.interest_rate = interest_rate
         self.epsilon = epsilon
