@@ -577,6 +577,10 @@ class BasePipe(AbstractPipe):
     A basic pipe to provide fundamental trading and training functionalities to
     the environment.
     """
+
+    def __init__(self) -> None:
+        pass
+    
     def pipe(self, env: Env) -> Env:
         """
         
@@ -591,6 +595,10 @@ class BasePipe(AbstractPipe):
         env = self.head().pipe(env)
         env = self.render(env, verbosity=self.verbosity)
 
+        self.reward_pipe = RewardPipe
+        self.observation_pipe = ObservationPipe
+        self.action_pipe = ActionPipe
+        self.head = HeadActionPipe
 
 class MarginAccountPipe(AbstractPipe):
     """
@@ -703,12 +711,6 @@ class MarginAccountPipe(AbstractPipe):
         self.render = ConsoleTearsheetRenderWrapper
         self.initial_margin = InitialMarginActionWrapper
         self.excess_margin = ExcessMarginActionWrapper
-
-
-        self.reward_pipe = RewardPipe
-        self.observation_pipe = ObservationPipe
-        self.action_pipe = ActionPipe
-        self.head = HeadActionPipe
 
         return None
 
