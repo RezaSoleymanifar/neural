@@ -305,7 +305,33 @@ class AbstractMarketEnvMetadataWrapper(Wrapper, ABC):
             A defaultdict object for storing metadata during an episode.
         
     Attributes:
-    
+    ----------
+        schedule (pd.DataFrame):
+            The schedule of the market environment.
+        index (int):
+            The current index of the episode.
+        day (int):
+            The current day of the episode.
+        date (pd.Timestamp):
+            The current date of the episode.
+        cash (float):
+            The current amount of cash available in the environment.
+        asset_quantities (np.ndarray):
+            The current quantities of assets available in the
+            environment.
+        portfolio_value (float):
+            The current value of the portfolio.
+        equity (float):
+            The current equity of the portfolio.
+        longs (np.ndarray):
+            The current longs of the portfolio.
+        shorts (np.ndarray):
+            The current shorts of the portfolio.    
+        maintenance_margin (float):
+            The current maintenance margin of the portfolio.
+        margin (float):
+        
+        
     """
 
     def __init__(self, env: Env) -> None:
