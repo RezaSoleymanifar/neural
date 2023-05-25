@@ -589,31 +589,32 @@ class HeadActionPipe(AbstractPipe):
 
 class RendererPipe(AbstractPipe):
     """
-    A pipe to render the environment.
+    A pipe to render the environment. This usually is the last pipe in the
+    stack of pipes. It is responsible for rendering the environment to the
+    console, GUI or a file.
     """
 
     def __init__(self, mode: str = 'human') -> None:
         self.mode = mode
         self.render = ConsoleTearsheetRenderWrapper
 
-        def pipe(self, env):
-            """ 
-            Adds the following functionality to the environment:
-            - renders the environment:
-                - prints the current state of the environment to the console
-                includes:
-                    - progress
-                    - return
-                    - sharpe ratio
-                    - profit 
-                    - equity
-                    - cash
-                    - portfolio value
-                    - longs
-                    - shorts
-            """
-            env =  self.render(env, self.mode)
-            return env
+    def pipe(self, env):
+        """ 
+        Adds the following functionality to the environment:
+        - prints the current state of the environment to the console
+        includes:
+            - progress
+            - return
+            - sharpe ratio
+            - profit 
+            - equity
+            - cash
+            - portfolio value
+            - longs
+            - shorts
+        """
+        env =  self.render(env, self.mode)
+        return env
 
 class BasePipe(AbstractPipe):
     """
@@ -662,12 +663,11 @@ class BasePipe(AbstractPipe):
 
         self.verbosity = verbosity
 
-        
         self.reward_pipe = RewardPipe
         self.observation_pipe = ObservationPipe
         self.action_pipe = ActionPipe
         self.head_pipe = HeadActionPipe
-        self.render = ConsoleTearsheetRenderWrapper
+        self.render_pipe = ConsoleTearsheetRenderWrapper
 
     def pipe(self, env: Env) -> Env:
         """
@@ -685,7 +685,7 @@ class BasePipe(AbstractPipe):
         env = self.action_pipe(min_trade=self.min_trade,
                                integer=self.integer).pipe(env)
         env = self.head_pipe().pipe(env)
-        env = self.render(env, verbosity=self.verbosity)
+        env = self.render_pipe(env, verbosity=self.verbosity)
 
 class MarginAccountPipe(AbstractPipe):
     """
