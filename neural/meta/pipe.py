@@ -121,6 +121,8 @@ class RewardPipe(AbstractPipe):
         """
 
         self.interest_rate = interest_rate
+        self.epsilon = epsilon
+        self.clip_threshold = clip_threshold
 
         self.reward_generator = RewardGeneratorWrapper
         self.interest = LiabilityInterstRewardWrapper
@@ -196,13 +198,8 @@ class ObservationPipe(AbstractPipe):
             statistics of the observation distribution. Set to None at
             construction. If track_statistics is True, the statistics will be
             synchronized with the statistics of the observation normalizer
-            wrapper. This will be reused with the wrapper when the pipe is
-            saved and loaded.
-        track_statistics (bool):
-            whether to track and update the observation statistics during
-            training. If False, the statistics will not be tracked and updated
-            during training. If yes statistics are tracked as pipe attribute
-            and can be saved and loaded with the pipe object.
+            wrapper. This will be reused with the wrapper when the pipe object
+            is saved and loaded.
         flatten (FlattenObservationWrapper):
             observation flattening wrapper. Set to FlattenObservationWrapper at
             construction.
@@ -226,6 +223,8 @@ class ObservationPipe(AbstractPipe):
         self,
         buffer_size: int = 10,
         stack_size: int = None,
+        epsilon: float = 1e-8,
+        clip_threshold: float = 10,
     ) -> None:
         """
         Initializes the observation pipe.
@@ -239,12 +238,11 @@ class ObservationPipe(AbstractPipe):
             size of the stack for stacking observations. Set to None at 
             construction. If None, the stack size will be set to the
             buffer size.
-        observation_statistics (RunningStatistics):
-            statistics of the observation distribution. Set to None at
-            construction.
         """
         self.buffer_size = buffer_size
         self.stack_size = stack_size
+        self.epsilon = epsilon
+        self.clip_threshold = clip_threshold
         self.observation_statistics = None
 
         self.flatten = FlattenToNUmpyObservationWrapper
@@ -295,7 +293,10 @@ class ObservationPipe(AbstractPipe):
         env = self.stacker(env, stack_size=self.stack_size)
 
         env = self.normalizer(
-            env, observation_statistics=self.observation_statistics)
+            env, 
+            observation_statistics=self.observation_statistics, 
+            epsilon=self.epsilon, 
+            clip_threshold=self.clip_threshold)
 
         return env
 

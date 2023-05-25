@@ -1291,16 +1291,16 @@ class ObservationNormalizerWrapper(RunningStatisticsObservationWrapper):
     def __init__(self,
                  env: Env,
                  epsilon: float = 1e-8,
-                 clip: float = 10,
+                 clip_threshold: float = 10,
                  observation_statistics: Optional[RunningStatistics] = None,
                 ) -> None:
 
         super().__init__(env)
         self.epsilon = epsilon
-        self.clip = clip
+        self.clip = clip_threshold
         if observation_statistics is None:
             self.observation_statistics = RunningStatistics()
-        observation_statistics = self.observation_statistics
+            observation_statistics = self.observation_statistics
 
     def observation(
         self, observation: np.ndarray[float] | Dict[str, np.ndarray[float]]
