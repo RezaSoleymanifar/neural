@@ -697,6 +697,8 @@ class BasePipe(AbstractPipe):
         env = self.head_pipe().pipe(env)
         env = self.render_pipe(env, verbosity=self.verbosity)
 
+        return env
+
 class MarginAccountPipe(AbstractPipe):
     """
     A pipe to simulate a margin account environment. The pipe adds the
