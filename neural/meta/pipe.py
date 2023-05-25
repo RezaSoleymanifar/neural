@@ -322,7 +322,6 @@ class ObservationPipe(AbstractPipe):
 
         env = self.normalizer(
             env, observation_statistics=self.observation_statistics)
-        self.caller_pipe.observation_statistics = self.observation_statistics
 
         return env
 
