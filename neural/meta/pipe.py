@@ -247,7 +247,8 @@ class ObservationPipe(AbstractPipe):
         self.observation_statistics = None
 
         if not hasattr(caller_pipe, 'observation_statistics'):
-            self.observation_statistics = RunningStatistics()
+            raise ValueError('caller pipe must have observation statistics '
+                           'attribute.')
 
         self.flatten = FlattenToNUmpyObservationWrapper
         self.buffer = ObservationBufferWrapper
@@ -257,10 +258,28 @@ class ObservationPipe(AbstractPipe):
         return None
 
     def caller(self, pipe: Callable) -> None:
-        
-        self.caller_pipe.observation_statistics = self.observation_statistics
+        """
+        A decorator for the pipe method. This decorator ensures that the
+        observation statistics of the caller pipe are synchronized with the
+        observation statistics of the observation pipe.
 
-        return None 
+        args:
+        -----
+            pipe (Callable):
+                pipe method of the caller pipe.
+            
+        returns:
+        --------
+            decorated_pipe (Callable):
+                decorated pipe method of the caller pipe.
+        """
+        def decorated_pipe(env):
+            env = self.pipe(env)
+            self.caller_pipe.observation_statistics = self.observation_statistics
+            return env
+        return decorated_pipe
+
+    @caller
     def pipe(self, env: Env) -> Env:
         """
         Applies the following functionalities to the base environment:
