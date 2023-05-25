@@ -467,7 +467,7 @@ class HeadActionPipe(AbstractPipe):
         - Non-uniform variable ratio:
             This is only viable for continuous models. The model is identical
             to the non-uniform fixed ratio model, except that the trade equity
-            ratio is determined by the model. A neuron with value in (0,1) is
+            ratio is determined by the model. A neuron with value in (0, 1) is
             responsible for determining the trade equity ratio. This can be
             achieved by applying sigmoid to a corresponding neuron.
         
@@ -672,7 +672,7 @@ class BasePipe(RewardPipe, ObservationPipe, ActionPipe, HeadActionPipe,
                RenderPipe):
     """
     A basic pipe to provide fundamental trading and training functionalities to
-    the environment.
+    the environment. 
     """
 
     def __init__(self,
