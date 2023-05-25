@@ -255,18 +255,22 @@ class ObservationPipe(AbstractPipe):
     def pipe(self, env: Env) -> Env:
         """
         Applies the following functionalities to the base environment:
+
             1. Observation flattening:
                 If numpy array, flattens the observation to a 1D array. If
                 dict, flattens the observation to a 1D array for each key.
                 then joins the arrays into a single 1D array.
+
             2. Observation buffering:
                 Buffers the last n observations. If numpy array, buffers the
                 last n observations in a deque. If dict, buffers the last n
                 observations in a deque for each key.
+
             3. Observation stacking:
                 Stacks the last n observations. If numpy array, stacks the last
                 n observations along axis = 0. If dict, stacks the last n
                 observations along axis = 0 for each key.
+
             4. Observation normalization:
                 Ensures that the observation distribution has zero mean and
                 unit variance. If numpy array, normalizes the observation
