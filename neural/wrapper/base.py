@@ -288,10 +288,23 @@ class AbstractMarketEnvMetadataWrapper(Wrapper, ABC):
 
     Attributes:
     ----------
-        history (defaultdict): 
-            A defaultdict object for storing metadata during an episode.
         initial_cash (float):
             The initial amount of cash available in the environment.
+        initial_asset_quantities (np.ndarray):
+            The initial quantities of assets available in the
+            environment.
+        data_metadata (DataMetadata):
+            The metadata of the data used to create the environment.
+        feature_schema (FeatureSchema):
+            The schema of the features used to create the environment.
+        assets (List[str]):
+            The assets used to create the environment.
+        n_steps (int):  
+            The number of steps in the environment.
+        history (defaultdict): 
+            A defaultdict object for storing metadata during an episode.
+        
+    
     """
 
     def __init__(self, env: Env) -> None:
@@ -379,6 +392,70 @@ class AbstractMarketEnvMetadataWrapper(Wrapper, ABC):
         """
         return self.market_env.asset_prices
 
+    @property
+    def progress(self) -> str:
+        """
+        If the underlying market env is a `TrainMarketEnv`, this method returns
+        the progress of the episode as a percentage string in ['0%', '100%'].
+        If the underlying market env is a `TradeMarketEnv`, this method returns
+        current date and time.
+
+        Returns:
+        ----------
+            progress (str): 
+                The progress of the episode as a percentage string or the
+                current date and time.
+        """
+        if isinstance(self.market_env, TradeMarketEnv):
+            progress = datetime.now().strftime("%m/%d/%Y, %H:%M")
+        else:
+            progress_percentage = self.market_env.index / self.market_env.n_steps
+            progress = f'{progress_percentage:.0%}'
+
+        return progress
+
+    @property
+    def profit(self):
+        """
+        The current profit of the trader. This is the difference between
+        the current equity and the initial equity.
+
+        Returns:
+        ----------
+            profit (float):
+                The current profit of the trader.
+        """
+        profit = self.equity - self.initial_equity
+        return profit
+
+    @property
+    def return_(self):
+        """
+        The current return of the trader. This is the ratio of the
+        current profit to the initial equity.
+
+        Returns:
+        ----------
+            return_ (float):
+                The current return of the trader.
+        """
+        return_ = self.profit / self.initial_equity
+        return return_
+
+    @property
+    def sharpe(self):
+        """
+        The current sharpe ratio of the trader. This is the ratio of the
+        current return to the current volatility of the equity.
+
+        Returns:
+        ----------
+            sharpe (float):
+                The current sharpe ratio of the trader.
+        """
+        sharpe = sharpe_ratio(self.history['equity'])
+        return sharpe
+    
     @abstractmethod
     def _cache_metadata(self):
         """
@@ -753,71 +830,6 @@ class MarginAccountMetaDataWrapper(AbstractMarketEnvMetadataWrapper):
         """
         excess_margin = self.marginable_equity - self.maintenance_margin_requirement
         return excess_margin
-
-    @property
-    def progress(self) -> str:
-        """
-        If the underlying market env is a `TrainMarketEnv`, this method returns
-        the progress of the episode as a percentage string in ['0%', '100%'].
-        If the underlying market env is a `TradeMarketEnv`, this method returns
-        current date and time.
-
-        Returns:
-        ----------
-            progress (str): 
-                The progress of the episode as a percentage string or the
-                current date and time.
-        """
-        if isinstance(self.market_env, TradeMarketEnv):
-            progress = datetime.now().strftime("%m/%d/%Y, %H:%M")
-        else:
-            progress_percentage = self.market_env.index / self.market_env.n_steps
-            progress = f'{progress_percentage:.0%}'
-
-        return progress
-
-
-    @property
-    def profit(self):
-        """
-        The current profit of the trader. This is the difference between
-        the current equity and the initial equity.
-
-        Returns:
-        ----------
-            profit (float):
-                The current profit of the trader.
-        """
-        profit = self.equity - self.initial_equity
-        return profit
-
-    @property
-    def return_(self):
-        """
-        The current return of the trader. This is the ratio of the
-        current profit to the initial equity.
-
-        Returns:
-        ----------
-            return_ (float):
-                The current return of the trader.
-        """
-        return_ = self.profit / self.initial_equity
-        return return_
-
-    @property
-    def sharpe(self):
-        """
-        The current sharpe ratio of the trader. This is the ratio of the
-        current return to the current volatility of the equity.
-
-        Returns:
-        ----------
-            sharpe (float):
-                The current sharpe ratio of the trader.
-        """
-        sharpe = sharpe_ratio(self.history['equity'])
-        return sharpe
 
     def _cache_metadata(self) -> None:
         """

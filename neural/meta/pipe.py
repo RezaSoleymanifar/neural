@@ -779,8 +779,17 @@ class MarginAccountPipe(BasePipe):
     trading logics of a margin account to the base market environment.
 
     It offers following functionalities:
-        - Margin account metadata
-        - Console tearsheet render
+        - Margin account metadata:
+            provides metadata of the margin account such as:
+                - longs
+                - shorts
+                - positions
+                - portfolio value
+                - equity
+                - marginable_equity
+                - maintenance_margin
+                - excess_margin
+
         - Initial margin
         - Excess margin
 
