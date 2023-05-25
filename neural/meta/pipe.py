@@ -5,7 +5,7 @@ pipes.py
 This module defines pipes for market environments.
 """
 from abc import abstractmethod, ABC
-from typing import Callable
+from typing import Callable, Optional
 
 from gym import Env
 from neural.wrapper.base import (MarginAccountMetaDataWrapper,
@@ -222,7 +222,7 @@ class ObservationPipe(AbstractPipe):
     def __init__(self,
                  buffer_size: int = 10,
                  stack_size: int = None,
-                 track_statistics: bool = True) -> None:
+                 observation_statistics: Optional[RunningStatistics] = True) -> None:
         """
         Initializes the observation pipe.
 
