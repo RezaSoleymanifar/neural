@@ -299,7 +299,7 @@ class ActionPipe(AbstractPipe):
     Action pipe for market environments. The pipe adds the following
     functionality to the base environment:
         - Minimum trade size:
-            Sets actions bellows a minimum trade size to zero.
+            Sets actions bellow a minimum trade size to zero.
         - Integer asset quantity:
             Modifies actions so that they map to integer asset quantities.
         - Position close:
@@ -308,10 +308,11 @@ class ActionPipe(AbstractPipe):
             Shorting is only possible with integer asset quantities.
 
     Minimum trade size ensures that the notional value of a trade is greater
-    than a minimum value. Integer asset quantity ensures that the number of
-    assets traded is an integer. Position close ensures that the agent can
-    close positions, before flipping the sign of the quantity. Shorting ensures
-    that the agent short actions map to integer asset quantities.
+    than a minimum threshold; if asset is held. Integer asset quantity ensures
+    that the number of assets traded is an integer. Position close ensures that
+    the agent can close positions, before flipping the sign of the quantity.
+    Shorting ensures that the agent short actions map to integer asset
+    quantities.
 
     Attributes:
     -----------
@@ -566,7 +567,7 @@ class HeadActionPipe(AbstractPipe):
         return parser
     
     @property
-    def mapper(self, env: Env):
+    def mapper(self):
         """
         Used with discrete models to map the actions to the expected action
         space.
@@ -580,9 +581,9 @@ class HeadActionPipe(AbstractPipe):
         is the expected input of the uniform action parser.
         """
         if self.uniform:
-            return self.fixed_uniform_mapper
+            mapper =  lambda env: self.fixed_uniform_mapper(env)
         else:
-            return self.fixed_nonuniform_mapper
+            mapper =  lambda env: self.fixed_nonuniform_mapper(env)
 
     def pipe(self, env):
         """
