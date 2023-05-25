@@ -222,7 +222,8 @@ class ObservationPipe(AbstractPipe):
     def __init__(self,
                  buffer_size: int = 10,
                  stack_size: int = None,
-                 observation_statistics: Optional[RunningStatistics] = True) -> None:
+                 observation_statistics: Optional[RunningStatistics] = None
+                 ) -> None:
         """
         Initializes the observation pipe.
 
@@ -244,8 +245,8 @@ class ObservationPipe(AbstractPipe):
         """
         self.buffer_size = buffer_size
         self.stack_size = stack_size
-        self.observation_statistics = None
-        self.track_statistics = track_statistics
+        self.observation_statistics = observation_statistics
+        
 
         self.flatten = FlattenToNUmpyObservationWrapper
         self.buffer = ObservationBufferWrapper
@@ -277,9 +278,7 @@ class ObservationPipe(AbstractPipe):
         env = self.stacker(env, stack_size=self.stack_size)
 
         env = self.normalizer(
-            env,
-            observation_statistics=self.observation_statistics,
-            track_statistics=self.track_statistics)
+            env, observation_statistics=self.observation_statistics)
 
         return env
 
