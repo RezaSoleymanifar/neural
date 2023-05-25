@@ -26,6 +26,7 @@ from neural.wrapper.reward import (RewardNormalizerWrapper,
                                    RewardGeneratorWrapper,
                                    LiabilityInterstRewardWrapper)
 
+from neural.utils.base import RunningStatistics
 
 class AbstractPipe(ABC):
     """
@@ -222,7 +223,6 @@ class ObservationPipe(AbstractPipe):
     def __init__(self,
                  buffer_size: int = 10,
                  stack_size: int = None,
-                 observation_statistics: Optional[RunningStatistics] = None
                  ) -> None:
         """
         Initializes the observation pipe.
@@ -236,16 +236,13 @@ class ObservationPipe(AbstractPipe):
             size of the stack for stacking observations. Set to None at 
             construction. If None, the stack size will be set to the
             buffer size.
-        track_statistics (bool):
-            whether to track and update the observation statistics
-            during training. If False, the statistics will not be
-            tracked and updated during training. If yes statistics are
-            tracked as pipe attribute and can be saved and loaded with
-            the pipe object.
+        observation_statistics (RunningStatistics):
+            statistics of the observation distribution. Set to None at
+            construction.
         """
         self.buffer_size = buffer_size
         self.stack_size = stack_size
-        self.observation_statistics = observation_statistics
+        self.observation_statistics = None
         
 
         self.flatten = FlattenToNUmpyObservationWrapper
@@ -258,10 +255,24 @@ class ObservationPipe(AbstractPipe):
     def pipe(self, env: Env) -> Env:
         """
         Applies the following functionalities to the base environment:
-            1. Observation flattening
-            2. Observation buffering
-            3. Observation stacking
-            4. Observation normalization
+            1. Observation flattening:
+                If numpy array, flattens the observation to a 1D array. If
+                dict, flattens the observation to a 1D array for each key.
+                then joins the arrays into a single 1D array.
+            2. Observation buffering:
+                Buffers the last n observations. If numpy array, buffers the
+                last n observations in a deque. If dict, buffers the last n
+                observations in a deque for each key.
+            3. Observation stacking:
+                Stacks the last n observations. If numpy array, stacks the last
+                n observations along axis = 0. If dict, stacks the last n
+                observations along axis = 0 for each key.
+            4. Observation normalization:
+                Ensures that the observation distribution has zero mean and
+                unit variance. If numpy array, normalizes the observation
+                using a running mean and standard deviation. If dict,
+                normalizes the observation using a running mean and standard
+                deviation for each key.
 
         Args:
         -----
