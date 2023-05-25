@@ -556,7 +556,7 @@ class HeadActionPipe(AbstractPipe):
         return parser
     
     @property
-    def mapper(self):
+    def mapper(self, env: Env):
         """
         Used with discrete models to map the actions to the expected action
         space.
@@ -580,7 +580,7 @@ class HeadActionPipe(AbstractPipe):
 
         """
         env = self.parser(env)
-        if self.discete:
+        if self.discrete:
             env = self.mapper(env)
         if self.clip:
             env = self.action_clipper(self.low, self.high, env)
@@ -612,7 +612,7 @@ class RenderPipe(AbstractPipe):
             - longs
             - shorts
         """
-        env =  self.render(env, self.mode)
+        env =  self.render(env)
         return env
 
 class BasePipe(AbstractPipe):
