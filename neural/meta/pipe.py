@@ -665,7 +665,12 @@ class RenderPipe(AbstractPipe):
         return env
 
 
-class BasePipe(RewardPipe, ObservationPipe, ActionPipe, HeadActionPipe):
+class BasePipe(
+    RewardPipe,
+    ObservationPipe,
+    ActionPipe,
+    HeadActionPipe,
+    RenderPipe):
     """
     A basic pipe to provide fundamental trading and training functionalities to
     the environment.
@@ -688,37 +693,31 @@ class BasePipe(RewardPipe, ObservationPipe, ActionPipe, HeadActionPipe):
                  high: float = 1) -> None:
 
         RewardPipe.__init__(
-            self, 
-            interest_rate)
+            self,
+            interest_rate = interest_rate)
         ObservationPipe.__init__(
-            self, 
-            buffer_size, 
-            stack_size)
+            self,
+            buffer_size = buffer_size,
+            stack_size = stack_size)
         ActionPipe.__init__(
-            self, 
-            min_trade, 
-            integer)
+            self,
+            min_trade = min_trade,
+            integer = integer)
         HeadActionPipe.__init__(
             self, 
-            verbosity = verbosity, 
-            interest_rate = interest_rate, 
-            buffer_size = buffer_size, 
-            stack_size = stack_size, 
-            min_trade = min_trade,
-            integer = integer, 
-            uniform = uniform, 
-            fixed = fixed, 
-            discrete = discrete, 
+            uniform = uniform,
+            fixed = fixed,
+            discrete = discrete,
             trade_equity_ratio = trade_equity_ratio,
-            hold_threshold = hold_threshold, 
-            clip = clip, 
-            low = low, 
-            high)
+            hold_threshold = hold_threshold,
+            clip = clip,
+            low = low,
+            high = high)
 
         return None
 
     def pipe(self, env):
-        self.rewar
+        self.reward = RewardPipe.pipe(self, env)
 
 
 class BasePipe(AbstractPipe):
