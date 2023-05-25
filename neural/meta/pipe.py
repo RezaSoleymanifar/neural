@@ -580,12 +580,14 @@ class BasePipe(AbstractPipe):
 
     def __init__(
             self,
+            interest_rate: float = 0.08,
+            epsilon: float = 1e-8,
+            clip_threshold: float = 10,
             buffer_size: int = 1,
             stack_size: int = 1,
             track_statistics: bool = True,
             min_trade: float = 0.01,
             integer: bool = False,
-            interest_rate: float = 0.0,
             uniform: bool = True,
             fixed: bool = True,
             discrete: bool = False,
@@ -600,6 +602,10 @@ class BasePipe(AbstractPipe):
         self.stack_size = stack_size
         self.observation_statistics = None
         self.track_statistics = track_statistics
+
+        self.interest_rate = interest_rate
+        self.epsilon = epsilon
+        self.clip_threshold = clip_threshold
 
         self.min_trade = min_trade
         self.integer = integer
