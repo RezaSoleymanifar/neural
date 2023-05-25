@@ -243,8 +243,7 @@ class ObservationPipe(AbstractPipe):
         """
         self.buffer_size = buffer_size
         self.stack_size = stack_size
-        self.observation_statistics = None
-        
+        self.observation_statistics = observation_statistics
 
         self.flatten = FlattenToNUmpyObservationWrapper
         self.buffer = ObservationBufferWrapper
