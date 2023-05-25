@@ -659,7 +659,44 @@ class RenderPipe(AbstractPipe):
         """
         env =  self.render(env)
         return env
-class BasePipe()
+    
+class BasePipe(RewardPipe, ObservationPipe, ActionPipe, HeadActionPipe):
+    """
+    A basic pipe to provide fundamental trading and training functionalities to
+    the environment.
+    """
+
+    def __init__(
+            self,
+            verbosity: int = 0,
+            interest_rate: float = 0.08,
+            buffer_size: int = 1,
+            stack_size: int = 1,
+            min_trade: float = 0.01,
+            integer: bool = False,
+            uniform: bool = True,
+            fixed: bool = True,
+            discrete: bool = False,
+            trade_equity_ratio: float = 0.05,
+            hold_threshold: float = 0.15,
+            clip: bool = False,
+            low: float = -1,
+            high: float = 1
+            ) -> None:
+        
+        self.reward_pipe = RewardPipe.__init__(self, interest_rate)
+        self.observation_pipe = ObservationPipe.__init__(self, buffer_size, stack_size)
+        self.action_pipe = ActionPipe.__init__(self, min_trade, integer)
+        self.head_action_pipe = HeadActionPipe.__init__(
+            self, verbosity, interest_rate, buffer_size, stack_size, min_trade,
+            integer, uniform, fixed, discrete, trade_equity_ratio,
+            hold_threshold, clip, low, high)
+
+        return None
+    
+    def pipe(self, env):
+        self.rewar
+
 class BasePipe(AbstractPipe):
     """
     A basic pipe to provide fundamental trading and training functionalities to
@@ -710,6 +747,8 @@ class BasePipe(AbstractPipe):
         self.action_pipe = ActionPipe
         self.head_pipe = HeadActionPipe
         self.render_pipe = ConsoleTearsheetRenderWrapper
+
+        return None
 
     def pipe(self, env: Env) -> Env:
         """
