@@ -223,7 +223,7 @@ class ObservationPipe(AbstractPipe):
     def __init__(self,
                 buffer_size: int = 10,
                 stack_size: int = None,
-                observation_statistics: Optional[RunningStatistics] = None,
+                caller_pipe: Optional[AbstractPipe] = None,
                 ) -> None:
         """
         Initializes the observation pipe.
@@ -243,7 +243,11 @@ class ObservationPipe(AbstractPipe):
         """
         self.buffer_size = buffer_size
         self.stack_size = stack_size
-        self.observation_statistics = observation_statistics
+        self.caller_pipe = caller_pipe
+        self.observation_statistics = None
+
+        if not hasattr(caller_pipe, 'observation_statistics'):
+            self.observation_statistics = RunningStatistics()
 
         self.flatten = FlattenToNUmpyObservationWrapper
         self.buffer = ObservationBufferWrapper
@@ -252,6 +256,11 @@ class ObservationPipe(AbstractPipe):
 
         return None
 
+    def caller(self, pipe: Callable) -> None:
+        
+        self.caller_pipe.observation_statistics = self.observation_statistics
+
+        return None 
     def pipe(self, env: Env) -> Env:
         """
         Applies the following functionalities to the base environment:
@@ -294,7 +303,7 @@ class ObservationPipe(AbstractPipe):
 
         env = self.normalizer(
             env, observation_statistics=self.observation_statistics)
-        self.observation_statistics = env.observation_statistics
+        self.caller_pipe.observation_statistics = self.observation_statistics
 
         return env
 
