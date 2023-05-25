@@ -775,8 +775,8 @@ class BasePipe(RewardPipe, ObservationPipe, ActionPipe, HeadActionPipe,
 
 class MarginAccountPipe(BasePipe):
     """
-    A pipe to simulate a margin account environment. The pipe adds the
-    trading logics of a margin account to the base market environment.
+    A pipe to simulate a margin account environment. The pipe adds the trading
+    logics of a margin account to the base market environment.
 
     It offers following functionalities:
         - Margin account metadata:
@@ -791,17 +791,18 @@ class MarginAccountPipe(BasePipe):
                 - excess_margin
 
         - Initial margin:
-            calculates initial margin for each asset based on the
-            notional value of the asset and the initial margin requirement
-            of the asset. Modifies actions if the initial margin is not
-            met.
+            calculates initial margin for each asset based on the notional
+            value of the asset and the initial margin requirement of the asset.
+            Modifies actions if the initial margin is not met.
         - Excess margin:
-            Provides a cushion around maintenance margin. If the excess
-            margin threshold is violated, the actions are modified to
-            restore the excess margin. For non-marginable assets, the
-            cushion is provided around cash = 0.
+            Provides a cushion around maintenance margin called excess maring.
+            If the excess margin threshold is violated, the actions are
+            modified to restore the excess margin. For non-marginable assets,
+            the cushion is provided around cash = 0 due to maintenance margi
+            being zero. Excess margin if positive, ensures maintenance margin
+            requirement is always met by definition.
 
-    Also adds the base pipe functionalities:
+    Also adds the BasePipe functionalities:
         - RewardPipe
         - ObservationPipe
         - ActionPipe
@@ -811,38 +812,32 @@ class MarginAccountPipe(BasePipe):
     Attributes:
     -----------
         excess_margin_ratio_threshold (float):
-            threshold for excess margin ratio. Set to 0.1 at
-            construction.
+            threshold for excess margin ratio (excess margin to portfolio
+            value). Set to 0.1 at construction.
         trade_equity_ratio (float):
-            ratio of equity to be traded. Set to 0.02 at construction.
+            ratio of equity to be traded at each interval.
         min_trade (float):
-            minimum trade size in terms of notional value of base
-            currency. Set to 1 at construction.
+            minimum trade size in terms of notional value of base currency. Set
+            to 1 at construction.
         integer (bool):
-            whether to modify notional value of trades to match integer
-            number of assets. Set to False at construction.
+            whether to modify notional value of trades to match integer number
+            of assets. Set to False at construction.
         buffer_size (int):
             size of the buffer for buffering observations. Set to 10 at
             construction.
         stack_size (int):
             size of the stack for stacking observations. Set to None at
-            construction. If None, the stack size will be set to the    
-            buffer size.
+            construction. If None, the stack size will be set to the buffer
+            size.
         observation_statistics (RunningStatistics):
             statistics of the observation distribution. Set to None at
-            construction. If track_statistics is True, the statistics
-            will be synchronized with the statistics of the observation
-            normalizer wrapper. This will be reused with the wrapper
-            when the pipe is saved and loaded.
-        track_statistics (bool):
-            whether to track and update the observation statistics
-            during training. If False, the statistics will not be   
-            tracked and updated during training. If yes statistics are
-            tracked as pipe attribute and can be saved and loaded with
-            the pipe object.
+            construction. If track_statistics is True, the statistics will be
+            synchronized with the statistics of the observation normalizer
+            wrapper. This will be reused with the wrapper when the pipe is
+            saved and loaded.
         verbosity (int):
-            verbosity level of the console tearsheet render. Set to 20
-            at construction.
+            verbosity level of the console tearsheet render. Set to 20 at
+            construction.
 
         margin_account_metadata (MarginAccountMetaDataWrapper):
             margin account metadata wrapper. Set to
@@ -851,8 +846,8 @@ class MarginAccountPipe(BasePipe):
             console tearsheet render wrapper. Set to
             ConsoleTearsheetRenderWrapper at construction.
         initial_margin (InitialMarginActionWrapper):
-            initial margin wrapper. Set to InitialMarginActionWrapper
-            at construction.
+            initial margin wrapper. Set to InitialMarginActionWrapper at
+            construction.
         excess_margin (ExcessMarginActionWrapper):
             excess margin wrapper. Set to ExcessMarginActionWrapper at
             construction.
@@ -869,8 +864,7 @@ class MarginAccountPipe(BasePipe):
     Methods:
     --------
         pipe(env):
-            Applies a stack of market wrappers successively to an
-            environment.
+            Applies a stack of market wrappers successively to an environment.
     """
 
     def __init__(self,
