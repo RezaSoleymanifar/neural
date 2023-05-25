@@ -617,7 +617,8 @@ class BasePipe(AbstractPipe):
         self.reward_pipe = RewardPipe
         self.observation_pipe = ObservationPipe
         self.action_pipe = ActionPipe
-        self.head = HeadActionPipe
+        self.head_pipe = HeadActionPipe
+        self.render = ConsoleTearsheetRenderWrapper
 
     def pipe(self, env: Env) -> Env:
         """
@@ -635,7 +636,7 @@ class BasePipe(AbstractPipe):
             track_statistics=self.track_statistics).pipe(env)
         env = self.action_pipe(min_trade=self.min_trade,
                                integer=self.integer).pipe(env)
-        env = self.head().pipe(env)
+        env = self.head_pipe().pipe(env)
         env = self.render(env, verbosity=self.verbosity)
 
 class MarginAccountPipe(AbstractPipe):
@@ -746,7 +747,6 @@ class MarginAccountPipe(AbstractPipe):
         self.verbosity = verbosity
 
         self.margin_account_metadata = MarginAccountMetaDataWrapper
-        self.render = ConsoleTearsheetRenderWrapper
         self.initial_margin = InitialMarginActionWrapper
         self.excess_margin = ExcessMarginActionWrapper
 
