@@ -571,7 +571,26 @@ class HeadActionPipe(AbstractPipe):
             env = self.action_clipper(self.low, self.high, env)
 
         return env
-    
+
+class BasePipe(AbstractPipe):
+    """
+    A basic pipe to provide fundamental trading and training functionalities to
+    the environment.
+    """
+    def pipe(self, env: Env) -> Env:
+        """
+        
+        """
+        env = self.reward_pipe().pipe(env)
+        env = self.observation_pipe(
+            buffer_size=self.buffer_size,
+            stack_size=self.stack_size,
+            track_statistics=self.track_statistics).pipe(env)
+        env = self.action_pipe(min_trade=self.min_trade,
+                               integer=self.integer).pipe(env)
+        env = self.head().pipe(env)
+        env = self.render(env, verbosity=self.verbosity)
+
 
 class MarginAccountPipe(AbstractPipe):
     """
@@ -708,20 +727,9 @@ class MarginAccountPipe(AbstractPipe):
         """
 
         env = self.margin_account_metadata(env)
-        env = self.render(env, verbosity=self.verbosity)
         env = self.initial_margin(env)
         env = self.excess_margin(
             env,
             excess_margin_ratio_threshold=self.excess_margin_ratio_threshold)
-
-        env = self.reward_pipe().pipe(env)
-        env = self.observation_pipe(
-            buffer_size=self.buffer_size,
-            stack_size=self.stack_size,
-            track_statistics=self.track_statistics).pipe(env)
-        env = self.action_pipe(min_trade=self.min_trade,
-                               integer=self.integer).pipe(env)
-
-        env = self.head().pipe(env)
 
         return env
