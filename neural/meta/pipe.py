@@ -1,4 +1,3 @@
-
 """
 pipes.py
 
@@ -27,6 +26,7 @@ from neural.wrapper.reward import (RewardNormalizerWrapper,
                                    LiabilityInterstRewardWrapper)
 
 from neural.utils.base import RunningStatistics
+
 
 class AbstractPipe(ABC):
     """
@@ -105,9 +105,11 @@ class RewardPipe(AbstractPipe):
             Applies a stack of market wrappers successively to an
             environment.
     """
-    def __init__(self,
-                interest_rate: float = 0.08,
-                ) -> None:
+
+    def __init__(
+        self,
+        interest_rate: float = 0.08,
+    ) -> None:
         """
         Initializes the reward pipe.
 
@@ -153,10 +155,11 @@ class RewardPipe(AbstractPipe):
                 wrapped environment.
         """
         env = self.reward_generator(env)
-        env = self.interest(env, interest_rate = self.interest_rate)
+        env = self.interest(env, interest_rate=self.interest_rate)
         env = self.reward_normalizer(env)
 
         return env
+
 
 class ObservationPipe(AbstractPipe):
     """
@@ -220,11 +223,13 @@ class ObservationPipe(AbstractPipe):
         pipe(env):
             Applies a stack of market wrappers successively to an environment.
     """
-    def __init__(self,
-                buffer_size: int = 10,
-                stack_size: int = None,
-                caller_pipe: Optional[AbstractPipe] = None,
-                ) -> None:
+
+    def __init__(
+        self,
+        buffer_size: int = 10,
+        stack_size: int = None,
+        caller_pipe: Optional[AbstractPipe] = None,
+    ) -> None:
         """
         Initializes the observation pipe.
 
@@ -248,7 +253,7 @@ class ObservationPipe(AbstractPipe):
 
         if not hasattr(caller_pipe, 'observation_statistics'):
             raise ValueError('caller pipe must have observation statistics '
-                           'attribute.')
+                             'attribute.')
 
         self.flatten = FlattenToNUmpyObservationWrapper
         self.buffer = ObservationBufferWrapper
@@ -273,10 +278,12 @@ class ObservationPipe(AbstractPipe):
             decorated_pipe (Callable):
                 decorated pipe method of the caller pipe.
         """
+
         def decorated_pipe(env):
             env = self.pipe(env)
             self.caller_pipe.observation_statistics = self.observation_statistics
             return env
+
         return decorated_pipe
 
     @caller
@@ -372,11 +379,8 @@ class ActionPipe(AbstractPipe):
         pipe(env):
             Applies a stack of market wrappers successively to an environment.
     """
-    def __init__(
-            self, 
-            min_trade: float = 1,
-            integer: bool = False
-            ) -> None:
+
+    def __init__(self, min_trade: float = 1, integer: bool = False) -> None:
         """
         Initializes the action pipe.
 
@@ -513,17 +517,16 @@ class HeadActionPipe(AbstractPipe):
             if discrete and non-uniform distribution of trading budget is
             requested.
     """
-    def __init__(
-            self,
-            uniform: bool = True,
-            fixed: bool = True,
-            discrete: bool = False,
-            trade_equity_ratio: float = 0.05,
-            hold_threshold: float = 0.15,
-            clip: bool = False,
-            low: float = -1,
-            high: float = 1
-            ) -> None:
+
+    def __init__(self,
+                 uniform: bool = True,
+                 fixed: bool = True,
+                 discrete: bool = False,
+                 trade_equity_ratio: float = 0.05,
+                 hold_threshold: float = 0.15,
+                 clip: bool = False,
+                 low: float = -1,
+                 high: float = 1) -> None:
         """
         Initializes the head action pipe.
 
@@ -554,7 +557,7 @@ class HeadActionPipe(AbstractPipe):
             raise ValueError(
                 'Discrete models can only be used with uniform trading '
                 'budget distribution.')
-        
+
         self.uniform = uniform
         self.fixed = fixed
         self.discrete = discrete
@@ -566,7 +569,7 @@ class HeadActionPipe(AbstractPipe):
         self.low = low
         self.high = high
 
-        self.fixed_uniform_parser  = EquityBasedFixedUniformActionParser
+        self.fixed_uniform_parser = EquityBasedFixedUniformActionParser
         self.variable_uniform_parser = None
         self.fixed_nonuniform_parser = None
         self.variable_nonuniform_parser = None
@@ -597,7 +600,7 @@ class HeadActionPipe(AbstractPipe):
                 parser = self.variable_nonuniform_parser
 
         return parser
-    
+
     @property
     def mapper(self):
         """
@@ -616,7 +619,7 @@ class HeadActionPipe(AbstractPipe):
             mapper = lambda env: self.fixed_uniform_mapper(env)
         else:
             mapper = lambda env: self.fixed_nonuniform_mapper(env)
-        
+
         return mapper
 
     def pipe(self, env):
@@ -631,6 +634,7 @@ class HeadActionPipe(AbstractPipe):
             env = self.action_clipper(self.low, self.high, env)
 
         return env
+
 
 class RenderPipe(AbstractPipe):
     """
@@ -657,45 +661,65 @@ class RenderPipe(AbstractPipe):
             - longs
             - shorts
         """
-        env =  self.render(env)
+        env = self.render(env)
         return env
-    
+
+
 class BasePipe(RewardPipe, ObservationPipe, ActionPipe, HeadActionPipe):
     """
     A basic pipe to provide fundamental trading and training functionalities to
     the environment.
     """
 
-    def __init__(
-            self,
-            verbosity: int = 0,
-            interest_rate: float = 0.08,
-            buffer_size: int = 1,
-            stack_size: int = 1,
-            min_trade: float = 0.01,
-            integer: bool = False,
-            uniform: bool = True,
-            fixed: bool = True,
-            discrete: bool = False,
-            trade_equity_ratio: float = 0.05,
-            hold_threshold: float = 0.15,
-            clip: bool = False,
-            low: float = -1,
-            high: float = 1
-            ) -> None:
-        
-        self.reward_pipe = RewardPipe.__init__(self, interest_rate)
-        self.observation_pipe = ObservationPipe.__init__(self, buffer_size, stack_size)
-        self.action_pipe = ActionPipe.__init__(self, min_trade, integer)
+    def __init__(self,
+                 verbosity: int = 0,
+                 interest_rate: float = 0.08,
+                 buffer_size: int = 1,
+                 stack_size: int = 1,
+                 min_trade: float = 0.01,
+                 integer: bool = False,
+                 uniform: bool = True,
+                 fixed: bool = True,
+                 discrete: bool = False,
+                 trade_equity_ratio: float = 0.05,
+                 hold_threshold: float = 0.15,
+                 clip: bool = False,
+                 low: float = -1,
+                 high: float = 1) -> None:
+
+        self.reward_pipe = RewardPipe.__init__(
+            self, 
+            interest_rate)
+        self.observation_pipe = ObservationPipe.__init__(
+            self, 
+            buffer_size, 
+            stack_size)
+        self.action_pipe = ActionPipe.__init__(
+            self, 
+            min_trade, 
+            integer)
         self.head_action_pipe = HeadActionPipe.__init__(
-            self, verbosity, interest_rate, buffer_size, stack_size, min_trade,
-            integer, uniform, fixed, discrete, trade_equity_ratio,
-            hold_threshold, clip, low, high)
+            self, 
+            verbosity, 
+            interest_rate, 
+            buffer_size, 
+            stack_size, 
+            min_trade,
+            integer, 
+            uniform, 
+            fixed, 
+            discrete, 
+            trade_equity_ratio,
+            hold_threshold, 
+            clip, 
+            low, 
+            high)
 
         return None
-    
+
     def pipe(self, env):
         self.rewar
+
 
 class BasePipe(AbstractPipe):
     """
@@ -703,23 +727,21 @@ class BasePipe(AbstractPipe):
     the environment.
     """
 
-    def __init__(
-            self,
-            verbosity: int = 0,
-            interest_rate: float = 0.08,
-            buffer_size: int = 1,
-            stack_size: int = 1,
-            min_trade: float = 0.01,
-            integer: bool = False,
-            uniform: bool = True,
-            fixed: bool = True,
-            discrete: bool = False,
-            trade_equity_ratio: float = 0.05,
-            hold_threshold: float = 0.15,
-            clip: bool = False,
-            low: float = -1,
-            high: float = 1
-            ) -> None:
+    def __init__(self,
+                 verbosity: int = 0,
+                 interest_rate: float = 0.08,
+                 buffer_size: int = 1,
+                 stack_size: int = 1,
+                 min_trade: float = 0.01,
+                 integer: bool = False,
+                 uniform: bool = True,
+                 fixed: bool = True,
+                 discrete: bool = False,
+                 trade_equity_ratio: float = 0.05,
+                 hold_threshold: float = 0.15,
+                 clip: bool = False,
+                 low: float = -1,
+                 high: float = 1) -> None:
 
         self.verbosity = verbosity
         self.interest_rate = interest_rate
@@ -760,9 +782,8 @@ class BasePipe(AbstractPipe):
             - Console tearsheet render
         """
         env = self.reward_pipe().pipe(env)
-        env = self.observation_pipe(
-            buffer_size=self.buffer_size,
-            stack_size=self.stack_size).pipe(env)
+        env = self.observation_pipe(buffer_size=self.buffer_size,
+                                    stack_size=self.stack_size).pipe(env)
         env = self.action_pipe(min_trade=self.min_trade,
                                integer=self.integer).pipe(env)
         env = self.head_pipe().pipe(env)
@@ -770,8 +791,9 @@ class BasePipe(AbstractPipe):
 
         self.observation_statistics = (
             self.observation_pipe.observation_statistics)
-        
+
         return env
+
 
 class MarginAccountPipe(AbstractPipe):
     """
@@ -858,21 +880,21 @@ class MarginAccountPipe(AbstractPipe):
     """
 
     def __init__(self,
-                trade_equity_ratio: float = 0.02,
-                excess_margin_ratio_threshold: float = 0.1,
-                verbosity: int = 0,
-                interest_rate: float = 0.08,
-                buffer_size: int = 1,
-                stack_size: int = 1,
-                min_trade: float = 0.01,
-                integer: bool = False,
-                uniform: bool = True,
-                fixed: bool = True,
-                discrete: bool = False,
-                hold_threshold: float = 0.15,
-                clip: bool = False,
-                low: float = -1,
-                high: float = 1) -> None:
+                 trade_equity_ratio: float = 0.02,
+                 excess_margin_ratio_threshold: float = 0.1,
+                 verbosity: int = 0,
+                 interest_rate: float = 0.08,
+                 buffer_size: int = 1,
+                 stack_size: int = 1,
+                 min_trade: float = 0.01,
+                 integer: bool = False,
+                 uniform: bool = True,
+                 fixed: bool = True,
+                 discrete: bool = False,
+                 hold_threshold: float = 0.15,
+                 clip: bool = False,
+                 low: float = -1,
+                 high: float = 1) -> None:
 
         self.excess_margin_ratio_threshold = excess_margin_ratio_threshold
         self.verbosity = verbosity
@@ -926,20 +948,19 @@ class MarginAccountPipe(AbstractPipe):
         env = self.excess_margin(
             env,
             excess_margin_ratio_threshold=self.excess_margin_ratio_threshold)
-        env = self.base_pipe(
-            verbosity=self.verbosity,
-            interest_rate=self.interest_rate,
-            buffer_size=self.buffer_size,
-            stack_size=self.stack_size,
-            min_trade=self.min_trade,
-            integer=self.integer,
-            uniform=self.uniform,
-            fixed=self.fixed,
-            discrete=self.discrete,
-            trade_equity_ratio=self.trade_equity_ratio,
-            hold_threshold=self.hold_threshold,
-            clip=self.clip,
-            low=self.low,
-            high=self.high).pipe(env)
+        env = self.base_pipe(verbosity=self.verbosity,
+                             interest_rate=self.interest_rate,
+                             buffer_size=self.buffer_size,
+                             stack_size=self.stack_size,
+                             min_trade=self.min_trade,
+                             integer=self.integer,
+                             uniform=self.uniform,
+                             fixed=self.fixed,
+                             discrete=self.discrete,
+                             trade_equity_ratio=self.trade_equity_ratio,
+                             hold_threshold=self.hold_threshold,
+                             clip=self.clip,
+                             low=self.low,
+                             high=self.high).pipe(env)
 
         return env
