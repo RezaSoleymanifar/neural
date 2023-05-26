@@ -21,7 +21,7 @@ from gym.vector import AsyncVectorEnv, SyncVectorEnv
 class AbstractTrainer(ABC):
     """
     This is an abstract class for training agents. It is designed to
-    proivde common functionalities for training agents. The features 
+    proivde common functionalities for training agents. The features
     provided by this class are:
         - Train/test split
         - Training on multiple environments
@@ -34,13 +34,36 @@ class AbstractTrainer(ABC):
         file_path (os.PathLike): 
             Path to the HDF5 file.
         dataset_name (str):
-            Name of the dataset in the HDF5 file.
+            Name of the dataset in the HDF5 file. If None, all datasets
+            are joined together.
+        n_chunks (int):
+            Number of chunks to split the dataset into, per environment
+            for loading data. Used for memory management. If n_chunks =
+            1 then entire dataset is loaded into memory.
+        train_ratio (float):
+            Ratio of the dataset to be used for training. Must be in (0,
+            1].
+        n_envs (int):
+            Number of environments to train on. If more than one then
+            multiple environments are used for training. Ensure n_envs
+            does not exceed CPU core count.
+        async_envs (bool):
+            If True, environments are run asynchronously, i.e. multiple
+            environments are run in parallel on CPU cores. If False,
+            environments are run synchronously, i.e. one at a time. If
+            False, environments are run synchronously.
+        exclusive_envs (bool):
+            If True, environments are split into exclusive temporal
+            groups. This means that each environment is initialized
+            with a different random seed and the data is split into
+            exclusive temporal groups. This is useful for training
+        
     """
     def __init__(
         self,
         agent: Agent,
         file_path: os.PathLike,
-        dataset_name,
+        dataset_name = Optional[str] = None,
         n_chunks: int = 1,
         train_ratio: float = 1,
         n_envs: int = 1,
