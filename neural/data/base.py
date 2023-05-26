@@ -1546,4 +1546,7 @@ class AsyncDataFeeder(AbstractDataFeeder):
 
     def __init__(self, stream_metadata: StreamMetaData,
                  data_client: AbstractDataClient) -> None:
-        pass
+        self.stream_metadata = stream_metadata
+        self.data_client = data_client
+
+        return None

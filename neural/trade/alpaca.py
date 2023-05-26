@@ -21,6 +21,18 @@ class AlpacaTrader(AbstractTrader):
             minimum equity if delta = 0.20. Pattern day trader minimum
             equity is $25,000.
         - The trader must have a positive excess margin.
+    
+    Methods:
+    --------
+        check_constraints:
+            Check if the trader meets the constraints to trade.
+        place_orders:
+            Place orders using the Alpaca trading client.
+    
+    Raises:
+    -------
+        TradeConstraintViolationError:
+            If the trader does not meet the constraints to trade.
 
     Notes
     -----
@@ -32,7 +44,8 @@ class AlpacaTrader(AbstractTrader):
 
     def __init__(self, trade_client: AlpacaTradeClient, agent: Agent) -> None:
 
-        super().__init__(trade_client, agent=agent)
+        super().__init__(
+            trade_client = trade_client, data_client=data_client, agent=agent)
 
     def check_constraints(self, delta=0.2):
 

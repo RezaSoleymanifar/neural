@@ -203,7 +203,7 @@ class AbstractTrader(ABC):
                 base currency is USD.
         """
         raise NotImplementedError
-    
+
     def trade(self):
         """
         Starts the trading process by creating a trading environment and
