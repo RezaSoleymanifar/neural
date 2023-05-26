@@ -40,12 +40,19 @@ class AlpacaTrader(AlpacaTraderFactory):
 
         super().__init__(trade_client, agent=agent)
 
-        if self.trade_client.equity
+    def check_constraints(self, delta = 0.2):
 
-    def place_orders(self,
-                     actions: np.ndarray[float],
-                     quantity_precision: int = 5
-                     ):
+        if self.trade_market_env.equity < (
+                1 + self.min_equity_ratio) * PATTERN_DAY_TRADER_MINIMUM_EQUITY:
+            raise TradeConstraintViolationError(
+                'Trader does not meet the equity requirement to trade.')
+        
+    def place_orders(
+        self,
+        actions: np.ndarray[float],
+        quantity_precision: int = 5,
+        min_equity_ratio: float = 0.25,
+    ):
         """
         This method places orders based on the actions provided by the
         agent. The actions are the notional values to be traded for each
