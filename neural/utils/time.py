@@ -59,7 +59,7 @@ class AbstractCalendar(ABC):
 
         Example:
         ---------
-                        start	                    end
+                    start	                    end
         2022-01-03	2022-01-03 00:00:00+00:00	2022-01-04 00:00:00+00:00
         2022-01-04	2022-01-04 00:00:00+00:00	2022-01-05 00:00:00+00:00
         2022-01-05	2022-01-05 00:00:00+00:00	2022-01-06 00:00:00+00:00
@@ -88,6 +88,7 @@ class Calendar:
 
     Example:
     ---------
+    Option 1, using default calendar:
         >>> from neural.data.enums import CalendarType
         >>> from neural.utils.time import Calendar
 
@@ -98,7 +99,7 @@ class Calendar:
         ... end_date='2022-01-10')
 
         >>> schedule
-                        start	                    end
+                    start                       end
         2022-01-03	2022-01-03 00:00:00+00:00	2022-01-04 00:00:00+00:00
         2022-01-04	2022-01-04 00:00:00+00:00	2022-01-05 00:00:00+00:00
         2022-01-05	2022-01-05 00:00:00+00:00	2022-01-06 00:00:00+00:00
@@ -106,6 +107,16 @@ class Calendar:
         2022-01-07	2022-01-07 00:00:00+00:00	2022-01-08 00:00:00+00:00
         2022-01-10	2022-01-10 00:00:00+00:00	2022-01-11 00:00:00+00:00
 
+    Option 2, using custom calendar:
+
+        >>> from neural.data.enums import CalendarType
+
+        >>> calendar = CustomCalendar()
+        >>> CalendarType.CUSTOM_CALENDAR_TYPE = 'CUSTOM_CALENDAR_TYPE'
+        >>> schedule = calendar.schedule(
+        ... calendar_type=CalendarType.CUSTOM_CALENDAR_TYPE,
+        ... start_date='2022-01-01',
+        ... end_date='2022-01-10')
     """
 
     @property
@@ -129,10 +140,10 @@ class Calendar:
 
         Args:
         ---------
-            calendar_type: The type of calendar to use.
-            start_date: The start date for the trading schedule.
-            end_date: The end date for the trading schedule.
-
+            calendar_type (CalendarType):
+                The type of calendar to use.
+            start_date (Any):
+            
         Returns:
         ---------
             pd.DataFrame: A dataframe with trading dates and times.
