@@ -60,7 +60,14 @@ class AlpacaTrader(AbstractTrader):
         Args:
         ------
             delta (float, optional):
-                A cushion 
+                A cushion around the pattern day trader minimum equity.
+                If delta = 0.20, the trader must have at least 120% of
+                the pattern day trader minimum equity. Defaults to 0.2.
+            
+        Raises:
+        -------
+            TradeConstraintViolationError:
+                If the trader does not meet the constraints to trade.
         
         Notes:
         ------
