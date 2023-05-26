@@ -8,7 +8,10 @@ import copy
 from abc import ABC, abstractmethod
 from torch import nn
 from typing import Optional, Tuple
+
 import numpy as np
+import torch
+from torch import nn
 
 from neural.env.base import TrainMarketEnv
 from neural.meta.agent import Agent
@@ -253,12 +256,21 @@ class AbstractTrainer(ABC):
 
         return piped_market_env
 
+    def test(self, n_episode: int = 1) -> None:
+
+        piped_market_env = self._get_piped_env()
+        observation = piped_market_env.reset()
+
+        with torch.no_grad(), torch.set_grad_enabled(False):
+            for _ in range(n_episode):
+                done = False
+                while not done:
+                    action = self.agent.model(observation)
+                    observation, reward, done, info = piped_market_env.step(
+                        action)
+        return None
+                    
     @abstractmethod
     def train(self, *args, **kwargs) -> nn.Module:
-
-        raise NotImplementedError
-
-    @abstractmethod
-    def test(self, *args, **kwargs) -> None:
 
         raise NotImplementedError

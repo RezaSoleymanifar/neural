@@ -47,19 +47,6 @@ class StableBaselinesTrainer(AbstractTrainer):
 
         return None
 
-    def test(self, n_episode: int = 1):
-
-        piped_market_env = self._get_piped_env()
-        observation = piped_market_env.reset()
-
-        with torch.no_grad(), torch.set_grad_enabled(False):
-            for _ in range(n_episode):
-                done = False
-                while not done:
-                    action = self.agent.model(observation)
-                    observation, reward, done, info = piped_market_env.step(
-                        action)
-
     def train(self,
               algorithm: OnPolicyAlgorithm,
               steps: int = 1_000_000,
