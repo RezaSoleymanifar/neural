@@ -31,7 +31,16 @@ class AbstractTrainer(ABC):
         - Random initializaiton of environments
         - Splitting environments into exclusive temporal groups
     
+    Training can happen in parallel with random initialization of
+    environment conditions. However for the purpose of saving stats for
+    observation normalization a final train/test must be performed on a
+    single environment. Only in single environment mode the agent's pipe
+    is used. In multi-environment mode, the agent's pipe is deep copied
+    to avoid simultaneous modification of the same pipe by parallel
+    environments.
+    
     Args:
+    ----
         agent (Agent): 
             Agent to be trained.
         file_path (os.PathLike): 
@@ -130,10 +139,10 @@ class AbstractTrainer(ABC):
     Note that if n_envs > 1 then a deep copy of pipe is created for each
     environment. Thus agent's pipe attribute is not used. In this case
     perform a final train/test on a single environment with target
-    initial conditions. In this case the agents' pipe is used and it
-    will be tuned to the state of pipe to target trade
-    account initial cash/assets. Training on multiple environments with
-    random initial conditions can help the model generalize better.
+    initial conditions. In this case the agent's pipe is used and its
+    normalizer stats is tuned to target account initial cash/assets,
+    prior to deoployment for trading. Training on multiple environments
+    with random initial conditions can help the model generalize better.
     """
     def __init__(
         self,
