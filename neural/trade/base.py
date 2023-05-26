@@ -209,8 +209,8 @@ class AbstractTrader(ABC):
                 env = env.env
             else:
                 raise ValueError(
-                    'The trading environment does not have a wrapper '
-                    'of type {AbstractMarketEnvMetadataWrapper.__name__}.'
+                    'The pipe does not have a wrapper of type '
+                    f'{AbstractMarketEnvMetadataWrapper.__name__}.')
         return env
     
     @property
