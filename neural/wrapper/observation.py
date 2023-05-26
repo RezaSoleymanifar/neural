@@ -48,21 +48,21 @@ def validate_observation(
             f'observation types {ACCEPTED_OBSERVATION_TYPES}.'
         )
 
-    return False
+    return None
 
 
 def observation(wrapper_class: Type[Wrapper]) -> Type[Wrapper]:
     """
     A decorator that augments an existing Gym wrapper and extends it to
-    have input and output self checks. The reulst is a new observation
+    have input and output self checks. The result is a new observation
     wrapper that checks if the observation of the wrapped env is in its
-    expected observation space, and also check if the observation
+    expected observation space, and also checks if the observation
     returned by the wrapped env is in its defined observation space.
 
-    Parameters
+    Args
     ----------
     wrapper_class : Type[Wrapper]
-        The base Gym wrapper class to be augmented. This should be a
+        The base gym wrapper class to be augmented. This should be a
         subclass of `gym.Wrapper`.
 
     Raises
@@ -83,13 +83,18 @@ def observation(wrapper_class: Type[Wrapper]) -> Type[Wrapper]:
 
     Examples
     --------
+    In this example 
     >>> from gym import Wrapper
     >>> from neural.meta.env.wrapper.observation import observation
     >>> @observation
     ... class CustomObservationWrapper(ObservationWrapper):
-    ...     self.expected_observation_type = [np.ndarray, dict]
+    ...     self.expected_observation_type = [np.ndarray]
     ...     def observation(self, observation):
     ...         pass
+
+    Notes
+    -----
+    Read more about how observation wrappers work from gym.ObservationWrapper
     """
 
     if not issubclass(wrapper_class, ObservationWrapper):
