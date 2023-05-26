@@ -792,13 +792,13 @@ class ObservationBufferWrapper(ObservationWrapper):
 
         return None
 
-    def reset(self):
+    def reset(self) -> np.ndarray[float] | Dict[str, np.ndarray[float]]:
         """
         Resets the environment and clears the observation buffer.
 
         Returns
         -------
-        dict
+        Dict[str, np.ndarray[float]]
             A dictionary containing the first observation of the reset
             environment.
         """
@@ -827,7 +827,6 @@ class ObservationBufferWrapper(ObservationWrapper):
             observation : np.ndarray[float] | Dict[str, np.ndarray[float]]
                 The observation without modification.
         """
-
         self.observation_buffer.append(observation)
 
         return observation
@@ -836,25 +835,23 @@ class ObservationBufferWrapper(ObservationWrapper):
 @observation
 class FlattenToNUmpyObservationWrapper(ObservationWrapper):
     """
-    A wrapper for OpenAI Gym trading environments that flattens the
-    observation space to a 1D numpy array.
+    A wrapper for OpenAI Gym trading environments that flattens the observation
+    space to a 1D numpy array. If numpy array then array is flattened. If
+    dictionary then each value is flattened and concatenated together to
+    produce a 1D numpy array.
 
     Attributes
     ----------
-    env : Env
-        The trading environment to be wrapped.
+        env : Env
+            The trading environment to be wrapped.
 
     Methods
     ----------
-    __init__(self, env: Env) -> None:
-        Initializes a new instance of the
-        FlattenToNumpyObservationWrapper class.
-
-    flattened_space(self, space: Space) -> spaces.Box:
-        Returns a flattened observation space.
-
-    observation(self, observation):
-        Flattens the observation space to a 1D numpy array.
+        flattened_space: Space -> spaces.Box
+            Returns a flattened observation space.
+        observation: np.ndarray[float] | Dict[str, np.ndarray[float]] ->
+        np.ndarray[float] | Dict[str, np.ndarray[float]]
+            Flattens the observation space to a 1D numpy array.
 
     Example
     -------
