@@ -79,10 +79,10 @@ class AbstractTrainer(ABC):
     def _get_piped_env(self, data_feeder: StaticDataFeeder) -> TrainMarketEnv:
         """
         Deep copies of agent pipe is create when n_envs > 1. This is to
-        avoid to complications arised when doing parallel training using
-        and possibly modifying the same pipe object. Pipes created in
-        parallel training will be saved for future reference so that
-        when performing more parallell training and/or testing state of
+        avoid complications arised during parallel training and possibly
+        modifying the same pipe object at the same time. Pipes created
+        in parallel training will be saved for future reference so that
+        when performing more paralell training/testing state of
         the parallel pipes are preserved.
         
         The common practice is to train on multiple environments and
