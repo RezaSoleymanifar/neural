@@ -529,7 +529,7 @@ class PositionsFeatureEngineeringWrapper(ObservationWrapper):
             The trading environment to be wrapped.
         """
         super().__init__(env)
-        self.n_symbols = self.market_metadata_wrapper.n_symbols
+        self.n_assets = self.market_metadata_wrapper.n_assets
         self.n_features = self.market_metadata_wrapper.n_features
         self.expected_observation_type = spaces.Dict({
             'cash':
