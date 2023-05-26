@@ -295,7 +295,7 @@ def observation(wrapper_class: Type[Wrapper]) -> Type[Wrapper]:
             wrapper prouces an observation, to ensure that the
             observation is in the observation space of the wrapper.
 
-            Parameters
+            Args
             ----------
             observation : Union[np.ndarray[float], Dict[str,
             np.ndarray[float]]]
@@ -306,13 +306,13 @@ def observation(wrapper_class: Type[Wrapper]) -> Type[Wrapper]:
             IncompatibleWrapperError
                 If the observation is not in the observation space.
             """
-
             validate_observation(self, observation)
             if not self.self.observation_space.contains(observation):
 
                 raise IncompatibleWrapperError(
-                    f'Wrapper {type(self).__name__} outputs an observation '
-                    f'that is not in its defined observation space {self.exptected_observation_space}.'
+                    f'Wrapper {type(super()).__name__} outputs an observation '
+                    f'that is not in its defined observation space '
+                    f'{self.observation_space}.'
                 )
 
             return None
