@@ -68,15 +68,6 @@ class AbstractPipe(ABC):
             decorated_pipe (Callable):
                 The decorated pipe method.
         """
-        def decorated_pipe(self, env: Env) -> Env:
-            env = pipe(self, env)
-            while not isinstance(env, AbstractMarketEnvMetadataWrapper):
-                if hasattr(env, "env"):
-                    env = env.env
-                else:
-                    return None
-            return env
-        return decorated_pipe
 
     @abstractmethod
     def pipe(self, env: Env) -> Env:
