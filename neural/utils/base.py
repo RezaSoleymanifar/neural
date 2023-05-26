@@ -38,6 +38,15 @@ class FillDeque:
             Returns a string representation of the deque.
         __str__:
             Returns a string representation of the deque.
+        clear:
+            Removes all elements from the deque buffer.
+    
+    Attributes:
+    -----------
+        buffer_size (int): 
+            The maximum size of the deque.
+        buffer (deque):
+            The deque buffer.
     """
 
     def __init__(self, buffer_size: int  = 10):
@@ -121,19 +130,62 @@ class RunningStatistics:
 
     https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Welford's_online_algorithm
 
-    Usage:
-        rms = RunningMeanStandardDeviation() rms.update(array) mean =
-        rms.mean std = rms.std normalized_array = rms.normalize(array)
-
     Args:
+    -----
         epsilon (float): A small constant to avoid divide-by-zero errors
         when normalizing data. clip (float): A value to clip normalized
         data to, to prevent outliers from dominating the statistics.
+
+    Methods:
+    --------
+        update:
+            Updates the running mean and standard deviation with the
+            new data.
+        normalize:
+            Normalizes the data to a mean of 0 and standard deviation
+
+    Attributes:
+    -----------
+        mean (float): 
+            The running mean of the data.
+        std (float): 
+            The running standard deviation of the data.   
+         
+    Raises:
+    -------
+        AssertionError: 
+            If the clip threshold is less than or equal to 0. 
+        AssertionError:
+            If the epsilon value is less than or equal to 0.
+        
+    Example:
+    --------
+        >>> rms = RunningMeanStandardDeviation() 
+        >>> rms.update(array) 
+        >>> mean = rms.mean 
+        >>> std = rms.std 
+        >>> normalized_array = rms.normalize(array)
     """
 
     def __init__(self, epsilon=1e-8, clip_threshold: float = np.inf):
         """
         Initializes the RunningMeanStandardDeviation object.
+
+        Args:
+        -----
+            epsilon (float): 
+                A small constant to avoid divide-by-zero
+                errors when normalizing data.
+            clip (float):
+                A value to clip normalized data to, to prevent
+                outliers from dominating the statistics.
+
+        Raises:
+        -------
+            AssertionError:
+                If the clip threshold is less than or equal to 0.
+            AssertionError:
+                If the epsilon value is less than or equal to 0.
         """
 
         assert clip_threshold > 0, "Clip threshold must be greater than 0"
