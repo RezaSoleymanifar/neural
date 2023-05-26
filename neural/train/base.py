@@ -111,8 +111,18 @@ class AbstractTrainer(ABC):
             Returns a list of piped environments for parallel training.
             if n_envs = 1 then a single environment is returned. If 
             n_envs > 1 then a single parallel environment is returned.
-            This 
-
+            Parallel environments are like single environments, except
+            that they return a list of observations, actions, rewards,
+            info pairs, and take a list of actions as input.
+            If called from 'train' method, then the environments are
+            created using train_data_feeder. If called from 'test'
+            method, then the environments are created using
+            test_data_feeder.
+        train():
+            Uses an RL trainer to train the agent. Implementation is 
+            left to the child class.
+        test():
+            Uses an RL trainer to test the agent. Implementation is
 
     """
     def __init__(
