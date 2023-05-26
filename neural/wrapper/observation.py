@@ -235,7 +235,7 @@ def observation(wrapper_class: Type[Wrapper]) -> Type[Wrapper]:
             if not valid:
 
                 raise IncompatibleWrapperError(
-                    f'Wrapper {type(self).__name__} is defining an exptected '
+                    f'Wrapper {type(super()).__name__} is defining an exptected '
                     f'observation type of type {type(self.expected_observation_type)} '
                     f', which is not in the accepted observation types '
                     f' {ACCEPTED_OBSERVATION_TYPES}.')
