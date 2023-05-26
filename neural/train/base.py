@@ -188,7 +188,11 @@ class AbstractTrainer(ABC):
         return None
 
     def _initialize_data_feeders(self) -> None:
-
+        """
+        Splits the dataset time horizon into training and testing
+        intervals, and creates data feeders for training and testing
+        environments. If train r
+        """
         dataset_metadata, datasets = from_hdf5(self.file_path,
                                                self.dataset_name)
         data_feeders = StaticDataFeeder(
