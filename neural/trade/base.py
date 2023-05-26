@@ -3,7 +3,9 @@ base.py
 """
 from abc import ABC
 from typing import List
+
 import numpy as np
+from torch import nn
 
 from neural.client.alpaca import AbstractTradeClient, AbstractDataClient
 from neural.data.base import AsyncDataFeeder, AlpacaAsset
@@ -158,7 +160,7 @@ class AbstractTrader(ABC):
         raise NotImplementedError
     
     @property
-    def model(self):
+    def model(self) -> nn.Module:
         """
         Returns the model used by the agent to generate actions.
         """
@@ -170,10 +172,6 @@ class AbstractTrader(ABC):
         """
         Starts the trading process by creating a trading environment and
         executing actions from the model.
-
-        Raises:
-            NotImplementedError: This method must be implemented by a
-            subclass.
         """
 
         observation = self.trade_market_env.reset()
