@@ -4,22 +4,19 @@ base.py
 import os
 import inspect
 import copy
+from typing import Optional, Tuple
 
 from abc import ABC, abstractmethod
-from torch import nn
-from typing import Optional, Tuple
 
 import numpy as np
 import torch
 from torch import nn
+from gym.vector import AsyncVectorEnv, SyncVectorEnv
 
 from neural.env.base import TrainMarketEnv
 from neural.meta.agent import Agent
 from neural.data.base import StaticDataFeeder
 from neural.utils.io import from_hdf5
-
-from gym.vector import AsyncVectorEnv, SyncVectorEnv
-
 
 class AbstractTrainer(ABC):
     """
@@ -33,10 +30,10 @@ class AbstractTrainer(ABC):
     
     Training can happen in parallel with random initialization of
     environment conditions. However for the purpose of saving stats for
-    observation normalization a final train/test must be performed on a
-    single environment. Only in single environment mode the agent's pipe
-    is used. In multi-environment mode, the agent's pipe is deep copied
-    to avoid simultaneous modification of the same pipe by parallel
+    observation normalization a final test must be performed on a single
+    environment. Only in single environment mode the agent's pipe is
+    used. In multi-environment mode, the agent's pipe is deep copied to
+    avoid simultaneous modification of the same pipe by parallel
     environments.
     
     Args:
@@ -140,7 +137,7 @@ class AbstractTrainer(ABC):
     environment. Thus agent's pipe attribute is not used. In this case
     perform a final train/test on a single environment with target
     initial conditions. This way agent's pipe is used and its
-    observation normalizer stats will be tuned to target account initial
+    observation normalizer stats will be tuned to live account initial
     cash/assets, prior to deoployment for trading. Training on multiple
     environments with random initial conditions can potentially help the
     model generalize better.
@@ -191,7 +188,10 @@ class AbstractTrainer(ABC):
         """
         Splits the dataset time horizon into training and testing
         intervals, and creates data feeders for training and testing
-        environments. If train r
+        environments. If train ratio is 0.8 then the first 80% of the
+        dataset is is used for training and the last 20% is used for
+        testing. If train ratio is 1 then the entire dataset is used for
+        training and no testing is performed.
         """
         dataset_metadata, datasets = from_hdf5(self.file_path,
                                                self.dataset_name)
@@ -220,7 +220,9 @@ class AbstractTrainer(ABC):
         parallel pipes are preserved.
         
         The common practice is to train on multiple environments and
-        perform a final test on a single environement.
+        perform a final test on a single environement, to tune the 
+        observation normalizer stats to target account initial
+        cash/assets.
         """
 
         caller_name = inspect.stack()[1].function
