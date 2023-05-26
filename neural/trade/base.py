@@ -174,7 +174,7 @@ class AbstractTrader(ABC):
             if quantity == 0 and new_quantity < 0:
                 new_quantity = int(new_quantity)
             
-
+            self.trade_client.place_order(*args, **kwargs)
             
     def trade(self):
         """

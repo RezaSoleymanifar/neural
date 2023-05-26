@@ -23,7 +23,7 @@ from alpaca.data.requests import (CryptoBarsRequest, CryptoTradesRequest,
                                   StockTradesRequest)
 
 from neural.common.log import logger
-from neural.common.constants import API_KEY, API_SECRET, GLOBAL_DATA_TYPE
+from neural.common.constants import API_KEY, API_SECRET
 from neural.client.base import (AbstractClient, AbstractTradeClient,
                                 AbstractDataClient)
 from neural.data.base import AlpacaDataSource, AlpacaAsset
