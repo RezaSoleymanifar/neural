@@ -153,7 +153,6 @@ class AbstractTrader(ABC):
         if self._trade_market_env is None:
             self._trade_market_env = TradeMarketEnv(trader=self)
         return self._trade_market_env
-
     def place_orders(self, actions: np.ndarray, *args, **kwargs):
         """
         """
@@ -173,12 +172,9 @@ class AbstractTrader(ABC):
         Starts the trading process by creating a trading environment and
         executing actions from the model.
         """
-
+        model = self.model
         observation = self.trade_market_env.reset()
 
         while True:
-            
-            action = self.model(observation)
+            action = model(observation)
             observation, reward, done, info = self.trade_market_env.step(action)
-            if done:
-                self.trade_market_env.reset()

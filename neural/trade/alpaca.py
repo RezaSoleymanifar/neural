@@ -1,4 +1,7 @@
-from typing import Callable
+"""
+alpaca.py
+"""
+import numpy as np
 
 from neural.client.alpaca import AlpacaTradeClient
 from neural.common.exceptions import TradeConstraintViolationError
@@ -112,6 +115,25 @@ class AlpacaTrader(AlpacaTraderFactory):
     
     
 
-    def place_orders(self, action, *args, **kwargs):
+    def place_orders(self, actions : np.ndarray[float], *args, **kwargs):
 
-        return super().place_orders(action, *args, **kwargs)
+        for action, asset, price, quantity in zip(actions, self.assets,
+                                                  self.asset_prices,
+                                                  self.asset_quantities):
+            new_quantity = action / price
+
+            if not asset.fractionable:
+                new_quantity = int(new_quantity)
+            
+            if not asset.shortable:
+                if quantity + new_quantity < 0:
+                    new_quantity = quantity
+
+            if (quantity > 0 and quantity + new_quantity < 0 or
+                    quantity < 0 and quantity + new_quantity > 0):
+                new_quantity = quantity
+
+            if quantity == 0 and new_quantity < 0:
+                new_quantity = int(new_quantity)
+            
+            return new_quantity
