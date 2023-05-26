@@ -83,18 +83,27 @@ def observation(wrapper_class: Type[Wrapper]) -> Type[Wrapper]:
 
     Examples
     --------
-    In this example 
+    In this example the observation decorator is used to:
+        - Check if the env at constructor has an observation space of 
+            type gym.spaces.
+        - Check if the observation returned by the wrapped env is in
+            spaces.Box(low=0, high=1, shape=(1,)), e.g. array =
+            np.array([0.5]) is valid, but array = np.array([1.5]) is
+            not.
     >>> from gym import Wrapper
     >>> from neural.meta.env.wrapper.observation import observation
     >>> @observation
     ... class CustomObservationWrapper(ObservationWrapper):
+    ...     def __init__(self, env):
     ...     self.expected_observation_type = [np.ndarray]
+    ...     self.observation_space = spaces.Box(low=0, high=1, shape=(1,))
     ...     def observation(self, observation):
     ...         pass
 
     Notes
     -----
-    Read more about how observation wrappers work from gym.ObservationWrapper
+    Read more about how observation wrappers work from
+    gym.ObservationWrapper
     """
 
     if not issubclass(wrapper_class, ObservationWrapper):
