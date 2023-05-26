@@ -736,11 +736,11 @@ class WealthAgnosticFeatureEngineeringWrapper(ObservationWrapper):
             are now independent of net worth.
         """
 
-        net_worth = self.market_metadata_wrapper.net_worth
+        equity = self.market_metadata_wrapper.equity
 
-        observation['positions'] /= net_worth
-        observation['cash'] /= net_worth
-        observation['return'] = net_worth / self.initial_cash - 1
+        observation['positions'] /= equity
+        observation['cash'] /= equity
+        observation['return'] = equity / self.initial_cash - 1
 
         return observation
 
