@@ -35,6 +35,10 @@ class AbstractTrader(ABC):
             An instance of the data client to stream data.
         agent (Agent):
             An instance of the agent to perform decision making.
+        data_feeder (AsyncDataFeeder):
+            An instance of the data feeder to stream data.
+        market_env (TradeMarketEnv):
+            An instance of the trading environment.
     
     Properties:
     -----------
@@ -73,6 +77,9 @@ class AbstractTrader(ABC):
         self.data_client = data_client
         self.agent = agent
 
+        self._data_feeder = None
+        self._trade_market_env = None
+
         return None
 
     @property
@@ -89,18 +96,43 @@ class AbstractTrader(ABC):
         """
         A numpy array of current quantity of each asset held by the
         trader. Asset quantities can be positive or negative. Negative
-        a
+        quantities indicate that the trader has shorted the asset,
+        namely the trader owes the asset to the broker.
+
+        Returns:
+        --------
+            asset_quantities (np.ndarray[float]):
+                The current quantity of each asset held by the trader.
         """
         return self.trade_client.asset_quantities
 
     @property
+    def asset_prices(self) -> np.ndarray[float]:
+        """
+        A numpy array of current price of each asset held by the
+        trader.
+
+        Returns:
+        --------
+            asset_prices (np.ndarray[float]):
+                The current price of each asset held by the trader.
+        """
+        return self.trade_market_env.asset_prices
+    
+    @property
     def data_feeder(self) -> AsyncDataFeeder:
         """
         The data feeder used to stream data from the data client.
+
+        Returns:
+        --------
+            data_feeder (AsyncDataFeeder):
+                An instance of the data feeder to stream data.
         """
         if self._data_feeder is None:
             stream_metadata = self.agent.dataset_metadata.stream
-            self._data_feeder = AsyncDataFeeder(stream_metadata, self.data_client)
+            self._data_feeder = AsyncDataFeeder(
+                stream_metadata, self.data_client)
         return self._data_feeder
     
     @property
@@ -109,8 +141,7 @@ class AbstractTrader(ABC):
         The trading environment used to execute orders.
         """
         if self._trade_market_env is None:
-            stream_metadata = self.agent.dataset_metadata.stream
-            self.trade_market_env = TradeMarketEnv(trader=self)
+            self._trade_market_env = TradeMarketEnv(trader=self)
         return self._trade_market_env
     
     def place_orders(self, actions: np.ndarray, *args, **kwargs):
