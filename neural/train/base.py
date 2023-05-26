@@ -231,11 +231,7 @@ class AbstractTrainer(ABC):
             data_feeder = self.train_data_feeder
 
         elif caller_name == 'test':
-            data_feeder = self.test_data_feeder
-
-        if data_feeder is None:
-            raise ValueError(
-                f'Data feeder is None. make sure {self.train}")
+            data_feeder = self.test_data_feeder'
 
         n_assets = self.agent.dataset_metadata.n_assets
         initial_cash = lambda: np.random.uniform(
@@ -283,9 +279,24 @@ class AbstractTrainer(ABC):
     def test(self, n_episode: int = 1) -> None:
         """
         This method is used to test the agent's performance on the
-        testing dataset. If no testing dataset is provided, then the
+        testing dataset. If n_envs = 1 then test is performed on
+        multiple parallel environments.
 
+        Raises:
+        ------
+            ValueError: If test_data_feeder is None.
+
+        Args:
+        -----
+            n_episode (int, optional): 
+                Number of episodes to test. Defaults to 1.
         """
+        if self.test_data_feeder is None:
+            raise ValueError('Test data feeder is set to None. '
+                             'Ensure train_ratio < 1. '
+                             'train_ratio = {self.train_ratio}'
+                             )
+        
         piped_market_env = self._get_piped_env()
         observation = piped_market_env.reset()
 
