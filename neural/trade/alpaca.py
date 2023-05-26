@@ -106,19 +106,18 @@ class AlpacaTrader(AlpacaTraderFactory):
                      **kwargs):
         """
         This method places orders based on the actions provided by the
-        agent. The actions are the notional values to be traded for
-        each asset. The notional value is calculated as the product of
-        the price and the quantity. The quantity is calculated as the
-        action divided by the price. The quantity is rounded to the
-        nearest integer if the asset is not fractionable. If asset is
-        not shortable, the quantity is set to zero if the position is 
-        
-        The quantity
-        is rounded to the nearest integer if the asset is being shorted.
-        (Alpaca API does not allow for fractional shorting). If position
-        flips from long to short or vice versa, the quantity is modified
-        so that only the position is closed. (Alpaca API does not allow
-        for continuous flipping of positions). If the position is
+        agent. The actions are the notional values to be traded for each
+        asset. The notional value is calculated as the product of the
+        price and the quantity. The quantity is calculated as the action
+        divided by the price. The quantity is rounded to the nearest
+        integer if the asset is not fractionable. If asset is not
+        shortable, and position is being shorted the action is set to
+        zero. The quantity is rounded to the nearest integer if the
+        asset is being shorted. (Alpaca API does not allow fractional
+        shorting). If position flips from long to short or vice versa,
+        the quantity is modified so that only the position is closed.
+        (Alpaca API does not allow for continuous flipping of
+        positions). I
         """
 
         for action, asset, price, quantity in zip(actions, self.assets,
@@ -129,13 +128,13 @@ class AlpacaTrader(AlpacaTraderFactory):
             if not asset.fractionable:
                 new_quantity = int(new_quantity)
             if not asset.shortable:
-                if quantity + new_quantity < 0:
-                    new_quantity = quantity
+                if quantity == 0 and new_quantity < 0:
+                    new_quantity = 0
+            if quantity == 0 and new_quantity < 0:
+                new_quantity = int(new_quantity)
             if (quantity > 0 and quantity + new_quantity < 0
                     or quantity < 0 and quantity + new_quantity > 0):
                 new_quantity = quantity
-            if quantity == 0 and new_quantity < 0:
-                new_quantity = int(new_quantity)
 
             self.trade_client.place_order(
                 asset=asset,
