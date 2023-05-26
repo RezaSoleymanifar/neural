@@ -141,8 +141,8 @@ class AbstractTrader(ABC):
         """
         if self._data_feeder is None:
             stream_metadata = self.agent.dataset_metadata.stream
-            self._data_feeder = AsyncDataFeeder(stream_metadata,
-                                                self.data_client)
+            self._data_feeder = AsyncDataFeeder(
+                stream_metadata, self.data_client)
         return self._data_feeder
 
     @property
@@ -177,6 +177,7 @@ class AbstractTrader(ABC):
         observation = self.trade_market_env.reset()
 
         while True:
+            
             action = self.model(observation)
             observation, reward, done, info = self.trade_market_env.step(action)
             if done:
