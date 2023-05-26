@@ -163,16 +163,16 @@ class RunningStatistics:
     -----------
         minimum (float):
             Returns the minimum value of the data stored in the
-            RunningMeanStandardDeviation object.
+            RunningStatistics object.
         maximum (float):
             Returns the maximum value of the data stored in the
-            RunningMeanStandardDeviation object.    
+            RunningStatistics object.    
         mean (float):
             Returns the mean of the data stored in the
-            RunningMeanStandardDeviation object.    
+            RunningStatistics object.    
         std (float):
             Returns the standard deviation of the data stored in the
-            RunningMeanStandardDeviation object.
+            RunningStatistics object.
         
 
     Methods:
@@ -196,7 +196,7 @@ class RunningStatistics:
         
     Example:
     --------
-        >>> rms = RunningMeanStandardDeviation() 
+        >>> rms = RunningStatistics() 
         >>> rms.update(array) 
         >>> mean = rms.mean 
         >>> std = rms.std 
@@ -205,7 +205,7 @@ class RunningStatistics:
 
     def __init__(self, epsilon=1e-8, clip_threshold: float = np.inf):
         """
-        Initializes the RunningMeanStandardDeviation object.
+        Initializes the RunningStatistics object.
 
         Args:
         -----
@@ -246,7 +246,7 @@ class RunningStatistics:
     def minimum(self) -> float:
         """
         Returns the minimum value of the data stored in the
-        RunningMeanStandardDeviation object.
+        RunningStatistics object.
 
         Raises:
         -------
@@ -268,7 +268,7 @@ class RunningStatistics:
     def maximum(self) -> float:
         """
         Returns the max value of the data stored in the
-        RunningMeanStandardDeviation object.
+        RunningStatistics object.
 
         Raises:
         -------
@@ -290,7 +290,7 @@ class RunningStatistics:
     def mean(self) -> float:
         """
         Computes and returns the mean of the data stored in the
-        RunningMeanStandardDeviation object.
+        RunningStatistics object.
 
         Raises:
         -------
@@ -311,7 +311,7 @@ class RunningStatistics:
     def std(self):
         """
         Computes and returns the standard deviation of the data stored
-        in the RunningMeanStandardDeviation object.
+        in the RunningStatistics object.
         """
         if not self.count:
             raise AssertionError(
@@ -325,12 +325,12 @@ class RunningStatistics:
 
     def initialize_statistics(self, array: np.ndarray):
         """
-        Initializes the RunningMeanStandardDeviation object with data.
+        Initializes the RunningStatistics object with data.
 
         Args:
         -----
             array (np.ndarray):
-                The data to initialize the RunningMeanStandardDeviation
+                The data to initialize the RunningStatistics
                 object with.
             
         Raises:
@@ -351,18 +351,29 @@ class RunningStatistics:
 
     def update(self, array: np.ndarray):
         """
-        Updates the RunningMeanStandardDeviation object with new data.
+        Updates the running mean and standard deviation with the new
+        data.
 
         Args:
-            x (np.ndarray): The new data to be added to the
-            RunningMeanStandardDeviation object.
+        -----
+            array (np.ndarray):
+                The data to update the RunningStatistics
+                object with.
+            
+        Raises:
+        -------
+            AssertionError:
+                If the shape of the data has changed during update.
         """
 
         if self.shape is None:
             self.initialize_statistics(array)
 
-        assert self.shape == array.shape, "Shape of data has changed during update."
-
+        if not self.shape == array.shape:
+            raise AssertionError(
+                'Shape of data has changed during update. '
+                f'original shape: {self.shape}, new shape: {array.shape}')
+        
         self.count += 1
         delta = array - self._mean
         self._mean += delta / self.count
@@ -374,10 +385,20 @@ class RunningStatistics:
 
         return None
 
-    def normalize(self, array: np.ndarray):
+    def normalize(self, array: np.ndarray) -> np.ndarray:
+        """
+        Normalizes the data to a mean of 0 and standard deviation of 1.
+        Uses running statistics to normalize the data.
 
-        # Normalize the array using the running mean and standard
-        # deviation
+        Args:
+        -----
+            array (np.ndarray):
+                The data to normalize.
+
+        Returns:
+        --------
+            np.ndarray: The normalized data.
+        """
         normalized_array = np.clip(
             (array - self.mean) / (self.std + self.epsilon), -self.clip_threshold,
             self.clip_threshold)
