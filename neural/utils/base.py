@@ -256,32 +256,55 @@ class RunningStatistics:
         Returns:
         --------
             float: The minimum value of the data.
-            
         """
 
-        assert self.count, "Must have at least one data point to compute minimum"
+        if not self.count:
+            raise AssertionError(
+                "Must have at least one data point to compute minimum")
 
         return self._minimum
 
     @property
-    def maximum(self):
+    def maximum(self) -> float:
         """
         Returns the max value of the data stored in the
         RunningMeanStandardDeviation object.
-        """
-        assert self.count, "Must have at least one data point to compute maximum"
 
+        Raises:
+        -------
+            AssertionError:
+                If there are no data points to compute the maximum.
+        
+        Returns:
+        --------
+            float: The maximum value of the data.
+        """
+
+        if not self.count:
+            raise AssertionError(
+                "Must have at least one data point to compute maximum") 
+        
         return self._minimum
 
     @property
-    def mean(self):
+    def mean(self) -> float:
         """
         Computes and returns the mean of the data stored in the
         RunningMeanStandardDeviation object.
+
+        Raises:
+        -------
+            AssertionError:
+                If there are no data points to compute the mean.
+            
+        Returns:
+        --------
+            float: The mean of the data.
         """
-
-        assert self.count, "Must have at least one data point to compute mean"
-
+        if not self.count:
+            raise AssertionError(
+                "Must have at least one data point to compute mean")    
+        
         return self._mean
 
     @property
@@ -290,9 +313,10 @@ class RunningStatistics:
         Computes and returns the standard deviation of the data stored
         in the RunningMeanStandardDeviation object.
         """
-
-        assert self.count, "Must have at least one data point to compute standard deviation"
-
+        if not self.count:
+            raise AssertionError(
+                "Must have at least one data point to compute standard deviation")  
+        
         variance = self.M2 / \
             (self.count - 1) if self.count > 1 else np.zeros_like(self.M2)
         self._std = np.sqrt(variance)
@@ -304,8 +328,15 @@ class RunningStatistics:
         Initializes the RunningMeanStandardDeviation object with data.
 
         Args:
-            x (np.ndarray): The data to initialize the
-            RunningMeanStandardDeviation object with.
+        -----
+            array (np.ndarray):
+                The data to initialize the RunningMeanStandardDeviation
+                object with.
+            
+        Raises:
+        -------
+            AssertionError:
+                If the data is not a numpy array.
         """
 
         self.shape = array.shape
