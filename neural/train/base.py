@@ -92,13 +92,34 @@ class AbstractTrainer(ABC):
             entire time horizon.
         train_market_env (TrainMarketEnv):
             Training environment.
-        
+        test_market_env (TrainMarketEnv):
+            Testing environment.
+        train_data_feeder (StaticDataFeeder):
+            Data feeder for training environment.
+        test_data_feeder (StaticDataFeeder):
+            Data feeder for testing environment.
+        env_pipes (list):
+            List of pipes for saved for parallel training. Can be reused
+            to continue training in parallel.
+
+    Methods:
+    -------
+        _initialize_data_feeders():
+            Initializes data feeders for training and testing
+            environments.
+        _get_piped_envs():
+            Returns a list of piped environments for parallel training.
+            if n_envs = 1 then a single environment is returned. If 
+            n_envs > 1 then a single parallel environment is returned.
+            This 
+
+
     """
     def __init__(
         self,
         agent: Agent,
         file_path: os.PathLike,
-        dataset_name = Optional[str] = None,
+        dataset_name: Optional[str] = None,
         n_chunks: int = 1,
         train_ratio: float = 1,
         n_envs: int = 1,
