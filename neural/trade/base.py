@@ -152,7 +152,9 @@ class AbstractTrader(ABC):
         return self._trade_market_env
 
     def place_orders(self, actions: np.ndarray, *args, **kwargs):
-
+        """
+        
+        """
         for action, asset, price, quantity in zip(actions, self.assets,
                                                   self.asset_prices,
                                                   self.asset_quantities):
@@ -168,6 +170,11 @@ class AbstractTrader(ABC):
             if (quantity > 0 and quantity + new_quantity < 0 or
                     quantity < 0 and quantity + new_quantity > 0):
                 new_quantity = quantity
+
+            if quantity == 0 and new_quantity != 0:
+                new_quantity = int(new_quantity)
+            
+            
             
     def trade(self):
         """
