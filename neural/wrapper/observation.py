@@ -329,16 +329,11 @@ def observation(wrapper_class: Type[Wrapper]) -> Type[Wrapper]:
             operation of wrapper.
 
 
-            Parameters
+            Args
             ----------
             observation : Union[np.ndarray[float], Dict[str,
             np.ndarray[float]]]
                 The observation to check.
-
-            Raises
-            ------
-            IncompatibleWrapperError
-                If the observation is not in the observation space.
 
             Returns
             -------
