@@ -80,7 +80,7 @@ class FillDeque(deque):
         """
         return iter(self.buffer)
 
-    def __getitem__(self, index):
+    def __getitem__(self, index) -> Any | List[Any]:
         """
         Returns a slice of the buffer as a list.
 
@@ -100,7 +100,7 @@ class FillDeque(deque):
         else:
             raise TypeError("Invalid argument type")
 
-    def clear(self):
+    def clear(self) -> None:
         """
         Removes all elements from the deque buffer.
         """
