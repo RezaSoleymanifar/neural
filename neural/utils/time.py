@@ -143,7 +143,9 @@ class Calendar:
             calendar_type (CalendarType):
                 The type of calendar to use.
             start_date (Any):
-            
+                The start date for the trading schedule. The date
+                can be anything that can be read by pandas to_datetime.
+                examples include pd.Timestamp, datetime.datetime, str.
         Returns:
         ---------
             pd.DataFrame: A dataframe with trading dates and times.
