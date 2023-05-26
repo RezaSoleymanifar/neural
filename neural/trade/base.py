@@ -12,7 +12,6 @@ from neural.meta.agent import Agent
 
 
 class AbstractTrader(ABC):
-
     """
     Abstract base class for defining a trader that can execute orders
     using a trading client and a model to produce actions. This trader
@@ -53,12 +52,8 @@ class AbstractTrader(ABC):
             trader owes the asset to the broker.
     """
 
-    def __init__(
-        self, 
-        trade_client: AbstractTradeClient,
-        data_client: AbstractDataClient,
-        agent: Agent
-    ):
+    def __init__(self, trade_client: AbstractTradeClient,
+                 data_client: AbstractDataClient, agent: Agent):
         """
         Initializes an AbstractTrader object.
 
@@ -90,7 +85,7 @@ class AbstractTrader(ABC):
         broker.
         """
         return self.trade_client.cash
-    
+
     @property
     def asset_quantities(self) -> np.ndarray[float]:
         """
@@ -118,7 +113,7 @@ class AbstractTrader(ABC):
                 The current price of each asset held by the trader.
         """
         return self.trade_market_env.asset_prices
-    
+
     @property
     def assets(self) -> List[AlpacaAsset]:
         """
@@ -130,7 +125,7 @@ class AbstractTrader(ABC):
                 The assets held by the trader.
         """
         return self.trade_market_env.assets
-    
+
     @property
     def data_feeder(self) -> AsyncDataFeeder:
         """
@@ -143,10 +138,10 @@ class AbstractTrader(ABC):
         """
         if self._data_feeder is None:
             stream_metadata = self.agent.dataset_metadata.stream
-            self._data_feeder = AsyncDataFeeder(
-                stream_metadata, self.data_client)
+            self._data_feeder = AsyncDataFeeder(stream_metadata,
+                                                self.data_client)
         return self._data_feeder
-    
+
     @property
     def trade_market_env(self) -> TradeMarketEnv:
         """
@@ -155,16 +150,25 @@ class AbstractTrader(ABC):
         if self._trade_market_env is None:
             self._trade_market_env = TradeMarketEnv(trader=self)
         return self._trade_market_env
-    
+
     def place_orders(self, actions: np.ndarray, *args, **kwargs):
 
-        for action, asset, price, quantity in zip(actions, self.assets, self.asset_prices, self.asset_quantities):
+        for action, asset, price, quantity in zip(actions, self.assets,
+                                                  self.asset_prices,
+                                                  self.asset_quantities):
             new_quantity = action / price
 
             if not asset.fractionable:
                 new_quantity = int(new_quantity)
             
+            if not asset.shortable:
+                if quantity + new_quantity < 0:
+                    new_quantity = quantity
 
+            if (quantity > 0 and quantity + new_quantity < 0 or
+                    quantity < 0 and quantity + new_quantity > 0):
+                new_quantity = quantity
+            
     def trade(self):
         """
         Starts the trading process by creating a trading environment and
