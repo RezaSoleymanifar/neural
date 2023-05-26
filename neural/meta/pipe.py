@@ -52,17 +52,11 @@ class AbstractPipe(ABC):
         combine these pipes to create a more complex pipe.
     """
 
-    @abstractmethod
-    @property
-    def metadata(self) -> dict:
-        """
-        Abstract property for metadata of the pipe. This is used to save the
-        pipe as a json file. The metadata should be a dictionary with the
-        following keys:
-            - name: name of the pipe.
-            - description: description of the pipe.
-            - wrappers: list of wrappers in the pipe.
-        """
+    def metadata(pipe: Callable):
+        def decorated_pipe(self, env: Env) -> Env:
+            env = pipe(self, env)
+            while not isinstance(env, AbstractMetadataWrapper):
+                env = env.env
 
     @abstractmethod
     def pipe(self, env: Env) -> Env:
