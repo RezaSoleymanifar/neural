@@ -192,7 +192,8 @@ class AbstractTrader(ABC):
         The trading environment used to execute orders.
         """
         if self._trade_market_env is None:
-            self._trade_market_env = TradeMarketEnv(trader=self)
+            env = TradeMarketEnv(trader=self)
+            self.agent.pipe(self._trade_market_env)
         return self._trade_market_env
     
     @property
