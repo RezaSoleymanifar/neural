@@ -11,6 +11,7 @@ from neural.client.alpaca import AbstractTradeClient, AbstractDataClient
 from neural.data.base import AsyncDataFeeder, AlpacaAsset
 from neural.env.base import TradeMarketEnv
 from neural.meta.agent import Agent
+from neural.wrapper.base import AbstractMarketEnvMetadataWrapper
 
 
 class AbstractTrader(ABC):
@@ -193,8 +194,24 @@ class AbstractTrader(ABC):
         """
         if self._trade_market_env is None:
             env = TradeMarketEnv(trader=self)
-            self.agent.pipe(self._trade_market_env)
+            piped_env = self.agent.pipe(self._trade_market_env)
+            self._trade_market_env = piped_env
         return self._trade_market_env
+    
+    @property
+    def market_metadata_wrapper(self) -> AbstractMarketEnvMetadataWrapper:
+        """
+        The metadata wrapper used by the trading environment.
+        """
+        env = self.trade_market_env
+        while not isinstance(env, AbstractMarketEnvMetadataWrapper):
+            if hasattr(env, 'env'):
+                env = env.env
+            else:
+                raise ValueError(
+                    'The trading environment does not have a wrapper '
+                    'of type {AbstractMarketEnvMetadataWrapper.__name__}.'
+        return env
     
     @property
     def model(self) -> nn.Module:
