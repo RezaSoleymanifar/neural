@@ -73,11 +73,12 @@ class RewardNormalizerWrapper(RewardWrapper):
             Normalize the reward.
     """
 
-    def __init__(self,
-                 env: Env,
-                 epsilon: float = 1e-8,
-                 clip_threshold: float = np.inf,
-                 ) -> None:
+    def __init__(
+        self,
+        env: Env,
+        epsilon: float = 1e-8,
+        clip_threshold: float = np.inf,
+    ) -> None:
         """
         This wrapper normalizes immediate rewards so that rewards have
         mean 0 and standard deviation 1.
@@ -124,6 +125,7 @@ class RewardNormalizerWrapper(RewardWrapper):
             reward, self.epsilon, self.clip_threshold)
 
         return normalized_reward
+
 
 @metadata
 class LiabilityInterstRewardWrapper(RewardWrapper):
@@ -291,13 +293,12 @@ class AbstractRewardShaperWrapper(RewardWrapper, ABC):
 
         if value < 0:
             raise ValueError("Value must be a positive number.")
-        
+
         if threshold <= 0:
             raise ValueError("Threshold must be a positive number.")
-        
+
         if base < 1:
             raise ValueError("Base must be greater than or equal to 1.")
-    
 
         deviation_ratio = value / threshold
         scale = deviation_ratio * factor if deviation_ratio > 1 else 0

@@ -20,10 +20,11 @@ def validate_observation(
         - np.ndarray
         - Dict[str, np.ndarray] (all values must be np.ndarray)
 
-    Parameters
+    Args
     ----------
     wrapper : Wrapper
-        The wrapper object that received the observation.
+        The wrapper object that receives the observation. Used to
+        produce hint when raising an error.
     observation : np.ndarray or Dict[str, np.ndarray]
         The observation to be validated. If it is a dictionary, all its
         values must be numpy arrays.
@@ -32,11 +33,7 @@ def validate_observation(
     ------
     IncompatibleWrapperError
         If the wrapper received an observation of an incompatible type.
-
     """
-
-    # Checks that the wrapper is compatible with the observation types.
-    #  This is a helper function to avoid having to reimplement it
     if isinstance(observation, dict):
         if all(isinstance(observation[key], np.ndarray) for key in observation):
             valid = True
@@ -46,8 +43,9 @@ def validate_observation(
 
     if not valid:
         raise IncompatibleWrapperError(
-            f'Wrapper {type(wrapper).__name__} received an observation of type {type(observation)}, '
-            F'which is not in the accepted observation types {ACCEPTED_OBSERVATION_TYPES}.'
+            f'Wrapper {type(wrapper).__name__} received an observation of '
+            f'type {type(observation)}, which is not in the accepted '
+            f'observation types {ACCEPTED_OBSERVATION_TYPES}.'
         )
 
     return False
@@ -1291,17 +1289,18 @@ class ObservationNormalizerWrapper(RunningStatisticsObservationWrapper):
     >>> env = NormalizeObservationWrapper(env)
     """
 
-    def __init__(self,
-                 env: Env,
-                 epsilon: float = 1e-8,
-                 clip_threshold: float = 10,
-                 observation_statistics: Optional[RunningStatistics] = None,
-                ) -> None:
+    def __init__(
+        self,
+        env: Env,
+        epsilon: float = 1e-8,
+        clip_threshold: float = 10,
+        observation_statistics: Optional[RunningStatistics] = None,
+    ) -> None:
 
         super().__init__(env)
         self.epsilon = epsilon
         self.clip = clip_threshold
-        
+
         if observation_statistics is None:
             self.observation_statistics = RunningStatistics()
             observation_statistics = self.observation_statistics
