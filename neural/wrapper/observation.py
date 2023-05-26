@@ -400,26 +400,26 @@ def buffer(wrapper_class: Type[Wrapper]) -> Type[Wrapper]:
 
         Args
         ----
-        env (gym.Env): The environment being wrapped.
+            env (gym.Env): The environment being wrapped.
 
         Attributes
         ----------
-        observation_buffer_wrapper : ObservationBufferWrapper
-            A reference to the observation buffer wrapper found in the
-            enclosed wrappers. use this attribute to access the
-            observation buffer wrapper and its attributes.
+            observation_buffer_wrapper : ObservationBufferWrapper
+                A reference to the observation buffer wrapper found in the
+                enclosed wrappers. use this attribute to access the
+                observation buffer wrapper and its attributes.
 
         Methods
         -------
-        find_observation_buffer_wrapper(self, env: Env) ->
-        ObservationBufferWrapper
-            Searches recursively for an observation buffer wrapper in
-            enclosed wrappers.
+            find_observation_buffer_wrapper(self, env: Env) ->
+            ObservationBufferWrapper
+                Searches recursively for an observation buffer wrapper in
+                enclosed wrappers.
 
         Raises
         ------
-        IncompatibleWrapperError: If no observation buffer is found in
-            any of the enclosed wrappers.
+            IncompatibleWrapperError: If no observation buffer is found in
+                any of the enclosed wrappers.
         """
 
         def __init__(self, env: Env, *args, **kwargs) -> None:
@@ -448,19 +448,19 @@ def buffer(wrapper_class: Type[Wrapper]) -> Type[Wrapper]:
 
             Args
             ----------
-            env : gym.Env
-                The environment being wrapped.
+                env : gym.Env
+                    The environment being wrapped.
 
             Raises
             ------
-            IncompatibleWrapperError
-                If no observation buffer is found in any of the enclosed
-                wrappers.
+                IncompatibleWrapperError
+                    If no observation buffer is found in any of the enclosed
+                    wrappers.
 
             Returns
             -------
-            ObservationBufferWrapper
-                The first observation buffer found.
+                ObservationBufferWrapper
+                    The first observation buffer found.
             """
 
             if isinstance(env, ObservationBufferWrapper):
@@ -489,25 +489,25 @@ class PositionsFeatureEngineeringWrapper(ObservationWrapper):
 
     Attributes
     ----------
-    env : Env
-        The trading environment to be wrapped.
-    n_assets : int
-        The number of assets in the environment.
-    n_features : int
-        The number of additional features included in each observation
-        after augmentation.
-    expected_observation_type : spaces.Dict
-        The expected observation space of the wrapped environment.
-    observation_space : spaces.Dict
-        The observation space of the wrapped environment.
+        env : Env
+            The trading environment to be wrapped.
+        n_assets : int
+            The number of assets in the environment.
+        n_features : int
+            The number of additional features included in each observation
+            after augmentation.
+        expected_observation_type : spaces.Dict
+            The expected observation space of the wrapped environment.
+        observation_space : spaces.Dict
+            The observation space of the wrapped environment.
 
     Methods
     -------
-    observation(self, observation: Dict[str, np.ndarray[float]]) ->
-    Dict[str, np.ndarray[float]]:
-        Augments the observation such that, instead of asset quantities
-        held, the notional value of assets (positions) is used. If asset
-        is borrowed (negative quantity), the notional value is negative.
+        observation(self, observation: Dict[str, np.ndarray[float]]) ->
+        Dict[str, np.ndarray[float]]:
+            Augments the observation such that, instead of asset quantities
+            held, the notional value of assets (positions) is used. If asset is
+            borrowed (negative quantity), the notional value is negative.
 
     Example
     -------
@@ -583,19 +583,19 @@ class PositionsFeatureEngineeringWrapper(ObservationWrapper):
         observation: Dict[str,
                           np.ndarray[float]]) -> Dict[str, np.ndarray[float]]:
         """
-        Augments the observation such that, instead of asset quantities
-        held, the notional value of assets (positions) is used.
+        Augments the observation such that, instead of asset quantities held,
+        the notional value of assets (positions) is used.
 
         Parameters
         ----------
-        observation : dict
-            A dictionary containing the original observation.
+            observation : Dict[str, np.ndarray[float]]
+                A dictionary containing the original observation.
 
         Returns
         -------
-        dict
-            A dictionary containing the augmented observation, where the
-            'positions' key contains the USD value of each asset.
+            observation : Dict[str, np.ndarray[float]]
+                A dictionary containing the augmented observation, where the
+                'positions' key contains the USD value of each asset.
         """
 
         asset_prices = self.market_metadata_wrapper.asset_prices
@@ -617,22 +617,22 @@ class WealthAgnosticFeatureEngineeringWrapper(ObservationWrapper):
 
     Attributes
     ----------
-    env : Env
-        The trading environment to be wrapped.
-    initial_cash : float
-        The initial amount of cash in the environment.
-    n_symbols : int
-        The number of assets in the environment.
-    n_features : int
-        The number of additional features included in each observation
-        after augmentation.
+        env : Env
+            The trading environment to be wrapped.
+        initial_cash : float
+            The initial amount of cash in the environment.
+        n_symbols : int
+            The number of assets in the environment.
+        n_features : int
+            The number of additional features included in each observation
+            after augmentation.
 
     Methods
     -------
-    observation(observation: Dict[str, np.ndarray[float]]) -> Dict[str,
-    np.ndarray[float]]:
-        Augments the observation such that net worth sensitive features
-        now have net worth independent values.
+        observation(observation: Dict[str, np.ndarray[float]]) -> Dict[str,
+        np.ndarray[float]]:
+            Augments the observation such that net worth sensitive features
+            now have net worth independent values.
 
     Example
     -------
@@ -649,7 +649,7 @@ class WealthAgnosticFeatureEngineeringWrapper(ObservationWrapper):
         Initializes a new instance of the
         WealthAgnosticFeatureEngineeringWrapper class.
 
-        Parameters
+        Args
         ----------
         env : Env
             The trading environment to be wrapped.
@@ -658,7 +658,7 @@ class WealthAgnosticFeatureEngineeringWrapper(ObservationWrapper):
         super().__init__(env)
 
         self.initial_cash = self.market_metadata_wrapper.initial_cash
-        self.n_symbols = self.market_metadata_wrapper.n_symbols
+        self.n_assets = self.market_metadata_wrapper.n_assets
         self.n_features = self.market_metadata_wrapper.n_features
 
         self.expected_observation_type = spaces.Dict({
@@ -670,12 +670,12 @@ class WealthAgnosticFeatureEngineeringWrapper(ObservationWrapper):
             'positions':
             spaces.Box(low=-np.inf,
                        high=np.inf,
-                       shape=(self.n_symbols, ),
+                       shape=(self.n_assets, ),
                        dtype=GLOBAL_DATA_TYPE),
             'holds':
             spaces.Box(low=0,
                        high=np.inf,
-                       shape=(self.n_symbols, ),
+                       shape=(self.n_assets, ),
                        dtype=np.int32),
             'features':
             spaces.Box(low=-np.inf,
@@ -693,12 +693,12 @@ class WealthAgnosticFeatureEngineeringWrapper(ObservationWrapper):
             'positions':
             spaces.Box(low=-np.inf,
                        high=np.inf,
-                       shape=(self.n_symbols, ),
+                       shape=(self.n_assets, ),
                        dtype=GLOBAL_DATA_TYPE),
             'holds':
             spaces.Box(low=0,
                        high=np.inf,
-                       shape=(self.n_symbols, ),
+                       shape=(self.n_assets, ),
                        dtype=np.int32),
             'features':
             spaces.Box(low=-np.inf,
@@ -773,13 +773,13 @@ class ObservationBufferWrapper(ObservationWrapper):
         Initializes a new instance of the ObservationBufferWrapper
         class.
 
-        Parameters
+        Args
         ----------
-        env : Env
-            The trading environment to be wrapped.
-        buffer_size : int, optional
-            The maximum number of observations to be stored in the
-            buffer. Defaults to 10.
+            env : Env
+                The trading environment to be wrapped.
+            buffer_size : int, optional
+                The maximum number of observations to be stored in the
+                buffer. Defaults to 10.
         """
 
         super().__init__(env)
