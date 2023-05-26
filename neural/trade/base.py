@@ -171,10 +171,10 @@ class AbstractTrader(ABC):
                     quantity < 0 and quantity + new_quantity > 0):
                 new_quantity = quantity
 
-            if quantity == 0 and new_quantity != 0:
+            if quantity == 0 and new_quantity < 0:
                 new_quantity = int(new_quantity)
             
-            
+
             
     def trade(self):
         """
