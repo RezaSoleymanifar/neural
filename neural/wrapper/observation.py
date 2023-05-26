@@ -720,10 +720,10 @@ class WealthAgnosticFeatureEngineeringWrapper(ObservationWrapper):
         observation: Dict[str,
                           np.ndarray[float]]) -> Dict[str, np.ndarray[float]]:
         """
-        Augments the observation such that net worth sensitive features
-        now have net worth independent values.
+        Augments the observation such that wealth sensitive features
+        now have wealth normalized values.
 
-        Parameters
+        Args
         ----------
         observation : dict
             A dictionary containing the original observation.
@@ -731,16 +731,13 @@ class WealthAgnosticFeatureEngineeringWrapper(ObservationWrapper):
         Returns
         -------
         dict
-            A dictionary containing the augmented observation, where the
-            'features' key contains net worth sensitive features that
-            are now independent of net worth.
+            A dictionary containing the augmented observation. Adds
         """
 
         equity = self.market_metadata_wrapper.equity
 
         observation['positions'] /= equity
         observation['cash'] /= equity
-        observation['return'] = equity / self.initial_cash - 1
 
         return observation
 
