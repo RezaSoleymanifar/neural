@@ -45,8 +45,7 @@ def validate_observation(
         raise IncompatibleWrapperError(
             f'Wrapper {type(wrapper).__name__} received an observation of '
             f'type {type(observation)}, which is not in the accepted '
-            f'observation types {ACCEPTED_OBSERVATION_TYPES}.'
-        )
+            f'observation types {ACCEPTED_OBSERVATION_TYPES}.')
 
     return None
 
@@ -223,7 +222,7 @@ def observation(wrapper_class: Type[Wrapper]) -> Type[Wrapper]:
                     f'defined before applying {observation} decorator.')
 
             valid = False
-        
+
             if isinstance(self.expected_observation_type, Space):
                 valid = True
 
@@ -312,8 +311,7 @@ def observation(wrapper_class: Type[Wrapper]) -> Type[Wrapper]:
                 raise IncompatibleWrapperError(
                     f'Wrapper {type(super()).__name__} outputs an observation '
                     f'that is not in its defined observation space '
-                    f'{self.observation_space}.'
-                )
+                    f'{self.observation_space}.')
 
             return None
 
@@ -518,6 +516,7 @@ class PositionsFeatureEngineeringWrapper(ObservationWrapper):
     >>> env = TrainMarketEnv(...)
     >>> env = PositionsFeatureEngineeringWrapper(env)
     """
+
     def __init__(self, env: Env) -> None:
         """
         Initializes a new instance of the PositionsFeatureEngineeringWrapper
@@ -725,13 +724,13 @@ class WealthAgnosticFeatureEngineeringWrapper(ObservationWrapper):
 
         Args
         ----------
-        observation : dict
-            A dictionary containing the original observation.
+            observation : Dict[str, np.ndarray[float]]
+                A dictionary containing the original observation.
 
         Returns
         -------
-        dict
-            A dictionary containing the augmented observation. Adds
+            observation: Dict[str, np.ndarray[float]]
+                A dictionary containing the augmented observation. Adds
         """
 
         equity = self.market_metadata_wrapper.equity
@@ -751,14 +750,15 @@ class ObservationBufferWrapper(ObservationWrapper):
 
     Attributes
     ----------
-    env : Env
-        The trading environment to be wrapped.
-    buffer_size : int
-        The maximum number of observations to be stored in the buffer.
-    observation_buffer : deque
-        A deque object that stores the last n observations, where n is equal to
-        the buffer_size. Deque has a self fill property such that when empty it
-        autofills with first input to always maintain a fixed size. 
+        env : Env
+            The trading environment to be wrapped.
+        buffer_size : int
+            The maximum number of observations to be stored in the buffer.
+        observation_buffer : deque
+            A deque object that stores the last n observations, where n is
+            equal to the buffer_size. Deque has a self fill property such that
+            when empty it autofills with first input to always maintain a fixed
+            size. 
 
     Example
     -------
@@ -786,7 +786,7 @@ class ObservationBufferWrapper(ObservationWrapper):
 
         if not isinstance(buffer_size, int) or not buffer_size > 0:
             raise ValueError("The buffer size must be positive integer.")
-        
+
         self.buffer_size = buffer_size
         self.observation_buffer = FillDeque(buffer_size=buffer_size)
 
@@ -809,21 +809,23 @@ class ObservationBufferWrapper(ObservationWrapper):
 
         return observation
 
-    def observation(self, observation):
+    def observation(
+        self, observation: np.ndarray[float] | Dict[str, np.ndarray[float]]
+    ) -> np.ndarray[float] | Dict[str, np.ndarray[float]]:
         """
-        Adds the observation to the buffer and returns the buffer as the
-        new observation.
+        Adds the observation to the buffer and returns the observation
+        without modification.
 
-        Parameters
+        Args
         ----------
-        observation : dict
-            A dictionary containing the current observation.
+            observation : np.ndarray[float] | Dict[str, np.ndarray[float]]  
+                The observation to be added to the buffer.
+
 
         Returns
         -------
-        deque
-            A deque object containing the last n observations, where n
-            is equal to the buffer_size.
+            observation : np.ndarray[float] | Dict[str, np.ndarray[float]]
+                The observation without modification.
         """
 
         self.observation_buffer.append(observation)
