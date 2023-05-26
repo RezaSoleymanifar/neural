@@ -19,65 +19,6 @@ class AlpacaTraderFactory(AbstractTrader):
                          data_client=data_client,
                          agent=agent)
 
-    def check_trade_constraints(self, *args, **kwargs):
-        """
-        The PDT rule is a regulation enforced by the U.S. Securities and
-        Exchange Commission (SEC) that applies to traders who execute
-        four or more day trades within a five-business-day period using
-        a margin account. A day trade is the act of buy and sell of the
-        same asset on the same day in a margin account. Same applies to
-        shorting and then covering the same asset on the same day in a
-        margin account. If a trader meets this threshold, they are
-        classified as a pattern day trader and must maintain a minimum
-        equity balance of $25,000 in their account to continue day
-        trading. v
-
-        If margin falls bellow maintenance margin then a margin call is
-        issued. A margin call is a broker's demand on an investor using
-        margin to deposit additional money or securities so that the
-        margin account is brought up to the minimum maintenance margin.
-        Margin calls occur when the account value depresses to a value
-        calculated by the broker's particular formula. If the investor
-        fails to bring the account back into line,
-
-        Alpaca API has automatic margin call and pattern day trader
-        protection in place. This facility is provided to avoid
-        triggering the Alpaca's protection mechanism in a more
-        conservative way.
-
-        Raises:
-        ---------
-            TradeConstraintViolationError: If any trade constraint is
-            violated.
-        
-        Notes:
-        ---------
-            This is only valid in margin accounts. If using cash account
-            the PDT rule does not apply. Also if using 
-        """
-
-        # pattern day trader constraint
-        patttern_day_trader = self.client.account.pattern_day_trader
-        net_worth = self.net_worth
-
-        pattern_day_trader_constraint = (True if not patttern_day_trader else
-                                         net_worth
-                                         > PATTERN_DAY_TRADER_MINIMUM_EQUITY)
-
-        if not pattern_day_trader_constraint:
-            raise TradeConstraintViolationError(
-                'Pattern day trader constraint violated.')
-
-        # margin trading
-        margin = abs(self.cash) if self.cash < 0 else 0
-        maintenance_margin = 1.00
-        margin_constraint = margin * maintenance_margin <= self.porftfolio_value
-
-        if not margin_constraint:
-            raise TradeConstraintViolationError('Margin constraint violated.')
-
-        return None
-
 
 class AlpacaTrader(AlpacaTraderFactory):
     """
@@ -98,6 +39,8 @@ class AlpacaTrader(AlpacaTraderFactory):
     def __init__(self, trade_client: AlpacaTradeClient, agent: Agent) -> None:
 
         super().__init__(trade_client, agent=agent)
+
+        if self.trade_client.equity
 
     def place_orders(self,
                      actions: np.ndarray[float],
