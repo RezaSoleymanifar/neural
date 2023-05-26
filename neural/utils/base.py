@@ -1,12 +1,17 @@
-from typing import List, Iterable
+"""
+base.py
+"""
+import os
+from typing import List, Iterable, Any
 from collections import deque
 
 import pandas as pd
 import numpy as np
-import tableprint, os
+
+import tableprint
 from tqdm import tqdm
 
-#================================================Data=====================================================
+#==================================Data========================================
 
 
 class FillDeque(deque):
@@ -34,7 +39,7 @@ class FillDeque(deque):
             Returns a string representation of the deque.
     """
 
-    def __init__(self, buffer_size):
+    def __init__(self, buffer_size: int  = 10):
         """
         Initializes the FillDeque instance with the specified buffer
         size.
@@ -48,16 +53,16 @@ class FillDeque(deque):
 
         return None
 
-    def append(self, item):
+    def append(self, item: Any):
         """
         Appends the item to the deque. If the deque is empty, it fills
         the deque with the first item received until it reaches the
         maximum buffer size.
 
         Args:
-            item: The item to append to the deque.
+        -----
+            item (Any): The item to append to the deque.
         """
-
         if not self.buffer:
             for _ in range(self.buffer_size):
                 self.buffer.append(item)
@@ -66,8 +71,13 @@ class FillDeque(deque):
 
         return None
 
-    def __iter__(self):
+    def __iter__(self) -> Iterable[Any]:
+        """
+        A generator that iterates over the deque.
 
+        Returns:
+            generator: A generator that iterates over the deque.
+        """
         return iter(self.buffer)
 
     def __getitem__(self, index):
