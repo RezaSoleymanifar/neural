@@ -139,10 +139,11 @@ class AbstractTrainer(ABC):
     Note that if n_envs > 1 then a deep copy of pipe is created for each
     environment. Thus agent's pipe attribute is not used. In this case
     perform a final train/test on a single environment with target
-    initial conditions. In this case the agent's pipe is used and its
-    normalizer stats is tuned to target account initial cash/assets,
-    prior to deoployment for trading. Training on multiple environments
-    with random initial conditions can help the model generalize better.
+    initial conditions. This way agent's pipe is used and its
+    observation normalizer stats will be tuned to target account initial
+    cash/assets, prior to deoployment for trading. Training on multiple
+    environments with random initial conditions can potentially help the
+    model generalize better.
     """
     def __init__(
         self,
@@ -178,7 +179,7 @@ class AbstractTrainer(ABC):
 
         if not 0 < train_ratio <= 1:
             raise ValueError("train_ratio must be in (0, 1]")
-
+        
         if not n_envs >= 1:
             raise ValueError("n_envs must be >= 1")
 
