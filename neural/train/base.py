@@ -82,22 +82,11 @@ class AbstractTrainer(ABC):
         avoid complications arised during parallel training and possibly
         modifying the same pipe object at the same time. Pipes created
         in parallel training will be saved for future reference so that
-        when performing more paralell training/testing state of
-        the parallel pipes are preserved.
+        when performing more paralell training/testing state of the
+        parallel pipes are preserved.
         
         The common practice is to train on multiple environments and
-        perform a final test on a single environement. If tracking is
-        enabled (which is by default), this will also prime the pipe to
-        track and save the statistics of the final test environement. If
-        pipe is wealth insensitive i.e. range of features across
-        different envs with intial_cash and initial_assets envs is the
-        same, then this is not necessary. In this case it is possible to
-        set the sate of agent pipe euqal to state of any of the parallel
-        pipes, as an alternative to performing a final test on a single
-        environment, to save the trained state of the pipe.
-
-        It is entirely possible to test on multiple environments,
-        however in order to  
+        perform a final test on a single environement.
         """
 
         caller_name = inspect.stack()[1].function
@@ -111,6 +100,7 @@ class AbstractTrainer(ABC):
         else:
             raise ValueError("Caller must be either train or test")
 
+        n_assets = 
         initial_cash = lambda: np.random.uniform(
             *self.initial_cash_range
         ) if self.initial_cash_range is not None else lambda: None
