@@ -88,7 +88,7 @@ class AbstractTrainer(ABC):
             environments are run synchronously, i.e. one at a time.
         exclusive_envs (bool):
             If True, environments are split into exclusive temporal
-            groups, i.e. if time horizon is from 0 to 100, and n_envs = 
+            groups, i.e. if time horizon is from 0 to 100, and n_envs =
             5 then for each interval [0, 20), [20, 40), [40, 60), [60,
             80), [80, 100) a new environment is created. If False, then
             n_envs copies of the same environment are created, with
@@ -112,21 +112,25 @@ class AbstractTrainer(ABC):
             environments.
         _get_piped_envs():
             Returns a list of piped environments for parallel training.
-            if n_envs = 1 then a single environment is returned. If 
+            if n_envs = 1 then a single environment is returned. If
             n_envs > 1 then a single parallel environment is returned.
             Parallel environments are like single environments, except
             that they return a list of observations, actions, rewards,
-            info pairs, and take a list of actions as input.
-            If called from 'train' method, then the environments are
-            created using train_data_feeder. If called from 'test'
-            method, then the environments are created using
-            test_data_feeder.
-        train():
-            Uses an RL trainer to train the agent. Implementation is 
-            left to the child class.
+            info pairs, and take a list of actions as input. If called
+            from 'train' method, then the environments are created using
+            train_data_feeder. If called from 'test' method, then the
+            environments are created using test_data_feeder.
         test():
-            Uses an RL trainer to test the agent. Implementation is
-
+            tests the agent using the test data feeder.
+        train():
+            Uses an RL trainer to train the agent. Implementation is
+            left to the child class.
+    Notes:
+    -----
+    Note that if n_envs > 1 then a deep copy of pipe is created for each
+    environment. In this case if a final state is to be saved, then
+    train/test on a single environment with preferred initial
+    conditions, to tune the state of pipe to target initial cash/assets.
     """
     def __init__(
         self,
@@ -257,7 +261,9 @@ class AbstractTrainer(ABC):
         return piped_market_env
 
     def test(self, n_episode: int = 1) -> None:
-
+        """
+        
+        """
         piped_market_env = self._get_piped_env()
         observation = piped_market_env.reset()
 
