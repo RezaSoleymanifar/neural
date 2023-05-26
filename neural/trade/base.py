@@ -106,6 +106,11 @@ class AbstractTrader(ABC):
         Cash available in the trading account. Cash can be positive or
         negative depending on the amount of cash borrowed from the
         broker.
+
+        Returns:
+        --------
+            cash (float):
+                Cash available in the trading account.
         """
         return self.trade_client.cash
 
@@ -187,11 +192,27 @@ class AbstractTrader(ABC):
             self._model = self.agent.model
         return self._model
     
+    def check_connection(self) -> bool:
+        """
+        Check the connection to the service. If the connection is
+        successful, the method should return True, otherwise False.
+        The Trader class will use this method to check the connection
+        before execution of trading process.
+
+        Returns:
+        --------
+            is_connected (bool):
+                True if the connection is successful, otherwise False.
+        """
+        return self.trade_client.check_connection()
+    
     def trade(self):
         """
         Starts the trading process by creating a trading environment and
         executing actions from the model.
         """
+
+        self.check_connection()
         model = self.model
         observation = self.trade_market_env.reset()
 

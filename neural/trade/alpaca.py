@@ -18,7 +18,8 @@ class AlpacaTrader(AbstractTrader):
     method to check if the trader meets the constraints to trade. The
     constraints are:
         - The trader must have at least 120% of the pattern day trader
-            minimum equity if delta = 0.20.
+            minimum equity if delta = 0.20. Pattern day trader minimum
+            equity is $25,000.
         - The trader must have a positive excess margin.
 
     Notes
@@ -50,7 +51,6 @@ class AlpacaTrader(AbstractTrader):
         self,
         actions: np.ndarray[float],
         quantity_precision: int = 5,
-        min_equity_ratio: float = 0.25,
     ):
         """
         This method places orders based on the actions provided by the
