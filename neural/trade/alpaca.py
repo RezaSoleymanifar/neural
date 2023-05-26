@@ -42,19 +42,32 @@ class AlpacaTrader(AbstractTrader):
     for 90 days. Set delta high enough to avoid this.
     """
 
-    def __init__(self,
-                 trade_client: AlpacaTradeClient,
-                 data_client: AlpacaDataClient,
-                 agent: Agent) -> None:
+    def __init__(self, trade_client: AlpacaTradeClient,
+                 data_client: AlpacaDataClient, agent: Agent) -> None:
 
         super().__init__(trade_client=trade_client,
                          data_client=data_client,
                          agent=agent)
 
     def check_constraints(self, delta=0.2):
+        """
+        Checks trading constraints. The constraints are:
+            - The trader must have at least 120% of the pattern day
+                trader minimum equity if delta = 0.20. Pattern day
+                trader minimum equity is $25,000.
+            - The trader must have a positive excess margin.
 
-        if self.trade_market_env.equity < (1 + self.min_equity_ratio) * (
-                1 + delta) * PATTERN_DAY_TRADER_MINIMUM_EQUITY:
+        Args:
+        ------
+            delta (float, optional):
+                A cushion 
+        
+        Notes:
+        ------
+        More info here:
+        https://www.finra.org/investors/investing/investment-products/stocks/day-trading
+        """
+        if self.equity < (1 + delta) * PATTERN_DAY_TRADER_MINIMUM_EQUITY:
             raise TradeConstraintViolationError(
                 'Trader does not meet the equity requirement to trade.')
 

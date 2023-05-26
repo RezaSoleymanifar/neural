@@ -131,6 +131,21 @@ class AbstractTrader(ABC):
         return self.trade_client.asset_quantities
 
     @property
+    def equity(self) -> float:
+        """
+        The current equity of the trader. Equity is the sum of cash and
+        the value of all assets owned by the trader. Equity = L + C - S
+        where L is the value of long positions, C is the cash and S is
+        the value of short positions. Cash can be positive or negative.
+
+        Returns:
+        --------
+            equity (float):
+                The current equity of the trader.
+        """
+        return self.trade_client.equity
+    
+    @property
     def asset_prices(self) -> np.ndarray[float]:
         """
         A numpy array of current price of each asset held by the
