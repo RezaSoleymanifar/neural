@@ -14,12 +14,13 @@ from tqdm import tqdm
 #==================================Data========================================
 
 
-class FillDeque(deque):
+class FillDeque:
     """
     A custom deque implementation that fills itself with the first item
     it receives when it's empty until it reaches the specified buffer
     size. After that, it behaves like a regular deque with a fixed
     maximum size.
+
 
     Methods:
     --------
