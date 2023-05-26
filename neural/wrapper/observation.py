@@ -200,11 +200,13 @@ def observation(wrapper_class: Type[Wrapper]) -> Type[Wrapper]:
 
         def _validate_expected_observation_type(self):
             """
+            Expected observation type is also the type of the
+            observation that the enclosed environment should return.
             Validates the expected observation type of the wrapper.
             ACCEPTED_OBSERVATION_TYPES constant is a list of valid
             observation types that can be used to define the expected
             observation type of a wrapper. Expected observation type is
-            Space or subset list of [np.ndarray, dict]
+            Space or subset list of [np.ndarray, dict].
 
             Raises
             ------
@@ -277,8 +279,9 @@ def observation(wrapper_class: Type[Wrapper]) -> Type[Wrapper]:
 
             if not valid:
                 raise IncompatibleWrapperError(
-                    f'Wrapper {type(self).__name__} received an observation of type {type(observation)}, '
-                    f'which is not in the expected observation type {self.expected_observation_type}.'
+                    f'Wrapper {type(self).__name__} received an observation '
+                    f'of type {type(observation)}, which is not in the '
+                    f'expected observation type {self.expected_observation_type}.'
                 )
 
             return None
