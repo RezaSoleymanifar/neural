@@ -116,12 +116,11 @@ class AbstractTrainer(ABC):
         ) if self.initial_assets_range is not None else lambda: None
 
         if self.n_envs == 1:
-
-            market_env = TrainMarketEnv(data_feeder=data_feeder,
+            train_market_env = TrainMarketEnv(data_feeder=data_feeder,
                                         trainer=self,
                                         initial_cash=initial_cash(),
                                         initial_assets=initial_assets())
-            piped_market_env = self.agent.pipe.pipe(market_env)
+            piped_market_env = self.agent.pipe.pipe(train_market_env)
 
             return piped_market_env
 
