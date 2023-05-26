@@ -127,10 +127,15 @@ class AbstractTrainer(ABC):
             train_data_feeder. If called from 'test' method, then the
             environments are created using test_data_feeder.
         test():
-            tests the agent using the test data feeder.
+            tests the agent using the test data feeder. If n_envs > 1
+            then a single environment is used for testing. If n_envs =
+            1 then multiple environments are used for testing.
         train():
             Uses an RL trainer to train the agent. Implementation is
-            left to the child class.
+            left to the child class. If n_envs > 1 then a single
+            environment is used for training. If n_envs = 1 then
+            multiple environments are used for training.
+
     Notes:
     -----
     Note that if n_envs > 1 then a deep copy of pipe is created for each
@@ -231,7 +236,7 @@ class AbstractTrainer(ABC):
             data_feeder = self.train_data_feeder
 
         elif caller_name == 'test':
-            data_feeder = self.test_data_feeder'
+            data_feeder = self.test_data_feeder
 
         n_assets = self.agent.dataset_metadata.n_assets
         initial_cash = lambda: np.random.uniform(
@@ -296,7 +301,7 @@ class AbstractTrainer(ABC):
                              'Ensure train_ratio < 1. '
                              'train_ratio = {self.train_ratio}'
                              )
-        
+
         piped_market_env = self._get_piped_env()
         observation = piped_market_env.reset()
 
@@ -308,8 +313,17 @@ class AbstractTrainer(ABC):
                     observation, reward, done, info = piped_market_env.step(
                         action)
         return None
-                    
+
     @abstractmethod
     def train(self, *args, **kwargs) -> nn.Module:
+        """
+        This method is left to be implemented by the child class. It
+        should contain the training procedure of the agent. An RL
+        trainer must be used to implement this method.
+
+        Returns:
+        --------
+            nn.Module: Trained agent model.
+        """
 
         raise NotImplementedError

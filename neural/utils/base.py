@@ -11,14 +11,33 @@ from tqdm import tqdm
 
 class FillDeque(deque):
     """
-    A custom deque implementation that fills itself with the first item it receives 
-    when it's empty until it reaches the specified buffer size. After that, it behaves 
-    like a regular deque with a fixed maximum size.
+    A custom deque implementation that fills itself with the first item
+    it receives when it's empty until it reaches the specified buffer
+    size. After that, it behaves like a regular deque with a fixed
+    maximum size.
+
+    Methods:
+    --------
+        append:
+            Appends the item to the deque. If the deque is empty, it
+            fills the deque with the first item received until it
+            reaches the maximum buffer size.
+        __iter__:
+            Returns an iterator over the deque.
+        __getitem__:    
+            Returns a slice of the deque.
+        __len__:
+            Returns the length of the deque.
+        __repr__:
+            Returns a string representation of the deque.
+        __str__:
+            Returns a string representation of the deque.
     """
 
     def __init__(self, buffer_size):
         """
-        Initializes the FillDeque instance with the specified buffer size.
+        Initializes the FillDeque instance with the specified buffer
+        size.
 
         Args:
             buffer_size (int): The maximum size of the deque.
@@ -31,8 +50,9 @@ class FillDeque(deque):
 
     def append(self, item):
         """
-        Appends the item to the deque. If the deque is empty, it fills the deque with
-        the first item received until it reaches the maximum buffer size.
+        Appends the item to the deque. If the deque is empty, it fills
+        the deque with the first item received until it reaches the
+        maximum buffer size.
 
         Args:
             item: The item to append to the deque.
@@ -81,24 +101,23 @@ class FillDeque(deque):
 
 class RunningStatistics:
     """
-    A class for computing the running mean and standard deviation of a stream of data.
-    Can be used to normalize data to a mean of 0 and standard deviation of 1 in an online
-    fashion.
+    A class for computing the running mean and standard deviation of a
+    stream of data. Can be used to normalize data to a mean of 0 and
+    standard deviation of 1 in an online fashion.
 
-    Implements the Welford online algorithm for computing the standard deviation.
+    Implements the Welford online algorithm for computing the standard
+    deviation.
 
     https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Welford's_online_algorithm
 
     Usage:
-        rms = RunningMeanStandardDeviation()
-        rms.update(array)
-        mean = rms.mean
-        std = rms.std
-        normalized_array = rms.normalize(array)
+        rms = RunningMeanStandardDeviation() rms.update(array) mean =
+        rms.mean std = rms.std normalized_array = rms.normalize(array)
 
     Args:
-        epsilon (float): A small constant to avoid divide-by-zero errors when normalizing data.
-        clip (float): A value to clip normalized data to, to prevent outliers from dominating the statistics.
+        epsilon (float): A small constant to avoid divide-by-zero errors
+        when normalizing data. clip (float): A value to clip normalized
+        data to, to prevent outliers from dominating the statistics.
     """
 
     def __init__(self, epsilon=1e-8, clip_threshold: float = np.inf):
@@ -125,7 +144,8 @@ class RunningStatistics:
     @property
     def minimum(self):
         """
-        Returns the minimum value of the data stored in the RunningMeanStandardDeviation object.
+        Returns the minimum value of the data stored in the
+        RunningMeanStandardDeviation object.
         """
 
         assert self.count, "Must have at least one data point to compute minimum"
@@ -135,7 +155,8 @@ class RunningStatistics:
     @property
     def maximum(self):
         """
-        Returns the max value of the data stored in the RunningMeanStandardDeviation object.
+        Returns the max value of the data stored in the
+        RunningMeanStandardDeviation object.
         """
         assert self.count, "Must have at least one data point to compute maximum"
 
@@ -144,7 +165,8 @@ class RunningStatistics:
     @property
     def mean(self):
         """
-        Computes and returns the mean of the data stored in the RunningMeanStandardDeviation object.
+        Computes and returns the mean of the data stored in the
+        RunningMeanStandardDeviation object.
         """
 
         assert self.count, "Must have at least one data point to compute mean"
@@ -154,7 +176,8 @@ class RunningStatistics:
     @property
     def std(self):
         """
-        Computes and returns the standard deviation of the data stored in the RunningMeanStandardDeviation object.
+        Computes and returns the standard deviation of the data stored
+        in the RunningMeanStandardDeviation object.
         """
 
         assert self.count, "Must have at least one data point to compute standard deviation"
@@ -170,7 +193,8 @@ class RunningStatistics:
         Initializes the RunningMeanStandardDeviation object with data.
 
         Args:
-            x (np.ndarray): The data to initialize the RunningMeanStandardDeviation object with.
+            x (np.ndarray): The data to initialize the
+            RunningMeanStandardDeviation object with.
         """
 
         self.shape = array.shape
@@ -188,7 +212,8 @@ class RunningStatistics:
         Updates the RunningMeanStandardDeviation object with new data.
 
         Args:
-            x (np.ndarray): The new data to be added to the RunningMeanStandardDeviation object.
+            x (np.ndarray): The new data to be added to the
+            RunningMeanStandardDeviation object.
         """
 
         if self.shape is None:
@@ -209,7 +234,8 @@ class RunningStatistics:
 
     def normalize(self, array: np.ndarray):
 
-        # Normalize the array using the running mean and standard deviation
+        # Normalize the array using the running mean and standard
+        # deviation
         normalized_array = np.clip(
             (array - self.mean) / (self.std + self.epsilon), -self.clip,
             self.clip)
@@ -219,12 +245,13 @@ class RunningStatistics:
 
 def validate_path(file_path: str | os.PathLike) -> None:
     """
-    Validates a file path by checking if it is a directory and if the parent directory exists.
-    Args:
+    Validates a file path by checking if it is a directory and if the
+    parent directory exists. Args:
         file_path (str | os.PathLike): The file path to be validated.
 
     Raises:
-        ValueError: If the specified path is a directory or if the parent directory does not exist.
+        ValueError: If the specified path is a directory or if the
+        parent directory does not exist.
 
     Returns:
         None
@@ -257,11 +284,13 @@ def tabular_print(entries: List,
     Prints a list of entries in a tabular format.
 
     Args:
-        entries (List): The list of entries to be printed in a tabular format.
-        style (str, optional): The style of the table border. Defaults to 'banner'.
-        align (str, optional): The alignment of the text in the table cells. Defaults to 'left'.
-        width (int, optional): The width of each cell in the table. Defaults to 15.
-        header (bool, optional): Whether the current row should be formatted as a header row. Defaults to False.
+        entries (List): The list of entries to be printed in a tabular
+        format. style (str, optional): The style of the table border.
+        Defaults to 'banner'. align (str, optional): The alignment of
+        the text in the table cells. Defaults to 'left'. width (int,
+        optional): The width of each cell in the table. Defaults to 15.
+        header (bool, optional): Whether the current row should be
+        formatted as a header row. Defaults to False.
 
     Returns:
         None
@@ -279,9 +308,9 @@ def tabular_print(entries: List,
 
 def progress_bar(total: Iterable):
     """
-    Creates a progress bar using the tqdm library.
-    Args:
-        total (Iterable): The total number of iterations for the progress bar.
+    Creates a progress bar using the tqdm library. Args:
+        total (Iterable): The total number of iterations for the
+        progress bar.
 
     Returns:
         tqdm: The progress bar object.
@@ -300,8 +329,8 @@ def sharpe_ratio(net_worth_history: List[float], base=0):
     Calculates the Sharpe ratio of a given net worth history list.
 
     Args:
-        net_worth_hist (List[float]): A list of net worth values.
-        base (int, optional): The risk-free rate. Defaults to 0.
+        net_worth_hist (List[float]): A list of net worth values. base
+        (int, optional): The risk-free rate. Defaults to 0.
 
     Returns:
         float: The calculated Sharpe ratio value.
