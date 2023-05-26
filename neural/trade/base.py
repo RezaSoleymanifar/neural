@@ -74,6 +74,7 @@ class AbstractTrader(ABC):
 
         self._data_feeder = None
         self._trade_market_env = None
+        self._model = None
 
         return None
 
@@ -153,29 +154,18 @@ class AbstractTrader(ABC):
 
     def place_orders(self, actions: np.ndarray, *args, **kwargs):
         """
-        
         """
-        for action, asset, price, quantity in zip(actions, self.assets,
-                                                  self.asset_prices,
-                                                  self.asset_quantities):
-            new_quantity = action / price
-
-            if not asset.fractionable:
-                new_quantity = int(new_quantity)
-            
-            if not asset.shortable:
-                if quantity + new_quantity < 0:
-                    new_quantity = quantity
-
-            if (quantity > 0 and quantity + new_quantity < 0 or
-                    quantity < 0 and quantity + new_quantity > 0):
-                new_quantity = quantity
-
-            if quantity == 0 and new_quantity < 0:
-                new_quantity = int(new_quantity)
-            
-            self.trade_client.place_order(*args, **kwargs)
-            
+        raise NotImplementedError
+    
+    @property
+    def model(self):
+        """
+        Returns the model used by the agent to generate actions.
+        """
+        if self._model is None:
+            self._model = self.agent.model
+        return self._model
+    
     def trade(self):
         """
         Starts the trading process by creating a trading environment and
@@ -186,7 +176,6 @@ class AbstractTrader(ABC):
             subclass.
         """
 
-        self.trade_market_env = self._get_trade_market_env(self)
         observation = self.trade_market_env.reset()
 
         while True:
