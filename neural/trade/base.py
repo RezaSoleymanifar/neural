@@ -2,11 +2,11 @@
 base.py
 """
 from abc import ABC
-
+from typing import List
 import numpy as np
 
 from neural.client.alpaca import AbstractTradeClient, AbstractDataClient
-from neural.data.base import AsyncDataFeeder
+from neural.data.base import AsyncDataFeeder, AlpacaAsset
 from neural.env.base import TradeMarketEnv
 from neural.meta.agent import Agent
 
@@ -120,6 +120,18 @@ class AbstractTrader(ABC):
         return self.trade_market_env.asset_prices
     
     @property
+    def assets(self) -> List[AlpacaAsset]:
+        """
+        A numpy array of assets held by the trader.
+
+        Returns:
+        --------
+            assets (np.ndarray[str]):
+                The assets held by the trader.
+        """
+        return self.trade_market_env.assets
+    
+    @property
     def data_feeder(self) -> AsyncDataFeeder:
         """
         The data feeder used to stream data from the data client.
@@ -146,10 +158,12 @@ class AbstractTrader(ABC):
     
     def place_orders(self, actions: np.ndarray, *args, **kwargs):
 
-        asset_prices = self.trade_market_env.asset_prices
-        assets = self.agent.dataset_metadata.assets
-        for action, asset, price in zip(actions, assets, asset_prices):
-            quantity = action / price
+        for action, asset, price, quantity in zip(actions, self.assets, self.asset_prices, self.asset_quantities):
+            new_quantity = action / price
+
+            if not asset.fractionable:
+                new_quantity = int(new_quantity)
+            
 
     def trade(self):
         """
