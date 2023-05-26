@@ -14,8 +14,11 @@ def validate_observation(
         observation: np.ndarray | Dict[str, np.ndarray]) -> None:
     """
     This is a helper function that is shared between the observation
-    sanity checkers. It performs a basic check to see if the observation
-    is a known observation type accepted by this library.
+    type checkers. It performs a basic check to see if the observation
+    is a known observation type accepted by this library. Aceepted
+    observation types are:
+        - np.ndarray
+        - Dict[str, np.ndarray] (all values must be np.ndarray)
 
     Parameters
     ----------
