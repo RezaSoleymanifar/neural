@@ -176,7 +176,7 @@ class AbstractTrainer(ABC):
 
         if not 0 < train_ratio <= 1:
             raise ValueError("train_ratio must be in (0, 1]")
-        
+
         if not n_envs >= 1:
             raise ValueError("n_envs must be >= 1")
 
@@ -234,7 +234,7 @@ class AbstractTrainer(ABC):
             data_feeder = self.test_data_feeder
 
         else:
-            raise ValueError("Caller must be either train or test")
+            raise ValueError('Caller must be either "train" or "test".')
 
         n_assets = self.agent.dataset_metadata.n_assets
         initial_cash = lambda: np.random.uniform(
