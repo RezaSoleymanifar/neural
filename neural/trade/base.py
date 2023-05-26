@@ -92,46 +92,15 @@ class AbstractTrader(ABC):
         a
         """
         return self.trade_client.asset_quantities
-    
-    
-    def apply_rules(self, *args, **kwargs):
-        """
-        Applies trading rules to the trades. Override this method to
-        apply custom rules before placing orders. This allows rule based
-        trading to complement the model based trading. For example, a
-        rule could be to only buy a stock if it has a positive sentiment
-        score. Or execute a techinical analysis strategy whenever a
-        condition is met to override the normal behavior of the model.
-
-        Raises:
-            NotImplementedError: This method must be implemented by a
-            subclass.
-        """
-
-        raise NotImplementedError
 
     def place_orders(self, actions: np.ndarray, *args, **kwargs):
-        """
-        Takes actions from the model and places relevant orders.
 
-        Args:
-            actions (np.ndarray): A 2D numpy array of actions generated
-            by the model.
+        asset_prices = self.trade_market_env.unwrapped.asset_prices
+        assets = self.agent.dataset_metadata.assets
+        for action, asset, price in zip(actions, assets, asset_prices):
+            quantity = action / price
 
-        Raises:
-            NotImplementedError: This method must be implemented by a
-            subclass.
-        """
-        # Get the list of symbols from the dataset metadata
-
-        symbols = self.agent.dataset_metadata.assets
-
-        # Loop over the symbols and actions and place orders for each
-        # symbol
-        for symbol, quantity in zip(symbols, actions):
-            self.trade_client.place_order(symbol, actions, *args, **kwargs)
-
-    def _get_trade_market_env(self, trader):
+    def _get_trade_market_env(self):
         stream_metadata = self.agent.dataset_metadata.stream
         data_feeder = AsyncDataFeeder(stream_metadata, self.data_client)
         self._get_data_feeder()
