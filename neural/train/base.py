@@ -1,3 +1,6 @@
+"""
+base.py
+"""
 import os
 import inspect
 import copy
@@ -16,7 +19,9 @@ from gym.vector import AsyncVectorEnv, SyncVectorEnv
 
 
 class AbstractTrainer(ABC):
-
+    """
+    
+    """
     def __init__(
         self,
         agent: Agent,
@@ -75,7 +80,7 @@ class AbstractTrainer(ABC):
         else:
             self.train_data_feeder = data_feeders.pop()
             self.test_data_feeder = None
-        
+
         return None
 
     def _get_piped_env(self) -> TrainMarketEnv:
@@ -135,7 +140,8 @@ class AbstractTrainer(ABC):
             copy.deepcopy(self.agent.pipe) for _ in range(self.n_envs)
         ] if self.env_pipes is None else self.env_pipes
         env_callables = [
-            lambda: pipe.pipe(env) for pipe, env in zip(self.env_pipes, envs)
+            lambda pipe=pipe, env=env: pipe.pipe(env)
+            for pipe, env in zip(self.env_pipes, envs)
         ]
 
         if self.async_envs:
