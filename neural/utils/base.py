@@ -476,14 +476,15 @@ def tabular_print(entries: List,
     return row
 
 
-def progress_bar(total: Iterable):
+def progress_bar(iterable: Iterable):
     """
     Creates a progress bar using the tqdm library.
 
     Args:
     -----
-        total (Iterable):
-            The total number of iterations to be performed.
+        iterable (Iterable):
+            The iterable to create the progress bar for. Progress bar is
+            shown based off of the length of the iterable.
 
     Returns:
     --------
@@ -491,11 +492,11 @@ def progress_bar(total: Iterable):
     """
 
     bar_format = '{l_bar}{bar}| {n_fmt}/{total_fmt} | {elapsed}<{remaining}'
-    bar = tqdm(total=total, bar_format=bar_format)
+    bar = tqdm(total=iterable, bar_format=bar_format)
     return bar
 
 
-#============================Financial==============================
+#=================================Financial====================================
 
 
 def sharpe_ratio(net_worth_history: List[float], base=0):
@@ -503,15 +504,20 @@ def sharpe_ratio(net_worth_history: List[float], base=0):
     Calculates the Sharpe ratio of a given net worth history list.
 
     Args:
-        net_worth_hist (List[float]): A list of net worth values. base
-        (int, optional): The risk-free rate. Defaults to 0.
-
+    -----
+        net_worth_history (List[float]):
+            The net worth history to calculate the Sharpe ratio for.
+        base (float, optional):
+            The base value to calculate the Sharpe ratio with. Defaults
+            to 0.
+        
     Returns:
-        float: The calculated Sharpe ratio value.
+    --------
+        float: The Sharpe ratio of the net worth history.
     """
 
     hist = pd.Series(net_worth_history)
     returns = hist.pct_change().dropna()
-    val = (returns.mean() - base) / returns.std()
+    sharpe_ratio = (returns.mean() - base) / returns.std()
 
-    return val
+    return sharpe_ratio
