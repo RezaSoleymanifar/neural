@@ -115,12 +115,12 @@ def observation(wrapper_class: Type[Wrapper]) -> Type[Wrapper]:
         """
         This wrapper allows an observation wrapper to have input and
         output self checks by subclassing from it and overriding the
-        observation method. The reulst is a new observation wrapper that
+        observation method. The result is a new observation wrapper that
         checks if the observation of the wrapped env is in its expected
-        observation space, and also check if the observation returned by
+        observation space, and also check if the observation produced by
         the wrapped env is in its defined observation space.
 
-        Parameters
+        Args
         ----------
         env : gym.Env
             The environment being wrapped.
@@ -136,10 +136,13 @@ def observation(wrapper_class: Type[Wrapper]) -> Type[Wrapper]:
     
         Methods
         -------
-        __init__(self, env: Env, *args, **kwargs) -> None:
-            Initializes the ObservationSpaceCheckerWrapper instance.
         _validate_expected_observation_type(self) -> None:
             Validates the expected observation type of the wrapper.
+            Makes sure that the expected observation type is a list of
+            valid types. Valid types are:
+                - np.ndarray
+                - Dict[str, np.ndarray] (all values must be np.ndarray) 
+                - 
         _validate_observation_in_expected_observation_type(self, 
             observation: Union[np.ndarray[float], Dict[str,
             np.ndarray[float]]] ) -> None: Validates if the observation
