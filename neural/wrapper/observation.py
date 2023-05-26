@@ -198,7 +198,7 @@ def observation(wrapper_class: Type[Wrapper]) -> Type[Wrapper]:
 
             return None
 
-        def _validate_expected_observation_type(self):
+        def _validate_expected_observation_type(self) -> None:
             """
             Expected observation type is also the type of the
             observation that the enclosed environment should return.
@@ -369,7 +369,7 @@ def buffer(wrapper_class: Type[Wrapper]) -> Type[Wrapper]:
     -------
     type[gym.Wrapper]
         A new wrapper class that augments the input wrapper class by
-        creating a pointer to any observation buffer found in the
+        creating a pointer to the first observation buffer found in the
         enclosed wrappers, if applicable.
 
     Raises
