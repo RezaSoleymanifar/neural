@@ -128,9 +128,12 @@ class AbstractTrainer(ABC):
     Notes:
     -----
     Note that if n_envs > 1 then a deep copy of pipe is created for each
-    environment. In this case if a final state is to be saved, then
-    train/test on a single environment with preferred initial
-    conditions, to tune the state of pipe to target initial cash/assets.
+    environment. Thus agent's pipe attribute is not used. In this case
+    perform a final train/test on a single environment with target
+    initial conditions. In this case the agents' pipe is used and it
+    will be tuned to the state of pipe to target trade
+    account initial cash/assets. Training on multiple environments with
+    random initial conditions can help the model generalize better.
     """
     def __init__(
         self,
