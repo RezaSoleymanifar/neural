@@ -17,7 +17,16 @@ class AlpacaTrader(AbstractTrader):
     trading client. This class also implements the check_constraints
     method to check if the trader meets the constraints to trade. The
     constraints are:
-    
+        - The trader must have at least 120% of the pattern day trader
+            minimum equity if delta = 0.20.
+        - The trader must have a positive excess margin.
+
+    Notes
+    -----
+    If manual liquidation of assets is not performed, the trader may
+    receive a margin call. If trader violates the pattern day trader
+    equity requirement, the trader will be restricted from day trading
+    for 90 days. Set delta high enough to avoid this.
     """
 
     def __init__(self, trade_client: AlpacaTradeClient, agent: Agent) -> None:

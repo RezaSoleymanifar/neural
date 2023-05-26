@@ -36,10 +36,12 @@ class AbstractTrader(ABC):
             An instance of the data client to stream data.
         agent (Agent):
             An instance of the agent to perform decision making.
-        data_feeder (AsyncDataFeeder):
+        _data_feeder (AsyncDataFeeder):
             An instance of the data feeder to stream data.
-        market_env (TradeMarketEnv):
+        _trade_market_env (TradeMarketEnv):
             An instance of the trading environment.
+        _model (nn.Module):
+            The PyTorch neural network model used by the agent.
     
     Properties:
     -----------
@@ -52,6 +54,24 @@ class AbstractTrader(ABC):
             quantities can be positive or negative. Negative quantities
             indicate that the trader has shorted the asset, namely the
             trader owes the asset to the broker.
+        asset_prices (np.ndarray[float]):
+            The current price of each asset held by the trader.
+        assets (np.ndarray[str]):
+            The assets held by the trader.
+        data_feeder (AsyncDataFeeder):
+            An instance of the data feeder to stream data.
+        trade_market_env (TradeMarketEnv):
+            An instance of the trading environment.
+        model (nn.Module):
+            The PyTorch neural network model used by the agent.
+    
+    Methods:
+    --------
+        check_connection():
+            Check the connection to the service. If the connection is
+            successful, the method should return True, otherwise False.
+            The Trader class will use this method to check the
+            connection before execution of trading process.
     """
 
     def __init__(self, trade_client: AbstractTradeClient,
