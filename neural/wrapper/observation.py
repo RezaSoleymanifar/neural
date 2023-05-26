@@ -155,15 +155,15 @@ def observation(wrapper_class: Type[Wrapper]) -> Type[Wrapper]:
         observation(self, observation: Union[np.ndarray[float],
         Dict[str, np.ndarray[float]]]
             ) -> Union[np.ndarray[float], Dict[str, np.ndarray[float]]]:
-            Checks if the observation is in the observation space before
-            returning it from the observation method of the base class.
+            Performs both input/output observation checks and returns
+            the observation.
         """
 
         def __init__(self, env: Env, *args, **kwargs) -> None:
             """
             Initializes the ObservationSpaceCheckerWrapper instance.
 
-            Parameters
+            Args
             ----------
             env : Env
                 The environment being wrapped.
@@ -176,18 +176,19 @@ def observation(wrapper_class: Type[Wrapper]) -> Type[Wrapper]:
             ------
             IncompatibleWrapperError
                 If the observation is not in the observation space.
+
+            Notes:
+            ------
+            Before calling the super constructor, this 
             """
 
-            # as a byproduct of following and due to inheritance from
-            # gym.ObservationWrapper existence of self.observation_space
-            # is guaranteed
             if not hasattr(env, 'observation_space') or not isinstance(
                     env.observation_space, Space):
 
                 raise IncompatibleWrapperError(
-                    f'Wrapper {type(self).__name__} requires a non None observation '
-                    f'space of type {Space} to be defined in the enclosed environment '
-                    f'{type(env).__name__}.')
+                    f'Wrapper {type(self).__name__} requires a non None '
+                    f'observation space of type {Space} to be defined in '
+                    f'the enclosed environment {type(env).__name__}.')
 
             super().__init__(env, *args, **kwargs)
 
@@ -202,7 +203,8 @@ def observation(wrapper_class: Type[Wrapper]) -> Type[Wrapper]:
             Validates the expected observation type of the wrapper.
             ACCEPTED_OBSERVATION_TYPES constant is a list of valid
             observation types that can be used to define the expected
-            observation type of a wrapper.
+            observation type of a wrapper. Expected observation type is
+            Space or subset list of [np.ndarray, dict]
 
             Raises
             ------
@@ -219,8 +221,7 @@ def observation(wrapper_class: Type[Wrapper]) -> Type[Wrapper]:
                     f'defined before applying {observation} decorator.')
 
             valid = False
-            # expected observation type is Space or subset list of
-            # [np.ndarray, dict]
+        
             if isinstance(self.expected_observation_type, Space):
                 valid = True
 
@@ -232,9 +233,10 @@ def observation(wrapper_class: Type[Wrapper]) -> Type[Wrapper]:
             if not valid:
 
                 raise IncompatibleWrapperError(
-                    f'Wrapper {type(self).__name__} is defining an exptected observation type '
-                    f'of type {type(self.expected_observation_type)}, which is not in the accepted '
-                    'observation types {ACCEPTED_OBSERVATION_TYPES}.')
+                    f'Wrapper {type(self).__name__} is defining an exptected '
+                    f'observation type of type {type(self.expected_observation_type)} '
+                    f', which is not in the accepted observation types '
+                    f' {ACCEPTED_OBSERVATION_TYPES}.')
 
         def _validate_observation_in_expected_observation_type(
             self, observation: np.ndarray[float] | Dict[str, np.ndarray[float]]
