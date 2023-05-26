@@ -112,6 +112,16 @@ class AlpacaAsset(AbstractAsset):
 
     Attributes:
     ----------
+        symbol: str
+            A string representing the symbol or ticker of the asset.
+        asset_type: AssetType
+            An instance of the `AssetType` enum class representing the
+            type of asset.
+        fractionable: bool
+            A boolean indicating whether the asset can be traded in
+            fractional shares. This is useful for trading for example
+            cryptocurrencies or stocks that are expensive to buy as a
+            whole share.
         marginable: bool
             A boolean indicating whether the asset can be bought on
             margin (i.e., borrowed funds). If an asset is not

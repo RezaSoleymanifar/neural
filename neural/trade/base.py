@@ -35,6 +35,18 @@ class AbstractTrader(ABC):
             An instance of the data client to stream data.
         agent (Agent):
             An instance of the agent to perform decision making.
+    
+    Properties:
+    -----------
+        cash (float):
+            Cash available in the trading account. Cash can be positive
+            or negative depending on the amount of cash borrowed from
+            the broker.
+        asset_quantities (np.ndarray[float]):
+            The current quantity of each asset held by the trader. Asset
+            quantities can be positive or negative. Negative quantities
+            indicate that the trader has shorted the asset, namely the
+            trader owes the asset to the broker.
     """
 
     def __init__(
@@ -55,17 +67,6 @@ class AbstractTrader(ABC):
                 An instance of the data client to stream data.
             agent (Agent):
                 An instance of the agent to perform decision making.
-        
-        Attributes:
-        ----------
-            trade_client (AbstractTradeClient):
-                An instance of the trading client to connect to the
-                trading platform.
-            data_client (AbstractDataClient):
-                An instance of the data client to stream data.
-            agent (Agent):
-                An instance of the agent to perform decision making.
-                
         """
 
         self.trade_client = trade_client
@@ -75,11 +76,21 @@ class AbstractTrader(ABC):
         return None
 
     @property
-    def cash(self):
+    def cash(self) -> float:
+        """
+        Cash available in the trading account. Cash can be positive or
+        negative depending on the amount of cash borrowed from the
+        broker.
+        """
         return self.trade_client.cash
     
     @property
-    def asset_quantities(self):
+    def asset_quantities(self) -> np.ndarray[float]:
+        """
+        A numpy array of current quantity of each asset held by the
+        trader. Asset quantities can be positive or negative. Negative
+        a
+        """
         return self.trade_client.asset_quantities
     
     
@@ -98,15 +109,6 @@ class AbstractTrader(ABC):
         """
 
         raise NotImplementedError
-
-    def integer_shorts(self, *args, **kwargs):
-        """
-        Considers constraint on shorting stocks that quantity of stocks
-        to be shorted must be an integer always.
-        TODO: experiment with scenario that actions leads to shortting.
-        How the residual quantity is handled in that case?
-        """
-        raise notImplementedError
 
     def place_orders(self, actions: np.ndarray, *args, **kwargs):
         """
