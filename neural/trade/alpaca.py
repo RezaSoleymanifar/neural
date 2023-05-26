@@ -3,7 +3,7 @@ alpaca.py
 """
 import numpy as np
 
-from neural.client.alpaca import AlpacaTradeClient
+from neural.client.alpaca import AlpacaTradeClient, AlpacaDataClient
 from neural.common.exceptions import TradeConstraintViolationError
 from neural.common.constants import PATTERN_DAY_TRADER_MINIMUM_EQUITY
 from neural.meta.agent import Agent
@@ -42,10 +42,14 @@ class AlpacaTrader(AbstractTrader):
     for 90 days. Set delta high enough to avoid this.
     """
 
-    def __init__(self, trade_client: AlpacaTradeClient, agent: Agent) -> None:
+    def __init__(self,
+                 trade_client: AlpacaTradeClient,
+                 data_client: AlpacaDataClient,
+                 agent: Agent) -> None:
 
-        super().__init__(
-            trade_client = trade_client, data_client=data_client, agent=agent)
+        super().__init__(trade_client=trade_client,
+                         data_client=data_client,
+                         agent=agent)
 
     def check_constraints(self, delta=0.2):
 
