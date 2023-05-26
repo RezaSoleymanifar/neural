@@ -379,7 +379,7 @@ def buffer(wrapper_class: Type[Wrapper]) -> Type[Wrapper]:
 
     Example
     -------
-
+    >>> from neural.wrapper.observation import buffer
     >>> @buffer
     >>> class CustomBufferDependentWrapper(Wrapper):
     ...     def __init__(self, *args, **kwargs):
@@ -391,7 +391,7 @@ def buffer(wrapper_class: Type[Wrapper]) -> Type[Wrapper]:
 
     if not issubclass(wrapper_class, Wrapper):
         raise TypeError(
-            f"{wrapper_class.__name__} must be a subclass of {Wrapper}")
+            f"{type(wrapper_class).__name__} must be a subclass of {Wrapper}")
 
     class ObservationBufferDependentWrapper(wrapper_class):
         """
@@ -409,8 +409,6 @@ def buffer(wrapper_class: Type[Wrapper]) -> Type[Wrapper]:
 
         Methods
         -------
-        __init__(self, env: Env, *args, **kwargs) -> None
-            Initializes the ObservationBufferDependentWrapper instance.
         find_observation_buffer_wrapper(self, env: Env) ->
         ObservationBufferWrapper
             Searches recursively for an observation buffer wrapper in
