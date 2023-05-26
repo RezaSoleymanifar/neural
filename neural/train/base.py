@@ -75,8 +75,10 @@ class AbstractTrainer(ABC):
         else:
             self.train_data_feeder = data_feeders.pop()
             self.test_data_feeder = None
+        
+        return None
 
-    def _get_piped_env(self, data_feeder: StaticDataFeeder) -> TrainMarketEnv:
+    def _get_piped_env(self) -> TrainMarketEnv:
         """
         Deep copies of agent pipe is create when n_envs > 1. This is to
         avoid complications arised during parallel training and possibly
@@ -100,12 +102,12 @@ class AbstractTrainer(ABC):
         else:
             raise ValueError("Caller must be either train or test")
 
-        n_assets = 
+        n_assets = self.agent.dataset_metadata.n_assets
         initial_cash = lambda: np.random.uniform(
             *self.initial_cash_range
         ) if self.initial_cash_range is not None else lambda: None
         initial_assets = lambda: np.random.uniform(
-            *self.initial_assets_range, size=len(n_symbols, )
+            *self.initial_assets_range, size=len(n_assets, )
         ) if self.initial_assets_range is not None else lambda: None
 
         if self.n_envs == 1:
@@ -122,8 +124,6 @@ class AbstractTrainer(ABC):
             data_feeders = data_feeder.split(n=self.n_envs)
         else:
             data_feeders = [data_feeder] * self.n_envs
-
-        n_symbols = len(self.agent.dataset_metadata.assets)
 
         envs = [
             TrainMarketEnv(data_feeder=data_feeder,
