@@ -6,17 +6,6 @@ for creating trading calendars for different asset classes. The trading
 calendars are based on pandas_market_calendars. The module also contains
 a class for creating custom calendars that are not supported by
 pandas_market_calendars.
-
-Example:
----------
-    >>> from neural.data.enums import CalendarType
-    >>> from neural.utils.time import Calendar
-
-    >>> calendar = Calendar()
-    >>> schedule = calendar.schedule(
-    ... calendar_type=CalendarType.NASDAQ,
-    ... start_date='2022-01-01',
-    ... end_date='2022-01-10')
 """
 
 from __future__ import annotations
