@@ -20,7 +20,21 @@ from gym.vector import AsyncVectorEnv, SyncVectorEnv
 
 class AbstractTrainer(ABC):
     """
+    This is an abstract class for training agents. It is designed to
+    proivde common functionalities for training agents. The features 
+    provided by this class are:
+        - Train/test split
+        - Training on multiple environments
+        - Random initializaiton of environments
+        - Splitting environments into exclusive temporal groups
     
+    Args:
+        agent (Agent): 
+            Agent to be trained.
+        file_path (os.PathLike): 
+            Path to the HDF5 file.
+        dataset_name (str):
+            Name of the dataset in the HDF5 file.
     """
     def __init__(
         self,
