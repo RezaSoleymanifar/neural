@@ -50,13 +50,48 @@ class AbstractTrainer(ABC):
         async_envs (bool):
             If True, environments are run asynchronously, i.e. multiple
             environments are run in parallel on CPU cores. If False,
-            environments are run synchronously, i.e. one at a time. If
-            False, environments are run synchronously.
+            environments are run synchronously, i.e. one at a time.
         exclusive_envs (bool):
             If True, environments are split into exclusive temporal
-            groups. This means that each environment is initialized
-            with a different random seed and the data is split into
-            exclusive temporal groups. This is useful for training
+            groups, i.e. if time horizon is from 0 to 100, and n_envs =
+            5 then for each interval [0, 20), [20, 40), [40, 60), [60,
+            80), [80, 100) a new environment is created. If False, then
+            n_envs copies of the same environment are created, with
+            entire time horizon.
+    
+    Attributes:
+    ----------
+        agent (Agent):
+            Agent to be trained.
+        file_path (os.PathLike):
+            Path to the HDF5 file.
+        dataset_name (str):
+            Name of the dataset in the HDF5 file. If None, all datasets
+            are joined together.
+        n_chunks (int):
+            Number of chunks to split the dataset into, per environment
+            for loading data. Used for memory management. If n_chunks =
+            1 then entire dataset is loaded into memory.    
+        train_ratio (float):
+            Ratio of the dataset to be used for training. Must be in (0,
+            1].
+        n_envs (int):
+            Number of environments to train on. If more than one then
+            multiple environments are used for training. Ensure n_envs
+            does not exceed CPU core count.
+        async_envs (bool):
+            If True, environments are run asynchronously, i.e. multiple
+            environments are run in parallel on CPU cores. If False,
+            environments are run synchronously, i.e. one at a time.
+        exclusive_envs (bool):
+            If True, environments are split into exclusive temporal
+            groups, i.e. if time horizon is from 0 to 100, and n_envs = 
+            5 then for each interval [0, 20), [20, 40), [40, 60), [60,
+            80), [80, 100) a new environment is created. If False, then
+            n_envs copies of the same environment are created, with
+            entire time horizon.
+        train_market_env (TrainMarketEnv):
+            Training environment.
         
     """
     def __init__(
