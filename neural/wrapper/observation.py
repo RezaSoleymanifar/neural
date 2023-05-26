@@ -391,7 +391,7 @@ def buffer(wrapper_class: Type[Wrapper]) -> Type[Wrapper]:
 
     if not issubclass(wrapper_class, Wrapper):
         raise TypeError(
-            f"{type(wrapper_class).__name__} must be a subclass of {Wrapper}")
+            f"{wrapper_class.__name__} must be a subclass of {Wrapper}")
 
     class ObservationBufferDependentWrapper(wrapper_class):
         """
@@ -399,6 +399,10 @@ def buffer(wrapper_class: Type[Wrapper]) -> Type[Wrapper]:
         recursively through enclosed wrappers for an observation buffer
         and creates a pointer to it. If search fails, an error is
         raised.
+
+        Args
+        ----
+        env (gym.Env): The environment being wrapped.
 
         Attributes
         ----------
@@ -413,10 +417,6 @@ def buffer(wrapper_class: Type[Wrapper]) -> Type[Wrapper]:
         ObservationBufferWrapper
             Searches recursively for an observation buffer wrapper in
             enclosed wrappers.
-
-        Args
-        ----
-        env (gym.Env): The environment being wrapped.
 
         Raises
         ------
@@ -473,8 +473,8 @@ def buffer(wrapper_class: Type[Wrapper]) -> Type[Wrapper]:
 
             else:
                 raise IncompatibleWrapperError(
-                    f'{wrapper_class.__name__} requires an observation buffer in one of '
-                    'the enclosed wrappers.')
+                    f'{wrapper_class.__name__} requires an observation '
+                    'buffer in one of the enclosed wrappers.')
 
     return ObservationBufferDependentWrapper
 
