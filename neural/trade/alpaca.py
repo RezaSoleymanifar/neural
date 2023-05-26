@@ -7,7 +7,7 @@ from neural.client.alpaca import AlpacaTradeClient
 from neural.common.exceptions import TradeConstraintViolationError
 from neural.common.constants import PATTERN_DAY_TRADER_MINIMUM_EQUITY
 from neural.meta.agent import Agent
-from neural.trade.base import AbstractTrader, AbstractDataClient
+from neural.trade.base import AbstractTrader
 
 
 class AlpacaTrader(AbstractTrader):
