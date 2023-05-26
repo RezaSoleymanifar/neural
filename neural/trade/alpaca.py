@@ -10,23 +10,16 @@ from neural.meta.agent import Agent
 from neural.trade.base import AbstractTrader, AbstractDataClient
 
 
-
 class AlpacaTraderFactory(AbstractTrader):
 
-    def __init__(self,
-        trade_client: AlpacaTradeClient,
-        data_client: AbstractDataClient,
-        agent: Agent) -> None:
+    def __init__(self, trade_client: AlpacaTradeClient,
+                 data_client: AbstractDataClient, agent: Agent) -> None:
 
-
-        super().__init__(
-            trade_client = trade_client,
-            data_client= data_client,
-            agent = agent)
-
+        super().__init__(trade_client=trade_client,
+                         data_client=data_client,
+                         agent=agent)
 
     def check_trade_constraints(self, *args, **kwargs):
-        
         """
         The PDT rule is a regulation enforced by the U.S. Securities and
         Exchange Commission (SEC) that applies to traders who execute
@@ -67,9 +60,9 @@ class AlpacaTraderFactory(AbstractTrader):
         patttern_day_trader = self.client.account.pattern_day_trader
         net_worth = self.net_worth
 
-        pattern_day_trader_constraint = (
-            True if not patttern_day_trader else net_worth >
-            PATTERN_DAY_TRADER_MINIMUM_EQUITY)
+        pattern_day_trader_constraint = (True if not patttern_day_trader else
+                                         net_worth
+                                         > PATTERN_DAY_TRADER_MINIMUM_EQUITY)
 
         if not pattern_day_trader_constraint:
             raise TradeConstraintViolationError(
@@ -81,15 +74,12 @@ class AlpacaTraderFactory(AbstractTrader):
         margin_constraint = margin * maintenance_margin <= self.porftfolio_value
 
         if not margin_constraint:
-            raise TradeConstraintViolationError(
-                'Margin constraint violated.')
+            raise TradeConstraintViolationError('Margin constraint violated.')
 
         return None
 
 
-
 class AlpacaTrader(AlpacaTraderFactory):
-
     """
     A custom implementation of the AlpacaTraderTemplate that allows for
     custom order placing and rule application.
@@ -105,35 +95,34 @@ class AlpacaTrader(AlpacaTraderFactory):
         decision making.
     """
 
-    def __init__(self, 
-        trade_client: AlpacaTradeClient, 
-        agent: Agent) -> None:
+    def __init__(self, trade_client: AlpacaTradeClient, agent: Agent) -> None:
 
-        super().__init__(
-            trade_client,
-            agent=agent)
-    
-    
+        super().__init__(trade_client, agent=agent)
 
-    def place_orders(self, actions : np.ndarray[float], *args, **kwargs):
+    def place_orders(self,
+                     actions: np.ndarray[float],
+                     quantity_decimals: int = 5,
+                     *args,
+                     **kwargs):
 
         for action, asset, price, quantity in zip(actions, self.assets,
                                                   self.asset_prices,
                                                   self.asset_quantities):
-            new_quantity = action / price
+            new_quantity = round(action / price, quantity_decimals)
 
             if not asset.fractionable:
                 new_quantity = int(new_quantity)
-            
             if not asset.shortable:
                 if quantity + new_quantity < 0:
                     new_quantity = quantity
-
-            if (quantity > 0 and quantity + new_quantity < 0 or
-                    quantity < 0 and quantity + new_quantity > 0):
+            if (quantity > 0 and quantity + new_quantity < 0
+                    or quantity < 0 and quantity + new_quantity > 0):
                 new_quantity = quantity
-
             if quantity == 0 and new_quantity < 0:
                 new_quantity = int(new_quantity)
-            
-            return new_quantity
+
+            self.trade_client.place_order(
+                asset=asset,
+                quantity=new_quantity,
+                time_in_force='ioc',
+            )
