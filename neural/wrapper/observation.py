@@ -142,11 +142,12 @@ def observation(wrapper_class: Type[Wrapper]) -> Type[Wrapper]:
             valid types. Valid types are:
                 - np.ndarray
                 - Dict[str, np.ndarray] (all values must be np.ndarray) 
-                - 
+                - gym.spaces.Space
         _validate_observation_in_expected_observation_type(self, 
             observation: Union[np.ndarray[float], Dict[str,
-            np.ndarray[float]]] ) -> None: Validates if the observation
-            is in the expected observation type.
+            np.ndarray[float]]] ) -> None: 
+                Validates if the observation is in the expected
+                observation type.
         _validate_observation_in_observation_space(self,
             observation: Union[np.ndarray[float], Dict[str,
             np.ndarray[float]]]) -> None: Validates if the observation
