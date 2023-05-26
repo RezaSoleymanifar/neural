@@ -136,20 +136,56 @@ class RunningStatistics:
         when normalizing data. clip (float): A value to clip normalized
         data to, to prevent outliers from dominating the statistics.
 
+    Attributes:
+    -----------
+        epsilon (float): 
+            A small constant to avoid divide-by-zero errors
+            when normalizing data.
+        clip_threshold (float):
+            A value to clip normalized data to, to prevent outliers
+            from dominating the statistics.
+        shape (tuple):
+            The shape of the data.
+        _minimum (float):
+            The minimum value of the data.
+        _maximum (float):
+            The maximum value of the data.
+        _mean (float):
+            The mean of the data.   
+        _std (float):
+            The standard deviation of the data.
+        M2 (float):
+            The sum of the squared differences from the mean.
+        count (int):
+            The number of data points seen so far.
+    
+    Properties:
+    -----------
+        minimum (float):
+            Returns the minimum value of the data stored in the
+            RunningMeanStandardDeviation object.
+        maximum (float):
+            Returns the maximum value of the data stored in the
+            RunningMeanStandardDeviation object.    
+        mean (float):
+            Returns the mean of the data stored in the
+            RunningMeanStandardDeviation object.    
+        std (float):
+            Returns the standard deviation of the data stored in the
+            RunningMeanStandardDeviation object.
+        
+
     Methods:
     --------
+        initialize_statistics:
+            Initializes the running statistics with the first data
+            point.
         update:
             Updates the running mean and standard deviation with the
             new data.
         normalize:
             Normalizes the data to a mean of 0 and standard deviation
-
-    Attributes:
-    -----------
-        mean (float): 
-            The running mean of the data.
-        std (float): 
-            The running standard deviation of the data.   
+ 
          
     Raises:
     -------
@@ -188,11 +224,13 @@ class RunningStatistics:
                 If the epsilon value is less than or equal to 0.
         """
 
-        assert clip_threshold > 0, "Clip threshold must be greater than 0"
-        assert epsilon > 0, "Epsilon value must be greater than 0"
+        if clip_threshold > 0:
+            raise AssertionError("clip_threshold must be greater than 0")   
+        if epsilon > 0:
+            raise AssertionError("epsilon value must be greater than 0")    
 
         self.epsilon = epsilon
-        self.clip = clip_threshold
+        self.clip_threshold = clip_threshold
 
         self.shape = None
         self._minimum = None
@@ -205,10 +243,20 @@ class RunningStatistics:
         return None
 
     @property
-    def minimum(self):
+    def minimum(self) -> float:
         """
         Returns the minimum value of the data stored in the
         RunningMeanStandardDeviation object.
+
+        Raises:
+        -------
+            AssertionError:
+                If there are no data points to compute the minimum.
+        
+        Returns:
+        --------
+            float: The minimum value of the data.
+            
         """
 
         assert self.count, "Must have at least one data point to compute minimum"
@@ -300,8 +348,8 @@ class RunningStatistics:
         # Normalize the array using the running mean and standard
         # deviation
         normalized_array = np.clip(
-            (array - self.mean) / (self.std + self.epsilon), -self.clip,
-            self.clip)
+            (array - self.mean) / (self.std + self.epsilon), -self.clip_threshold,
+            self.clip_threshold)
 
         return normalized_array
 
