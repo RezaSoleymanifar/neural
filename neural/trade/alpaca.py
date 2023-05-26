@@ -10,43 +10,33 @@ from neural.meta.agent import Agent
 from neural.trade.base import AbstractTrader, AbstractDataClient
 
 
-class AlpacaTraderFactory(AbstractTrader):
-
-    def __init__(self, trade_client: AlpacaTradeClient,
-                 data_client: AbstractDataClient, agent: Agent) -> None:
-
-        super().__init__(trade_client=trade_client,
-                         data_client=data_client,
-                         agent=agent)
-
-
-class AlpacaTrader(AlpacaTraderFactory):
+class AlpacaTrader(AbstractTrader):
     """
-    A custom implementation of the AlpacaTraderTemplate that allows for
-    custom order placing and rule application.
-
-    Args:
-        client (AlpacaMetaClient): An instance of the Alpaca client.
-        agent (Agent): An instance of the agent to perform decision
-        making.
-
-    Attributes:
-        trade_client (AlpacaMetaClient): An instance of the Alpaca
-        client. agent (Agent): An instance of the agent to perform
-        decision making.
+    A concrete implementation of the AbstractTrader class. This class
+    implements the place_orders method to place orders using the Alpaca
+    trading client. This class also implements the check_constraints
+    method to check if the trader meets the constraints to trade. The
+    constraints are:
+    
     """
 
     def __init__(self, trade_client: AlpacaTradeClient, agent: Agent) -> None:
 
         super().__init__(trade_client, agent=agent)
 
-    def check_constraints(self, delta = 0.2):
+    def check_constraints(self, delta=0.2):
 
-        if self.trade_market_env.equity < (
-                1 + self.min_equity_ratio) * PATTERN_DAY_TRADER_MINIMUM_EQUITY:
+        if self.trade_market_env.equity < (1 + self.min_equity_ratio) * (
+                1 + delta) * PATTERN_DAY_TRADER_MINIMUM_EQUITY:
             raise TradeConstraintViolationError(
                 'Trader does not meet the equity requirement to trade.')
-        
+
+        if self.trade_market_env.excess_margin < 0:
+            raise TradeConstraintViolationError(
+                'Trader may receive a margin call if no action is taken.')
+
+        return None
+
     def place_orders(
         self,
         actions: np.ndarray[float],
@@ -82,6 +72,7 @@ class AlpacaTrader(AlpacaTraderFactory):
             the quantity_precision high enough to avoid this triggering
             this constraint.
         """
+        self.check_constraints()
 
         for action, asset, price, quantity in zip(actions, self.assets,
                                                   self.asset_prices,
