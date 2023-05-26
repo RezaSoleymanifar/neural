@@ -101,9 +101,8 @@ class AlpacaTrader(AlpacaTraderFactory):
 
     def place_orders(self,
                      actions: np.ndarray[float],
-                     quantity_precision: int = 5,
-                     *args,
-                     **kwargs):
+                     quantity_precision: int = 5
+                     ):
         """
         This method places orders based on the actions provided by the
         agent. The actions are the notional values to be traded for each
@@ -117,7 +116,21 @@ class AlpacaTrader(AlpacaTraderFactory):
         shorting). If position flips from long to short or vice versa,
         the quantity is modified so that only the position is closed.
         (Alpaca API does not allow for continuous flipping of
-        positions). I
+        positions).
+
+        Args:
+        ----------
+            actions (np.ndarray[float]):
+                The actions to be taken for each asset.
+            quantity_precision (int, optional):
+                The precision to which the quantity is rounded. Defaults
+                to 5. 
+        
+        Notes:
+        ---------
+            Assets can have maximum quantity precision constraints. Set 
+            the quantity_precision high enough to avoid this triggering
+            this constraint.
         """
 
         for action, asset, price, quantity in zip(actions, self.assets,
