@@ -409,15 +409,20 @@ class RunningStatistics:
 def validate_path(file_path: str | os.PathLike) -> None:
     """
     Validates a file path by checking if it is a directory and if the
-    parent directory exists. Args:
-        file_path (str | os.PathLike): The file path to be validated.
+    parent directory exists. 
+
+    Args:
+    -----
+        file_path (str | os.PathLike):
+            The path to the file to be validated.
 
     Raises:
-        ValueError: If the specified path is a directory or if the
-        parent directory does not exist.
-
-    Returns:
-        None
+    -------
+        ValueError:
+            If the specified path is a directory.
+        ValueError:
+            If the parent directory of the specified file does not
+            exist.
     """
 
     if os.path.isdir(file_path):
@@ -429,13 +434,14 @@ def validate_path(file_path: str | os.PathLike) -> None:
 
         if not os.path.isdir(dir_path):
             raise ValueError(
-                f"Directory {dir_path} leading to the specified file does not exist."
+                f'Directory {dir_path} leading to the specified file '
+                'does not exist.'
             )
 
     return None
 
 
-#============================Visualization==============================
+#============================Visualization=====================================
 
 
 def tabular_print(entries: List,
@@ -444,22 +450,23 @@ def tabular_print(entries: List,
                   width=15,
                   header=False) -> None:
     """
-    Prints a list of entries in a tabular format.
+    Prints a list of entries in a tabular format. Uses the tableprint
+    library to print the table.
 
     Args:
-        entries (List): The list of entries to be printed in a tabular
-        format. style (str, optional): The style of the table border.
-        Defaults to 'banner'. align (str, optional): The alignment of
-        the text in the table cells. Defaults to 'left'. width (int,
-        optional): The width of each cell in the table. Defaults to 15.
-        header (bool, optional): Whether the current row should be
-        formatted as a header row. Defaults to False.
-
-    Returns:
-        None
+    -----
+        entries (List):
+            The list of entries to be printed.
+        style (str, optional):
+            The style of the table. Defaults to 'banner'.
+        align (str, optional):
+            The alignment of the table. Defaults to 'left'.
+        width (int, optional):
+            The width of the table. Defaults to 15.
+        header (bool, optional):
+            Whether to print the header of the table. Defaults to False.
     """
 
-    # helper method to tabulate performance metrics.
     if header:
         row = tableprint.header(entries, style=style, align=align, width=width)
 
@@ -471,11 +478,15 @@ def tabular_print(entries: List,
 
 def progress_bar(total: Iterable):
     """
-    Creates a progress bar using the tqdm library. Args:
-        total (Iterable): The total number of iterations for the
-        progress bar.
+    Creates a progress bar using the tqdm library.
+
+    Args:
+    -----
+        total (Iterable):
+            The total number of iterations to be performed.
 
     Returns:
+    --------
         tqdm: The progress bar object.
     """
 
