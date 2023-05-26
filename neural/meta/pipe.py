@@ -8,7 +8,8 @@ from typing import Callable
 
 from gym import Env
 from neural.wrapper.base import (MarginAccountMetaDataWrapper,
-                                 ConsoleTearsheetRenderWrapper)
+                                 ConsoleTearsheetRenderWrapper,
+                                 AbstractMarketEnvMetadataWrapper)
 
 from neural.wrapper.action import (
     MinTradeSizeActionWrapper, IntegerAssetQuantityActionWrapper,
@@ -52,11 +53,30 @@ class AbstractPipe(ABC):
         combine these pipes to create a more complex pipe.
     """
 
-    def metadata(pipe: Callable):
+    def metadata(self, pipe: Callable):
+        """
+        A decorator for modifying the pipe method to return the metadata
+        wrapper of the environment.
+
+        Args:
+        -----
+            pipe (Callable):
+                The pipe method to decorate.
+            
+        Returns:
+        --------
+            decorated_pipe (Callable):
+                The decorated pipe method.
+        """
         def decorated_pipe(self, env: Env) -> Env:
             env = pipe(self, env)
-            while not isinstance(env, AbstractMetadataWrapper):
-                env = env.env
+            while not isinstance(env, AbstractMarketEnvMetadataWrapper):
+                if hasattr(env, "env"):
+                    env = env.env
+                else:
+                    return None
+            return env
+        return decorated_pipe
 
     @abstractmethod
     def pipe(self, env: Env) -> Env:
