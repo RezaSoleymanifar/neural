@@ -476,7 +476,7 @@ def tabular_print(entries: List,
     return row
 
 
-def progress_bar(iterable: Iterable):
+def progress_bar(iterable: Iterable) -> tqdm:
     """
     Creates a progress bar using the tqdm library.
 
