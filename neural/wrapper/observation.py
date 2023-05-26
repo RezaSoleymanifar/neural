@@ -720,7 +720,7 @@ class WealthAgnosticFeatureEngineeringWrapper(ObservationWrapper):
         observation: Dict[str,
                           np.ndarray[float]]) -> Dict[str, np.ndarray[float]]:
         """
-        Augments the observation such that wealth sensitive features
+        Augments the observation such that wealth dependent features
         now have wealth normalized values.
 
         Args
@@ -744,11 +744,10 @@ class WealthAgnosticFeatureEngineeringWrapper(ObservationWrapper):
 
 class ObservationBufferWrapper(ObservationWrapper):
     """
-    A wrapper for OpenAI Gym trading environments that provides a
-    temporary buffer of observations for subsequent wrappers that
-    require this form of information. Autofills itself with the first
-    observation received from the environment to maintain a constant
-    buffer size at all times.
+    A wrapper for OpenAI Gym trading environments that provides a temporary
+    buffer of observations for subsequent wrappers that require this form of
+    information. Autofills itself with the first observation received from the
+    environment to maintain a constant buffer size at all times.
 
     Attributes
     ----------
@@ -757,21 +756,16 @@ class ObservationBufferWrapper(ObservationWrapper):
     buffer_size : int
         The maximum number of observations to be stored in the buffer.
     observation_buffer : deque
-        A deque object that stores the last n observations, where n is
-        equal to the buffer_size. Deque has a self fill property such
-        that when empty it autofills with first input to always maintain
-        a fixed size. 
+        A deque object that stores the last n observations, where n is equal to
+        the buffer_size. Deque has a self fill property such that when empty it
+        autofills with first input to always maintain a fixed size. 
 
     Example
     -------
     >>> from neural.meta.env.base import TrainMarketEnv
-    >>> from neural.meta.env.wrapper.observation import WealthAgnosticFeatureEngineeringWrapper
-    >>> from neural.meta.env.wrapper.observation import PositionsFeatureEngineeringWrapper
     >>> from nerual.meta.env.wrapper.observation import ObservationBufferWrapper
     >>> env = TrainMarketEnv(...)
-    >>> env = PositionsFeatureEngineeringWrapper(env)
-    >>> env = WealthAgnosticFeatureEngineeringWrapper(env)
-    >>> env = ObservationBufferWrapperf(env)
+    >>> env = ObservationBufferWrapper(env)
     """
 
     def __init__(self, env: Env, buffer_size: int = 10) -> None:
@@ -790,8 +784,9 @@ class ObservationBufferWrapper(ObservationWrapper):
 
         super().__init__(env)
 
-        assert buffer_size > 0, "The buffer size must be greater than 0."
-
+        if not isinstance(buffer_size, int) or not buffer_size > 0:
+            raise ValueError("The buffer size must be positive integer.")
+        
         self.buffer_size = buffer_size
         self.observation_buffer = FillDeque(buffer_size=buffer_size)
 
