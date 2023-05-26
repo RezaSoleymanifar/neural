@@ -78,7 +78,7 @@ class AlpacaTrader(AbstractTrader):
             raise TradeConstraintViolationError(
                 'Trader does not meet the equity requirement to trade.')
 
-        if self.trade_market_env.excess_margin < 0:
+        if self.market_metadata_wrapper.excess_margin < 0:
             raise TradeConstraintViolationError(
                 'Trader may receive a margin call if no action is taken.')
 
