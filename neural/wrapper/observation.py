@@ -880,22 +880,26 @@ class FlattenToNUmpyObservationWrapper(ObservationWrapper):
 
     def flattened_space(self, space: Space) -> spaces.Box:
         """
-        Returns a flattened observation space.
+        Returns a flattened observation space. self.observation_space at
+        constructor is set equal to that of self.env.observation_space i.e.
+        observation_space of enclosed wrapper due to inheritance from
+        ObservationWrapper. This method is used to set the observation_space
+        attribute to a flattened version of the observation space of the
+        enclosed wrapper. Having defined the observation_space attribute
+        is necessary for some RL training algorithms to work.
 
         Args:
         -----------
-        env : Env
-            The trading environment.
+            env : Env
+                The trading environment.
 
         Returns:
         --------
-        spaces.Box
-            The flattened observation space.
+            spaces.Box
+                The flattened observation space.
         """
 
-        # self.observation_space at constructor is set equal to of
-        # self.env.observation_space i.e. observation_spcae of enclosed
-        # wrapper due to inheritance from ObservationWrapper
+
         sample_observation = space.sample()
 
         if isinstance(sample_observation, np.ndarray):
