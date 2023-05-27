@@ -1056,6 +1056,11 @@ class ObservationStackerWrapper(ObservationWrapper):
         --------
             spaces.Box
                 The observation space of the stacked observations.
+        
+        Raises:
+        -------
+            AssertionError
+                If observation space is not a box space.
 
         TODO: Add support for other observation spaces.
         """
@@ -1093,7 +1098,7 @@ class ObservationStackerWrapper(ObservationWrapper):
 
         Returns:
         --------
-            Space
+            Spaces.Box | Spaces.Dict
                 The observation space of the stacked observations.
         """
         buffer_observation_space = (
@@ -1162,14 +1167,19 @@ class RunningStatisticsObservationWrapper(ObservationWrapper):
     deviation of the observations using the RunningMeanStandardDeviation
     class.
 
-    Parameters:
+    Args:
     -----------
     env : gym.Env
         The environment to wrap.
 
     Methods:
     --------
-
+        observation(observation: np.ndarray[float] | Dict[str,
+        np.ndarray[float]] -> np.ndarray[float] | Dict[str,
+        np.ndarray[float]])
+            Returns the running mean and standard deviation normalized
+            observation.
+        
 
     Example
     -------
