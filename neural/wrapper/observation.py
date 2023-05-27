@@ -1085,14 +1085,15 @@ class ObservationStackerWrapper(ObservationWrapper):
                           shape=stacked_shape,
                           dtype=GLOBAL_DATA_TYPE)
 
-    def stacked_observation_space(self) -> spaces.Box | Dict[str, spaces.Box]:
+    def stacked_observation_space(self) -> spaces.Box | spaces.Dict:
         """
         The observation space of the stacked observations. Works with
-        both spaces.Box and spaces.Dict observation spaces. If the observation space
-        is a dict, the stacked observation space will be a dict with the
-        same keys and stacked shape of each key. If the observation
-        space is a box, the stacked observation space will be a box with
-        the shape of the stacked observations.
+        both spaces.Box and spaces.Dict observation spaces. If the
+        observation space is a dict, the stacked observation space will
+        be a dict with the same keys and stacked shape of each key. If
+        the observation space is a box, the stacked observation space
+        will be a box with the shape of the stacked observations.
+        Currently only supports spaces.Box observation spaces.
 
         Returns:
         --------
@@ -1171,31 +1172,12 @@ class RunningStatisticsObservationWrapper(ObservationWrapper):
 
     Methods:
     --------
-    initialize_observation_rms(observation: np.ndarray[float] |
-    Dict[str, np.ndarray[float]]
-        ) -> RunningMeanStandardDeviation | Dict[str,
-        RunningMeanStandardDeviation]: Initializes the running mean and
-        standard deviation for the observations.
 
-    update(observation: np.ndarray[float] | Dict[str,
-    np.ndarray[float]]) -> None:
-        Updates the running mean and standard deviation for the
-        observations.
-
-    observation(observation: np.ndarray[float] | Dict[str,
-    np.ndarray[float]]
-        ) -> np.ndarray[float] | Dict[str, np.ndarray[float]]: Returns
-        the observation and updates the running mean and standard
-        deviation.
 
     Example
     -------
     >>> from neural.meta.env.base import TrainMarketEnv
-    >>> from neural.meta.env.wrapper.observation import FlattenToNUmpyObservationWrapper
-    >>> from neural.meta.env.wrapper.observation import ObservationStackerWrapper
     >>> env = TrainMarketEnv(...)
-    >>> env = FlattenToNUmpyObservationWrapper(env)
-    >>> env = ObservationStackerWrapper(env)
     >>> env = RunningMeanSandardDeviationObservationWrapper(env)
     """
 
