@@ -1207,8 +1207,24 @@ class RunningStatisticsObservationWrapper(ObservationWrapper):
         containing the running mean standard deviation for each key is
         produced.
 
-        
+        Args:
+        -----------
+            observation (np.ndarray[float] or Dict[str,
+            np.ndarray[float]]):
+                The observation to initialize the running mean standard
+                deviation with. The shape of the observation is used to
+                initialize the running mean standard deviation.
 
+        Returns:
+        --------
+            RunningStatistics | Dict[str, RunningStatistics]
+                The running mean standard deviation for the observation.
+
+        Raises:
+        -------
+            TypeError:
+                If the observation is not a numpy array or a dictionary
+                containing numpy arrays.
         """
 
         if isinstance(observation, np.ndarray):
