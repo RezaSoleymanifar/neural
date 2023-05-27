@@ -1088,16 +1088,17 @@ class ObservationStackerWrapper(ObservationWrapper):
     def stacked_observation_space(self) -> spaces.Box | Dict[str, spaces.Box]:
         """
         The observation space of the stacked observations. Works with
-        both numpy and dict of numpy observation spaces.
+        both spaces.Box and spaces.Dict observation spaces. If the observation space
+        is a dict, the stacked observation space will be a dict with the
+        same keys and stacked shape of each key. If the observation
+        space is a box, the stacked observation space will be a box with
+        the shape of the stacked observations.
 
         Returns:
         --------
             Space
                 The observation space of the stacked observations.
         """
-
-
-
         buffer_observation_space = (
             self.observation_buffer_wrapper.observation_space)
 
@@ -1114,7 +1115,8 @@ class ObservationStackerWrapper(ObservationWrapper):
         return stacked_observation_space
 
     def observation(self, observation: Dict[str, np.ndarray[float]]
-                    | np.ndarray[float]):
+                    | np.ndarray[float]) -> Dict[str, np.ndarray[float]
+                                                  ] | np.ndarray[float]:
         """
         Returns the last n stacked observations in the buffer. Note
         observation in argument is discarded and only elemetns in buffer
@@ -1122,16 +1124,21 @@ class ObservationStackerWrapper(ObservationWrapper):
         stacker, all changes will be lost as this wrapper's point of
         reference is the buffer.
 
-        Parameters:
+        Args:
         -----------
-        observation : dict or ndarray
-            A dictionary or ndarray containing the current observation.
+            observation : Dict[str, np.ndarray[float]] |
+            np.ndarray[float] -> Dict[str, np.ndarray[float]] |
+            np.ndarray[float]
+                A dictionary or numpy array containing the current
+                observation. Is not used. Only elements in buffer are
+                used. If no modifications are made to the observation
+                the last item in the buffer will be equal to the
+                observation.
 
         Returns:
         --------
-        ndarray or dict of ndarrays
-            An ndarray or dict of ndarrays containing the stacked
-            observations.
+            Dict[str, np.ndarray[float]] | np.ndarray[float]
+                The last n stacked observations in the buffer.
         """
 
         stack = self.observation_buffer_wrapper.observation_buffer[-self.
