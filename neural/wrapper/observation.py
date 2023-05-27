@@ -1039,14 +1039,16 @@ class ObservationStackerWrapper(ObservationWrapper):
                 f'buffer size {buffer_size}.'
             )
 
-        self.observation_space = None
+        self.observation_space = self.stacked_observation_space()
 
         return None
 
     def infer_stacked_observation_space(
             self, observation_space: spaces.Box) -> spaces.Box:
         """
-        Infers the observation space of the stacked observations.
+        Infers the observation space of the stacked observations. Takes 
+        a box observation space and returns a box observation space with
+        the shape of the stacked observations.
 
         Args:
         -----------
@@ -1085,9 +1087,8 @@ class ObservationStackerWrapper(ObservationWrapper):
 
     def stacked_observation_space(self) -> Space:
         """
-        self.observation_space at constructor is set equal to of
-        self.env.observation_space i.e. observation_spcae of enclosed
-        wrapper due to inheritance from ObservationWrapper
+        The observation space of the stacked observations. Works with
+        both numpy and dict of numpy observation spaces.
 
         Returns:
         --------
