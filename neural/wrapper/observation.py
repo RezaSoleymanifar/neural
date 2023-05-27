@@ -1048,21 +1048,24 @@ class ObservationStackerWrapper(ObservationWrapper):
         """
         Infers the observation space of the stacked observations.
 
-        Parameters:
+        Args:
         -----------
-        observation_space : spaces.Box
-            The original observation space.
+            observation_space : spaces.Box
+                The original observation space.
 
         Returns:
         --------
-        spaces.Box
-            The observation space of the stacked observations.
+            spaces.Box
+                The observation space of the stacked observations.
+
+        TODO: Add support for other observation spaces.
         """
 
-        # TODO: Add support for other observation spaces
-        assert isinstance(observation_space, spaces.Box), (
-            f"currently {ObservationStackerWrapper.__name__} only supports Box observation spaces"
-        )
+        if not isinstance(observation_space, spaces.Box):
+            raise AssertionError(
+                f'currently {ObservationStackerWrapper.__name__} only '
+                'supports Box observation spaces'
+            )
 
         observation = observation_space.sample()
         stacked_shape = np.stack([observation] * self.stack_size).shape
