@@ -991,11 +991,10 @@ class ObservationStackerWrapper(ObservationWrapper):
 
     Methods:
     --------
-    infer_stacked_observation_space: spaces.Box -> spaces.Box
-        Infers the observation space of the stacked observations.
+        infer_stacked_observation_space: spaces.Box -> spaces.Box
+            Returns the observation space of the stacked observations.
 
-    stacked_observation_space(self) -> Space:
-        Returns the observation space of the stacked observations.
+        stacked_observation_space: -> spaces.Box | spaces.Dict
 
     observation: Dict[str, np.ndarray[float]] | np.ndarray[float]) ->
     Dict[str, np.ndarray[float]] | np.ndarray[float]:
@@ -1314,7 +1313,7 @@ class ObservationNormalizerWrapper(RunningStatisticsObservationWrapper):
         np.ndarray[float]]) -> np.ndarray[float] | Dict[str,    
         np.ndarray[float]]
             Normalizes the observation received from the environment and
-            
+
 
     Example
     -------
@@ -1362,9 +1361,7 @@ class ObservationNormalizerWrapper(RunningStatisticsObservationWrapper):
                 observation, self.epsilon, self.clip).astype(GLOBAL_DATA_TYPE)
 
         elif isinstance(observation, dict):
-
             observation = dict()
-
             for key, rms in self.observation_rms.items():
                 observation[key] = rms.normalize(
                     observation, self.epsilon,
