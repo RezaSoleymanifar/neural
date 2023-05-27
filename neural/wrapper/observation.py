@@ -1245,10 +1245,12 @@ class RunningStatisticsObservationWrapper(ObservationWrapper):
         Updates the running mean standard deviation with the new
         observation.
 
-        Args: observation (np.ndarray[float] or Dict[str,
-        np.ndarray[float]]): The new observation.
-
-        Returns: None.
+        Args:
+        -----------
+            observation (np.ndarray[float] or Dict[str,
+            np.ndarray[float]]):
+                The observation to update the running mean standard
+                deviation with.
         """
 
         if isinstance(observation, np.ndarray):
