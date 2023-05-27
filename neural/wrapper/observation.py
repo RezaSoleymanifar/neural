@@ -1190,11 +1190,16 @@ class RunningStatisticsObservationWrapper(ObservationWrapper):
 
     def __init__(self,
                  env: Env,
+                 epsilon: float = 1e-8,
+                 clip_threshold: float = 10,
                  observation_statistics: Optional[RunningStatistics] = None):
 
         super().__init__(env)
 
         self.expected_observation_type = [dict, np.ndarray]
+        self.epsilon = epsilon
+        self.clip_threshold = clip_threshold
+
         if observation_statistics is None:
             self.observation_statistics = (
                 observation_statistics if observation_statistics is not None
@@ -1234,13 +1239,15 @@ class RunningStatisticsObservationWrapper(ObservationWrapper):
         """
 
         if isinstance(observation, np.ndarray):
-            observation_rms = RunningStatistics()
+            observation_rms = RunningStatistics(
+                epsilon=self.epsilon, clip_threshold=self.clip_threshold)
 
         elif isinstance(observation, dict):
 
             observation_rms = dict()
             for key in observation.keys():
-                observation_rms[key] = RunningStatistics()
+                observation_rms[key] = RunningStatistics(
+                    epsilon=self.epsilon, clip_threshold=self.clip_threshold)
 
         return observation_rms
 
@@ -1341,7 +1348,10 @@ class ObservationNormalizerWrapper(RunningStatisticsObservationWrapper):
         observation_statistics: Optional[RunningStatistics] = None,
     ) -> None:
 
-        super().__init__(env)
+        super().__init__(env=env,
+                         epsilon=epsilon,
+                         clip_threshold=clip_threshold,
+                         observation_statistics=observation_statistics)
         self.epsilon = epsilon
         self.clip = clip_threshold
 

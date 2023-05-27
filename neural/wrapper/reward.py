@@ -108,7 +108,7 @@ class RewardNormalizerWrapper(RewardWrapper):
         self.epsilon = epsilon
         self.clip_threshold = clip_threshold
         self.reward_statistics = RunningStatistics(
-            self.epsilon=epsilon, self.clip_threshold=clip_threshold)
+            epsilon=self.epsilon, clip_threshold=self.clip_threshold)
 
         return None
 
@@ -128,8 +128,7 @@ class RewardNormalizerWrapper(RewardWrapper):
                 The normalized reward.
         """
         self.reward_statistics.update(reward)
-        normalized_reward = self.reward_statistics.normalize(
-            reward, self.epsilon, self.clip_threshold)
+        normalized_reward = self.reward_statistics.normalize(reward)
 
         return normalized_reward
 
