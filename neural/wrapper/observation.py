@@ -1325,25 +1325,22 @@ class ObservationNormalizerWrapper(RunningStatisticsObservationWrapper):
         self.epsilon = epsilon
         self.clip = clip_threshold
 
-        if observation_statistics is None:
-            self.observation_statistics = RunningStatistics()
-            observation_statistics = self.observation_statistics
-        else:
-            self.observation_statistics = observation_statistics
-
     def observation(
         self, observation: np.ndarray[float] | Dict[str, np.ndarray[float]]
     ) -> np.ndarray[float] | Dict[str, np.ndarray[float]]:
         """
         Normalizes the observation received from the environment and
-        returns it.
+        returns it. The superclass updates the running mean standard
+        deviation with the new observation.
 
         Args:
+        -----------
             observation (np.ndarray[float] or Dict[str,
             np.ndarray[float]]): The observation to normalize.
 
         Returns: 
-            The normalized observation np.ndarray[float] or Dict[str,
+        --------
+            The normalized observation. np.ndarray[float] or Dict[str,
             np.ndarray[float]
         """
 
