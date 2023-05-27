@@ -899,7 +899,6 @@ class FlattenToNUmpyObservationWrapper(ObservationWrapper):
                 The flattened observation space.
         """
 
-
         sample_observation = space.sample()
 
         if isinstance(sample_observation, np.ndarray):
@@ -936,7 +935,8 @@ class FlattenToNUmpyObservationWrapper(ObservationWrapper):
             ])
 
             flattened_size = sum(
-                shape[0] for shape in flattened_observation_space.values())
+                space.shape[0]
+                for space in flattened_observation_space.values())
 
             flattened_shape = (flattened_size, )
 
@@ -945,19 +945,23 @@ class FlattenToNUmpyObservationWrapper(ObservationWrapper):
                               shape=flattened_shape,
                               dtype=GLOBAL_DATA_TYPE)
 
-    def observation(self, observation):
+    def observation(
+        self, observation: np.ndarray[float] | Dict[str, np.ndarray[float]]
+    ) -> np.ndarray[float] | Dict[str, np.ndarray[float]]:
         """
-        Flattens the observation space to a 1D numpy array.
+        Flattens the observation space to a 1D numpy array. This is separate
+        from flattening the observation space in the constructor.
 
         Args:
         -----------
-        observation : dict or ndarray
-            The observation space.
+            observation : np.ndarray[float] | Dict[str, np.ndarray[float]]
+            -> np.ndarray[float] | Dict[str, np.ndarray[float]]
+                The observation to be flattened.
 
         Returns:
         --------
-        ndarray
-            The flattened observation space.
+            ndarray
+                The flattened observation space.
         """
 
         if isinstance(observation, dict):
