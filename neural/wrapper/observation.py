@@ -1286,24 +1286,35 @@ class RunningStatisticsObservationWrapper(ObservationWrapper):
 @observation
 class ObservationNormalizerWrapper(RunningStatisticsObservationWrapper):
     """
-    A wrapper class that normalizes the observations received from the
-    environment using running mean standard deviation.
+    A Gym environment wrapper that normalizes the observations using the
+    RunningMeanStandardDeviation class. If numpy arrays are used, the
+    observations are normalized using RunningMeanStandardDeviation. If
+    dictionaries are used, each key is normalized using
+    RunningMeanStandardDeviation. The observation_statistics argument is
+    set equal to the running mean standard deviation of the observation.
+    If used in a pipe, argument can be saved as an attribute of the
+    pipe, and used to restore the running mean standard deviation of the
+    warpper, for example to resume training, or start trading.
 
-    Args: env (gym.Env): The environment to wrap.
+    Args:
+    -----------
+        env : gym.Env
+            The environment to wrap.
+        observation_statistics : RunningStatistics | Dict[str,
+        RunningStatistics] | None
+            The running mean standard deviation of the observation. If
+            None, the running mean standard deviation is initialized
+            using the observation space of the environment. Wrapper sets
+            the argument equal to the running mean standard deviation of
+            the observation.
 
-    Attributes: expected_observation_type (list): A list of expected
-    observation types. observation_rms (RunningMeanStandardDeviation or
-    dict): Running mean standard deviation for the observation.
-
-    Methods: initialize_observation_rms(observation):
-        Initializes the running mean standard deviation for the
-        observation.
-    update(observation):
-        Updates the running mean standard deviation with the new
-        observation.
-    observation(observation):
-        Normalizes the observation received from the environment and
-        returns it.
+    Methods:
+    --------
+        observation(observation: np.ndarray[float] | Dict[str,
+        np.ndarray[float]]) -> np.ndarray[float] | Dict[str,    
+        np.ndarray[float]]
+            Normalizes the observation received from the environment and
+            
 
     Example
     -------
