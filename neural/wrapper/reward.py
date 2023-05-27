@@ -1,3 +1,6 @@
+"""
+reward.py
+"""
 from typing import Optional
 from gym import Env
 from abc import ABC, abstractmethod
@@ -104,25 +107,28 @@ class RewardNormalizerWrapper(RewardWrapper):
 
         self.epsilon = epsilon
         self.clip_threshold = clip_threshold
+        self.reward_statistics = RunningStatistics(
+            self.epsilon=epsilon, self.clip_threshold=clip_threshold)
 
         return None
 
     def reward(self, reward: float) -> float:
         """
-        Normalize the reward. This method should be called after the
-        reward shaping wrapper.
+        Normalize the reward. This method should be the last wrapper in
+        the reward wrapper stack.
 
         Args:
         --------
-            reward (float): The immediate reward to normalize.
+            reward (float): 
+                The immediate reward to normalize.
 
         Returns:
         --------
-            float: The normalized reward.
+            float: 
+                The normalized reward.
         """
-
-        self.reward_statistic.update(reward)
-        normalized_reward = self.reward_statistic.normalize(
+        self.reward_statistics.update(reward)
+        normalized_reward = self.reward_statistics.normalize(
             reward, self.epsilon, self.clip_threshold)
 
         return normalized_reward
