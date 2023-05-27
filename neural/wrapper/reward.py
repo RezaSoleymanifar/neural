@@ -25,19 +25,25 @@ class RewardGeneratorWrapper(RewardWrapper):
 
     Attributes:
     ----------
-        env (gym.Env): The environment to wrap. equity_history
-        (list[float]): A list of equity values for each step in the
-        episode.
+        env (gym.Env): 
+            The environment to wrap. equity_history
+        (list[float]): 
+            A list of equity values for each step in the episode.
 
     Methods:
     -------
         reward(reward: float) -> float:
-            Generate the reward signal.
+            Generates the reward signal.
     """
 
     def __init__(self, env: Env) -> None:
         """
-        Initializes 
+        Initializes the reward generator wrapper.
+
+        Args:
+        -------
+            env (gym.Env): 
+                The environment to wrap.
         """
         super().__init__(env)
         self.equity_history = self.market_metadata_wrapper.equity_history
@@ -50,12 +56,9 @@ class RewardGeneratorWrapper(RewardWrapper):
 class RewardNormalizerWrapper(RewardWrapper):
     """
     This wrapper will normalize immediate rewards. This should typically
-    be the last wrapper in the reward wrapper chain. This wrapper
+    be the last wrapper in the reward wrapper stack. This wrapper
     normalizes immediate rewards so that rewards have mean 0 and
-    standard deviation 1. If track is True the reward_statistics
-    argument will be set equal reward_statistics attribute. This is
-    useful if you want to track the reward statistics from the outer
-    scope.
+    standard deviation 1.
 
     Usage:
     -------
