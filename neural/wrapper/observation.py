@@ -1183,36 +1183,32 @@ class RunningStatisticsObservationWrapper(ObservationWrapper):
 
     def __init__(self,
                  env: Env,
-                 observation_statistics: Optional[RunningStatistics] = None,
-                 track_statistics: bool = True):
+                 observation_statistics: Optional[RunningStatistics] = None):
 
         super().__init__(env)
 
         self.expected_observation_type = [dict, np.ndarray]
-        self.observation_statistics = (observation_statistics if
-                                       observation_statistics is not None else
-                                       self.initialize_observation_statistics(
-                                           env.observation_space.sample()))
-
-        if track_statistics:
-            observation_statistics = self.observation_statistics
+        if observation_statistics is None:
+            self.observation_statistics = (observation_statistics if
+                                        observation_statistics is not None else
+                                        self.initialize_observation_statistics(
+                                            env.observation_space.sample()))
+        observation_statistics = self.observation_statistics
 
         return self.observation_statistics
+
 
     def initialize_observation_statistics(
         self, observation: np.ndarray[float] | Dict[str, np.ndarray[float]]
     ) -> RunningStatistics | Dict[str, RunningStatistics]:
         """
         Initializes the running mean standard deviation for the
-        observation.
+        observation. If the observation is a dictionary, a dictionary
+        containing the running mean standard deviation for each key is
+        produced.
 
-        Args: observation (np.ndarray[float] or Dict[str,
-        np.ndarray[float]]): The observation for which the running mean
-        standard deviation needs to be initialized.
+        
 
-        Returns: A RunningMeanStandardDeviation object or a dictionary
-        containing RunningMeanStandardDeviation objects for each
-        observation key.
         """
 
         if isinstance(observation, np.ndarray):
