@@ -991,21 +991,16 @@ class ObservationStackerWrapper(ObservationWrapper):
 
     Methods:
     --------
-    __init__(self, env: Env, stack_size: Optional[int] = None) -> None:
-        Initializes a new instance of the ObservationStackerWrapper
-        class.
-
-    infer_stacked_observation_space(self, observation_space: spaces.Box)
-    -> spaces.Box:
+    infer_stacked_observation_space: spaces.Box -> spaces.Box
         Infers the observation space of the stacked observations.
 
     stacked_observation_space(self) -> Space:
         Returns the observation space of the stacked observations.
 
-    observation(self, observation: Dict[str, np.ndarray[float]] |
-    np.ndarray[float]):
+    observation: Dict[str, np.ndarray[float]] | np.ndarray[float]) ->
+    Dict[str, np.ndarray[float]] | np.ndarray[float]:
         Returns the last n stacked observations in the buffer. Note
-        observation in argument is discarded and only elemetns in buffer
+        observation in argument is discarded and only elements in buffer
         are used, thus if observation is changed between buffer and
         stacker, all changes will be lost as this wrapper's point of
         reference is the buffer.
@@ -1013,10 +1008,8 @@ class ObservationStackerWrapper(ObservationWrapper):
     Example
     -------
     >>> from neural.meta.env.base import TrainMarketEnv
-    >>> from neural.meta.env.wrapper.observation import FlattenToNUmpyObservationWrapper
     >>> from neural.meta.env.wrapper.observation import ObservationStackerWrapper
     >>> env = TrainMarketEnv(...)
-    >>> env = FlattenToNUmpyObservationWrapper(env)
     >>> env = ObservationStackerWrapper(env)
     """
 
@@ -1025,7 +1018,7 @@ class ObservationStackerWrapper(ObservationWrapper):
         Initializes a new instance of the ObservationStackerWrapper
         class.
 
-        Parameters:
+        Args:
         -----------
         env : Env
             The trading environment to be wrapped.
