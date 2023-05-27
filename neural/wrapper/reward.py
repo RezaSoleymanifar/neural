@@ -64,11 +64,6 @@ class RewardNormalizerWrapper(RewardWrapper):
     -------
         env = NormalizeReward(env, epsilon=1e-8, clip_threshold=10)
 
-    Note:
-    -------
-        The scaling depends on past trajectories and rewards will not be
-        scaled correctly if the wrapper was newly instantiated or the
-        policy was changed recently.
 
     Methods:
     -------
@@ -88,19 +83,21 @@ class RewardNormalizerWrapper(RewardWrapper):
 
         Args:
         -------
-            env (Env): The environment to apply the wrapper. epsilon
-            (float, optional): A small constant to avoid divide-by-zero
-            errors when normalizing data. Defaults to 1e-8.
-            clip_threshold (float, optional): A value to clip normalized
-            data to, to prevent outliers from dominating the statistics.
-            Defaults to np.inf.
+            env (gym.Env):
+                The environment to wrap.
+            epsilon (float):
+                A small value to avoid division by zero.
+            clip_threshold (float):
+                The maximum value to clip the normalized reward.
+                This is useful to prevent the agent from receiving
+                very large rewards.
 
         Example
         -------
         >>> from neural.meta.env.base import TrainMarketEnv
-        >>> from neural.meta.env.wrapper.reward import NormalizeReward
+        >>> from neural.meta.env.wrapper.reward import RewardNormalizerWrapper
         >>> env = TrainMarketEnv(...)
-        >>> env = NormalizeReward(env)
+        >>> env = RewardNormalizerWrapper(env)
         """
 
         super().__init__(env)
@@ -112,7 +109,8 @@ class RewardNormalizerWrapper(RewardWrapper):
 
     def reward(self, reward: float) -> float:
         """
-        Normalize the reward.
+        Normalize the reward. This method should be called after the
+        reward shaping wrapper.
 
         Args:
         --------
