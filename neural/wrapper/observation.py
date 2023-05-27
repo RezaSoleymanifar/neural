@@ -1085,24 +1085,20 @@ class ObservationStackerWrapper(ObservationWrapper):
 
     def stacked_observation_space(self) -> Space:
         """
-        Returns a flattened observation space.
-
-        Args:
-        -----------
-        env : Env
-            The trading environment.
+        self.observation_space at constructor is set equal to of
+        self.env.observation_space i.e. observation_spcae of enclosed
+        wrapper due to inheritance from ObservationWrapper
 
         Returns:
         --------
-        spaces.Box
-            The flattened observation space.
+            Space
+                The observation space of the stacked observations.
         """
 
-        # self.observation_space at constructor is set equal to of
-        # self.env.observation_space i.e. observation_spcae of enclosed
-        # wrapper due to inheritance from ObservationWrapper
 
-        buffer_observation_space = self.observation_buffer_wrapper.observation_space
+
+        buffer_observation_space = (
+            self.observation_buffer_wrapper.observation_space)
 
         if isinstance(buffer_observation_space, spaces.Box):
             stacked_observation_space = self.infer_stacked_observation_space(
@@ -1140,10 +1136,8 @@ class ObservationStackerWrapper(ObservationWrapper):
         stack = self.observation_buffer_wrapper.observation_buffer[-self.
                                                                    stack_size:]
 
-        # Check if the observations are ndarrays or dictionaries of
-        # ndarrays
         if isinstance(stack[0], np.ndarray):
-            stacked_observation = np.stack(stack)  # default axis=0
+            stacked_observation = np.stack(stack)
 
         elif isinstance(stack[0], dict):
             stacked_observation = {}
