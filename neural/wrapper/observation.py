@@ -1034,10 +1034,8 @@ class ObservationStackerWrapper(ObservationWrapper):
                            if stack_size is not None else buffer_size)
 
         if stack_size > buffer_size:
-            raise AssertionError(
-                f'Stack size {stack_size} cannot exceed '
-                f'buffer size {buffer_size}.'
-            )
+            raise AssertionError(f'Stack size {stack_size} cannot exceed '
+                                 f'buffer size {buffer_size}.')
 
         self.observation_space = self.stacked_observation_space()
 
@@ -1066,8 +1064,7 @@ class ObservationStackerWrapper(ObservationWrapper):
         if not isinstance(observation_space, spaces.Box):
             raise AssertionError(
                 f'currently {ObservationStackerWrapper.__name__} only '
-                'supports Box observation spaces'
-            )
+                'supports Box observation spaces')
 
         observation = observation_space.sample()
         stacked_shape = np.stack([observation] * self.stack_size).shape
@@ -1115,9 +1112,10 @@ class ObservationStackerWrapper(ObservationWrapper):
 
         return stacked_observation_space
 
-    def observation(self, observation: Dict[str, np.ndarray[float]]
-                    | np.ndarray[float]) -> Dict[str, np.ndarray[float]
-                                                  ] | np.ndarray[float]:
+    def observation(
+        self, observation: Dict[str, np.ndarray[float]]
+        | np.ndarray[float]
+    ) -> Dict[str, np.ndarray[float]] | np.ndarray[float]:
         """
         Returns the last n stacked observations in the buffer. Note
         observation in argument is discarded and only elemetns in buffer
@@ -1189,14 +1187,13 @@ class RunningStatisticsObservationWrapper(ObservationWrapper):
 
         self.expected_observation_type = [dict, np.ndarray]
         if observation_statistics is None:
-            self.observation_statistics = (observation_statistics if
-                                        observation_statistics is not None else
-                                        self.initialize_observation_statistics(
-                                            env.observation_space.sample()))
+            self.observation_statistics = (
+                observation_statistics if observation_statistics is not None
+                else self.initialize_observation_statistics(
+                    env.observation_space.sample()))
         observation_statistics = self.observation_statistics
 
         return self.observation_statistics
-
 
     def initialize_observation_statistics(
         self, observation: np.ndarray[float] | Dict[str, np.ndarray[float]]
@@ -1262,8 +1259,24 @@ class RunningStatisticsObservationWrapper(ObservationWrapper):
 
         return None
 
-    def observation(self, observation: np.ndarray[float]
-                    | Dict[str, np.ndarray[float]]):
+    def observation(
+        self, observation: np.ndarray[float]
+        | Dict[str, np.ndarray[float]]
+    ) -> np.ndarray[float] | Dict[str, np.ndarray[float]]:
+        """
+        Updates the running mean standard deviation with the new
+        observation. If the observation is a dictionary, the running
+        mean standard deviation for each key is updated.
+
+        Args:
+        -----------
+            observation (np.ndarray[float] or Dict[str,
+            np.ndarray[float]]):
+                The observation to update the running mean standard
+                deviation with.
+        
+        
+        """
 
         self.update(observation)
 
@@ -1329,8 +1342,9 @@ class ObservationNormalizerWrapper(RunningStatisticsObservationWrapper):
             observation (np.ndarray[float] or Dict[str,
             np.ndarray[float]]): The observation to normalize.
 
-        Returns:
-            The normalized observation.
+        Returns: 
+            The normalized observation np.ndarray[float] or Dict[str,
+            np.ndarray[float]
         """
 
         observation = super().observation(observation)
