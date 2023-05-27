@@ -1085,7 +1085,7 @@ class ObservationStackerWrapper(ObservationWrapper):
                           shape=stacked_shape,
                           dtype=GLOBAL_DATA_TYPE)
 
-    def stacked_observation_space(self) -> Space:
+    def stacked_observation_space(self) -> spaces.Box | Dict[str, spaces.Box]:
         """
         The observation space of the stacked observations. Works with
         both numpy and dict of numpy observation spaces.
