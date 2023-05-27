@@ -1033,10 +1033,11 @@ class ObservationStackerWrapper(ObservationWrapper):
         self.stack_size = (stack_size
                            if stack_size is not None else buffer_size)
 
-        assert (
-            self.stack_size <= buffer_size,
-            f"Stack size {self.stack_size} cannot exceed buffer size {buffer_size}."
-        )
+        if stack_size > buffer_size:
+            raise AssertionError(
+                f'Stack size {stack_size} cannot exceed '
+                f'buffer size {buffer_size}.'
+            )
 
         self.observation_space = None
 
