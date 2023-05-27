@@ -1164,7 +1164,7 @@ class ObservationStackerWrapper(ObservationWrapper):
 class RunningStatisticsObservationWrapper(ObservationWrapper):
     """
     A Gym environment wrapper that tracks the running mean and standard
-    deviation of the observations using the RunningMeanStandardDeviation
+    deviation of the observations using the RunningStatistics
     class.
 
     Args:
@@ -1239,17 +1239,17 @@ class RunningStatisticsObservationWrapper(ObservationWrapper):
         """
 
         if isinstance(observation, np.ndarray):
-            observation_rms = RunningStatistics(
+            observation_statistics = RunningStatistics(
                 epsilon=self.epsilon, clip_threshold=self.clip_threshold)
 
         elif isinstance(observation, dict):
 
-            observation_rms = dict()
+            observation_statistics = dict()
             for key in observation.keys():
-                observation_rms[key] = RunningStatistics(
+                observation_statistics[key] = RunningStatistics(
                     epsilon=self.epsilon, clip_threshold=self.clip_threshold)
 
-        return observation_rms
+        return observation_statistics
 
     def update(
             self, observation: np.ndarray[float] | Dict[str, np.ndarray[float]]
@@ -1303,10 +1303,10 @@ class RunningStatisticsObservationWrapper(ObservationWrapper):
 class ObservationNormalizerWrapper(RunningStatisticsObservationWrapper):
     """
     A Gym environment wrapper that normalizes the observations using the
-    RunningMeanStandardDeviation class. If numpy arrays are used, the
-    observations are normalized using RunningMeanStandardDeviation. If
+    RunningStatistics class. If numpy arrays are used, the
+    observations are normalized using RunningStatistics. If
     dictionaries are used, each key is normalized using
-    RunningMeanStandardDeviation. The observation_statistics argument is
+    RunningStatistics. The observation_statistics argument is
     set equal to the running mean standard deviation of the observation.
     If used in a pipe, argument can be saved as an attribute of the
     pipe, and used to restore the running mean standard deviation of the
@@ -1377,13 +1377,13 @@ class ObservationNormalizerWrapper(RunningStatisticsObservationWrapper):
         observation = super().observation(observation)
 
         if isinstance(observation, np.ndarray):
-            observation = self.observation_rms.normalize(
+            observation = self.observation_statistics.normalize(
                 observation, self.epsilon, self.clip).astype(GLOBAL_DATA_TYPE)
 
         elif isinstance(observation, dict):
             observation = dict()
-            for key, rms in self.observation_rms.items():
-                observation[key] = rms.normalize(
+            for key, running_statistics in self.observation_statistics.items():
+                observation[key] = running_statistics.normalize(
                     observation, self.epsilon,
                     self.clip).astype(GLOBAL_DATA_TYPE)
 
