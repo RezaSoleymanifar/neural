@@ -874,7 +874,7 @@ class FlattenToNUmpyObservationWrapper(ObservationWrapper):
 
         super().__init__(env)
         self.expected_observation_type = [dict, np.ndarray]
-        self.observation_space = self.flattened_space(env.observation_space)
+        self.observation_space = self.flattened_space(self.observation_space)
 
         return None
 
