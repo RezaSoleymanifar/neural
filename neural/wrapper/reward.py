@@ -345,8 +345,20 @@ class AbstractFixedRewardShaper(RewardWrapper, ABC):
         super().__init__(env)
         self.use_std = use_std
         self.use_min = use_min
-        self.scale = scale
+        self._scale = scale
         self.reward_statistics = RunningStatistics()
+
+    @property
+    def scale(self) -> float:
+        """
+        The scaling factor for the shaped reward. Defaults to -1.0
+
+        Returns:
+        --------
+            float:
+                The scaling factor for the shaped reward.
+        """
+        return self._scale
 
     @abstractmethod
     def check_condition(self, *args, **kwargs) -> bool:
@@ -583,6 +595,8 @@ class AbstractDynamicRewardShaper(AbstractFixedRewardShaper, ABC):
         self.base = base
 
     @property
+    def scale(self) -> float:
+    @property
     @abstractmethod
     def metric(self) -> float:
         """
@@ -614,7 +628,7 @@ class AbstractDynamicRewardShaper(AbstractFixedRewardShaper, ABC):
         """
 
         raise NotImplementedError
-    
+
     def check_condition(self) -> bool:
         """
         Checks whether the reward should be shaped based on the current
@@ -707,30 +721,6 @@ class AbstractDynamicRewardShaper(AbstractFixedRewardShaper, ABC):
         scale = np.sign(factor) * np.power(base, abs(scale))
         return scale
 
-    def reward(self, reward: float) -> float:
-        """
-        Shapes the reward signal based on the check_condition method and
-        the adjusted scaling factor.
-
-        Args:
-        -----
-            reward (float): 
-                The original reward.
-
-        Returns:
-        --------
-            float: 
-                The shaped reward.
-        """
-        if self.check_condition():
-            scale = self.parse_scale(self.threshold,
-                                     self.metric,
-                                     self.factor,
-                                     self.base)
-            reward = self.shape_reward(use_std=self.use_std,
-                                       use_min=self.use_min,
-                                       scale=scale)
-        return reward
 
 
 @metadata
