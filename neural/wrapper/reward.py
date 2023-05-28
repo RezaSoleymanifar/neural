@@ -335,8 +335,7 @@ class AbstractRewardShaperWrapper(RewardWrapper, ABC):
         Produces a scalar for shaping the reward based on the deviation from a
         threshold. Scale sign is determined by factor. The returned scale from
         this function can be used to adjust the reward signal based on the the
-        reward statistics. by default scale is equal to deviation ratio if
-        deviation from threshold occurs.
+        reward statistics. by default output scale = +1.0.
 
         Args:
         -----
