@@ -704,7 +704,8 @@ class AbstractDynamicRewardShaper(AbstractFixedRewardShaper, ABC):
 @metadata
 class FixedExcessMarginRatioRewardShaper(AbstractFixedRewardShaper):
     """
-    a reward shaping wrapper that penalizes an excess margin ratio
+    a reward shaping wrapper that penalizes the excess margin ratio
+    falling below a given threshold.
     """
     def __init__(
         self,
@@ -714,13 +715,16 @@ class FixedExcessMarginRatioRewardShaper(AbstractFixedRewardShaper):
         use_min: bool = None,
         scale: float = 1.0,
     ) -> None:
-        super().__init__(env)
+        super().__init__(env,
+                         use_std=use_std,
+                         use_min=use_min,
+                         scale=scale)
 
         if excess_margin_ratio_threshold <= 0:
             raise AssertionError(
                 'Excess margin ratio threshold must be a positive number.')
 
-        self.short_ratio_threshold = excess_margin_ratio_threshold
+        self.excess_margin_ratio_threshold = excess_margin_ratio_threshold
         self.use_std = use_std
         self.use_min = use_min
         self.scale = scale
