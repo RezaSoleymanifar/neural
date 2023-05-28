@@ -413,29 +413,50 @@ class AbstractMarketEnvMetadataWrapper(Wrapper, ABC):
         """
         The current trading date of the episode, corresponding to the current
         day. Uses the 'day' property to calculate the current date.
+
+        Returns:
+        ----------
+            date (pd.Timestamp):
+                The current trading date of the episode.
         """
-        day_index = self.day - 1 
+        day_index = self.day - 1
         return self.schedule.index[day_index]
-    
-    
+
+
     @property
     def cash(self) -> float:
         """
-        The current amount of cash available to the trader.
+        The current amount of cash available in the environment.
+        Can be positive or negative.
+
+        Returns:
+        ----------
+            cash (float):
+                The current amount of cash available in the environment.
         """
         return self.market_env.cash
 
     @property
     def asset_quantities(self) -> np.ndarray[float]:
         """
-        The current quantity of each asset held by the trader.
+        The current quantity of each asset held.
+
+        Returns:
+        ----------
+            asset_quantities (np.ndarray[float]):
+                The current quantity of each asset held.
         """
         return self.market_env.asset_quantities
 
     @property
     def asset_prices(self) -> np.ndarray[float]:
         """
-        The current price of each asset held by the trader.
+        The current price of each asset held.
+
+        Returns:    
+        ----------
+            asset_prices (np.ndarray[float]):
+                The current price of each asset held by the trader.
         """
         return self.market_env.asset_prices
 
