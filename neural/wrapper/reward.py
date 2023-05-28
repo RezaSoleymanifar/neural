@@ -466,16 +466,14 @@ class AbstractFixedRewardShaper(RewardWrapper, ABC):
 
 class AbstractDynamicRewardShaper(AbstractFixedRewardShaper, ABC):
     """
-    Abstract base class for a dynamic reward shaper wrapper.
+    Abstract base class for a dynamic reward shaper wrapper. This class
+    defines the interface for a dynamic reward shaper wrapper, which
+    shapes the reward signal of an environment based on a dynamically
+    adjusted threshold value. To create a custom dynamic reward shaper,
+    users must inherit from this class and implement the abstract
+    methods: `check_condition`, `metric`, and `threshold`.
 
-    This class defines the interface for a dynamic reward shaper
-    wrapper, which shapes the reward signal of an environment based on a
-    dynamically adjusted threshold value. To create a custom dynamic
-    reward shaper, users must inherit from this class and implement the
-    abstract methods: `check_condition`, `metric`, and `threshold`.
-
-    Attributes:
-    -
+    Attributes: -
         env (Env): 
             The environment to wrap. 
         use_std (bool or None, optional): 
@@ -668,7 +666,7 @@ class AbstractDynamicRewardShaper(AbstractFixedRewardShaper, ABC):
 
         if threshold <= 0:
             raise AssertionError("Threshold must be a positive number.")
-        
+ 
         if base < 1:
             raise AssertionError("Base must be greater than or equal to 1.")
 
@@ -676,7 +674,7 @@ class AbstractDynamicRewardShaper(AbstractFixedRewardShaper, ABC):
         scale = deviation_ratio * factor if deviation_ratio > 1 else 0
         scale = np.sign(factor) * np.power(base, abs(scale))
         return scale
-    
+
     def reward(self, reward: float) -> float:
         """
         Shapes the reward signal based on the check_condition method and
@@ -692,7 +690,6 @@ class AbstractDynamicRewardShaper(AbstractFixedRewardShaper, ABC):
             float: 
                 The shaped reward.
         """
-
         if self.check_condition():
             scale = self.parse_scale(self.threshold,
                                      self.metric,
@@ -701,14 +698,13 @@ class AbstractDynamicRewardShaper(AbstractFixedRewardShaper, ABC):
             reward = self.shape_reward(use_std=self.use_std,
                                        use_min=self.use_min,
                                        scale=scale)
-
         return reward
 
 
 @metadata
-class ExcessMarginRatioRewardShaper(AbstractFixedRewardShaperWrapper):
+class FixedExcessMarginRatioRewardShaper(AbstractFixedRewardShaper):
     """
-    
+    a reward shaping wrapper that penalizes an excess margin ratio
     """
     def __init__(
         self,
@@ -771,7 +767,7 @@ class ExcessMarginRatioRewardShaper(AbstractFixedRewardShaperWrapper):
 
 @metadata
 class DynamicPenalizeShortRatioRewardWrapper(
-    ExcessMarginRatioRewardShaper, AbstractDynamicRewardShaperWrapper):
+    FixedExcessMarginRatioRewardShaper, AbstractDynamicRewardShaperWrapper):
     """
     A reward shaping wrapper that penalizes a short ratio lower than a
     given threshold.
