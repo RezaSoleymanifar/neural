@@ -335,15 +335,17 @@ class AbstractRewardShaperWrapper(RewardWrapper, ABC):
         Produces a scalar for shaping the reward based on the deviation from a
         threshold. Scale sign is determined by factor. The returned scale from
         this function can be used to adjust the reward signal based on the the
-        reward statistics. by default output scale = +1.0.
+        reward statistics. by default output scale = +1.0. If used with
+        standard deviation for example then the reward = +1.0 * std. If used
+        with minimum then the reward = +1.0 * min.
 
         Args:
         -----
             threshold (float):
                 The threshold value. This is a positive value. If the target
-                value is greater than the threshold, the deviation_ratio will be
-                greater than 1. If the target value is less than the threshold,
-                the devation_ratio will be set to 0.
+                value is greater than the threshold, the deviation_ratio will
+                be greater than 1. If the target value is less than the
+                threshold, the devation_ratio will be set to 0.
             value (float):
                 The target value to compare against the threshold. This can be
                 a metric such as excess_margin_ratio. If metric > 0 exceeds the
@@ -356,22 +358,23 @@ class AbstractRewardShaperWrapper(RewardWrapper, ABC):
                     - magnitude of factor determines strength of
                       punishment/encouragement.
                 
-                If factor is positive the triggered condition will be
-                encouraged. If not the triggered condition will be discouraged.
-                factor also is used as a linear scaling of the deviation ratio.
-                scale = deviation_ratio * factor If factor = 1, the scaling
-                factor will be equal to the deviation ratio. Used to intensify
-                or weaken the effect of the deviation.
+                Assuming using standard deviation, if factor is positive the
+                triggered condition will be encouraged. If not, the triggered
+                condition will be discouraged. factor also is used as a linear
+                scaling of the deviation ratio. scale = deviation_ratio *
+                factor If factor = 1, the scaling factor will be equal to the
+                deviation ratio. Used to intensify or weaken the effect of the
+                deviation.
             base (float):
-                based is raised to the power of the absolute value of the
-                scale, computed using deviation_ratio and factor.
+                base is raised to the power of the absolute value of the scale
+                provodie exponential scaling of the deviation ratio.
 
         Notes:
         ------
             The overall idea is to use deviation ratio to map to a scalar that
-            shows the deviation of threshold. Scaling this scalar is allowed
-            using both linear and exponential parameters. The scaling factor is
-            calculated as follows:
+            shows the deviation of threshold. This scalar can be scaled
+            linearly and exponentially to intensify/weaken reward/punishment. The scaling factor is calculated as
+            follows:
 
             - deviation_ratio = value / threshold
             - if deviation_ratio > 1, scale = deviation_ratio * factor
