@@ -265,7 +265,26 @@ class AbstractFixedRewardShaper(RewardWrapper, ABC):
             The environment to wrap.
         reward_statistics (RunningStatistics):
             A running statistics object for tracking reward statistics.
-        
+
+    Args:
+    -----
+        env (Env): 
+            The environment to wrap. 
+        use_std (bool or None, optional): 
+            Whether to use the standard deviation of the rewards.
+            Defaults to None.
+        use_min (bool or None, optional): 
+            Whether to use the min/max reward statistics. Defaults
+            to None. if use_min = Flase, then with default scale =
+            -1 the shaped reward will be -1 * max meaning if reward
+            condition is met the shaped reward will be the negative
+            maximum reward. 
+        scale (float, optional): The scaling factor for the
+            shaped reward. Defaults to -1.0 meaning if for example
+            reward shaping condition is met and use_std is True, the
+            shaped reward will be the mean minus the standard
+            deviation.
+
     Methods:
     -------
         check_condition(*args, **kwargs) -> bool:
@@ -481,41 +500,45 @@ class AbstractDynamicRewardShaper(AbstractFixedRewardShaper, ABC):
     users must inherit from this class and implement the abstract
     methods: `check_condition`, `metric`, and `threshold`.
 
-    Attributes: -
+    Attributes:
+    -
         env (Env): 
             The environment to wrap. 
-        use_std (bool or None, optional): 
-            Whether to use the standard deviation of the rewards.
-            Defaults to None.
-        use_min (bool or None, optional): 
-            Whether to use the maximum reward. Defaults to None. 
-        scale (float, optional): 
-            The scaling factor for the shaped reward. Defaults to 1.0.
-            factor (float, optional): 
-                The factor used to adjust the scaling factor. Defaults
-                to 1.0. 
-            base (float, optional): 
-                The base value used in the scaling factor adjustment.
-                Defaults to 1.0.
+        use_std : bool, optional
+            A boolean indicating whether to use the reward's
+            standard deviation in shaping the reward. Default is
+            None.
+        use_min : bool, optional
+            A boolean indicating whether to use the minimum reward
+            value in shaping the reward. If False, the maximum reward
+            value is used.
+        scale : float, optional
+            A float value used to scale the shaped reward based on
+            chosen method. Default is -1. If use_std is True, reward
+            = scale * std. In this case behavior is discouraged, by
+            providing negative signal based on the standard
+            deviation of the reward.
+        factor (float, optional):
+            The factor used to adjust the scaling factor. Defaults  
+            to -1.0.
+        base (float, optional): 
+            The base value used in the scaling factor adjustment.
+            Defaults to 1.0.
 
     Methods:
-
+    -------
         check_condition() -> bool:
             Abstract method that checks whether the reward should be
             shaped based on the current episode state.
-
         metric() -> float:
             Abstract property that defines the metric used to adjust the
             scaling factor.
-
         threshold() -> float:
             Abstract property that defines the threshold used for
             shaping the reward.
-
         reward(reward: float) -> float:
             Shapes the reward signal based on the check_condition method
             and the adjusted scaling factor.
-
     """
 
     def __init__(
@@ -556,8 +579,6 @@ class AbstractDynamicRewardShaper(AbstractFixedRewardShaper, ABC):
                          use_min=use_min,
                          scale=scale)
 
-        self.use_std = use_std
-        self.use_min = use_min
         self.factor = factor
         self.base = base
 
