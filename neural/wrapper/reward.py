@@ -249,6 +249,11 @@ class LiabilityInterstRewardWrapper(RewardWrapper):
         return debt_interest
 
 
+class AbstractRewardShaper(RewardWrapper):
+    
+
+    
+
 class AbstractFixedRewardShaper(RewardWrapper, ABC):
     """
     A blueprint class for reward shaping wrappers. This class is
