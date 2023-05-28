@@ -805,13 +805,13 @@ class MarginAccountMetaDataWrapper(AbstractMarketEnvMetadataWrapper):
         """
         The current equity of the trader. Equity is the sum of all long
         positions and cash(+/-), minus short positions. This caputures
-        the concept of debt substracted value of assets/cash that can be
-        used to maintain existing assets in the context of marginable
-        assets. In the context of nonmarginable assets, since shorting
-        is not allowed, this is the same as the cash plus the value of
-        long positions. There is no concept of maintaining a position in
-        nonmarginable assets, since they are purchased with cash and
-        cannot be used as collateral.
+        the concept of total ownership or debt substracted value of
+        assets/cash that can be used to maintain existing assets in the
+        context of marginable assets. In the context of nonmarginable
+        assets, since shorting is not allowed, this is the same as the
+        cash plus the value of long positions. There is no concept of
+        maintaining a position in nonmarginable assets, since they are
+        purchased with cash and cannot be used as collateral.
 
         Returns:
         ----------
@@ -830,9 +830,11 @@ class MarginAccountMetaDataWrapper(AbstractMarketEnvMetadataWrapper):
         When trading assets the gross intial margin of the assets should
         not exceed the marginable equity. In the context of non-margin
         trading, this is the same as the cash. In the context of margin
-        trading, this is the same as equity. In short, equity =
+        trading, this is the same as equity minus non_marginable_longs.
+        Namely value of non marginable assets held in the portfolio do
+        not contribute to marginable equity. In short, equity =
         marginable_equity + non_marginable_longs. Since
-        non-marginable_longs cannot be used to open new positions
+        non_marginable_longs cannot be used to open new positions
         (cannot be used as collateral), this value is not included in
         the marginable equity.
 
@@ -856,9 +858,9 @@ class MarginAccountMetaDataWrapper(AbstractMarketEnvMetadataWrapper):
         The current maintenance margin requirement of the trader. This
         is the minimum amount of equity that must be maintained in the
         account to avoid a margin call. Maintenance margin requirement
-        of nonmarginable assets is always zero. This is an abuse of
-        terminology, since nonmarginable assets do not have a concept of
-        margin.
+        of nonmarginable assets is always  set to zero. This is an abuse
+        of terminology, since nonmarginable assets do not have a concept
+        of margin.
 
         Returns:
         ----------
