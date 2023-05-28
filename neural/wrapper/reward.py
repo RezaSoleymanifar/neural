@@ -777,7 +777,7 @@ class AbstractDynamicRewardShaperWrapper(AbstractRewardShaperWrapper, ABC):
 
 
 @metadata
-class FixedPenalizeExcessMarginRatioRewardWrapper(AbstractFixedRewardShaperWrapper):
+class ExcessMarginRatioRewardShaper(AbstractFixedRewardShaperWrapper):
     """
     
     """
@@ -803,14 +803,20 @@ class FixedPenalizeExcessMarginRatioRewardWrapper(AbstractFixedRewardShaperWrapp
     @property
     def threshold(self) -> float:
         """
-        The short ratio threshold.
+        The threshold for the excess margin ratio. This is inverse
+        of the excess margin ratio threshold. If this threshold is
+        exceeded by inverse of the excess margin ratio, the reward
+        will be shaped.
 
         Returns:
-            float: The short ratio threshold.
+        --------
+            float: 
+                The threshold for the excess margin ratio reward
+                shaping.
         """
         excess_margin_ratio_threshold = (
         self.market_metadata_wrapper.excess_margin_ratio_threshold)
-        return self.short_ratio_threshold
+        return excess_margin_ratio_threshold
 
     @property
     def metric(self) -> float:
@@ -836,7 +842,7 @@ class FixedPenalizeExcessMarginRatioRewardWrapper(AbstractFixedRewardShaperWrapp
 
 @metadata
 class DynamicPenalizeShortRatioRewardWrapper(
-    FixedPenalizeExcessMarginRatioRewardWrapper, AbstractDynamicRewardShaperWrapper):
+    ExcessMarginRatioRewardShaper, AbstractDynamicRewardShaperWrapper):
     """
     A reward shaping wrapper that penalizes a short ratio lower than a
     given threshold.
