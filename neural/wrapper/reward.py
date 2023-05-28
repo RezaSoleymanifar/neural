@@ -515,7 +515,7 @@ class AbstractDynamicRewardShaper(AbstractFixedRewardShaper, ABC):
         env: Env,
         use_std: bool = None,
         use_min: bool = None,
-        scale: float = -1.0,
+        scale: Optional[float] = None,
         factor: float = -1.0,
         base: float = 1.0,
     ) -> None:
@@ -535,7 +535,10 @@ class AbstractDynamicRewardShaper(AbstractFixedRewardShaper, ABC):
                 1.0. factor (float, optional): The factor used to adjust
                 the scaling factor. Defaults to -1.0. when factor > 0
                 the shaped reward will be positive. When factor < 0 the
-                shaped reward will be negative. 
+                shaped reward will be negative.
+            factor (float, optional):
+                The factor used to adjust the scaling factor. Defaults  
+                to -1.0. 
             base (float, optional): 
                 The base value used in the scaling factor adjustment.
                 Defaults to 1.0.
@@ -551,16 +554,6 @@ class AbstractDynamicRewardShaper(AbstractFixedRewardShaper, ABC):
         self.factor = factor
         self.base = base
 
-
-    def check_condition(self) -> bool:
-        """
-        Checks whether the reward should be shaped based on the current
-        episode state. By default returns True if metric > threshold. If
-        metric < threshold is desired use inverse of metric, and
-        threshold.
-        """
-        return True if self.metric > self.threshold else False
-
     @property
     @abstractmethod
     def metric(self) -> float:
@@ -568,7 +561,6 @@ class AbstractDynamicRewardShaper(AbstractFixedRewardShaper, ABC):
         Abstract property that defines the metric used to adjust the
         scaling factor. Metric is compared to the threshold, to produce
         a scalar that shows the deviation from threshold.
-
         Returns:
         --------
             float: 
@@ -594,6 +586,15 @@ class AbstractDynamicRewardShaper(AbstractFixedRewardShaper, ABC):
         """
 
         raise NotImplementedError
+    
+    def check_condition(self) -> bool:
+        """
+        Checks whether the reward should be shaped based on the current
+        episode state. By default returns True if metric > threshold. If
+        metric < threshold is desired use inverse of metric, and
+        threshold.
+        """
+        return True if self.metric > self.threshold else False
 
     def parse_scale(self,
                     threshold: float,
@@ -663,13 +664,13 @@ class AbstractDynamicRewardShaper(AbstractFixedRewardShaper, ABC):
         """
         if self.scale is not None:
             return self.scale
-        
+
         if value < 0:
             raise AssertionError("Value must be a positive number.")
 
         if threshold <= 0:
             raise AssertionError("Threshold must be a positive number.")
- 
+
         if base < 1:
             raise AssertionError("Base must be greater than or equal to 1.")
 
@@ -740,13 +741,26 @@ class FixedExcessMarginRatioRewardShaper(AbstractFixedRewardShaper):
         else:
             return False
 
-class DynamicExcesMarginRewardShaper(
+class DynamicExcessMarginRewardShaper(
     FixedExcessMarginRatioRewardShaper, AbstractDynamicRewardShaper):
 
-    def __init__(self, env: Env) -> None:
-        super().__init__(env)
+    def __init__(
+        self,
+        env: Env,
+        use_std: bool = None,
+        use_min: bool = None,
+        scale: Optional[float] = None,
+        factor: float = -1.0,
+        base: float = 1.0,
+    ) -> None:
+        super().__init__(env,
+                         use_std=use_std,
+                         use_min=use_min,
+                         scale=scale,
+                         factor=factor,
+                         base=base)
 
-    
+
     @property
     def threshold(self) -> float:
         """
