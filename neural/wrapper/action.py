@@ -659,23 +659,6 @@ class ExcessMarginActionWrapper(ActionWrapper):
                                        shape=(self.n_assets, ),
                                        dtype=GLOBAL_DATA_TYPE)
 
-    @property
-    def excess_margin_ratio(self):
-        """
-        Excess margin is defined as marginable equity minus maintenance
-        marging requirement. This is the amount of equity that is
-        available in form of cash or marginable securities that is free
-        to be used for trading marginable securities. As long as excess
-        margin is greater than zero a margin call will not be received.
-        Note that if asset is non marginable then trade can only happe
-        with cash. So excess margin can only be used to buy other
-        marginable assets.
-        """
-        excess_margin = self.market_metadata_wrapper.excess_margin
-        portfolio_value = self.market_metadata_wrapper.portfolio_value
-        excess_margin_ratio = excess_margin / portfolio_value
-        return excess_margin_ratio
-
     def action(self, actions: np.ndarray) -> np.ndarray:
         """
         If excess_margin_ratio is violated the corrective action is

@@ -899,9 +899,26 @@ class MarginAccountMetaDataWrapper(AbstractMarketEnvMetadataWrapper):
                 the maintenance margin requirement. In the context of
                 nonmarginable assets, this is the same as the cash.
         """
-        excess_margin = self.marginable_equity - self.maintenance_margin_requirement
+        excess_margin = (
+            self.marginable_equity - self.maintenance_margin_requirement)
         return excess_margin
 
+    @property
+    def excess_margin_ratio(self):
+        """
+        Result of div
+
+        Returns:
+        ----------
+            excess_margin_ratio (float):
+                Excess margin ratio is the ratio of excess margin to
+                portfolio value.
+        """
+        excess_margin = self.market_metadata_wrapper.excess_margin
+        portfolio_value = self.market_metadata_wrapper.portfolio_value
+        excess_margin_ratio = excess_margin / portfolio_value
+        return excess_margin_ratio
+    
     def _cache_metadata(self) -> None:
         """
         Caches metadata during an episode. This method is called by the
