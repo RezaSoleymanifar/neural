@@ -521,6 +521,7 @@ class AbstractFixedRewardShaperWrapper(AbstractRewardShaperWrapper):
     `check_condition` and `threshold`.
 
     Attributes:
+    ----------
         env (Env): 
             The environment to wrap. 
         use_std (bool or None, optional):
@@ -533,20 +534,27 @@ class AbstractFixedRewardShaperWrapper(AbstractRewardShaperWrapper):
             If use_std is True, reward = mean + scale * std. In this
             case behavior is encouraged, by providing positive signal
             based on the standard deviation of the reward.
+    
+    Properties:
+    ----------
+        threshold (float):
+            The threshold used for shaping the reward. This is a
+            positive value. If the target value is greater than the
+            threshold, the deviation_ratio will be greater than 1. If
+            the target value is less than the threshold, the
+            devation_ratio will be set to 0.
 
     Methods:
+    ---------
         check_condition() -> bool:
             Abstract method that checks the condition for shaping the
             reward.
-
         threshold() -> float:
             Abstract property that defines the threshold used to
             determine intensity of reward shaping.
-
         shape_reward(reward: float) -> float:
             Shapes the reward signal based on the check_condition method
             and the threshold value.
-
         step(action) -> tuple:
             Takes a step in the environment and returns the observation,
             shaped reward, done flag, and info dictionary.
