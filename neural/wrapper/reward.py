@@ -350,8 +350,7 @@ class AbstractRewardShaperWrapper(RewardWrapper, ABC):
                 > 0 then the scaling factor will be greater than 1. This 
                 way agent learns to avoid margin calls.
             factor (float):
-                The scaling factor. This is a positive value. The   
-                 
+                factor is a positive value. 
 
         Notes:
         ------
