@@ -780,6 +780,7 @@ class FixedExcessMarginRatioRewardShaper(AbstractFixedRewardShaper):
         else:
             return False
 
+@metadata
 class DynamicExcessMarginRewardShaper(AbstractDynamicRewardShaper):
     """
     A reward shaping wrapper that penalizes the excess margin ratio.
@@ -816,19 +817,16 @@ class DynamicExcessMarginRewardShaper(AbstractDynamicRewardShaper):
         use_std: bool = None,
         use_min: bool = None,
         scale: Optional[float] = None,
-        factor: float = -1.0,
         base: float = 1.0,
     ) -> None:
         super().__init__(
             env = env,
             use_std = use_std,
             use_min = use_min,
-            scale = scale
+            scale = scale,
+            base = base
             )
         
-        self.factor = factor
-        self.base = base
-
     @property
     def threshold(self) -> float:
         """
