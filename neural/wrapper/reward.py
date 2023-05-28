@@ -269,7 +269,8 @@ class AbstractRewardShaperWrapper(RewardWrapper, ABC):
 
     def __init__(self, 
                  env: Env, 
-                 use_std: Optional[bool]
+                 use_std: Optional[bool],
+                 use_min: Optional[bool],
                  use_) -> None:
         """
         Initializes the AbstractRewardShaperWrapper instance.
@@ -672,6 +673,87 @@ class AbstractDynamicRewardShaperWrapper(AbstractFixedRewardShaperWrapper, ABC):
 
         raise NotImplementedError
 
+    def parse_scale(self,
+                    threshold: float,
+                    value: float,
+                    factor: float = -1.0,
+                    base=1.0) -> float:
+        """
+        Produces a scalar for shaping the reward based on the deviation
+        from a threshold. Use as a replacement for fixed scale argument
+        in shape_reward method. Scale sign is determined by factor. The
+        returned scale from this function can be used to adjust the
+        reward signal based on the the reward statistics. by default
+        output scale = -1.0. If used with standard deviation for example
+        then the reward = mean + (-1.0) * std. If used with minimum then
+        the reward = -1.0 * min.
+
+        Args:
+        -----
+            threshold (float):
+                The threshold value. This is a positive value. If the
+                target value is greater than the threshold, the
+                deviation_ratio will be greater than 1. If the target
+                value is less than the threshold, the devation_ratio
+                will be set to 0.
+            value (float):
+                The target value to compare against the threshold. This
+                can be a metric such as excess_margin_ratio. If metric >
+                0 exceeds the threshold = excess_margin_ratio_threshold
+                > 0 then the scaling factor will be greater than 1. This
+                way agent learns to avoid margin calls.
+            factor (float):
+                factor serves two purposes:
+                    - sign of factor determines
+                      punishment/encouragement.
+                    - magnitude of factor determines strength of
+                      punishment/encouragement.
+                
+                Assuming using standard deviation, if factor is positive
+                the triggered condition will be encouraged. If not, the
+                triggered condition will be discouraged. factor also is
+                used as a linear scaling of the deviation ratio. scale =
+                deviation_ratio * factor If factor = 1, the scaling
+                factor will be equal to the deviation ratio. Used to
+                intensify or weaken the effect of the deviation.
+            base (float):
+                base is raised to the power of the absolute value of the
+                scale provodie exponential scaling of the deviation
+                ratio.
+
+        Notes:
+        ------
+            The overall idea is to use deviation ratio to map to a
+            scalar that shows the deviation of threshold. This scalar
+            can be scaled linearly and exponentially to intensify/weaken
+            encouragement/punishment. The scaling factor is calculated
+            as follows:
+
+            - deviation_ratio = value / threshold
+            - if deviation_ratio > 1, scale = deviation_ratio * factor
+            - otherwise, scale = 0
+
+            If deviation_ratio = 1.5, factor = -2, base = 2, then: scale
+            = (1.5 * -2) = -3 then scale = (-1) * 2 ** 3 = -8. This
+            scalar can be used to produce reward modification using
+            reward min/max or standard deviation. For example if used
+            with standard deviation, then reward = mean + (-8) * std.
+        """
+
+        if value < 0:
+            raise AssertionError("Value must be a positive number.")
+
+        if threshold <= 0:
+            raise AssertionError("Threshold must be a positive number.")
+        
+        if base < 1:
+            raise AssertionError("Base must be greater than or equal to 1.")
+
+        deviation_ratio = value / threshold
+        scale = deviation_ratio * factor if deviation_ratio > 1 else 0
+        scale = np.sign(factor) * np.power(base, abs(scale))
+        return scale
+    
     def reward(self, reward: float) -> float:
         """
         Shapes the reward signal based on the check_condition method and
