@@ -356,17 +356,23 @@ class AbstractRewardShaperWrapper(RewardWrapper, ABC):
                 The target value to compare against the threshold. This
                 can be a metric such as excess_margin_ratio. If metric >
                 0 exceeds the threshold = excess_margin_ratio_threshold
-                > 0 then the scaling factor will be greater than 1. This 
+                > 0 then the scaling factor will be greater than 1. This
                 way agent learns to avoid margin calls.
             factor (float):
+                factor serves two purposes:
+
+                    - sign of factor determines
+                      punishment/encouragement.
+                    - magnitude of factor determines strength of
+                      punishment/encouragement.
+                
                 Sign of factor determines sign of reward. If factor is
-                postive the triggered condition will be encouraged.
-                 
-                This is a linear scaling
-                of the deviation ratio. scale = deviation_ratio * factor
-                If factor = 1, the scaling factor will be equal to the
-                deviation ratio. Used to intensify or weaken the effect
-                of the deviation.
+                positive the triggered condition will be encouraged. If
+                not the triggered condition will be discouraged. factor
+                also is used as a linear scaling of the deviation ratio.
+                scale = deviation_ratio * factor If factor = 1, the
+                scaling factor will be equal to the deviation ratio.
+                Used to intensify or weaken the effect of the deviation.
             base (float):
                 based is raised to the power of the absolute value of
                 the scale, computed using deviation_ratio and factor.
