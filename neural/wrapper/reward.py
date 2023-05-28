@@ -249,39 +249,76 @@ class LiabilityInterstRewardWrapper(RewardWrapper):
         return debt_interest
 
 
-class AbstractRewardShaperWrapper(RewardWrapper, ABC):
+class AbstractFixedRewardShaper(RewardWrapper, ABC):
     """
-    A blueprint class for reward shaping wrappers.
-
-    This class is designed to be subclassed for creating custom reward
-    shaping wrappers for market environments. Reward shaping wrappers
-    are used to modify the reward signal obtained by an agent in order
-    to encourage or discourage certain behaviours during training.
-    highly useful for pretraining an agent with some degrees of freedom
-    in actions. Apply relevant reward shaping wrappers to define and
+    A blueprint class for reward shaping wrappers. This class is
+    designed to be subclassed for creating custom reward shaping
+    wrappers for market environments. Reward shaping wrappers are used
+    to modify the reward signal obtained by an agent in order to
+    encourage or discourage certain behaviours during training. highly
+    useful for pretraining an agent with some degrees of freedom in
+    actions. Apply relevant reward shaping wrappers to define and
     restrict unwanted actions. Start with a pipe of wrappers that
     enforce the desired behaviour and later remove the influencing
     wrappers to allow the agent to learn the desired behaviour. if
     desired behavior is a starting point, then in a final step remove
     the reward shaping wrapper and the agent may learn to improve on it.
 
+    Attributes:
+    ----------  
+        env (gym.Env):
+            The environment to wrap.
+        reward_statistics (RunningStatistics):
+            A running statistics object for tracking reward statistics.
+        
+    Methods:
+    -------
+        check_condition(*args, **kwargs) -> bool:
+            An abstract method for checking whether to apply reward
+            shaping.
+        reward(reward: float, *args, **kwargs) -> float:    
+            An abstract method for shaping the reward signal.
+        shape_reward(reward: float) -> float:
+            Calculate the shaped reward based on the input parameters.
+        step(action) -> tuple:
+            Advances the environment by one step and updates the reward
+            signal.
     """
 
-    def __init__(self,
-                 env: Env,
-                 use_std: Optional[bool],
-                 use_min: Optional[bool],
-                 scale: float = -1.0) -> None:
+    def __init__(
+        self,
+        env: Env,
+        use_std: Optional[bool] = None,
+        use_min: Optional[bool] = None,
+        scale: float = -1.0,
+    ) -> None:
         """
-        Initializes the AbstractRewardShaperWrapper instance.
+        Initializes the abstract fixed reward shaper wrapper.
 
         Args:
         -----
-            env (gym.Env): 
-                The environment to wrap.
+            env (Env): 
+                The environment to wrap. 
+            use_std (bool or None, optional): 
+                Whether to use the standard deviation of the rewards.
+                Defaults to None.
+            use_min (bool or None, optional): 
+                Whether to use the min/max reward statistics. Defaults
+                to None. if use_min = Flase, then with default scale =
+                -1 the shaped reward will be -1 * max meaning if reward
+                condition is met the shaped reward will be the negative
+                maximum reward. 
+            scale (float, optional): The scaling factor for the
+                shaped reward. Defaults to -1.0 meaning if for example
+                reward shaping condition is met and use_std is True, the
+                shaped reward will be the mean minus the standard
+                deviation.
         """
 
         super().__init__(env)
+        self.use_std = use_std
+        self.use_min = use_min
+        self.scale = scale
         self.reward_statistics = RunningStatistics()
 
     @abstractmethod
@@ -305,33 +342,6 @@ class AbstractRewardShaperWrapper(RewardWrapper, ABC):
         --------
             bool: 
                 True if the reward should be shaped, False otherwise.
-        """
-
-        raise NotImplementedError
-
-    @abstractmethod
-    def reward(self, reward: float, *args, **kwargs) -> float:
-        """
-        An abstract method for shaping the reward signal.
-
-        This method should be implemented by subclasses to modify the
-        reward signal based on the current episode state. The method
-        takes the current reward as input, and an arbitrary number of
-        arguments and keyword arguments, depending on the specific
-        reward shaping strategy.
-
-        Args:
-        -----
-            reward (float):
-                The current reward signal.
-            *args:
-                Variable length argument list.
-            **kwargs:
-                Arbitrary keyword arguments.
-
-        Returns:
-        --------
-            float: The modified reward signal.
         """
 
         raise NotImplementedError
@@ -395,6 +405,33 @@ class AbstractRewardShaperWrapper(RewardWrapper, ABC):
             shaped_reward = self.reward_statistics.mean + scale * self.reward_statistics.std
 
         return shaped_reward
+    
+    @abstractmethod
+    def reward(self, reward: float, *args, **kwargs) -> float:
+        """
+        An abstract method for shaping the reward signal.
+
+        This method should be implemented by subclasses to modify the
+        reward signal based on the current episode state. The method
+        takes the current reward as input, and an arbitrary number of
+        arguments and keyword arguments, depending on the specific
+        reward shaping strategy.
+
+        Args:
+        -----
+            reward (float):
+                The current reward signal.
+            *args:
+                Variable length argument list.
+            **kwargs:
+                Arbitrary keyword arguments.
+
+        Returns:
+        --------
+            float: The modified reward signal.
+        """
+
+        raise NotImplementedError
 
     def step(
         self,
@@ -433,7 +470,7 @@ class AbstractRewardShaperWrapper(RewardWrapper, ABC):
         return observation, reward, done, info
 
 
-class AbstractFixedRewardShaperWrapper(AbstractRewardShaperWrapper):
+class AbstractFixedRewardShaperWrapper(AbstractFixedRewardShaper):
     """
     Abstract base class for a fixed reward shaping strategy.
 
