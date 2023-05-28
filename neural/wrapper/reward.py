@@ -190,15 +190,34 @@ class LiabilityInterstRewardWrapper(RewardWrapper):
         """
         return self.interest_rate / 360
 
-    def reset(self):
+    def reset(self) -> np.ndarray[float] | Dict[str, np.ndarray[float]]:
         """
-        Re
+        Reset the environment.
+
+        Returns:
+        --------
+            observation (np.ndarray):
+                The initial observation.
         """
         observation = self.env.reset()
         self.previous_day = self.market_metadata_wrapper.day
         return observation
 
     def reward(self, reward):
+        """
+        Generate the reward signal.
+
+        Args:
+        --------
+            reward (float):
+                The reward to modify.
+            
+        Returns:
+        --------
+            float:
+                The modified reward. Subtracts the interest from the
+                reward.
+        """
         current_day = self.market_metadata_wrapper.day
         if current_day != self.previous_day:
             interest = self.compute_interest()
@@ -209,17 +228,16 @@ class LiabilityInterstRewardWrapper(RewardWrapper):
 
     def compute_interest(self):
         cash_debt = abs(min(self.market_metadata_wrapper.cash, 0))
-        cash_interest = cash_debt * self.daily_interest_rate
-
+        
         positions = self.market_metadata_wrapper.positions
         asset_quantitties = self.market_metadata_wrapper.asset_quantities
-
         asset_debt = sum(
             position for position, quantity in zip(positions, asset_quantitties)
             if quantity < 0)
-        asset_interest = asset_debt * self.daily_interest_rate
 
-        return cash_interest + asset_interest
+        debt_interest = (cash_debt + asset_debt) * self.daily_interest_rate
+
+        return debt_interest
 
 
 class AbstractRewardShaperWrapper(RewardWrapper, ABC):
