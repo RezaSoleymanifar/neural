@@ -332,11 +332,11 @@ class AbstractRewardShaperWrapper(RewardWrapper, ABC):
                     factor: float = 1.0,
                     base=1.0) -> float:
         """
-        Calculate the scaling factor for shaping the reward based on the
-        deviation from a threshold. The return value scale from this function
-        can be used to adjust the reward signal based on the the reward
-        statistics. by deafult scale is equal to deviation ratio if deviation
-        from threshold occurs.
+        Produces a scalar for shaping the reward based on the deviation from a
+        threshold. Scale sign is determined by factor. The returned scale from
+        this function can be used to adjust the reward signal based on the the
+        reward statistics. by default scale is equal to deviation ratio if
+        deviation from threshold occurs.
 
         Args:
         -----
