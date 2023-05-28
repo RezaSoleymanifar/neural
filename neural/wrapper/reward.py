@@ -584,7 +584,10 @@ class AbstractDynamicRewardShaper(AbstractFixedRewardShaper, ABC):
     def threshold(self) -> float:
         """
         Abstract property that defines the threshold used for shaping
-        the reward.
+        the reward. If metric exceeds the threshold, the reward will be
+        shaped based on deviation of metric above the threshold. If
+        deviation bellows the threshold, is desired use inverse of
+        metric.
 
         Returns:
         --------
@@ -725,9 +728,6 @@ class FixedExcessMarginRatioRewardShaper(AbstractFixedRewardShaper):
                 'Excess margin ratio threshold must be a positive number.')
 
         self.excess_margin_ratio_threshold = excess_margin_ratio_threshold
-        self.use_std = use_std
-        self.use_min = use_min
-        self.scale = scale
 
     @property
     def threshold(self) -> float:
@@ -743,9 +743,7 @@ class FixedExcessMarginRatioRewardShaper(AbstractFixedRewardShaper):
                 The threshold for the excess margin ratio reward
                 shaping.
         """
-        excess_margin_ratio_threshold = (
-        self.market_metadata_wrapper.excess_margin_ratio_threshold)
-        return excess_margin_ratio_threshold
+        return 1 / self.excess_margin_ratio_threshold
 
     @property
     def metric(self) -> float:
