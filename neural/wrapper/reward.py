@@ -800,6 +800,29 @@ class FixedPenalizeExcessMarginRatioRewardWrapper(AbstractFixedRewardShaperWrapp
         self.use_min = use_min
         self.scale = scale
 
+    @property
+    def threshold(self) -> float:
+        """
+        The short ratio threshold.
+
+        Returns:
+            float: The short ratio threshold.
+        """
+        excess_margin_ratio_threshold = (
+        self.market_metadata_wrapper.excess_margin_ratio_threshold)
+        return self.short_ratio_threshold
+
+    @property
+    def metric(self) -> float:
+        """
+        The short ratio.
+
+        Returns:
+            float: The short ratio.
+        """
+
+        return self.short_ratio
+    
     def check_condition(self) -> bool:
         """
         An abstract method for checking whether to apply reward shaping.
@@ -813,7 +836,7 @@ class FixedPenalizeExcessMarginRatioRewardWrapper(AbstractFixedRewardShaperWrapp
 
 @metadata
 class DynamicPenalizeShortRatioRewardWrapper(
-        FixedPenalizeExcessMarginRatioRewardWrapper, AbstractDynamicRewardShaperWrapper):
+    FixedPenalizeExcessMarginRatioRewardWrapper, AbstractDynamicRewardShaperWrapper):
     """
     A reward shaping wrapper that penalizes a short ratio lower than a
     given threshold.
@@ -914,28 +937,6 @@ class DynamicPenalizeShortRatioRewardWrapper(
         super().__init__(env, short_ratio_threshold, use_std, use_min, factor)
         self.factor = factor
 
-    @property
-    def threshold(self) -> float:
-        """
-        The short ratio threshold.
-
-        Returns:
-            float: The short ratio threshold.
-        """
-
-        return self.short_ratio_threshold
-
-    @property
-    def metric(self) -> float:
-        """
-        The short ratio.
-
-        Returns:
-            float: The short ratio.
-        """
-
-        return self.short_ratio
-
     def check_condition(self) -> bool:
         """
         Checks whether the reward should be shaped based on the current
@@ -956,252 +957,3 @@ class DynamicPenalizeShortRatioRewardWrapper(
         self.short_ratio = abs(shorts) / net_worth
 
         return self.short_ratio > self.short_ratio_threshold
-
-
-@metadata
-class FixedPenalizeCashRatioRewardWrapper(AbstractRewardShaperWrapper):
-    """
-    A reward shaping wrapper that penalizes a cash ratio lower than a
-    given threshold. The cash ratio is defined as the ratio of cash to
-    net worth. This ratio has meaning when both cash and net worth are
-    positive.
-
-    This class modifies the reward signal of a market environment by
-    applying a penalty when the cash ratio rises above a specified
-    threshold. The penalty is based on the deviation of the cash ratio
-    from the threshold.
-
-    Parameters
-    ----------
-    env : gym.Env
-        The environment to wrap.
-    cash_ratio_threshold : float, optional
-        The maximum cash ratio allowed before being penalized. Default
-        is 0.01.
-    factor : float, optional
-        A factor used to modify the penalty based on the deviation of
-        the cash ratio from the threshold. Default is -1.0.
-    use_std : bool, optional
-        A boolean indicating whether to use the reward's standard
-        deviation in shaping the reward. Default is None.
-    use_min : bool, optional
-        A boolean indicating whether to use the maximum reward value in
-        shaping the reward. Default is None. Alternative is to use the
-        maximum reward value.
-    scale : float, optional
-        A float value used to scale the shaped reward based on chosen
-        method. Default is 1.
-
-    Attributes
-    ----------
-    env : gym.Env
-        The environment being wrapped.
-    reward_rms : RunningMeanStandardDeviation
-        The running mean and standard deviation object for tracking
-        reward statistics.
-    market_metadata_wrapper : MarketMetadataWrapper
-        The metadata wrapper for the market environment.
-    cash_ratio_threshold : float
-        The maximum cash ratio allowed before being penalized.
-    factor : float
-        A factor used to modify the penalty based on the deviation of
-        the cash ratio from the threshold.
-    cash_ratio : float
-        The current cash ratio.
-
-    Methods
-    -------
-    reward(reward: float) -> float:
-        Modifies the reward if the cash ratio rises above the threshold.
-
-    check_condition() -> bool:
-        Checks whether the reward should be shaped based on the current
-        episode state.
-
-    """
-
-    def __init__(
-        self,
-        env: Env,
-        cash_ratio_threshold: float = 0.1,
-        use_std: Optional[bool] = None,
-        use_min: Optional[bool] = None,
-        scale: float = -1.0,
-    ) -> None:
-        """
-        Initializes the FixedPenalizeCashRatioRewardWrapper instance.
-
-        Parameters
-        ----------
-        env : gym.Env
-            The environment to wrap.
-        cash_ratio_threshold : float, optional
-            The maximum cash ratio allowed before being penalized.
-            Default is 0.01.
-        factor : float, optional
-            A factor used to modify the penalty based on the deviation
-            of the cash ratio from the threshold. Default is -1.0.
-        use_std : bool, optional
-            A boolean indicating whether to use the reward's standard
-            deviation in shaping the reward. Default is None.
-        use_min : bool, optional
-            A boolean indicating whether to use the maximum reward value
-            in shaping the reward. Default is None. Alternative is to
-            use the maximum reward value.
-        scale : float, optional
-            A float value used to scale the shaped reward based on
-            chosen method. Default is 1.
-        """
-
-        super().__init__(env, use_std, use_min, scale)
-        self.cash_ratio_threshold = cash_ratio_threshold
-        self.cash_ratio = None
-
-    @property
-    def threshold(self) -> float:
-        """
-        The cash ratio threshold.
-
-        Returns
-        -------
-        float
-            The cash ratio threshold.
-        """
-        return self.cash_ratio_threshold
-
-    def check_condition(self) -> bool:
-        """
-        Checks whether the reward should be shaped based on the current
-        episode state.
-
-        Returns
-        -------
-        bool
-            True if the reward should be shaped, False otherwise.
-        """
-
-        cash = self.market_metadata_wrapper.cash
-        net_worth = self.market_metadata_wrapper.net_worth
-
-        if not net_worth > 0 or not cash > 0:
-            return False
-
-        self.cash_ratio = cash / net_worth
-
-        return self.cash_ratio > self.cash_ratio_threshold
-
-
-@metadata
-class DynamicPenalizeShortRatioRewardWrapper(
-        FixedPenalizeExcessMarginRatioRewardWrapper):
-
-    def __init__(
-        self,
-        env: Env,
-        cash_ratio_threshold: float = 0.1,
-        use_std: Optional[bool] = None,
-        use_min: Optional[bool] = None,
-        factor: float = -1.0,
-    ) -> None:
-        """
-        A wrapper that modifies the reward function of an environment by
-        penalizing the agent when its cash ratio rises above a certain
-        threshold.
-
-        Args:
-            env (Env): The environment to wrap. cash_ratio_threshold
-            (float, optional): The maximum threshold for the ratio of
-            cash to net worth. If the ratio rises above this threshold,
-            the agent will be penalized. Defaults to 0.1. use_std (bool,
-            optional): Indicates whether to use standard deviation or
-            not. Defaults to None. use_min (bool, optional): Indicates
-            whether to use the maximum or not. Defaults to None. factor
-            (float, optional): The factor by which the reward will be
-            penalized. Defaults to -1.0.
-
-        Attributes:
-            cash_ratio_threshold (float): The maximum threshold for the
-            ratio of cash to net worth. cash_ratio (float): The current
-            cash ratio. factor (float): The factor by which the reward
-            will be penalized.
-
-        Properties:
-            threshold (float): The `cash_ratio_threshold` value. metric
-            (float): The current cash ratio.
-
-        Methods:
-            check_condition() -> bool: Calculates the current cash ratio
-            by dividing the amount of cash by the net worth. If the cash
-            ratio rises above the threshold, the method returns True,
-            indicating that the agent should be penalized.
-        """
-
-        super().__init__(env, use_std, use_min, factor)
-        """
-        Initializes the `DynamicPenalizeShortRatioRewardWrapper`
-        instance.
-
-        Args:
-            env (Env): The environment to wrap. cash_ratio_threshold
-            (float, optional): The maximum threshold for the 
-                ratio of cash to net worth. If the ratio rises above
-                this threshold, the agent will be penalized. Defaults to
-                0.1.
-            use_std (bool, optional): Indicates whether to use standard
-            deviation or not. Defaults to None. use_min (bool,
-            optional): Indicates whether to use the maximum or not.
-            Defaults to None. factor (float, optional): The factor by
-            which the reward will be penalized. Defaults to -1.0.
-
-        Returns:
-            None
-        """
-
-        self.cash_ratio_threshold = cash_ratio_threshold
-        self.cash_ratio = None
-
-    @property
-    def threshold(self) -> float:
-        """
-        Returns the `cash_ratio_threshold` value.
-
-        Returns:
-            float: The minimum threshold for the ratio of cash to net
-            worth.
-        """
-
-        return self.cash_ratio_threshold
-
-    @property
-    def metric(self) -> float:
-        """
-        Returns the current cash ratio.
-
-        Returns:
-            float: The current cash ratio.
-        """
-
-        return self.cash_ratio
-
-    def check_condition(self) -> bool:
-        """
-        Calculates the current cash ratio by dividing the amount of cash
-        by the net worth. If the net worth or cash is zero or negative,
-        returns False. If the cash ratio rises above the threshold, the
-        method returns True, indicating that the agent should be
-        penalized.
-
-        Returns:
-            bool: True if the cash ratio rises above the threshold,
-            False otherwise.
-        """
-
-        cash = self.market_metadata_wrapper.cash
-        net_worth = self.market_metadata_wrapper.net_worth
-
-        if not net_worth > 0 or not cash > 0:
-            return False
-
-        self.cash_ratio = cash / net_worth
-
-        return self.cash_ratio > self.cash_ratio_threshold
