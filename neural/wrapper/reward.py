@@ -387,8 +387,8 @@ class AbstractFixedRewardShaper(RewardWrapper, ABC):
 
     def shape_reward(self,
                      use_std: bool = None,
-                     use_min: bool = None,
-                     scale: float = -1) -> float:
+                     use_min: bool = None
+                     ) -> float:
         """
         Calculate the shaped reward based on the input parameters.
 
@@ -437,12 +437,12 @@ class AbstractFixedRewardShaper(RewardWrapper, ABC):
 
         if use_min is not None:
             shaped_reward = (
-                scale * self.reward_statistics.minimum
-                if use_min else scale * self.reward_statistics.maximum)
+                self.scale * self.reward_statistics.minimum
+                if use_min else self.scale * self.reward_statistics.maximum)
 
         elif use_std is not None:
             shaped_reward = (
-                self.reward_statistics.mean + scale * self.reward_statistics.std)
+                self.reward_statistics.mean + self.scale * self.reward_statistics.std)
 
         return shaped_reward
     
@@ -462,8 +462,7 @@ class AbstractFixedRewardShaper(RewardWrapper, ABC):
         """
         if self.check_condition():
             reward = self.shape_reward(use_std=self.use_std,
-                                       use_min=self.use_min,
-                                       scale=self.scale)
+                                       use_min=self.use_min)
         return reward
 
     def step(
