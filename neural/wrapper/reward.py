@@ -594,9 +594,8 @@ class AbstractDynamicRewardShaper(AbstractFixedRewardShaper, ABC):
 
     @property
     def scale(self) -> float:
-        return self.parse_scale(
-                                factor=self.factor,
-                                base=self.base)
+        return self.parse_scale()
+    
     @property
     @abstractmethod
     def metric(self) -> float:
@@ -650,11 +649,16 @@ class AbstractDynamicRewardShaper(AbstractFixedRewardShaper, ABC):
                 The ratio of metric to threshold.
         """
 
-        if not self.threshold > 0 or not self.metric >= 0:
+        if not self.threshold > 0:
             raise AssertionError(
                 f'Threshold must be greater than 0. '
                 f'Current value: {self.threshold}')
-        
+
+        if not self.metric >= 0:
+            raise AssertionError(
+                f'Metric must be greater than or equal to 0. '
+                f'Current value: {self.metric}')
+
         ratio = self.metric / self.threshold
         return ratio if ratio > 1 else 0
 
@@ -665,7 +669,7 @@ class AbstractDynamicRewardShaper(AbstractFixedRewardShaper, ABC):
         metric < threshold is desired use inverse of metric, and
         threshold.
         """
-        return True if self.metric > self.threshold else False
+        return True if self.deviation_ratio > 1 else False
 
     def parse_scale(self,
                     factor: float = -1.0,
@@ -737,8 +741,8 @@ class AbstractDynamicRewardShaper(AbstractFixedRewardShaper, ABC):
         if base < 1:
             raise AssertionError("Base must be greater than or equal to 1.")
 
-        deviation_ratio = self.metric / self.threshold
-        scale = deviation_ratio * factor if deviation_ratio > 1 else 0
+        scale = (
+            self.deviation_ratio * self._scale if self.deviation_ratio > 1 else 0)
         scale = np.sign(factor) * np.power(base, abs(scale))
         return scale
 
