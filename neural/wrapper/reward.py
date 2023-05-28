@@ -420,7 +420,8 @@ class AbstractRewardShaperWrapper(RewardWrapper, ABC):
             scale : float, optional
                 A float value used to scale the shaped reward based on chosen
                 method. Default is 1. If use_std is True, reward = scale * std.
-                In 
+                In this case behavior is encouraged, by providing positive
+                signal based on the standard deviation of the reward.
 
         Returns
         -------
@@ -432,19 +433,6 @@ class AbstractRewardShaperWrapper(RewardWrapper, ABC):
             ValueError
                 If both `use_min` and `use_std` parameters are set to a
                 non-None value, or if both are set to None.
-
-        Notes
-        -----
-        The method calculates the shaped reward based on the input parameters.
-        If `use_min` is not None, the method uses the maximum or maximum reward
-        value, depending on the value of `use_min`, to shape the reward. If
-        `use_std` is not None, the method uses the mean and standard deviation
-        of the reward values to shape the reward. The shaped reward is then
-        multiplied by the `scale` parameter.
-
-        If both `use_min` and `use_std` parameters are set to a non-None value,
-        or if both are set to None, a `ValueError` is raised with an
-        appropriate message.
 
         Examples
         --------
