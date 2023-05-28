@@ -549,9 +549,6 @@ class AbstractFixedRewardShaperWrapper(AbstractRewardShaperWrapper):
         check_condition() -> bool:
             Abstract method that checks the condition for shaping the
             reward.
-        threshold() -> float:
-            Abstract property that defines the threshold used to
-            determine intensity of reward shaping.
         shape_reward(reward: float) -> float:
             Shapes the reward signal based on the check_condition method
             and the threshold value.
@@ -658,17 +655,25 @@ class AbstractDynamicRewardShaperWrapper(AbstractRewardShaperWrapper, ABC):
     abstract methods: `check_condition`, `metric`, and `threshold`.
 
     Attributes:
-        env (Env): The environment to wrap. use_std (bool or None,
-        optional): Whether to use the standard deviation of the rewards.
+    -
+        env (Env): 
+            The environment to wrap. 
+        use_std (bool or None, optional): 
+            Whether to use the standard deviation of the rewards.
             Defaults to None.
-        use_min (bool or None, optional): Whether to use the maximum
-        reward. Defaults to None. scale (float, optional): The scaling
-        factor for the shaped reward. Defaults to 1.0. factor (float,
-        optional): The factor used to adjust the scaling factor.
-        Defaults to 1.0. base (float, optional): The base value used in
-        the scaling factor adjustment. Defaults to 1.0.
+        use_min (bool or None, optional): 
+            Whether to use the maximum reward. Defaults to None. 
+        scale (float, optional): 
+            The scaling factor for the shaped reward. Defaults to 1.0.
+            factor (float, optional): 
+                The factor used to adjust the scaling factor. Defaults
+                to 1.0. 
+            base (float, optional): 
+                The base value used in the scaling factor adjustment.
+                Defaults to 1.0.
 
     Methods:
+
         check_condition() -> bool:
             Abstract method that checks whether the reward should be
             shaped based on the current episode state.
@@ -699,12 +704,13 @@ class AbstractDynamicRewardShaperWrapper(AbstractRewardShaperWrapper, ABC):
         Initializes the abstract dynamic reward shaper wrapper.
 
         Args:
-            env (Env): The environment to wrap. use_std (bool or None,
-            optional): Whether to use the standard deviation of the
-            rewards.
-                Defaults to None.
-            use_min (bool or None, optional): Whether to use the maximum
-            reward. Defaults to None. scale (float, optional): The
+            env (Env): 
+                The environment to wrap. use_std (bool or None,
+                optional): Whether to use the standard deviation of the
+                rewards. Defaults to None.
+            use_min (bool or None, optional): 
+                Whether to use the maximum reward. Defaults to None.
+                scale (float, optional): The
             scaling factor for the shaped reward. Defaults to 1.0.
             factor (float, optional): The factor used to adjust the
             scaling factor. Defaults to -1.0. when factor > 0 the shaped
