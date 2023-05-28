@@ -534,15 +534,6 @@ class AbstractFixedRewardShaperWrapper(AbstractRewardShaperWrapper):
             If use_std is True, reward = mean + scale * std. In this
             case behavior is encouraged, by providing positive signal
             based on the standard deviation of the reward.
-    
-    Properties:
-    ----------
-        threshold (float):
-            The threshold used for shaping the reward. This is a
-            positive value. If the target value is greater than the
-            threshold, the deviation_ratio will be greater than 1. If
-            the target value is less than the threshold, the
-            devation_ratio will be set to 0.
 
     Methods:
     ---------
@@ -602,21 +593,6 @@ class AbstractFixedRewardShaperWrapper(AbstractRewardShaperWrapper):
         --------
             bool: 
                 Whether to shape the reward.
-        """
-
-        raise NotImplementedError
-
-    @property
-    @abstractmethod
-    def threshold(self) -> float:
-        """
-        Abstract property that defines the threshold used for shaping
-        the reward.
-
-        Returns:
-        --------
-            float: 
-                The threshold used for shaping the reward.
         """
 
         raise NotImplementedError
@@ -801,7 +777,7 @@ class AbstractDynamicRewardShaperWrapper(AbstractRewardShaperWrapper, ABC):
 
 
 @metadata
-class FixedPenalizeShortRatioRewardWrapper(AbstractFixedRewardShaperWrapper):
+class FixedPenalizeExcessMarginRatioRewardWrapper(AbstractFixedRewardShaperWrapper):
     """
     
     """
@@ -816,28 +792,13 @@ class FixedPenalizeShortRatioRewardWrapper(AbstractFixedRewardShaperWrapper):
         super().__init__(env)
 
         if excess_margin_ratio_threshold <= 0:
-            raise AssertionError('Threshold must be a positive number.')
+            raise AssertionError(
+                'Excess margin ratio threshold must be a positive number.')
 
         self.short_ratio_threshold = excess_margin_ratio_threshold
         self.use_std = use_std
         self.use_min = use_min
         self.scale = scale
-        self.short_ratio = None
-
-    @property
-    def threshold(self) -> float:
-        """
-        Excess margin ratio threshold. Since excess over threshold is
-        penalized, and values bellow excess_margin_ratio_threshold are
-        penalized, the threshold is inverse of the excess margin ratio.
-
-        Returns:
-        --------
-            float: 
-                The penalty threshold.
-        """
-
-        return self.short_ratio_threshold
 
     def check_condition(self) -> bool:
         if self.market_metadata_wrapper.excess_margin_ratio <= self.:
@@ -848,7 +809,7 @@ class FixedPenalizeShortRatioRewardWrapper(AbstractFixedRewardShaperWrapper):
 
 @metadata
 class DynamicPenalizeShortRatioRewardWrapper(
-        FixedPenalizeShortRatioRewardWrapper):
+        FixedPenalizeExcessMarginRatioRewardWrapper):
     """
     A reward shaping wrapper that penalizes a short ratio lower than a
     given threshold.
@@ -1128,7 +1089,7 @@ class FixedPenalizeCashRatioRewardWrapper(AbstractRewardShaperWrapper):
 
 @metadata
 class DynamicPenalizeShortRatioRewardWrapper(
-        FixedPenalizeShortRatioRewardWrapper):
+        FixedPenalizeExcessMarginRatioRewardWrapper):
 
     def __init__(
         self,
