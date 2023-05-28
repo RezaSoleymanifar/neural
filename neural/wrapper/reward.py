@@ -359,13 +359,17 @@ class AbstractRewardShaperWrapper(RewardWrapper, ABC):
                 > 0 then the scaling factor will be greater than 1. This 
                 way agent learns to avoid margin calls.
             factor (float):
-                factor is a positive value. This is a linear scaling
+                Sign of factor determines sign of reward. If factor is
+                postive the triggered condition will be encouraged.
+                 
+                This is a linear scaling
                 of the deviation ratio. scale = deviation_ratio * factor
                 If factor = 1, the scaling factor will be equal to the
                 deviation ratio. Used to intensify or weaken the effect
                 of the deviation.
             base (float):
-
+                based is raised to the power of the absolute value of
+                the scale, computed using deviation_ratio and factor.
 
         Notes:
         ------
