@@ -388,7 +388,9 @@ class AbstractRewardShaperWrapper(RewardWrapper, ABC):
             - otherwise, scale = 0
 
             If deviation_ratio = 1.5, factor = -2, base = 2, then:
-            scale = (1.5 * -2) = -3, scale = (-1) * 2 ** 3 = -8
+            scale = (1.5 * -2) = -3, scale = (-1) * 2 ** 3 = -8. This
+            scalar can be used to produce reward modification using
+            reward min/max or standard deviation.
         """
 
         if value < 0:
