@@ -373,7 +373,8 @@ class AbstractRewardShaperWrapper(RewardWrapper, ABC):
         ------
             The overall idea is to use deviation ratio to map to a scalar that
             shows the deviation of threshold. This scalar can be scaled
-            linearly and exponentially to intensify/weaken reward/punishment. The scaling factor is calculated as
+            linearly and exponentially to intensify/weaken
+            encouragement/punishment. The scaling factor is calculated as
             follows:
 
             - deviation_ratio = value / threshold
@@ -381,14 +382,15 @@ class AbstractRewardShaperWrapper(RewardWrapper, ABC):
             - otherwise, scale = 0
 
             If deviation_ratio = 1.5, factor = -2, base = 2, then: scale = (1.5
-            * -2) = -3, scale = (-1) * 2 ** 3 = -8. This scalar can be used to
-            produce reward modification using reward min/max or standard
-            deviation.
+            * -2) = -3 then scale = (-1) * 2 ** 3 = -8. This scalar can be used
+            to produce reward modification using reward min/max or standard
+            deviation. For example if used with standard deviation, then reward
+            = -8 * std.
         """
 
         if value < 0:
             raise AssertionError("Value must be a positive number.")
-        
+
         if threshold <= 0:
             raise AssertionError("Threshold must be a positive number.")
         
@@ -397,7 +399,7 @@ class AbstractRewardShaperWrapper(RewardWrapper, ABC):
 
         deviation_ratio = value / threshold
         scale = deviation_ratio * factor if deviation_ratio > 1 else 0
-        scale = np.sign(scale) * np.power(base, abs(scale))
+        scale = np.sign(factor) * np.power(base, abs(scale))
         return scale
 
     def shape_reward(self,
@@ -413,12 +415,12 @@ class AbstractRewardShaperWrapper(RewardWrapper, ABC):
                 A boolean indicating whether to use the reward's standard
                 deviation in shaping the reward. Default is None.
             use_min : bool, optional
-                A boolean indicating whether to use the maximum reward value in
-                shaping the reward. Default is None. Alternative is to use the
-                maximum reward value.
+                A boolean indicating whether to use the minimum reward value in
+                shaping the reward. If None, the maximum reward value is used.
             scale : float, optional
                 A float value used to scale the shaped reward based on chosen
-                method. Default is 1.
+                method. Default is 1. If use_std is True, reward = scale * std.
+                In 
 
         Returns
         -------
