@@ -661,7 +661,9 @@ class AbstractDynamicRewardShaper(AbstractFixedRewardShaper, ABC):
             reward min/max or standard deviation. For example if used
             with standard deviation, then reward = mean + (-8) * std.
         """
-
+        if self.scale is not None:
+            return self.scale
+        
         if value < 0:
             raise AssertionError("Value must be a positive number.")
 
@@ -727,6 +729,24 @@ class FixedExcessMarginRatioRewardShaper(AbstractFixedRewardShaper):
 
         self.excess_margin_ratio_threshold = excess_margin_ratio_threshold
 
+    
+    def check_condition(self) -> bool:
+        """
+        An abstract method for checking whether to apply reward shaping.
+        """
+        excess_margin_ratio = self.market_metadata_wrapper.excess_margin_ratio
+        if excess_margin_ratio < self.excess_margin_ratio_threshold:
+            return True
+        else:
+            return False
+
+class DynamicExcesMarginRewardShaper(
+    FixedExcessMarginRatioRewardShaper, AbstractDynamicRewardShaper):
+
+    def __init__(self, env: Env) -> None:
+        super().__init__(env)
+
+    
     @property
     def threshold(self) -> float:
         """
@@ -753,17 +773,6 @@ class FixedExcessMarginRatioRewardShaper(AbstractFixedRewardShaper):
         """
 
         return self.short_ratio
-    
-    def check_condition(self) -> bool:
-        """
-        An abstract method for checking whether to apply reward shaping.
-        """
-        excess_margin_ratio = self.market_metadata_wrapper.excess_margin_ratio
-        if excess_margin_ratio < self.excess_margin_ratio_threshold:
-            return True
-        else:
-            return False
-
 
 @metadata
 class DynamicPenalizeShortRatioRewardWrapper(
