@@ -333,11 +333,12 @@ class AbstractRewardShaperWrapper(RewardWrapper, ABC):
                     base=1.0) -> float:
         """
         Produces a scalar for shaping the reward based on the deviation from a
-        threshold. Scale sign is determined by factor. The returned scale from
-        this function can be used to adjust the reward signal based on the the
-        reward statistics. by default output scale = +1.0. If used with
-        standard deviation for example then the reward = +1.0 * std. If used
-        with minimum then the reward = +1.0 * min.
+        threshold. Use as a replacement for fixed scale argument in
+        shape_reward method. Scale sign is determined by factor. The returned
+        scale from this function can be used to adjust the reward signal based
+        on the the reward statistics. by default output scale = +1.0. If used
+        with standard deviation for example then the reward = mean + (+1.0) *
+        std. If used with minimum then the reward = +1.0 * min.
 
         Args:
         -----
@@ -385,7 +386,7 @@ class AbstractRewardShaperWrapper(RewardWrapper, ABC):
             * -2) = -3 then scale = (-1) * 2 ** 3 = -8. This scalar can be used
             to produce reward modification using reward min/max or standard
             deviation. For example if used with standard deviation, then reward
-            = -8 * std.
+            = mean + (-8) * std.
         """
 
         if value < 0:
@@ -439,7 +440,7 @@ class AbstractRewardShaperWrapper(RewardWrapper, ABC):
         If `use_min` is True, and scale is 2, the shaped reward is calculated
         as self.reward_statistics.min * 2. If `use_std` is used instead, and
         scale = -3 the shaped reward is calculated as
-        self.reward_statistics.std * (-3).
+        mean + std * (-3).
         """
         if use_min is not None and use_std is not None:
             raise ValueError(
@@ -450,7 +451,9 @@ class AbstractRewardShaperWrapper(RewardWrapper, ABC):
             raise ValueError("Either use_min or use_std parameter must be set.")
 
         if use_min is not None:
-            shaped_reward = scale * self.reward_statistics.min if use_min else scale * self.reward_statistics.max
+            shaped_reward = (
+                scale * self.reward_statistics.minimum
+                if use_min else scale * self.reward_statistics.maximum)
 
         elif use_std is not None:
             shaped_reward = self.reward_statistics.mean + scale * self.reward_statistics.std
@@ -465,12 +468,21 @@ class AbstractRewardShaperWrapper(RewardWrapper, ABC):
         Advances the environment by one step and updates the reward signal.
 
         Args:
-            action (int, Tuple[int], Any): The action taken by the agent.
+        -----
+            action (int, Tuple[int], Any): 
+                The action taken by the agent.
 
         Returns:
-            Tuple: A tuple containing the new observation, the modified reward,
-            a boolean indicating whether the episode has ended, and a
-            dictionary containing additional information.
+        --------
+            observation (np.ndarray[float] | Dict[str, np.ndarray[float]]):
+                The observation of the environment.
+            reward (float):
+                The shaped reward.
+            done (bool):
+                Whether the episode is done.
+            info (dict):
+                A dictionary containing additional information about the
+                environment.
         """
 
         observation, reward, done, info = self.env.step(action)
