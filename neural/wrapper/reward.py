@@ -802,55 +802,21 @@ class AbstractDynamicRewardShaperWrapper(AbstractRewardShaperWrapper, ABC):
 
 @metadata
 class FixedPenalizeShortRatioRewardWrapper(AbstractFixedRewardShaperWrapper):
-    """
-    A reward shaping wrapper that penalizes a short ratio lower than a
-    given threshold.
-
-    Args:
-        env (gym.Env): The environment to wrap. short_ratio_threshold
-        (float): The maximum short ratio allowed before being penalized.
-
-    Attributes:
-        env (gym.Env): The environment being wrapped. reward_rms
-        (RunningMeanStandardDeviation): The running mean and standard
-        deviation object for tracking reward statistics.
-        market_metadata_wrapper (MarketMetadataWrapper): The metadata
-        wrapper for the market environment. short_ratio_threshold
-        (float): The maximum short ratio allowed before being penalized.
-
-    Methods:
-        reward(reward: float) -> float:
-            Penalizes the reward if the short ratio exceeds the
-            threshold.
-
-        check_condition() -> bool:
-            Checks whether the reward should be shaped based on the
-            current episode state.
-    """
 
     def __init__(
         self,
         env: Env,
-        short_ratio_threshold: float = 0.2,
+        excess_margin_ratio_threshold: float = 0.2,
         use_std: bool = None,
         use_min: bool = None,
         scale: float = 1.0,
     ) -> None:
-        """
-        Initializes the PenalizeShortRatioRewardWrapper instance.
-
-        Args:
-            env (gym.Env): The environment to wrap.
-            short_ratio_threshold (float): The maximum short ratio
-            allowed before being penalized.
-                Default is 0.2.
-        """
-
         super().__init__(env)
 
-        assert short_ratio_threshold >= 0, "Short ratio threshold must be non-negative."
+        if excess_margin_ratio_threshold < 0:
+            raise AssertionError("Short ratio threshold must be non-negative.")
 
-        self.short_ratio_threshold = short_ratio_threshold
+        self.short_ratio_threshold = excess_margin_ratio_threshold
         self.use_std = use_std
         self.use_min = use_min
         self.scale = scale
