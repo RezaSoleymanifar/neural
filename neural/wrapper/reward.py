@@ -746,10 +746,13 @@ class AbstractDynamicRewardShaperWrapper(AbstractRewardShaperWrapper, ABC):
     def metric(self) -> float:
         """
         Abstract property that defines the metric used to adjust the
-        scaling factor.
+        scaling factor. Compared to the threshold, to produce a scalar
+        that shows the deviation of threshold.
 
         Returns:
-            float: The metric used to adjust the scaling factor.
+        --------
+            float: 
+                The metric used to adjust the scaling factor.
         """
 
         raise NotImplementedError
@@ -762,7 +765,9 @@ class AbstractDynamicRewardShaperWrapper(AbstractRewardShaperWrapper, ABC):
         the reward.
 
         Returns:
-            float: The threshold used for shaping the reward.
+        --------
+            float: 
+                The threshold used for shaping the reward.
         """
 
         raise NotImplementedError
@@ -773,14 +778,20 @@ class AbstractDynamicRewardShaperWrapper(AbstractRewardShaperWrapper, ABC):
         the adjusted scaling factor.
 
         Args:
-            reward (float): The original reward.
+        -----
+            reward (float): 
+                The original reward.
 
         Returns:
-            float: The shaped reward.
+        --------
+            float: 
+                The shaped reward.
         """
 
         if self.check_condition():
-            scale = self.parse_scale(self.threshold, self.metric, self.factor,
+            scale = self.parse_scale(self.threshold,
+                                     self.metric,
+                                     self.factor,
                                      self.base)
             reward = self.shape_reward(use_std=self.use_std,
                                        use_min=self.use_min,

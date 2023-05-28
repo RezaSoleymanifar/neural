@@ -360,6 +360,11 @@ class AbstractMarketEnvMetadataWrapper(Wrapper, ABC):
     def schedule(self) -> pd.DataFrame:
         """
         The schedule of the market environment.
+
+        Returns:
+        ----------
+            schedule (pd.DataFrame):
+                The schedule of the market environment.
         """
         schedule = self.data_metadata.schedule
 
@@ -369,6 +374,11 @@ class AbstractMarketEnvMetadataWrapper(Wrapper, ABC):
     def index(self) -> int:
         """
         The current index of the episode.
+
+        Returns:
+        ----------
+            index (int):
+                The current index of the episode.
         """
         return self.market_env.index
 
@@ -381,6 +391,10 @@ class AbstractMarketEnvMetadataWrapper(Wrapper, ABC):
         number of intervals per day. The day corresponding to the
         current index is the first day whose cumulative number of
 
+        Returns:
+        ----------
+            day (int):
+                The current day index of the episode.
         """
         resolution = self.data_metadata.resolution
         resolution_offset = pd.to_timedelta(resolution)
