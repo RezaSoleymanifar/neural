@@ -402,36 +402,30 @@ class AbstractFixedRewardShaper(RewardWrapper, ABC):
                 if use_min else scale * self.reward_statistics.maximum)
 
         elif use_std is not None:
-            shaped_reward = self.reward_statistics.mean + scale * self.reward_statistics.std
+            shaped_reward = (
+                self.reward_statistics.mean + scale * self.reward_statistics.std)
 
         return shaped_reward
     
-    @abstractmethod
-    def reward(self, reward: float, *args, **kwargs) -> float:
+    def reward(self, reward: float) -> float:
         """
-        An abstract method for shaping the reward signal.
-
-        This method should be implemented by subclasses to modify the
-        reward signal based on the current episode state. The method
-        takes the current reward as input, and an arbitrary number of
-        arguments and keyword arguments, depending on the specific
-        reward shaping strategy.
+        Shapes the reward based on the check_condition method.
 
         Args:
-        -----
-            reward (float):
-                The current reward signal.
-            *args:
-                Variable length argument list.
-            **kwargs:
-                Arbitrary keyword arguments.
+        ------
+            reward (float): 
+                The original reward.
 
         Returns:
         --------
-            float: The modified reward signal.
+            float: 
+                The shaped reward.
         """
-
-        raise NotImplementedError
+        if self.check_condition():
+            reward = self.shape_reward(use_std=self.use_std,
+                                       use_min=self.use_min,
+                                       scale=self.scale)
+        return reward
 
     def step(
         self,
@@ -470,115 +464,7 @@ class AbstractFixedRewardShaper(RewardWrapper, ABC):
         return observation, reward, done, info
 
 
-class AbstractFixedRewardShaperWrapper(AbstractFixedRewardShaper):
-    """
-    Abstract base class for a fixed reward shaping strategy.
-
-    This class defines the interface for a fixed reward shaper wrapper,
-    which shapes the reward signal of an environment based on a
-    threshold value. To create a custom fixed reward shaper, users must
-    inherit from this class and implement the abstract methods:
-    `check_condition` and `threshold`.
-
-    Attributes:
-    ----------
-        env (Env): 
-            The environment to wrap. 
-        use_std (bool or None, optional):
-            Whether to use the standard deviation of the rewards.
-            Defaults to None.
-        use_min (bool or None, optional):
-            Whether to use the maximum reward. Defaults to None. 
-        scale (float, optional): 
-            The scaling factor for the shaped reward. Defaults to 1.0.
-            If use_std is True, reward = mean + scale * std. In this
-            case behavior is encouraged, by providing positive signal
-            based on the standard deviation of the reward.
-
-    Methods:
-    ---------
-        check_condition() -> bool:
-            Abstract method that checks the condition for shaping the
-            reward.
-        shape_reward(reward: float) -> float:
-            Shapes the reward signal based on the check_condition method
-            and the threshold value.
-        step(action) -> tuple:
-            Takes a step in the environment and returns the observation,
-            shaped reward, done flag, and info dictionary.
-    """
-
-    def __init__(
-        self,
-        env: Env,
-        use_std: Optional[bool] = None,
-        use_min: Optional[bool] = None,
-        scale: float = -1.0,
-    ) -> None:
-        """
-        Initializes the abstract fixed reward shaper wrapper.
-
-        Args:
-        -----
-            env (Env): 
-                The environment to wrap. 
-            use_std (bool or None, optional): 
-                Whether to use the standard deviation of the rewards.
-                Defaults to None.
-            use_min (bool or None, optional): 
-                Whether to use the min/max reward statistics. Defaults
-                to None. if use_min = Flase, then with default scale =
-                -1 the shaped reward will be -1 * max meaning if reward
-                condition is met the shaped reward will be the negative
-                maximum reward. 
-            scale (float, optional): The scaling factor for the
-                shaped reward. Defaults to -1.0 meaning if for example
-                reward shaping condition is met and use_std is True, the
-                shaped reward will be the mean minus the standard
-                deviation.
-        """
-
-        super().__init__(env)
-        self.use_std = use_std
-        self.use_min = use_min
-        self.scale = scale
-
-    @abstractmethod
-    def check_condition(self) -> bool:
-        """
-        Abstract method that checks the condition for shaping the
-        reward.
-
-        Returns:
-        --------
-            bool: 
-                Whether to shape the reward.
-        """
-
-        raise NotImplementedError
-
-    def reward(self, reward: float) -> float:
-        """
-        Shapes the reward based on the check_condition method.
-
-        Args:
-        ------
-            reward (float): 
-                The original reward.
-
-        Returns:
-        --------
-            float: 
-                The shaped reward.
-        """
-        if self.check_condition():
-            reward = self.shape_reward(use_std=self.use_std,
-                                       use_min=self.use_min,
-                                       scale=self.scale)
-        return reward
-
-
-class AbstractDynamicRewardShaperWrapper(AbstractFixedRewardShaperWrapper, ABC):
+class AbstractDynamicRewardShaper(AbstractFixedRewardShaper, ABC):
     """
     Abstract base class for a dynamic reward shaper wrapper.
 
