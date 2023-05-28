@@ -742,8 +742,11 @@ class FixedExcessMarginRatioRewardShaper(AbstractFixedRewardShaper):
             return False
 
 class DynamicExcessMarginRewardShaper(
-    FixedExcessMarginRatioRewardShaper, AbstractDynamicRewardShaper):
+    FixedExcessMarginRatioRewardShaper):
+    """
+    A reward shaping wrapper that penalizes the excess margin ratio.
 
+    """
     def __init__(
         self,
         env: Env,
@@ -756,10 +759,9 @@ class DynamicExcessMarginRewardShaper(
         super().__init__(env,
                          use_std=use_std,
                          use_min=use_min,
-                         scale=scale,
-                         factor=factor,
-                         base=base)
-
+                         scale=scale)
+        self.factor = factor
+        self.base = base
 
     @property
     def threshold(self) -> float:
@@ -785,12 +787,13 @@ class DynamicExcessMarginRewardShaper(
         Returns:
             float: The short ratio.
         """
+        excess_margin_ratio = self.market_metadata_wrapper.excess_margin_ratio
+        return 1/excess_margin_ratio
 
-        return self.short_ratio
 
 @metadata
 class DynamicPenalizeShortRatioRewardWrapper(
-    FixedExcessMarginRatioRewardShaper, AbstractDynamicRewardShaperWrapper):
+    FixedExcessMarginRatioRewardShaper, AbstractDynamicRewardShaper):
     """
     A reward shaping wrapper that penalizes a short ratio lower than a
     given threshold.
