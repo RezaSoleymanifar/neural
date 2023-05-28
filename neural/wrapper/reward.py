@@ -316,6 +316,15 @@ class AbstractRewardShaperWrapper(RewardWrapper, ABC):
         arguments and keyword arguments, depending on the specific
         reward shaping strategy.
 
+        Args:
+        -----
+            reward (float):
+                The current reward signal.
+            *args:
+                Variable length argument list.
+            **kwargs:
+                Arbitrary keyword arguments.
+
         Returns:
         --------
             float: The modified reward signal.
@@ -350,7 +359,13 @@ class AbstractRewardShaperWrapper(RewardWrapper, ABC):
                 > 0 then the scaling factor will be greater than 1. This 
                 way agent learns to avoid margin calls.
             factor (float):
-                factor is a positive value. 
+                factor is a positive value. This is a linear scaling
+                of the deviation ratio. scale = deviation_ratio * factor
+                If factor = 1, the scaling factor will be equal to the
+                deviation ratio. Used to intensify or weaken the effect
+                of the deviation.
+            base (float):
+
 
         Notes:
         ------
