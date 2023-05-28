@@ -338,16 +338,23 @@ class AbstractRewardShaperWrapper(RewardWrapper, ABC):
         Args:
         -----
             threshold (float):
-                The threshold value. This is a positive value. If the 
+                The threshold value. This is a positive value. If the
                 target value is greater than the threshold, the scaling
                 factor will be greater than 1. If the target value is
-                less than the threshold, the scaling factor will be
-                set to 0.
+                less than the threshold, the scaling factor will be set
+                to 0.
             value (float):
                 The target value to compare against the threshold. This
-                can be a metric
+                can be a metric such as excess_margin_ratio. If metric >
+                0 exceeds the threshold = excess_margin_ratio_threshold
+                > 0 then the scaling factor will be greater than 1. This 
+                way agent learns to avoid margin calls.
+            factor (float):
+                The scaling factor. This is a positive value. The   
+                 
 
         Notes:
+        ------
             The scaling factor is calculated as follows:
 
             - deviation_ratio = value / threshold
