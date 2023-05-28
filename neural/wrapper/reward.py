@@ -417,15 +417,15 @@ class AbstractRewardShaperWrapper(RewardWrapper, ABC):
         Args
         ----------
         use_std : bool, optional
-            A boolean indicating whether to use the reward's standard
-            deviation in shaping the reward. Default is None.
+            A boolean indicating whether to use the reward's standard deviation
+            in shaping the reward. Default is None.
         use_min : bool, optional
-            A boolean indicating whether to use the maximum reward value
-            in shaping the reward. Default is None. Alternative is to
-            use the maximum reward value.
+            A boolean indicating whether to use the maximum reward value in
+            shaping the reward. Default is None. Alternative is to use the
+            maximum reward value.
         scale : float, optional
-            A float value used to scale the shaped reward based on
-            chosen method. Default is 1.
+            A float value used to scale the shaped reward based on chosen
+            method. Default is 1.
 
         Returns
         -------
@@ -435,29 +435,28 @@ class AbstractRewardShaperWrapper(RewardWrapper, ABC):
         Raises
         ------
         ValueError
-            If both `use_min` and `use_std` parameters are set to a
-            non-None value, or if both are set to None.
+            If both `use_min` and `use_std` parameters are set to a non-None
+            value, or if both are set to None.
 
         Notes
         -----
-        The method calculates the shaped reward based on the input
-        parameters. If `use_min` is not None, the method uses the
-        maximum or maximum reward value, depending on the value of
-        `use_min`, to shape the reward. If `use_std` is not None, the
-        method uses the mean and standard deviation of the reward values
-        to shape the reward. The shaped reward is then multiplied by the
-        `scale` parameter.
+        The method calculates the shaped reward based on the input parameters.
+        If `use_min` is not None, the method uses the maximum or maximum reward
+        value, depending on the value of `use_min`, to shape the reward. If
+        `use_std` is not None, the method uses the mean and standard deviation
+        of the reward values to shape the reward. The shaped reward is then
+        multiplied by the `scale` parameter.
 
-        If both `use_min` and `use_std` parameters are set to a non-None
-        value, or if both are set to None, a `ValueError` is raised with
-        an appropriate message.
+        If both `use_min` and `use_std` parameters are set to a non-None value,
+        or if both are set to None, a `ValueError` is raised with an
+        appropriate message.
 
         Examples
         --------
-        >>> def parse_scale(reward):
-        ...     ...
-        >>>     return scale
-        >>> reward_shaper = lambda reward: shape_reward(use_std=True, scale=parse_scale(reward))
+        If `use_min` is True, and scale is 2, the shaped reward is calculated
+        as self.reward_statistics.min * 2. If `use_std` is used instead,  and
+        scale = -3 the shaped reward is calculated as
+        self.reward_statistics.std * (-3).
         """
 
         if use_min is not None and use_std is not None:
