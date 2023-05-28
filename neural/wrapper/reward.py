@@ -595,6 +595,10 @@ class AbstractDynamicRewardShaper(AbstractFixedRewardShaper, ABC):
 
     @property
     def scale(self) -> float:
+        return self.parse_scale(
+                                value=self.metric,
+                                factor=self.factor,
+                                base=self.base)
     @property
     @abstractmethod
     def metric(self) -> float:
@@ -628,6 +632,21 @@ class AbstractDynamicRewardShaper(AbstractFixedRewardShaper, ABC):
 
         raise NotImplementedError
 
+    @property
+    def deviation_ratio(self) -> float:
+        """
+        The ratio of metric to threshold. If metric > threshold, the
+        deviation ratio will be greater than 1. If metric < threshold,
+        the deviation ratio will be less than 1.
+
+        Returns:
+        --------
+            float: 
+                The ratio of metric to threshold.
+        """
+        ratio = self.metric / self.threshold
+        return ratio if ratio > 1 else 0
+
     def check_condition(self) -> bool:
         """
         Checks whether the reward should be shaped based on the current
@@ -638,8 +657,6 @@ class AbstractDynamicRewardShaper(AbstractFixedRewardShaper, ABC):
         return True if self.metric > self.threshold else False
 
     def parse_scale(self,
-                    threshold: float,
-                    value: float,
                     factor: float = -1.0,
                     base=1.0) -> float:
         """
@@ -703,19 +720,13 @@ class AbstractDynamicRewardShaper(AbstractFixedRewardShaper, ABC):
             reward min/max or standard deviation. For example if used
             with standard deviation, then reward = mean + (-8) * std.
         """
-        if self.scale is not None:
-            return self.scale
-
-        if value < 0:
-            raise AssertionError("Value must be a positive number.")
-
-        if threshold <= 0:
-            raise AssertionError("Threshold must be a positive number.")
+        if self._scale is not None:
+            return self._scale
 
         if base < 1:
             raise AssertionError("Base must be greater than or equal to 1.")
 
-        deviation_ratio = value / threshold
+        deviation_ratio = self.metric / self.threshold
         scale = deviation_ratio * factor if deviation_ratio > 1 else 0
         scale = np.sign(factor) * np.power(base, abs(scale))
         return scale
