@@ -267,43 +267,18 @@ class AbstractRewardShaperWrapper(RewardWrapper, ABC):
 
     """
 
-    def __init__(
-        self,
-        env: Env,
-        use_std: bool = None,
-        use_min: bool = None,
-        scale: float = -1.0,
-        factor: Optional[float] = None,
-        base: float = 1.0,
-    ) -> None:
+    def __init__(self, env: Env) -> None:
         """
-        Initializes the abstract dynamic reward shaper wrapper.
+        Initializes the AbstractRewardShaperWrapper instance.
 
         Args:
         -----
-            env (Env): 
-                The environment to wrap. use_std (bool or None,
-                optional): Whether to use the standard deviation of the
-                rewards. Defaults to None.
-            use_min (bool or None, optional): 
-                Whether to use the maximum reward. Defaults to None.
-            scale (float, optional):
-                The scaling factor for the shaped reward. Defaults to
-                1.0. factor (float, optional): The factor used to adjust
-                the scaling factor. Defaults to -1.0. when factor > 0
-                the shaped reward will be positive. When factor < 0 the
-                shaped reward will be negative. 
-            base (float, optional): 
-                The base value used in the scaling factor adjustment.
-                Defaults to 1.0.
+            env (gym.Env): 
+                The environment to wrap.
         """
 
         super().__init__(env)
-
-        self.use_std = use_std
-        self.use_min = use_min
-        self.factor = factor
-        self.base = base
+        self.reward_statistics = RunningStatistics()
 
     @abstractmethod
     def check_condition(self, *args, **kwargs) -> bool:
@@ -360,7 +335,7 @@ class AbstractRewardShaperWrapper(RewardWrapper, ABC):
     def parse_scale(self,
                     threshold: float,
                     value: float,
-                    factor: float = 1.0,
+                    factor: float = -1.0,
                     base=1.0) -> float:
         """
         Produces a scalar for shaping the reward based on the deviation
@@ -368,9 +343,9 @@ class AbstractRewardShaperWrapper(RewardWrapper, ABC):
         in shape_reward method. Scale sign is determined by factor. The
         returned scale from this function can be used to adjust the
         reward signal based on the the reward statistics. by default
-        output scale = +1.0. If used with standard deviation for example
-        then the reward = mean + (+1.0) * std. If used with minimum then
-        the reward = +1.0 * min.
+        output scale = -1.0. If used with standard deviation for example
+        then the reward = mean + (-1.0) * std. If used with minimum then
+        the reward = -1.0 * min.
 
         Args:
         -----
@@ -636,16 +611,14 @@ class AbstractFixedRewardShaperWrapper(AbstractRewardShaperWrapper):
             float: 
                 The shaped reward.
         """
-
         if self.check_condition():
             reward = self.shape_reward(use_std=self.use_std,
                                        use_min=self.use_min,
                                        scale=self.scale)
-
         return reward
 
 
-class AbstractDynamicRewardShaperWrapper(AbstractRewardShaperWrapper, ABC):
+class AbstractDynamicRewardShaperWrapper(AbstractFixedRewardShaperWrapper, ABC):
     """
     Abstract base class for a dynamic reward shaper wrapper.
 
@@ -698,6 +671,7 @@ class AbstractDynamicRewardShaperWrapper(AbstractRewardShaperWrapper, ABC):
         env: Env,
         use_std: bool = None,
         use_min: bool = None,
+        scale: float = -1.0,
         factor: float = -1.0,
         base: float = 1.0,
     ) -> None:
@@ -723,7 +697,10 @@ class AbstractDynamicRewardShaperWrapper(AbstractRewardShaperWrapper, ABC):
                 Defaults to 1.0.
         """
 
-        super().__init__(env)
+        super().__init__(env,
+                         use_std=use_std,
+                         use_min=use_min,
+                         scale=scale)
 
         self.use_std = use_std
         self.use_min = use_min
