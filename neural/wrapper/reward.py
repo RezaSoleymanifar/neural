@@ -250,7 +250,7 @@ class LiabilityInterstRewardWrapper(RewardWrapper):
 
 
 class AbstractRewardShaper(RewardWrapper):
-    
+
 
     
 
@@ -548,7 +548,6 @@ class AbstractDynamicRewardShaper(AbstractFixedRewardShaper, ABC):
                 The base value used in the scaling factor adjustment.
                 Defaults to 1.0.
         """
-
         super().__init__(env,
                          use_std=use_std,
                          use_min=use_min,
@@ -746,10 +745,19 @@ class FixedExcessMarginRatioRewardShaper(AbstractFixedRewardShaper):
         else:
             return False
 
-class DynamicExcessMarginRewardShaper(AbstractDynamicRewardShaper,
-    FixedExcessMarginRatioRewardShaper):
+class DynamicExcessMarginRewardShaper(AbstractDynamicRewardShaper):
     """
     A reward shaping wrapper that penalizes the excess margin ratio.
+    Uses deviation from excess margin ratio threshold to shape the
+    reward. If excess margin ratio is smaller than the threshold, the
+    reward will be shaped.
+
+    Attributes:
+    ----------
+        env (gym.Env):
+            The environment to wrap.
+        excess_margin_ratio_threshold (float):
+        
 
     """
     def __init__(
@@ -761,8 +769,7 @@ class DynamicExcessMarginRewardShaper(AbstractDynamicRewardShaper,
         factor: float = -1.0,
         base: float = 1.0,
     ) -> None:
-        FixedExcessMarginRatioRewardShaper.__init__(
-            self,
+        super().__init__(
             env = env,
             use_std = use_std,
             use_min = use_min,
@@ -798,128 +805,3 @@ class DynamicExcessMarginRewardShaper(AbstractDynamicRewardShaper,
         """
         excess_margin_ratio = self.market_metadata_wrapper.excess_margin_ratio
         return 1/excess_margin_ratio
-
-
-@metadata
-class DynamicPenalizeShortRatioRewardWrapper(
-    FixedExcessMarginRatioRewardShaper, AbstractDynamicRewardShaper):
-    """
-    A reward shaping wrapper that penalizes a short ratio lower than a
-    given threshold.
-
-    This class modifies the reward signal of a market environment by
-    applying a penalty when the short ratio exceeds a specified
-    threshold. The penalty is based on the deviation of the short ratio
-    from the threshold.
-
-    Parameters
-    ----------
-    env : gym.Env
-        The environment to wrap.
-    short_ratio_threshold : float, optional
-        The maximum short ratio allowed before being penalized. Default
-        is 0.2.
-    factor : float, optional
-        A factor used to modify the penalty based on the deviation of
-        the short ratio from the threshold. Default is 1.0.
-    use_std : bool, optional
-        A boolean indicating whether to use the reward's standard
-        deviation in shaping the reward. Default is None.
-    use_min : bool, optional
-        A boolean indicating whether to use the maximum reward value in
-        shaping the reward. Default is None. Alternative is to use the
-        maximum reward value.
-    scale : float, optional
-        A float value used to scale the shaped reward based on chosen
-        method. Default is 1.
-
-    Attributes
-    ----------
-    env : gym.Env
-        The environment being wrapped.
-    reward_rms : RunningMeanStandardDeviation
-        The running mean and standard deviation object for tracking
-        reward statistics.
-    market_metadata_wrapper : MarketMetadataWrapper
-        The metadata wrapper for the market environment.
-    short_ratio_threshold : float
-        The maximum short ratio allowed before being penalized.
-    factor : float
-        A factor used to modify the penalty based on the deviation of
-        the short ratio from the threshold.
-    short_ratio : float
-        The current short ratio.
-
-    Methods
-    -------
-    reward(reward: float) -> float:
-        Modifies the reward if the short ratio exceeds the threshold.
-
-    check_condition() -> bool:
-        Checks whether the reward should be shaped based on the current
-        episode state.
-    
-    threshold -> float:
-        The short ratio threshold.
-
-    metric -> float:
-        The short ratio.
-    """
-
-    def __init__(
-        self,
-        env: Env,
-        short_ratio_threshold: float = 0.2,
-        use_std: bool = None,
-        use_min: bool = None,
-        factor: float = -1.0,
-        base: float = 1.0,
-    ) -> None:
-        """
-        Initializes the DynamicPenalizeShortRatioRewardWrapper instance.
-
-        Parameters
-        ----------
-        env : gym.Env
-            The environment to wrap.
-        short_ratio_threshold : float, optional
-            The maximum short ratio allowed before being penalized.
-            Default is 0.2.
-        factor : float, optional
-            A factor used to modify the penalty based on the deviation
-            of the short ratio from the threshold. Default is -1.0.
-        use_std : bool, optional
-            A boolean indicating whether to use the reward's standard
-            deviation in shaping the reward. Default is None.
-        use_min : bool, optional
-            A boolean indicating whether to use the maximum reward value
-            in shaping the reward. Default is None. Alternative is to
-            use the maximum reward value.
-        base : float, optional
-            The base value used in the scaling factor adjustment.
-            Defaults to 1.0.
-        """
-
-        super().__init__(env, short_ratio_threshold, use_std, use_min, factor)
-        self.factor = factor
-
-    def check_condition(self) -> bool:
-        """
-        Checks whether the reward should be shaped based on the current
-        episode state.
-
-        Returns
-        -------
-        bool
-            True if the reward should be shaped, False otherwise.
-        """
-
-        shorts = self.market_metadata_wrapper.shorts
-        net_worth = self.market_metadata_wrapper.net_worth
-
-        if not net_worth > 0:
-            return False
-
-        self.short_ratio = abs(shorts) / net_worth
-
-        return self.short_ratio > self.short_ratio_threshold
