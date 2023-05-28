@@ -360,46 +360,45 @@ class AbstractRewardShaperWrapper(RewardWrapper, ABC):
                 way agent learns to avoid margin calls.
             factor (float):
                 factor serves two purposes:
-
                     - sign of factor determines
                       punishment/encouragement.
                     - magnitude of factor determines strength of
                       punishment/encouragement.
                 
-                Sign of factor determines sign of reward. If factor is
-                positive the triggered condition will be encouraged. If
-                not the triggered condition will be discouraged. factor
-                also is used as a linear scaling of the deviation ratio.
-                scale = deviation_ratio * factor If factor = 1, the
-                scaling factor will be equal to the deviation ratio.
-                Used to intensify or weaken the effect of the deviation.
+                If factor is positive the triggered condition will be
+                encouraged. If not the triggered condition will be
+                discouraged. factor also is used as a linear scaling of
+                the deviation ratio. scale = deviation_ratio * factor If
+                factor = 1, the scaling factor will be equal to the
+                deviation ratio. Used to intensify or weaken the effect
+                of the deviation.
             base (float):
                 based is raised to the power of the absolute value of
                 the scale, computed using deviation_ratio and factor.
 
         Notes:
         ------
-            The scaling factor is calculated as follows:
+            The overall idea is to use deviation ratio to map to a
+            scalar that shows the deviation of threshold. Scaling this
+            scalar is allowed using both linear and exponential
+            parameters. The scaling factor is calculated as follows:
 
             - deviation_ratio = value / threshold
             - if deviation_ratio > 1, scale = deviation_ratio * factor
             - otherwise, scale = 0
 
-            The scaling factor can be used to adjust the reward signal
-            based on the deviation from a desired behavior or state. The
-            factor parameter can be used to adjust the strength of the
-            scaling.
+            If deviation_ratio = 1.5, factor = -2, base = 2, then:
+            scale = (1.5 * -2) = -3, scale = (-1) * 2 ** 3 = -8
         """
-        # turn following into raise error
 
         if value < 0:
-            raise ValueError("Value must be a positive number.")
-
+            raise AssertionError("Value must be a positive number.")
+        
         if threshold <= 0:
-            raise ValueError("Threshold must be a positive number.")
-
+            raise AssertionError("Threshold must be a positive number.")
+        
         if base < 1:
-            raise ValueError("Base must be greater than or equal to 1.")
+            raise AssertionError("Base must be greater than or equal to 1.")
 
         deviation_ratio = value / threshold
         scale = deviation_ratio * factor if deviation_ratio > 1 else 0
