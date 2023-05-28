@@ -906,7 +906,10 @@ class MarginAccountMetaDataWrapper(AbstractMarketEnvMetadataWrapper):
     @property
     def excess_margin_ratio(self):
         """
-        Result of div
+        Result of dividing excess margin by portfolio value. This metric
+        can be used to determine the amount of cushion around the margin
+        call threshold. Can be used to provide both protection and
+        guaranteed liquidity.
 
         Returns:
         ----------

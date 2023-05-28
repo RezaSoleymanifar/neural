@@ -672,8 +672,9 @@ class ExcessMarginActionWrapper(ActionWrapper):
         a reward wrapper to penalize the agent for triggering the
         threshold, or receiving a margin call.
         """
+        excess_margin_ratio = self.market_metadata_wrapper.excess_margin_ratio
         asset_quantities = self.market_metadata_wrapper.asset_quantities
-        if self.excess_margin_ratio < self.excess_margin_ratio_threshold:
+        if excess_margin_ratio < self.excess_margin_ratio_threshold:
             for action, quantity in zip(actions, asset_quantities):
                 if (action < 0 and quantity <= 0
                         or action > 0 and quantity >= 0):
