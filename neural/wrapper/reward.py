@@ -267,18 +267,43 @@ class AbstractRewardShaperWrapper(RewardWrapper, ABC):
 
     """
 
-    def __init__(self, env: Env) -> None:
+    def __init__(
+        self,
+        env: Env,
+        use_std: bool = None,
+        use_min: bool = None,
+        scale: float = -1.0,
+        factor: Optional[float] = None,
+        base: float = 1.0,
+    ) -> None:
         """
-        Initializes the AbstractRewardShaperWrapper instance.
+        Initializes the abstract dynamic reward shaper wrapper.
 
         Args:
         -----
-            env (gym.Env): 
-                The environment to wrap.
+            env (Env): 
+                The environment to wrap. use_std (bool or None,
+                optional): Whether to use the standard deviation of the
+                rewards. Defaults to None.
+            use_min (bool or None, optional): 
+                Whether to use the maximum reward. Defaults to None.
+            scale (float, optional):
+                The scaling factor for the shaped reward. Defaults to
+                1.0. factor (float, optional): The factor used to adjust
+                the scaling factor. Defaults to -1.0. when factor > 0
+                the shaped reward will be positive. When factor < 0 the
+                shaped reward will be negative. 
+            base (float, optional): 
+                The base value used in the scaling factor adjustment.
+                Defaults to 1.0.
         """
 
         super().__init__(env)
-        self.reward_statistics = RunningStatistics()
+
+        self.use_std = use_std
+        self.use_min = use_min
+        self.factor = factor
+        self.base = base
 
     @abstractmethod
     def check_condition(self, *args, **kwargs) -> bool:
