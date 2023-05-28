@@ -773,15 +773,15 @@ class MarginAccountMetaDataWrapper(AbstractMarketEnvMetadataWrapper):
     def positions(self) -> np.ndarray[float]:
         """
         The current positions (notional base currency value) of each
-        asset held. The position of each asset is the quantity of each
-        asset held times its price. Position of an asset is always
+        asset. The position of each asset is the quantity of each
+        asset times its price. Position of an asset is always
         positive.
 
         Returns:
         ----------
             positions 
                 (np.ndarray[float]): The current positions of each asset
-                held by the trader.
+                in the environment.
         """
         positions = np.abs(self.asset_quantities * self.asset_prices)
         return positions
@@ -805,13 +805,13 @@ class MarginAccountMetaDataWrapper(AbstractMarketEnvMetadataWrapper):
         """
         The current equity of the trader. Equity is the sum of all long
         positions and cash(+/-), minus short positions. This caputures
-        the concept of owened liquidity that can be used to maintain
-        existing assets in the context of marginable assets. In the
-        context of nonmarginable assets, since shorting is not allowed,
-        this is the same as the cash plus the value of long positions.
-        There is no concept of maintaining a position in nonmarginable
-        assets, since they are purchased with cash and cannot be used as
-        collateral.
+        the concept of debt substracted value of assets/cash that can be
+        used to maintain existing assets in the context of marginable
+        assets. In the context of nonmarginable assets, since shorting
+        is not allowed, this is the same as the cash plus the value of
+        long positions. There is no concept of maintaining a position in
+        nonmarginable assets, since they are purchased with cash and
+        cannot be used as collateral.
 
         Returns:
         ----------
