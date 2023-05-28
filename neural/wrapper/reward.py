@@ -277,7 +277,7 @@ class AbstractFixedRewardShaper(RewardWrapper, ABC):
             Calculate the shaped reward based on the input parameters.
         step(action) -> tuple:
             Advances the environment by one step and updates the reward
-            signal.
+            signal, if condition is met.
     
     Notes:
     ------
@@ -763,17 +763,20 @@ class DynamicExcessMarginRewardShaper(AbstractDynamicRewardShaper):
             The threshold for the excess margin ratio. If the excess
             margin ratio is smaller than the threshold, the reward will
             be shaped. The default value is 0.2.
-        use_std (bool or None, optional):
+        use_std (bool or None, optional): 
             Whether to use the standard deviation of the rewards.
             Defaults to None.
-        use_min (bool or None, optional):
-            Whether to use the maximum reward. Defaults to None.
-        scale (float, optional):
-            The scaling factor for the shaped reward. Defaults to 1.0.
-        factor (float, optional):
-            The factor used to adjust the scaling factor. Defaults to   
-
-
+        use_min (bool or None, optional): 
+            Whether to use the min/max reward statistics. Defaults
+            to None. if use_min = Flase, then with default scale =
+            -1 the shaped reward will be -1 * max meaning if reward
+            condition is met the shaped reward will be the negative
+            maximum reward. 
+        scale (float, optional): The scaling factor for the
+            shaped reward. Defaults to -1.0 meaning if for example
+            reward shaping condition is met and use_std is True, the
+            shaped reward will be the mean minus the standard
+            deviation.
     """
     def __init__(
         self,
