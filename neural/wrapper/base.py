@@ -485,8 +485,8 @@ class AbstractMarketEnvMetadataWrapper(Wrapper, ABC):
     @property
     def profit(self):
         """
-        The current profit of the trader. This is the difference between
-        the current equity and the initial equity.
+        The current profit made in the environment. This is the
+        difference between the current equity and the initial equity.
 
         Returns:
         ----------
@@ -499,7 +499,7 @@ class AbstractMarketEnvMetadataWrapper(Wrapper, ABC):
     @property
     def return_(self):
         """
-        The current return of the trader. This is the ratio of the
+        The current return on initial equity. This is the ratio of the
         current profit to the initial equity.
 
         Returns:
@@ -701,9 +701,9 @@ class MarginAccountMetaDataWrapper(AbstractMarketEnvMetadataWrapper):
                 2) Given small enough trade to equity ratio, the trader
                     has enough marginable equity to open new positions
                     (automatically satisfying initial margin
-                    reuirements).
+                    reuirements at all trades).
                 3) If initial margin of purchased assets do not exceed
-                    the excess margin, it also gurarantees that post
+                    the excess margin, it also guarantees that post
                     transaction the maintenance margin requirement is
                     also met.
 
