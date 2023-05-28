@@ -801,15 +801,19 @@ class FixedPenalizeExcessMarginRatioRewardWrapper(AbstractFixedRewardShaperWrapp
         self.scale = scale
 
     def check_condition(self) -> bool:
-        if self.market_metadata_wrapper.excess_margin_ratio <= self.:
+        """
+        An abstract method for checking whether to apply reward shaping.
+        """
+        excess_margin_ratio = self.market_metadata_wrapper.excess_margin_ratio
+        if excess_margin_ratio < self.excess_margin_ratio_threshold:
+            return True
+        else:
             return False
-
-        return self.short_ratio > self.short_ratio_threshold
 
 
 @metadata
 class DynamicPenalizeShortRatioRewardWrapper(
-        FixedPenalizeExcessMarginRatioRewardWrapper):
+        FixedPenalizeExcessMarginRatioRewardWrapper, AbstractDynamicRewardShaperWrapper):
     """
     A reward shaping wrapper that penalizes a short ratio lower than a
     given threshold.
