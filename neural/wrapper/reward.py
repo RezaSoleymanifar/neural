@@ -589,14 +589,12 @@ class AbstractDynamicRewardShaper(AbstractFixedRewardShaper, ABC):
                          use_std=use_std,
                          use_min=use_min,
                          scale=scale)
-
-        self.factor = factor
+        
         self.base = base
 
     @property
     def scale(self) -> float:
         return self.parse_scale(
-                                value=self.metric,
                                 factor=self.factor,
                                 base=self.base)
     @property
@@ -606,10 +604,17 @@ class AbstractDynamicRewardShaper(AbstractFixedRewardShaper, ABC):
         Abstract property that defines the metric used to adjust the
         scaling factor. Metric is compared to the threshold, to produce
         a scalar that shows the deviation from threshold.
+
         Returns:
         --------
-            float: 
+            float >= 0: 
                 The metric used to adjust the scaling factor.
+        
+        Notes:
+        ------
+            metric should be a positive value. If metric > threshold,
+            the deviation_ratio will be greater than 1. reward/penalty 
+            will be based off this deviation ratio.
         """
 
         raise NotImplementedError
@@ -620,13 +625,13 @@ class AbstractDynamicRewardShaper(AbstractFixedRewardShaper, ABC):
         """
         Abstract property that defines the threshold used for shaping
         the reward. If metric exceeds the threshold, the reward will be
-        shaped based on deviation of metric above the threshold. If
-        deviation bellows the threshold, is desired use inverse of
-        metric.
+        shaped based on deviation of metric above the threshold. If you
+        want to shape the reward when metric falls below the threshold,
+        use the inverse of metric and threshold.
 
         Returns:
         --------
-            float: 
+            float > 0: 
                 The threshold used for shaping the reward.
         """
 
@@ -644,6 +649,12 @@ class AbstractDynamicRewardShaper(AbstractFixedRewardShaper, ABC):
             float: 
                 The ratio of metric to threshold.
         """
+
+        if not self.threshold > 0 or not self.metric >= 0:
+            raise AssertionError(
+                f'Threshold must be greater than 0. '
+                f'Current value: {self.threshold}')
+        
         ratio = self.metric / self.threshold
         return ratio if ratio > 1 else 0
 
