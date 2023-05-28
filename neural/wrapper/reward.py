@@ -551,25 +551,23 @@ class AbstractDynamicRewardShaper(AbstractFixedRewardShaper, ABC):
         self.factor = factor
         self.base = base
 
-    @abstractmethod
+
     def check_condition(self) -> bool:
         """
-        Abstract method that checks whether the reward should be shaped
-        based on the current episode state.
-
-        Returns:
-            bool: Whether to shape the reward.
+        Checks whether the reward should be shaped based on the current
+        episode state. By default returns True if metric > threshold. If
+        metric < threshold is desired use inverse of metric, and
+        threshold.
         """
-
-        raise NotImplementedError
+        return True if self.metric > self.threshold else False
 
     @property
     @abstractmethod
     def metric(self) -> float:
         """
         Abstract property that defines the metric used to adjust the
-        scaling factor. Compared to the threshold, to produce a scalar
-        that shows the deviation of threshold.
+        scaling factor. Metric is compared to the threshold, to produce
+        a scalar that shows the deviation from threshold.
 
         Returns:
         --------
