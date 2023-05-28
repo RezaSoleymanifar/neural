@@ -290,6 +290,13 @@ class AbstractRewardShaperWrapper(RewardWrapper, ABC):
         method takes an arbitrary number of arguments and keyword
         arguments, depending on the specific condition to be checked.
 
+        Args:
+        -----
+            *args:
+                Variable length argument list.
+            **kwargs:
+                Arbitrary keyword arguments.
+
         Returns:
         --------
             bool: 
@@ -310,12 +317,14 @@ class AbstractRewardShaperWrapper(RewardWrapper, ABC):
         reward shaping strategy.
 
         Returns:
+        --------
             float: The modified reward signal.
         """
 
         raise NotImplementedError
 
-    def parse_scale(threshold: float,
+    def parse_scale(self,
+                    threshold: float,
                     value: float,
                     factor: float = 1.0,
                     base=1.0) -> float:
@@ -327,21 +336,16 @@ class AbstractRewardShaperWrapper(RewardWrapper, ABC):
         ratio if deviation from threshold occurs.
 
         Args:
-            threshold (float): The threshold value for the deviation
-            ratio. value (float): The value to calculate the deviation
-            ratio from. factor (float, optional): The factor to scale
-            the deviation ratio by. Default is 1.0. base (float,
-            optional): The base for the exponential scaling. Default is
-            1.0.
-
-        Returns:
-            float: The scaling factor for shaping the reward based on
-            the deviation from the threshold.
-            
-
-        Raises:
-            AssertionError: If value, threshold, or factor are not
-            positive numbers.
+        -----
+            threshold (float):
+                The threshold value. This is a positive value. If the 
+                target value is greater than the threshold, the scaling
+                factor will be greater than 1. If the target value is
+                less than the threshold, the scaling factor will be
+                set to 0.
+            value (float):
+                The target value to compare against the threshold. This
+                can be a metric
 
         Notes:
             The scaling factor is calculated as follows:
