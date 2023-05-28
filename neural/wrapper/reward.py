@@ -172,7 +172,6 @@ class LiabilityInterstRewardWrapper(RewardWrapper):
         compute_interest() -> float:
             Compute the interest to charge on liabilities.
     """
-
     def __init__(self, env, interest_rate=0.08):
         super().__init__(env)
         self.interest_rate = interest_rate
@@ -203,7 +202,7 @@ class LiabilityInterstRewardWrapper(RewardWrapper):
         self.previous_day = self.market_metadata_wrapper.day
         return observation
 
-    def reward(self, reward):
+    def reward(self, reward: float) -> float:
         """
         Generate the reward signal.
 
@@ -211,7 +210,7 @@ class LiabilityInterstRewardWrapper(RewardWrapper):
         --------
             reward (float):
                 The reward to modify.
-            
+    
         Returns:
         --------
             float:
@@ -226,9 +225,19 @@ class LiabilityInterstRewardWrapper(RewardWrapper):
 
         return reward
 
-    def compute_interest(self):
+    def compute_interest(self) -> float:
+        """
+        Compute the interest to charge on liabilities. Liabilities
+        include borrowed cash, or borrowed assets. The interest rate is
+        applied on a daily basis.
+
+        Returns:
+        --------
+            float:
+                The interest to charge on liabilities.
+        """
         cash_debt = abs(min(self.market_metadata_wrapper.cash, 0))
-        
+
         positions = self.market_metadata_wrapper.positions
         asset_quantitties = self.market_metadata_wrapper.asset_quantities
         asset_debt = sum(
