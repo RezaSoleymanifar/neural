@@ -594,7 +594,9 @@ class AbstractFixedRewardShaperWrapper(AbstractRewardShaperWrapper):
         reward.
 
         Returns:
-            bool: Whether to shape the reward.
+        --------
+            bool: 
+                Whether to shape the reward.
         """
 
         raise NotImplementedError
@@ -607,7 +609,9 @@ class AbstractFixedRewardShaperWrapper(AbstractRewardShaperWrapper):
         the reward.
 
         Returns:
-            float: The threshold used for shaping the reward.
+        --------
+            float: 
+                The threshold used for shaping the reward.
         """
 
         raise NotImplementedError
@@ -617,15 +621,18 @@ class AbstractFixedRewardShaperWrapper(AbstractRewardShaperWrapper):
         Shapes the reward based on the check_condition method.
 
         Args:
-            reward (float): The original reward.
+        ------
+            reward (float): 
+                The original reward.
 
         Returns:
-            float: The shaped reward.
+        --------
+            float: 
+                The shaped reward.
         """
 
         if self.check_condition():
-            reward = self.shape_reward(threshold=self.threshold,
-                                       use_std=self.use_std,
+            reward = self.shape_reward(use_std=self.use_std,
                                        use_min=self.use_min,
                                        scale=self.scale)
 
