@@ -141,6 +141,36 @@ class LiabilityInterstRewardWrapper(RewardWrapper):
     borrowed assets. The interest rate is calculated as a percentage of
     the liability. Apply this wrapper prior to normalization of rewards
     as this substracts the notional value of interest from the reward.
+    Applies the interest rate on a daily basis.
+
+    Args:
+    -------
+        env (gym.Env):
+            The environment to wrap.
+        interest_rate (float):
+            The interest rate to charge on liabilities. This is
+            expressed as a percentage of the liability. The interest
+            rate is applied daily. The default value is 8% per annum.
+
+    Attributes:
+    -----------
+        interest_rate (float):
+            The interest rate to charge on liabilities. This is
+            expressed as a percentage of the liability. The interest
+            rate is applied daily. The default value is 8% per annum.
+
+        previous_day (datetime.date):
+            The day of the previous step. This is used to determine if
+            the day has changed and interest should be charged.
+
+    Methods:
+    --------
+        reset() -> np.ndarray:
+            Reset the environment.
+        reward(reward: float) -> float:
+            Compute the reward.
+        compute_interest() -> float:
+            Compute the interest to charge on liabilities.
     """
 
     def __init__(self, env, interest_rate=0.08):
@@ -150,9 +180,20 @@ class LiabilityInterstRewardWrapper(RewardWrapper):
 
     @property
     def daily_interest_rate(self):
+        """
+        Compute the daily interest rate.
+
+        Returns:
+        --------
+            float:
+                The daily interest rate.
+        """
         return self.interest_rate / 360
 
     def reset(self):
+        """
+        Re
+        """
         observation = self.env.reset()
         self.previous_day = self.market_metadata_wrapper.day
         return observation
