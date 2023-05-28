@@ -802,7 +802,9 @@ class AbstractDynamicRewardShaperWrapper(AbstractRewardShaperWrapper, ABC):
 
 @metadata
 class FixedPenalizeShortRatioRewardWrapper(AbstractFixedRewardShaperWrapper):
-
+    """
+    
+    """
     def __init__(
         self,
         env: Env,
@@ -813,8 +815,8 @@ class FixedPenalizeShortRatioRewardWrapper(AbstractFixedRewardShaperWrapper):
     ) -> None:
         super().__init__(env)
 
-        if excess_margin_ratio_threshold < 0:
-            raise AssertionError("Short ratio threshold must be non-negative.")
+        if excess_margin_ratio_threshold <= 0:
+            raise AssertionError('Threshold must be a positive number.')
 
         self.short_ratio_threshold = excess_margin_ratio_threshold
         self.use_std = use_std
@@ -825,23 +827,21 @@ class FixedPenalizeShortRatioRewardWrapper(AbstractFixedRewardShaperWrapper):
     @property
     def threshold(self) -> float:
         """
-        The short ratio threshold.
+        Excess margin ratio threshold. Since excess over threshold is
+        penalized, and values bellow excess_margin_ratio_threshold are
+        penalized, the threshold is inverse of the excess margin ratio.
 
         Returns:
-            float: The short ratio threshold.
+        --------
+            float: 
+                The penalty threshold.
         """
 
         return self.short_ratio_threshold
 
     def check_condition(self) -> bool:
-
-        shorts = self.market_metadata_wrapper.shorts
-        net_worth = self.market_metadata_wrapper.net_worth
-
-        if not net_worth > 0:
+        if self.market_metadata_wrapper.excess_margin_ratio <= self.:
             return False
-
-        self.short_ratio = abs(shorts) / net_worth
 
         return self.short_ratio > self.short_ratio_threshold
 
