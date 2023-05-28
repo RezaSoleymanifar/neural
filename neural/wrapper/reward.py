@@ -445,7 +445,7 @@ class AbstractFixedRewardShaper(RewardWrapper, ABC):
                 self.reward_statistics.mean + self.scale * self.reward_statistics.std)
 
         return shaped_reward
-    
+
     def reward(self, reward: float) -> float:
         """
         Shapes the reward based on the check_condition method.
@@ -558,7 +558,6 @@ class AbstractDynamicRewardShaper(AbstractFixedRewardShaper, ABC):
         use_std: bool = None,
         use_min: bool = None,
         scale: Optional[float] = None,
-        factor: float = -1.0,
         base: float = 1.0,
     ) -> None:
         """
@@ -578,9 +577,6 @@ class AbstractDynamicRewardShaper(AbstractFixedRewardShaper, ABC):
                 the scaling factor. Defaults to -1.0. when factor > 0
                 the shaped reward will be positive. When factor < 0 the
                 shaped reward will be negative.
-            factor (float, optional):
-                The factor used to adjust the scaling factor. Defaults  
-                to -1.0. 
             base (float, optional): 
                 The base value used in the scaling factor adjustment.
                 Defaults to 1.0.
@@ -589,13 +585,11 @@ class AbstractDynamicRewardShaper(AbstractFixedRewardShaper, ABC):
                          use_std=use_std,
                          use_min=use_min,
                          scale=scale)
-        
+
+        if base < 1:
+            raise AssertionError("Base must be greater than or equal to 1.")
         self.base = base
 
-    @property
-    def scale(self) -> float:
-        return self.parse_scale()
-    
     @property
     @abstractmethod
     def metric(self) -> float:
@@ -637,6 +631,13 @@ class AbstractDynamicRewardShaper(AbstractFixedRewardShaper, ABC):
         raise NotImplementedError
 
     @property
+    def scale(self) -> float:
+        """
+        Property that defines the scaling factor for the shaped reward.
+        """
+        return self.parse_scale()
+
+    @property
     def deviation_ratio(self) -> float:
         """
         The ratio of metric to threshold. If metric > threshold, the
@@ -671,9 +672,7 @@ class AbstractDynamicRewardShaper(AbstractFixedRewardShaper, ABC):
         """
         return True if self.deviation_ratio > 1 else False
 
-    def parse_scale(self,
-                    factor: float = -1.0,
-                    base=1.0) -> float:
+    def parse_scale(self) -> float:
         """
         Produces a scalar for shaping the reward based on the deviation
         from a threshold. Use as a replacement for fixed scale argument
@@ -738,12 +737,9 @@ class AbstractDynamicRewardShaper(AbstractFixedRewardShaper, ABC):
         if self._scale is not None:
             return self._scale
 
-        if base < 1:
-            raise AssertionError("Base must be greater than or equal to 1.")
-
         scale = (
             self.deviation_ratio * self._scale if self.deviation_ratio > 1 else 0)
-        scale = np.sign(factor) * np.power(base, abs(scale))
+        scale = np.sign(self._scale) * np.power(base, abs(scale))
         return scale
 
 
