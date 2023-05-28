@@ -267,11 +267,11 @@ class AbstractRewardShaperWrapper(RewardWrapper, ABC):
 
     """
 
-    def __init__(self, 
-                 env: Env, 
+    def __init__(self,
+                 env: Env,
                  use_std: Optional[bool],
                  use_min: Optional[bool],
-                 use_) -> None:
+                 scale: float = -1.0) -> None:
         """
         Initializes the AbstractRewardShaperWrapper instance.
 
