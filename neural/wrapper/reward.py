@@ -249,25 +249,15 @@ class LiabilityInterstRewardWrapper(RewardWrapper):
         return debt_interest
 
 
-class AbstractRewardShaper(RewardWrapper):
-
-
-    
-
 class AbstractFixedRewardShaper(RewardWrapper, ABC):
     """
-    A blueprint class for reward shaping wrappers. This class is
-    designed to be subclassed for creating custom reward shaping
-    wrappers for market environments. Reward shaping wrappers are used
-    to modify the reward signal obtained by an agent in order to
-    encourage or discourage certain behaviours during training. highly
-    useful for pretraining an agent with some degrees of freedom in
-    actions. Apply relevant reward shaping wrappers to define and
-    restrict unwanted actions. Start with a pipe of wrappers that
-    enforce the desired behaviour and later remove the influencing
-    wrappers to allow the agent to learn the desired behaviour. if
-    desired behavior is a starting point, then in a final step remove
-    the reward shaping wrapper and the agent may learn to improve on it.
+    Fixed reward shaper wrapper. Fixed because the reward shaping is
+    independent from magnitude of deviation from target behavior. If a
+    condition is met then applies a fixed reward shaping based on the
+    reward statistics. This is a blueprint class for fixed reward
+    shaping wrappers. This class is designed to be subclassed for
+    creating custom fixed reward shaping wrappers for market
+    environments.
 
     Attributes:
     ----------  
@@ -288,6 +278,19 @@ class AbstractFixedRewardShaper(RewardWrapper, ABC):
         step(action) -> tuple:
             Advances the environment by one step and updates the reward
             signal.
+    
+    Notes:
+    ------
+        Reward shaping wrappers are used to modify the reward
+        signal obtained by an agent in order to encourage or discourage
+        certain behaviours during training. highly useful for pretraining an
+        agent with some degrees of freedom in actions. Apply relevant reward
+        shaping wrappers to define and restrict unwanted actions. Start with
+        a pipe of wrappers that enforce the desired behaviour and later
+        remove the influencing wrappers to allow the agent to learn the
+        desired behaviour. if desired behavior is a starting point, then in
+        a final step remove the reward shaping wrapper and the agent may
+        learn to improve on it.
     """
 
     def __init__(
@@ -757,7 +760,19 @@ class DynamicExcessMarginRewardShaper(AbstractDynamicRewardShaper):
         env (gym.Env):
             The environment to wrap.
         excess_margin_ratio_threshold (float):
-        
+            The threshold for the excess margin ratio. If the excess
+            margin ratio is smaller than the threshold, the reward will
+            be shaped. The default value is 0.2.
+        use_std (bool or None, optional):
+            Whether to use the standard deviation of the rewards.
+            Defaults to None.
+        use_min (bool or None, optional):
+            Whether to use the maximum reward. Defaults to None.
+        scale (float, optional):
+            The scaling factor for the shaped reward. Defaults to 1.0.
+        factor (float, optional):
+            The factor used to adjust the scaling factor. Defaults to   
+
 
     """
     def __init__(
