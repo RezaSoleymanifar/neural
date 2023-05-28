@@ -342,9 +342,9 @@ class AbstractRewardShaperWrapper(RewardWrapper, ABC):
         -----
             threshold (float):
                 The threshold value. This is a positive value. If the target
-                value is greater than the threshold, the scaling factor will be
+                value is greater than the threshold, the deviation_ratio will be
                 greater than 1. If the target value is less than the threshold,
-                the scaling factor will be set to 0.
+                the devation_ratio will be set to 0.
             value (float):
                 The target value to compare against the threshold. This can be
                 a metric such as excess_margin_ratio. If metric > 0 exceeds the
