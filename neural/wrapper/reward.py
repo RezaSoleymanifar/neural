@@ -262,21 +262,9 @@ class AbstractRewardShaperWrapper(RewardWrapper, ABC):
     restrict unwanted actions. Start with a pipe of wrappers that
     enforce the desired behaviour and later remove the influencing
     wrappers to allow the agent to learn the desired behaviour. if
-    desired behavior is a starting point, at a final step remove the
-    reward shaping wrapper then the agent will learn to improve on it.
+    desired behavior is a starting point, then in a final step remove
+    the reward shaping wrapper and the agent may learn to improve on it.
 
-    Attributes:
-        env (gym.Env): The environment to wrap. rms (RunningMeanStd):
-        Running mean and standard deviation object to track reward
-        statistics. buffer (list): A list to buffer experiences before
-        writing to disk. buffer_size (int): The maximum number of
-        experiences to buffer before writing to disk. path (str): The
-        path to the HDF5 file for saving experiences.
-
-    Methods:
-        check_condition: An abstract method for checking whether to
-        apply reward shaping. reward: An abstract method for shaping the
-        reward signal.
     """
 
     def __init__(self, env: Env) -> None:
@@ -284,11 +272,13 @@ class AbstractRewardShaperWrapper(RewardWrapper, ABC):
         Initializes the AbstractRewardShaperWrapper instance.
 
         Args:
-            env (gym.Env): The environment to wrap.
+        -----
+            env (gym.Env): 
+                The environment to wrap.
         """
 
         super().__init__(env)
-        self.reward_rms = RunningStatistics()
+        self.reward_statistics = RunningStatistics()
 
     @abstractmethod
     def check_condition(self, *args, **kwargs) -> bool:
@@ -296,12 +286,14 @@ class AbstractRewardShaperWrapper(RewardWrapper, ABC):
         An abstract method for checking whether to apply reward shaping.
 
         This method should be implemented by subclasses to determine
-        whether to apply reward shaping to the current episode. The
+        whether to apply reward shaping to the current step. The
         method takes an arbitrary number of arguments and keyword
         arguments, depending on the specific condition to be checked.
 
         Returns:
-            bool: True if the reward should be shaped, False otherwise.
+        --------
+            bool: 
+                True if the reward should be shaped, False otherwise.
         """
 
         raise NotImplementedError
@@ -441,10 +433,10 @@ class AbstractRewardShaperWrapper(RewardWrapper, ABC):
             raise ValueError("Either use_min or use_std parameter must be set.")
 
         if use_min is not None:
-            shaped_reward = scale * self.reward_rms.min if use_min else scale * self.reward_rms.max
+            shaped_reward = scale * self.reward_statistics.min if use_min else scale * self.reward_statistics.max
 
         elif use_std is not None:
-            shaped_reward = self.reward_rms.mean + scale * self.reward_rms.std
+            shaped_reward = self.reward_statistics.mean + scale * self.reward_statistics.std
 
         return shaped_reward
 
@@ -468,7 +460,7 @@ class AbstractRewardShaperWrapper(RewardWrapper, ABC):
 
         observation, reward, done, info = self.env.step(action)
 
-        self.reward_rms.update(reward)
+        self.reward_statistics.update(reward)
 
         if self.check_condition():
             reward = self.reward(reward)
