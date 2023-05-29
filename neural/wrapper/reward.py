@@ -362,7 +362,8 @@ class AbstractRewardShaper(RewardWrapper, ABC):
             )
 
         if use_min is None and use_std is None:
-            raise AssertionError("Either use_min or use_std parameter must be set.")
+            raise AssertionError(
+                "Either use_min or use_std parameter must be set.")
 
         self.use_std = use_std
         self.use_min = use_min
@@ -591,7 +592,8 @@ class AbstractFixedRewardShaper(AbstractRewardShaper, ABC):
             )
 
         if use_min is None and use_std is None:
-            raise AssertionError("Either use_min or use_std parameter must be set.")
+            raise AssertionError(
+                "Either use_min or use_std parameter must be set.")
 
         self.use_std = use_std
         self.use_min = use_min
@@ -699,6 +701,7 @@ class AbstractDynamicRewardShaper(AbstractRewardShaper, ABC):
 
         if base < 1:
             raise AssertionError("Base must be greater than or equal to 1.")
+        self.multiplier = multiplier
         self.base = base
 
     @property
@@ -706,18 +709,13 @@ class AbstractDynamicRewardShaper(AbstractRewardShaper, ABC):
     def metric(self) -> float:
         """
         Abstract property that defines the metric to measure the deviation from
-        expected behavior. deviation_ratio = metric / threshold.
+        expected behavior. deviation_ratio = metric / threshold when metric >
+        threshold. deviation_ratio = 0 when metric < threshold.
 
         Returns:
         --------
             float >= 0: 
                 The metric used to adjust the scaling factor.
-        
-        Notes:
-        ------
-            metric should be a positive value. If metric > threshold,
-            the deviation_ratio will be greater than 1. reward/penalty 
-            will be based off this deviation ratio.
         """
 
         raise NotImplementedError
@@ -751,12 +749,11 @@ class AbstractDynamicRewardShaper(AbstractRewardShaper, ABC):
         scale is computed as sign(multiplier) * base ** (deviation_ratio *
         abs(multiplier)) where deviation_ratio = metric / threshold.
         """
-        if self._scale is not None:
-            return self._scale
 
-        scale = (self.deviation_ratio *
-                 self._scale if self.deviation_ratio > 1 else 0)
-        scale = np.sign(self._scale) * np.power(base, abs(scale))
+        scale = (
+            np.sign(self.multiplier) *
+            np.power(self.base, abs(self.deviation_ratio * self.multiplier)))
+        scale = 0 if self.deviation_ratio <= 1 else scale
         return scale
 
     @property
@@ -791,7 +788,6 @@ class AbstractDynamicRewardShaper(AbstractRewardShaper, ABC):
         threshold.
         """
         return True if self.deviation_ratio > 1 else False
-
 
 
 @metadata
