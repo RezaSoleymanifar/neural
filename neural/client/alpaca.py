@@ -55,9 +55,8 @@ from neural.utils.misc import objects_list_to_dataframe
 
 class AlpacaClient(AbstractClient):
     """
-    The AlpacaClient class is a wrapper for the Alpaca API. It provides
-    a simple interface for connecting to the Alpaca API and retrieving
-    data. It also provides a simple interface for placing orders.
+    The AlpacaClient class that connects to Alpaca API. It provides a
+    simple interface for performing account related tasks.
 
     Args:
     ------
@@ -65,9 +64,9 @@ class AlpacaClient(AbstractClient):
             The API key for the Alpaca API. 
         secret (str): The
             secret key for the Alpaca API. 
-        paper (bool): Whether to use the
-            paper trading API or the live trading API. Defaults to
-            False.
+        paper (bool): 
+            Whether to use the paper trading API or the live trading
+            API. Defaults to False.
 
     Attributes:
     -----------
@@ -80,8 +79,8 @@ class AlpacaClient(AbstractClient):
             API. Defaults to False. If using paper account credentials,
             this should be set to True.
         _clients:
-            Dictionary of all clients available on Alpaca API.
-            The corresponding values are the RESTClient objects.
+            Dictionary of all clients available on Alpaca API. The
+            corresponding values are the RESTClient objects.
         _account:
             A TradeAccount object that contains information about the
             account.
@@ -194,10 +193,10 @@ class AlpacaClient(AbstractClient):
     Option 3: Instantiate an instance of the AlpacaClient class with
     environment variables.
 
-    Set the environment variables for API key and secret on
-    Unix-like operating systems (Linux, macOS, etc.): 
-        BASH: export API_KEY = <your_api_key> 
-        BASH: export API_SECRET = <your_secret_key>
+    Set the environment variables for API key and secret on Unix-like
+    operating systems (Linux, macOS, etc.): 
+        BASH: export API_KEY = <your_api_key> BASH: export API_SECRET =
+        <your_secret_key>
     
     >>> from neural.connect.alpaca import AlpacaClient 
     >>> client = AlpacaClient()
