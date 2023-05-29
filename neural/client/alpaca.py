@@ -398,7 +398,7 @@ class AlpacaClient(AbstractClient):
         exchanges = [item.value for item in self._exchanges]
         return exchanges
 
-    def connect(self):
+    def connect(self) -> None:
         """
         Connect to the Alpaca API and set up the client. Will be called
         automatically when the client is instantiated. Sets up the
@@ -412,12 +412,13 @@ class AlpacaClient(AbstractClient):
 
     def _validate_credentials(self) -> bool:
         """
-        Ensure that the API key and secret are valid. If the API key and
+        Ensures that the API key and secret are valid. If the API key and
         secret are not valid, an exception will be raised.
 
         Raises:
         -------
-            ValueError: If the API key and secret are not valid.
+            ValueError: 
+                If the API key and secret are not valid.
         """
         if self.key is None or self.secret is None:
             raise ValueError(
@@ -442,6 +443,11 @@ class AlpacaClient(AbstractClient):
                 - Get clock
                 - Get calendar
                 - Get assets
+        
+        Returns:
+        ---------
+            RESTClient:
+                A dictionary mapping client names to RESTClient objects.
         """
         clients = dict()
         clients['trade'] = TradingClient(api_key=self.key,
