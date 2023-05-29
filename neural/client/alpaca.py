@@ -679,7 +679,7 @@ class AlpacaDataClient(AbstractDataClient, AlpacaClient):
                 Whether to use the paper trading API or the live trading
                 API. Defaults to False.
         """
-        AlpacaClient.__init__(self, *args, **kwargs)
+        super().__init__(self, *args, **kwargs)
 
         return None
 

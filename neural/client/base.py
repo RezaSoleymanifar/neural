@@ -184,15 +184,9 @@ class AbstractTradeClient(AbstractClient):
             be positive or negative. Negative cash indicates that the
             trader is in debt.
 
-    Raises
-    ------
-        NotImplementedError
-            If the `cash` or `asset_quantities` properties are not
-            implemented in the subclass.
-
     Methods
     -------
-        asset_quantities(assets: List[AbstractAsset], *args, **kwargs)
+        get_asset_quantities(assets: List[AbstractAsset], *args, **kwargs)
         -> np.ndarray[float]:
             Returns numpy array containing quantities of the assets
             provided as argument. Asset quantities can be positive or
