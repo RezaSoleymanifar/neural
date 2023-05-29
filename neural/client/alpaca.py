@@ -43,6 +43,32 @@ class AlpacaClient(AbstractClient):
             paper trading API or the live trading API. Defaults to
             False.
 
+    Attributes:
+    -----------
+        key (str):
+            The API key for the Alpaca API.
+        secret (str):
+            The secret key for the Alpaca API.
+        paper (bool):
+            Whether to use the paper trading API or the live trading
+            API. Defaults to False. If using paper account credentials,
+            this should be set to True.
+        _clients:
+            Dictionary of all clients available on Alpaca API.
+            The corresponding values are the RESTClient objects.
+        _account:
+            A TradeAccount object that contains information about the
+            account.
+        _assets:
+            A list of all assets available on Alpaca API.
+        _symbols:
+            A dictionary of all symbols available on Alpaca API. Values
+            are asset objects.
+        _asset_types:
+            The asset types available on Alpaca API.
+        _exchanges:
+            A list of exchanges available on Alpaca API.
+
     Properties:
     -----------
         clients:
@@ -130,7 +156,6 @@ class AlpacaClient(AbstractClient):
     your API key and secret.
 
     >>> client = AlpacaClient(key=..., secret=...)
-    >>> assets = client.assets()
 
     Option 2: Instantiate an instance of the AlpacaClient by passing
     values to constants.
@@ -143,12 +168,10 @@ class AlpacaClient(AbstractClient):
     Option 3: Instantiate an instance of the AlpacaClient class with
     environment variables.
 
-    # Set the environment variables for API key and secret on #
+    Set the environment variables for API key and secret on
     Unix-like operating systems (Linux, macOS, etc.): 
-        BASH: export API_KEY = <your_api_key> BASH: export API_SECRET =
-        <your_secret_key>
-
-    # Instantiate an instance of the AlpacaClient class 
+        BASH: export API_KEY = <your_api_key> 
+        BASH: export API_SECRET = <your_secret_key>
     
     >>> from neural.connect.alpaca import AlpacaClient 
     >>> client = AlpacaClient()
@@ -200,7 +223,8 @@ class AlpacaClient(AbstractClient):
         ---------
             dict: 
                 A dictionary mapping client names to RESTClient
-                objects.
+                objects. clients['trade'] is the trading client
+                of type TradingClient in Alpaca API.
         """
         return self._clients
 
