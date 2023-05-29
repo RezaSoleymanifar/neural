@@ -883,6 +883,9 @@ class AlpacaDataClient(AbstractDataClient, AlpacaClient):
             - maintenance_margin
             - shortable
             - easy_to_borrow
+
+        This is a universal representation of assets for the Alpaca API.
+        Makes financial data retrieval self-contained in the assets.
         
         Args:
         ------
@@ -897,14 +900,13 @@ class AlpacaDataClient(AbstractDataClient, AlpacaClient):
         Raises:
         ------- 
             ValueError: 
-                If a symbol is not a known symbol.  
+                If a symbol is not a known symbol to the Alpaca API.
 
         Notes:
         ------
             Asset objects are client dependent as each client can have
             individual representation/specifications for the same
-            underlying asset. This method is specific to the Alpaca API
-            client.
+            underlying asset.
         """
         asset_type_map = {
             AssetClass.US_EQUITY: AssetType.STOCK,
@@ -919,16 +921,12 @@ class AlpacaDataClient(AbstractDataClient, AlpacaClient):
 
             if alpaca_asset is None:
                 raise ValueError(f'Symbol {symbol} is not a known symbol.')
-
             if not alpaca_asset.tradable:
                 logger.warning(f'Symbol {symbol} is not a tradable symbol.')
-
             if alpaca_asset.status != AssetStatus.ACTIVE:
                 logger.warning(f'Symbol {symbol} is not an active symbol.')
-
             if not alpaca_asset.fractionable:
                 logger.warning(f'Symbol {symbol} is not a fractionable symbol.')
-
             if not alpaca_asset.easy_to_borrow:
                 logger.warning(f'Symbol {symbol} is not easy to borrow (ETB).')
 
