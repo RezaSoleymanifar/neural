@@ -172,6 +172,7 @@ class LiabilityInterstRewardWrapper(RewardWrapper):
         compute_interest() -> float:
             Compute the interest to charge on liabilities.
     """
+
     def __init__(self, env, interest_rate=0.08):
         super().__init__(env)
         self.interest_rate = interest_rate
@@ -351,7 +352,7 @@ class AbstractFixedRewardShaper(RewardWrapper, ABC):
 
         if use_min is None and use_std is None:
             raise ValueError("Either use_min or use_std parameter must be set.")
-        
+
         self.use_std = use_std
         self.use_min = use_min
         self._scale = scale
@@ -394,10 +395,7 @@ class AbstractFixedRewardShaper(RewardWrapper, ABC):
 
         raise NotImplementedError
 
-    def shape_reward(self,
-                     use_std: bool = None,
-                     use_min: bool = None
-                     ) -> float:
+    def shape_reward(self) -> float:
         """
         Calculate the shaped reward based on the input parameters.
 
@@ -437,14 +435,14 @@ class AbstractFixedRewardShaper(RewardWrapper, ABC):
         mean + std * (-3).
         """
 
-        if use_min is not None:
-            shaped_reward = (
-                self.scale * self.reward_statistics.minimum
-                if use_min else self.scale * self.reward_statistics.maximum)
+        if self.use_min is not None:
+            shaped_reward = (self.scale * self.reward_statistics.minimum
+                             if self.use_min else self.scale *
+                             self.reward_statistics.maximum)
 
-        elif use_std is not None:
-            shaped_reward = (
-                self.reward_statistics.mean + self.scale * self.reward_statistics.std)
+        elif self.use_std is not None:
+            shaped_reward = (self.reward_statistics.mean +
+                             self.scale * self.reward_statistics.std)
 
         return shaped_reward
 
@@ -463,8 +461,7 @@ class AbstractFixedRewardShaper(RewardWrapper, ABC):
                 The shaped reward.
         """
         if self.check_condition():
-            reward = self.shape_reward(use_std=self.use_std,
-                                       use_min=self.use_min)
+            reward = self.shape_reward()
         return reward
 
     def step(
@@ -583,10 +580,7 @@ class AbstractDynamicRewardShaper(AbstractFixedRewardShaper, ABC):
                 The base value used in the scaling factor adjustment.
                 Defaults to 1.0.
         """
-        super().__init__(env,
-                         use_std=use_std,
-                         use_min=use_min,
-                         scale=scale)
+        super().__init__(env, use_std=use_std, use_min=use_min, scale=scale)
 
         if base < 1:
             raise AssertionError("Base must be greater than or equal to 1.")
@@ -653,14 +647,12 @@ class AbstractDynamicRewardShaper(AbstractFixedRewardShaper, ABC):
         """
 
         if not self.threshold > 0:
-            raise AssertionError(
-                f'Threshold must be greater than 0. '
-                f'Current value: {self.threshold}')
+            raise AssertionError(f'Threshold must be greater than 0. '
+                                 f'Current value: {self.threshold}')
 
         if not self.metric >= 0:
-            raise AssertionError(
-                f'Metric must be greater than or equal to 0. '
-                f'Current value: {self.metric}')
+            raise AssertionError(f'Metric must be greater than or equal to 0. '
+                                 f'Current value: {self.metric}')
 
         ratio = self.metric / self.threshold
         return ratio if ratio > 1 else 0
@@ -739,11 +731,10 @@ class AbstractDynamicRewardShaper(AbstractFixedRewardShaper, ABC):
         if self._scale is not None:
             return self._scale
 
-        scale = (
-            self.deviation_ratio * self._scale if self.deviation_ratio > 1 else 0)
+        scale = (self.deviation_ratio *
+                 self._scale if self.deviation_ratio > 1 else 0)
         scale = np.sign(self._scale) * np.power(base, abs(scale))
         return scale
-
 
 
 @metadata
@@ -752,6 +743,7 @@ class FixedExcessMarginRatioRewardShaper(AbstractFixedRewardShaper):
     a reward shaping wrapper that penalizes the excess margin ratio
     falling below a given threshold.
     """
+
     def __init__(
         self,
         env: Env,
@@ -760,10 +752,7 @@ class FixedExcessMarginRatioRewardShaper(AbstractFixedRewardShaper):
         use_min: bool = None,
         scale: float = 1.0,
     ) -> None:
-        super().__init__(env,
-                         use_std=use_std,
-                         use_min=use_min,
-                         scale=scale)
+        super().__init__(env, use_std=use_std, use_min=use_min, scale=scale)
 
         if excess_margin_ratio_threshold <= 0:
             raise AssertionError(
@@ -771,7 +760,6 @@ class FixedExcessMarginRatioRewardShaper(AbstractFixedRewardShaper):
 
         self.excess_margin_ratio_threshold = excess_margin_ratio_threshold
 
-    
     def check_condition(self) -> bool:
         """
         An abstract method for checking whether to apply reward shaping.
@@ -781,6 +769,7 @@ class FixedExcessMarginRatioRewardShaper(AbstractFixedRewardShaper):
             return True
         else:
             return False
+
 
 @metadata
 class DynamicExcessMarginRewardShaper(AbstractDynamicRewardShaper):
@@ -813,6 +802,7 @@ class DynamicExcessMarginRewardShaper(AbstractDynamicRewardShaper):
             shaped reward will be the mean minus the standard
             deviation.
     """
+
     def __init__(
         self,
         env: Env,
@@ -821,14 +811,12 @@ class DynamicExcessMarginRewardShaper(AbstractDynamicRewardShaper):
         scale: Optional[float] = None,
         base: float = 1.0,
     ) -> None:
-        super().__init__(
-            env = env,
-            use_std = use_std,
-            use_min = use_min,
-            scale = scale,
-            base = base
-            )
-        
+        super().__init__(env=env,
+                         use_std=use_std,
+                         use_min=use_min,
+                         scale=scale,
+                         base=base)
+
     @property
     def threshold(self) -> float:
         """
@@ -854,4 +842,4 @@ class DynamicExcessMarginRewardShaper(AbstractDynamicRewardShaper):
             float: The short ratio.
         """
         excess_margin_ratio = self.market_metadata_wrapper.excess_margin_ratio
-        return 1/excess_margin_ratio
+        return 1 / excess_margin_ratio
