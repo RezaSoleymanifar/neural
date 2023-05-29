@@ -442,7 +442,7 @@ class AlpacaClient(AbstractClient):
         return account
 
 
-class AlpacaDataClient(AlpacaClient, AbstractDataClient):
+class AlpacaDataClient(AbstractDataClient, AlpacaClient):
     """
     This is an extension of the AlpacaClient class. It provides a
     simple interface for retrieving data from the Alpaca API, in
@@ -584,12 +584,20 @@ class AlpacaDataClient(AlpacaClient, AbstractDataClient):
     """
     def __init__(self, *args, **kwargs):
 
-        super().__init__(*args, **kwargs)
+        AlpacaClient.__init__(self, *args, **kwargs)
 
     @property
     def data_source(self):
 
         return AlpacaDataSource
+
+    def connect(self):
+        """
+        Uses the connect method of the AlpacaClient class to connect to
+        the Alpaca API and set up the REST clients. Will be called
+        automatically when the client is instantiated.
+        """
+        return AlpacaClient.connect(self)
 
     def _get_clients(self) -> RESTClient:
         """

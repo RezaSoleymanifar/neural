@@ -72,7 +72,6 @@ class AbstractClient(ABC):
 
 
 class AbstractTradeClient(AbstractClient):
-
     """
     Abstract base class for a client that connects to a trading service
     or API. Trade clients are enforced to provide the bare minimum
