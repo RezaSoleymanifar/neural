@@ -146,6 +146,7 @@ class AbstractDataClient(AbstractClient):
     map the client to the corresponding stream metadata, for live
     streaming of data.
     """
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -159,7 +160,7 @@ class AbstractDataClient(AbstractClient):
         """
 
         raise NotImplementedError
-    
+
 
 class AbstractTradeClient(AbstractClient):
     """
@@ -191,17 +192,19 @@ class AbstractTradeClient(AbstractClient):
 
     Methods
     -------
-        asset_quantities : np.ndarray[float]
-            The current quantity of each asset held by the trader. Asset
-            quantities can be positive or negative. Negative quantities
-            indicate that the trader has shorted the asset, namely the
-            trader owes the asset to the broker.
-        check_connection
+        asset_quantities(assets: List[AbstractAsset], *args, **kwargs)
+        -> np.ndarray[float]:
+            Returns numpy array containing quantities of the assets
+            provided as argument. Asset quantities can be positive or
+            negative. Negative quantities indicate that the trader has
+            shorted the asset, namely the trader owes the asset to the
+            broker.
+        check_connection(*args, **kwargs):
             Check the connection to the service. If the connection is
             not successful, an error should be raised. The Trader class
             will use this method to check the connection before
             execution of trading process.
-        place_order
+        place_order(*args, **kwargs):
             Place an order for a single asset.
 
     Examples
@@ -209,15 +212,17 @@ class AbstractTradeClient(AbstractClient):
     To create a new trade client:
 
     >>> class MyTradeClient(AbstractTradeClient):
-    ...     def connect(self, *args, **kwargs):
-    ...         # Connect to the API
-    ...         pass
+    ...    def __init__(self, *args, **kwargs):
+    ...        super().__init__(*args, **kwargs)
     ...     @property
-    ...     def cash(self) -> float:
+    ...     def cash(self):
     ...         # Return the current amount of cash available to the
     ...         # trader.
     ...         pass
-    ...     def get_asset_quantities(self) -> np.ndarray[float]:
+    ...     def connect(self, *args, **kwargs):
+    ...         # Connect to the API
+    ...         pass
+    ...     def get_asset_quantities(self, assets, *args, **kwargs):
     ...         # Return the current quantity of each asset held by the
     ...         # trader.
     ...         pass
@@ -233,6 +238,17 @@ class AbstractTradeClient(AbstractClient):
     """
 
     def __init__(self, *args, **kwargs):
+        """
+        Initialize the client and connect to the API.
+
+        Args
+        ----------
+            *args : Tuple
+                Positional arguments to be passed to the `connect`
+                method.
+            **kwargs : Dict
+                Keyword arguments to be passed to the `connect` method.
+        """
         super().__init__(*args, **kwargs)
 
     @property
@@ -251,12 +267,18 @@ class AbstractTradeClient(AbstractClient):
         raise NotImplementedError
 
     @abstractmethod
-    def get_asset_quantities(self, assets: List[AbstractAsset], *args, **kwargs) -> np.ndarray[float]:
+    def get_asset_quantities(self, assets: List[AbstractAsset], *args,
+                             **kwargs) -> np.ndarray[float]:
         """
         The current quantity of each asset held by the trader. Asset
         quantities can be positive or negative. Negative quantities
         indicate that the trader has shorted the asset, namely the
         trader owes the asset to the broker.
+
+        Args:
+        ----
+            assets (List[AbstractAsset]):
+                A list of assets to get the quantities for.
 
         Raises:
         --------
