@@ -28,7 +28,7 @@ from neural.client.base import (AbstractClient, AbstractTradeClient,
                                 AbstractDataClient)
 from neural.data.base import AlpacaDataSource, AlpacaAsset
 from neural.data.enums import AssetType
-from neural.utils.misc import objects_to_dataframe
+from neural.utils.misc import objects_list_to_dataframe
 
 
 class AlpacaClient(AbstractClient):
@@ -346,7 +346,7 @@ class AlpacaClient(AbstractClient):
         if self._assets is None:
             self._assets = self.clients['trade'].get_all_assets()
 
-        assets_dataframe = objects_to_dataframe(self._assets)
+        assets_dataframe = objects_list_to_dataframe(self._assets)
 
         return assets_dataframe
 
@@ -1017,7 +1017,7 @@ class AlpacaTradeClient(AlpacaClient, AbstractTradeClient):
 
         self._positions = self.clients['trading'].get_all_positions()
 
-        positions_dataframe = objects_to_dataframe(self._positions)
+        positions_dataframe = objects_list_to_dataframe(self._positions)
 
         return positions_dataframe
 

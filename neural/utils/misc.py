@@ -1,7 +1,7 @@
 """
 misc.py
 """
-from typing import Iterable, Dict
+from typing import List
 from enum import Enum
 
 import pandas as pd
@@ -12,17 +12,18 @@ from alpaca.data.timeframe import TimeFrame, TimeFrameUnit
 
 
 
-def objects_to_dataframe(
-    object_collection: Iterable[Asset]
+def objects_list_to_dataframe(
+    objects_list: List[object]
     ) -> pd.DataFrame:
     """
-    Converts a collection of enum objects into a pandas DataFrame. Used
-    in the AlpacaClient class to convert the assets property into a
-    DataFrame.
+    Converts a collection of objects into a pandas DataFrame. Used in
+    the AlpacaClient class to convert the assets objects into a
+    DataFrame, or convert positions objects into a dataframe. If a value
+    is Enum, its string representation is used.
 
     Args:
     ------
-        object_collection (Iterable[Dict[str, str]]): 
+        object_collection List[Asset]: 
             A collection of enum objects, where each object is a
             dictionary containing property-value pairs.
 
@@ -30,7 +31,7 @@ def objects_to_dataframe(
         pd.DataFrame: A DataFrame containing the converted objects.
     """
 
-    objects_collection_ = object_collection.copy()
+    objects_collection_ = objects_list.copy()
     for index, object in enumerate(objects_collection_):
         object_dict = dict(object)
 
