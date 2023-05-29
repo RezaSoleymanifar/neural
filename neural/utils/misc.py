@@ -11,8 +11,9 @@ from alpaca.data.timeframe import TimeFrame, TimeFrameUnit
 
 
 
+
 def objects_to_dataframe(
-    object_collection: Iterable[Dict[str, str]]
+    object_collection: Iterable[Asset]
     ) -> pd.DataFrame:
     """
     Converts a collection of enum objects into a pandas DataFrame. Used
