@@ -1009,7 +1009,7 @@ class AlpacaTradeClient(AbstractTradeClient, AlpacaClient):
         
     Properties:
     -----------
-        clients:
+        clients: Dict[str:RESTClient]:
             Returns a dictionary of all clients available on Alpaca API.
             The corresponding values are the RESTClient objects.
         account:
@@ -1063,8 +1063,8 @@ class AlpacaTradeClient(AbstractTradeClient, AlpacaClient):
                 - ERSX
                 - OTC
         cash:
-            The current amount of cash available to the trader. This
-            will be used by agent to make decisions.
+            The current amount of cash available to the trader. Cash can
+            be positive or negative.
         asset_quantities:
             Returns a dictionary of symbols and asset quantities for the
             trader's current positions. This will be used by agent to
@@ -1075,6 +1075,26 @@ class AlpacaTradeClient(AbstractTradeClient, AlpacaClient):
         
     Methods:
     --------
+        connect(self) -> None: 
+            Connect to the Alpaca API and set up the REST clients. Will
+            be called automatically when the client is instantiated.
+        _validate_credentials(self) -> bool:
+            Ensure that the API key and secret are valid.
+        _get_clients(self) -> RESTClient:
+            Gets the rest client objects from Alpaca API. Rest clients
+            include the trading client, the stock historical data
+            client, and the crypto historical data client. The trading
+            client is used to place orders and perform account related
+            tasks. The stock historical data client is used to retrieve
+            historical stock data. The crypto historical data client is
+            used to retrieve historical crypto data. The clients are
+            stored in a dictionary with the keys 'trade', 'stocks', and
+            'crypto'.
+        _get_account(self) -> TradeAccount:
+            The account object is used to perform account related tasks
+            such as checking the account status, getting the account
+            balance, and getting the account positions.
+        
         
     """
     def __init__(self, *args, **kwargs):
