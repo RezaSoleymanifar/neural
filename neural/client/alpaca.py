@@ -920,10 +920,10 @@ class AlpacaDataClient(AbstractDataClient, AlpacaClient):
 
         return streamer
 
-    def symbols_to_assets(self, symbols: List[str]):
+    def symbols_to_assets(self, symbols: List[str]) -> List[AlpacaAsset]:
         """
-        This method converts a list of symbols to a list of Asset
-        objects. AlpacaAsset objects have the flowing attributes:
+        This method converts a list of symbols to a list of AlpacaAsset
+        objects. AlpacaAsset objects have the following attributes:
             - symbol
             - asset_type
             - fractionable
@@ -942,8 +942,8 @@ class AlpacaDataClient(AbstractDataClient, AlpacaClient):
 
         Returns:
         ---------
-            list: 
-                A list of Asset objects.
+            list[AlpacaAsset]: 
+                A list of AlpacaAsset objects.
 
         Raises:
         ------- 
@@ -952,7 +952,7 @@ class AlpacaDataClient(AbstractDataClient, AlpacaClient):
 
         Notes:
         ------
-            Asset objects are client dependent as each client can have
+            Alpaca Asset objects are client dependent as each client can have
             individual representation/specifications for the same
             underlying asset.
         """
@@ -960,11 +960,9 @@ class AlpacaDataClient(AbstractDataClient, AlpacaClient):
             AssetClass.US_EQUITY: AssetType.STOCK,
             AssetClass.CRYPTO: AssetType.CRYPTOCURRENCY
         }
-
         assets = list()
 
         for symbol in symbols:
-
             alpaca_asset = self.symbols[symbol]
 
             if alpaca_asset is None:
