@@ -23,7 +23,7 @@ def objects_to_dataframe(
     ------
         object_collection (Iterable[Dict[str, str]]): 
             A collection of enum objects, where each object is a
-            dictionary containing key-value pairs.
+            dictionary containing property-value pairs.
 
     Returns:
         pd.DataFrame: A DataFrame containing the converted objects.
@@ -36,9 +36,7 @@ def objects_to_dataframe(
         for key, val in object_dict.items():
             object_dict[key] = val.value if isinstance(val, Enum) else val
             objects_collection_[index] = object_dict
-
-    df = pd.DataFrame(objects_collection_)
-    return df
+    return pd.DataFrame(objects_collection_)
 
 
 
