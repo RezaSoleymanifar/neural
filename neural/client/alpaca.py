@@ -931,14 +931,14 @@ class AlpacaDataClient(AbstractDataClient, AlpacaClient):
                 logger.warning(f'Symbol {symbol} is not easy to borrow (ETB).')
 
             asset_type = asset_type_map[alpaca_asset.asset_class]
-
+            maintenance_margin = (
+                alpaca_asset.maintenance_margin_requirement/100)
             assets.append(
                 AlpacaAsset(symbol=symbol,
                             asset_type=asset_type,
                             fractionable=alpaca_asset.fractionable,
                             marginable=alpaca_asset.marginable,
-                            maintenance_margin=alpaca_asset.
-                            maintenance_margin_requirement,
+                            maintenance_margin=maintenance_margin,
                             shortable=alpaca_asset.shortable,
                             easy_to_borrow=alpaca_asset.easy_to_borrow))
         return assets
