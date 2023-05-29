@@ -7,8 +7,8 @@ Description:
     inheritance structure of classes provided are as follows:
         
         AbstractClient 
-            |- AbstractTradeClient 
-            |- AbstractDataClient
+            - AbstractTradeClient 
+            - AbstractDataClient
     
     AbstractClient is an abstract base class for API clients that
     provides connectivity functionality. Concrete classes are expected

@@ -1,5 +1,31 @@
 """
+alpaca.py
 
+Description:
+------------
+    This module provides concrete implementations of the abstract
+    clients for Alpaca API.
+
+License:
+--------
+    MIT License. See LICENSE.md file.
+
+Author(s):
+-------
+    Reza Soleymanifar, Email: Reza@Soleymanifar.com
+
+Classes:
+--------
+    AlpacaClient(AbstractClient):
+        The AlpacaClient class is a concrete implementation of the
+        AbstractClient class for the Alpaca API. It provides a simple
+        interface for connecting to the Alpaca API and performing
+        basic account related tasks.
+    AlpacaDataClient(AbstractDataClient, AlpacaClient):
+        This is an extension of the AlpacaClient class. It provides a
+        simple interface for retrieving data from the Alpaca API, in
+        addition to the functionalities provided by the AlpacaClient
+        class.
 """
 from typing import Optional, Dict, List, Callable, Tuple
 
