@@ -25,7 +25,7 @@ def objects_list_to_dataframe(
     Args:
     ------
         objects_list List[object]:
-            A collection of objects, where each object's dictionary
+            A list of objects, where each object's dictionary
             representation is used 
 
     Returns:
