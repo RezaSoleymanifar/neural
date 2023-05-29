@@ -52,16 +52,21 @@ class AbstractClient(ABC):
             Positional arguments to be passed to the `_connect` method.
         **kwargs : Dict 
             Keyword arguments to be passed to the `_connect` method.
-
         """
         self.connect(*args, **kwargs)
-        
 
     @abstractmethod
     def connect(self, *args, **kwargs):
         """
         Connect to the API. This method must be implemented in the
         subclass.
+
+        Args
+        ----
+        *args : Tuple   
+            Positional arguments to be passed to the `_connect` method.
+        **kwargs : Dict
+            Keyword arguments to be passed to the `_connect` method.
         """
         raise NotImplementedError
 
@@ -82,13 +87,17 @@ class AbstractTradeClient(AbstractClient):
         - check_connection
         - place_order
 
-
     Attributes
     ----------
     cash : float
-        The current amount of cash available to the trader.
+        The current amount of cash available to the trader. Cash can be
+        positive or negative. Negative cash indicates that the trader is
+        in debt.
     asset_quantities : np.ndarray[float]
-        The current quantity of each asset held by the trader.
+        The current quantity of each asset held by the trader. Asset
+        quantities can be positive or negative. Negative quantities
+        indicate that the trader has shorted the asset, namely the
+        trader owes the asset to the broker.
 
     Raises
     ------
@@ -100,7 +109,7 @@ class AbstractTradeClient(AbstractClient):
     -------
     check_connection
         Check the connection to the service. If the connection is
-        successful, the method should return True, otherwise False. The
+        not successful, an error should be raised. The
         Trader class will use this method to check the connection before
         execution of trading process.
     place_order
