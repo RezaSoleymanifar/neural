@@ -743,26 +743,44 @@ class AlpacaDataClient(AbstractDataClient, AlpacaClient):
             - start
             - end
         
+        Possible dataset types are:
+            - AlpacaDataSource.DatasetType.BAR
+            - AlpacaDataSource.DatasetType.QUOTE
+            - AlpacaDataSource.DatasetType.TRADE
+        
+        Possible asset types are:
+            - AssetType.STOCK
+            - AssetType.CRYPTOCURRENCY
+
+        Since BAR is an aggregated type of dataset timeframe applies to
+        it showing the aggregating sampling resolution. For QUOTES and
+        TRADES, data is recorded at the time of event, so timeframe does
+        not apply to them. BAR dataset type is the aggregation of TRADE
+        dataset type.
+
         Args:
         ------
             dataset_type:
                 The type of dataset to retrieve. The dataset types are:
-                    - BAR
-                    - QUOTE 
-                    - TRADE
+                    - AlpacaDataSource.DatasetType.BAR
+                    - AlpacaDataSource.DatasetType.QUOTE
             asset_type:
                 The type of asset to retrieve. The asset types are:
-                    - STOCK
-                    - CRYPTOCURRENCY
+                    - AssetType.STOCK
+                    - AssetType.CRYPTOCURRENCY
             
         Returns:
         ---------
-            tuple: A tuple containing the downloader and the request
-            object.
+            Tuple[Callable, BaseTimeseriesDataRequest]:
+                The downloader and the request object for the specified
+                dataset type and asset type. downloader(request) returns
+                the deisired dataset. The request object should be
+                instantiated with the appropriate parameters first.
         
         Raises:
         -------
-            ValueError: If the dataset type or asset type is not valid.
+            ValueError: 
+                If the dataset type or asset type is not valid.
         
         Notes:
         ------
