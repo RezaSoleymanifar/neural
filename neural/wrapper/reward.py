@@ -388,34 +388,26 @@ class AbstractFixedRewardShaper(RewardWrapper, ABC):
     @abstractmethod
     def check_condition(self) -> bool:
         """
-        An abstract method for checking whether to apply reward shaping.
-
-        This method should be implemented by subclasses to determine
-        whether to apply reward shaping to the current step.
+        An abstract method for checking whether to apply reward shaping. This
+        method should be implemented by subclasses to determine whether to
+        apply reward shaping to the current step.
 
         Returns:
         --------
             bool: 
                 True if the reward should be shaped, False otherwise.
         """
-
         raise NotImplementedError
 
     def shape_reward(self) -> float:
         """
-        Calculate the shaped reward based on the input parameters.
+        Calculate the shaped reward based on scale and reward statistics.
+        Outpus a scalar that is either mean + scale * std or scale * min/max.
 
         Returns
         -------
             float
                 A float value representing the shaped reward.
-
-        Examples
-        --------
-        If `use_min` is True, and scale is 2, the shaped reward is
-        calculated as self.reward_statistics.minimum * 2. If `use_std` is
-        used instead, and scale = -3 the shaped reward is calculated as
-        mean + (-3) * std.
         """
         if self.use_min is not None:
             shaped_reward = (self.scale * self.reward_statistics.minimum
@@ -430,7 +422,7 @@ class AbstractFixedRewardShaper(RewardWrapper, ABC):
 
     def reward(self, reward: float) -> float:
         """
-        Shapes the reward based on the check_condition method.
+        Shapes the reward when check_condition is True.
 
         Args:
         ------
@@ -472,9 +464,7 @@ class AbstractFixedRewardShaper(RewardWrapper, ABC):
                 A dictionary containing additional information about the
                 environment.
         """
-
         observation, reward, done, info = self.env.step(action)
-
         self.reward_statistics.update(reward)
 
         if self.check_condition():
@@ -488,7 +478,7 @@ class AbstractDynamicRewardShaper(AbstractFixedRewardShaper, ABC):
     Abstract base class for a dynamic reward shaper wrapper. This class
     defines the interface for a dynamic reward shaper wrapper, which
     shapes the reward signal of an environment based on a dynamically
-    adjusted threshold value. To create a custom dynamic reward shaper,
+    adjusted scale. To create a custom dynamic reward shaper,
     users must inherit from this class and implement the abstract
     methods: `check_condition`, `metric`, and `threshold`.
 
@@ -505,11 +495,7 @@ class AbstractDynamicRewardShaper(AbstractFixedRewardShaper, ABC):
             value in shaping the reward. If False, the maximum reward
             value is used.
         scale : float, optional
-            A float value used to scale the shaped reward based on
-            chosen method. Default is -1. If use_std is True, reward
-            = scale * std. In this case behavior is discouraged, by
-            providing negative signal based on the standard
-            deviation of the reward.
+            If provided it overrides the dynamic scaling
         factor (float, optional):
             The factor used to adjust the scaling factor. Defaults  
             to -1.0.
