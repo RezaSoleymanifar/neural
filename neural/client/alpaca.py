@@ -800,10 +800,11 @@ class AlpacaDataClient(AbstractDataClient, AlpacaClient):
             - AssetType.CRYPTOCURRENCY
 
         Since BAR is an aggregated type of dataset timeframe applies to
-        it showing the aggregating sampling resolution. For QUOTES and
-        TRADES, data is recorded at the time of event, so timeframe does
-        not apply to them. BAR dataset type is the aggregation of TRADE
-        dataset type.
+        it showing data for aggregated sampling resolution. For QUOTES
+        and TRADES, data is recorded at the time of event (recorded with
+        nano-second accuracy), so timeframe does not apply to them. BAR
+        dataset type is the aggregation of TRADE dataset type over
+        timeframe intervals.
 
         Args:
         ------
