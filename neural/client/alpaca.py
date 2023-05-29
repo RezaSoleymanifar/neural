@@ -6,21 +6,17 @@ from typing import Optional, Dict, List, Callable, Tuple
 import numpy as np
 import pandas as pd
 
-from alpaca.trading.enums import (AccountStatus, AssetExchange, AssetClass,
-                                  AssetStatus)
 from alpaca.common.rest import RESTClient
 from alpaca.data.historical import (StockHistoricalDataClient,
                                     CryptoHistoricalDataClient)
 from alpaca.data.live import StockDataStream, CryptoDataStream
-from alpaca.trading import TradingClient, MarketOrderRequest
-from alpaca.trading.enums import OrderSide, TimeInForce
-from alpaca.trading.models import Order, TradeAccount
-from alpaca.trading.models import Asset
-from alpaca.data.requests import BaseTimeseriesDataRequest
-
 from alpaca.data.requests import (CryptoBarsRequest, CryptoTradesRequest,
                                   StockBarsRequest, StockQuotesRequest,
-                                  StockTradesRequest)
+                                  StockTradesRequest, BaseTimeseriesDataRequest)
+from alpaca.trading import TradingClient, MarketOrderRequest
+from alpaca.trading.models import Order, TradeAccount, Asset
+from alpaca.trading.enums import (AccountStatus, AssetExchange, AssetClass,
+                                  AssetStatus, OrderSide, TimeInForce)
 
 from neural.common.log import logger
 from neural.common.constants import API_KEY, API_SECRET
