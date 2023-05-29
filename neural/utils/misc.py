@@ -16,10 +16,11 @@ def objects_list_to_dataframe(
     objects_list: List[object]
     ) -> pd.DataFrame:
     """
-    Converts a collection of objects into a pandas DataFrame. Used in
-    the AlpacaClient class to convert the assets objects into a
+    Converts a collection of objects into a pandas DataFrame. Uses
+    dictionary representation of the objects to create the dataframe.
+    Used in the AlpacaClient class to convert the assets objects into a
     DataFrame, or convert positions objects into a dataframe. If a value
-    is Enum, its string representation is used.
+    is Enum, its string representation is used in dataframe.
 
     Args:
     ------
@@ -28,12 +29,13 @@ def objects_list_to_dataframe(
             dictionary containing property-value pairs.
 
     Returns:
-        pd.DataFrame: A DataFrame containing the converted objects.
+        pd.DataFrame: 
+            A DataFrame containing the converted objects.
     """
 
     objects_collection_ = objects_list.copy()
-    for index, object in enumerate(objects_collection_):
-        object_dict = dict(object)
+    for index, object_ in enumerate(objects_collection_):
+        object_dict = dict(object_)
 
         for key, val in object_dict.items():
             object_dict[key] = val.value if isinstance(val, Enum) else val
