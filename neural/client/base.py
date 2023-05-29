@@ -157,8 +157,8 @@ class AbstractTradeClient(AbstractClient):
 
         Raises:
         --------
-            NotImplementedError: This property must be implemented by a
-            subclass.
+            NotImplementedError: 
+                This property must be implemented by a subclass.
         """
 
         raise NotImplementedError
@@ -174,18 +174,10 @@ class AbstractTradeClient(AbstractClient):
 
         Raises:
         --------
-            NotImplementedError: This property must be implemented by a
-            subclass.
+            NotImplementedError: 
+                This property must be implemented by a subclass.
         """
 
-        raise NotImplementedError
-
-    @abstractmethod
-    def connect(self, *args, **kwargs):
-        """
-        Connect to the API. This method must be implemented in the
-        subclass.
-        """
         raise NotImplementedError
 
     @abstractmethod
@@ -198,8 +190,8 @@ class AbstractTradeClient(AbstractClient):
 
         Raises:
         --------
-            NotImplementedError: This method must be implemented by a
-            subclass.
+            NotImplementedError: 
+                This method must be implemented by a subclass.
         """
 
         raise NotImplementedError
