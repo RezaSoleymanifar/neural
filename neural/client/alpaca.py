@@ -202,12 +202,10 @@ class AlpacaClient(AbstractClient):
     >>> from neural.client.alpaca import AlpacaClient 
     >>> client = AlpacaClient()
     """
-
     def __init__(self,
                  key: Optional[str] = None,
                  secret: Optional[str] = None,
                  paper: bool = False) -> None:
-
         """
         Initialize an instance of the AlpacaClient class.
 
@@ -353,8 +351,8 @@ class AlpacaClient(AbstractClient):
         """
         Returns the asset types available on Alpaca API. The asset types
         are:
-            - STOCK
-            - CRYPTOCURRENCY    
+            - AssetType.STOCK
+            - AssetType.CRYPTOCURRENCY
 
         Returns:
         ---------
@@ -386,7 +384,7 @@ class AlpacaClient(AbstractClient):
 
         Returns:
         ---------
-            list: 
+            List[AssetExchange]: 
                 A list of exchanges available on Alpaca API.
         
         Notes:
