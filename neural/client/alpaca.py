@@ -1068,9 +1068,6 @@ class AlpacaTradeClient(AbstractTradeClient, AlpacaClient):
         cash (float):
             The current amount of cash available to the trader. Cash can
             be positive or negative.
-        asset_quantities (np.ndarray[float]):
-            Returns a numpy array of asset quantities for the specified
-            list of assets.
         equity (float):
             The current net worth of the trader. This along with market
             data will be used by agent to make decisions.
@@ -1096,8 +1093,13 @@ class AlpacaTradeClient(AbstractTradeClient, AlpacaClient):
             The account object is used to perform account related tasks
             such as checking the account status, getting the account
             balance, and getting the account positions.
-        
-        
+        get_asset_quantities(assets: List[AbstractAsset]) ->
+        np.ndarray[float]:
+            Returns numpy array containing quantities of the assets
+            provided as argument. Asset quantities can be positive or
+            negative. Negative quantities indicate that the trader has
+            shorted the asset, namely the trader owes the asset to the
+            broker.
     """
     def __init__(self, *args, **kwargs):
 
@@ -1118,10 +1120,33 @@ class AlpacaTradeClient(AbstractTradeClient, AlpacaClient):
         ---------
             float: The current amount of cash available to the trader.
         """
-
         self._cash = self.account.cash
 
         return self._cash
+
+    @property
+    def equity(self) -> float:
+        """
+        The current net worth of the trader. More concretely, the equity
+        in a margin account is defined as E = L + C - S where 
+            - E is equity
+            - L is long market value
+            - C is cash balance
+            - S is short market value
+        
+        Equity thus shows the total value of the account if all the
+        positions were closed at the current market prices. This along
+        with market data will be used by agent to make decisions.
+
+        Returns:
+        ---------
+            float: 
+                The current equity of the trader.
+        """
+
+        self._equity = self.account.portfolio_value
+
+        return self._equity
 
     def get_asset_quantities(self, assets: List[AlpacaAsset]) -> np.ndarray[float]:
         """
@@ -1150,29 +1175,6 @@ class AlpacaTradeClient(AbstractTradeClient, AlpacaClient):
             asset_quantities.append(quantity)
             asset_quantities = np.array(asset_quantities)
         return asset_quantities
-
-    @property
-    def equity(self) -> float:
-        """
-        The current net worth of the trader. More concretely, the equity
-        in a margin account is defined as E = L + C - S where 
-            - E is equity
-            - L is long market value
-            - C is cash balance
-            - S is short market value
-        
-        Equity thus shows the total value of the account if all the
-        positions were closed at the current market prices. This along
-        with market data will be used by agent to make decisions.
-
-        Returns:
-        ---------
-            float: The current equity of the trader.
-        """
-
-        self._equity = self.account.portfolio_value
-
-        return self._equity
 
     def get_positions_dataframe(self) -> pd.DataFrame:
         """
