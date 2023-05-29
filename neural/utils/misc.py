@@ -33,14 +33,14 @@ def objects_list_to_dataframe(
         pd.DataFrame:
             A DataFrame containing the information on objects.
     """
-    objects_collection_ = objects_list.copy()
-    for index, object_ in enumerate(objects_collection_):
+    objects_list_ = objects_list.copy()
+    for index, object_ in enumerate(objects_list_):
         object_dict = dict(object_)
-
-        for key, val in object_dict.items():
-            object_dict[key] = val.value if isinstance(val, Enum) else val
-            objects_collection_[index] = object_dict
-    return pd.DataFrame(objects_collection_)
+        for attribute_name, attribute in object_dict.items():
+            object_dict[attribute_name] = (
+                attribute.value if isinstance(attribute, Enum) else attribute)
+            objects_list_[index] = object_dict
+    return pd.DataFrame(objects_list_)
 
 
 
