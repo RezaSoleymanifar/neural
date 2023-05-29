@@ -2,11 +2,42 @@
 base.py
 
 Abstract base classes for API clients. These classes define the
-blueprint for API clients. The Trader class expects the clients to
-provide the following information:
-    - cash
-    - asset_quantities
-    
+blueprint for API clients.
+
+Classes:
+--------
+    AbstractClient(ABC):
+        Abstract base class for API clients. Provides facility for
+        connecting to the API at construction. Child classes are
+        expected to implement connection logic in the `connect` method.
+        Credentials should be passed to the constructor. This client can
+        provide trading and/or data functionality.
+
+    AbstractTradeClient(AbstractClient):
+        Abstract base class for a client that connects to a trading 
+        service or API. Trade clients are enforced to provide the bare
+        minimum functionality required for agent to make trading
+        decisions. This is an extension of the AbstractClient class that
+        in addition to connectivity, provides trading functionality. The
+        Trader class expects the client to provide the following
+        information:
+            - cash
+            - asset_quantities  
+
+        And also following functionality:
+            - check_connection
+            - place_order
+
+    AbstractDataClient(AbstractClient):
+        Abstract base class for a client that connects to a data service
+        or API. This class defines a blueprint for clients that provide 
+        data functionality. data_source property will be used to map
+        clients to constituents of stream metadata that has data_source
+        attribute. For example a Trader class may use multiple data
+        clients at construction (e.g. one borker data client and one
+        twitter data client). The Trader class will use the data source
+        attribute of each client to map the client to the corresponding
+        stream metadata, for live streaming of data.
 """
 from __future__ import annotations
 
