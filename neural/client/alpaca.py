@@ -112,6 +112,7 @@ class AlpacaClient(AbstractClient):
                 - Get account maintenance margin
                 - Get account initial margin
                 - Get account buying power
+    
         assets:
             Returns a dataframe of all assets available on Alpaca API.
             Asset objects have the flowing attributes:
