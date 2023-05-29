@@ -252,12 +252,11 @@ class LiabilityInterstRewardWrapper(RewardWrapper):
 
 class AbstractFixedRewardShaper(RewardWrapper, ABC):
     """
-    Fixed reward shaper wrapper. Fixed because the reward shaping is
-    independent from magnitude of deviation from target behavior. If a
-    condition is met then applies a fixed reward shaping based on the reward
-    statistics. This is a blueprint class for fixed reward shaping wrappers.
-    This class is designed to be subclassed for creating custom fixed reward
-    shaping wrappers for market environments.
+    Fixed reward shaper wrapper. Fixed because the reward shaping uses a fixed
+    scale value. If a condition is met then applies a reward shaping
+    based on the reward statistics. This is a blueprint class for fixed reward
+    shaping wrappers. This class is designed to be subclassed for creating
+    custom fixed reward shaping wrappers for market environments.
 
     Attributes:
     ----------  
@@ -277,9 +276,7 @@ class AbstractFixedRewardShaper(RewardWrapper, ABC):
     Properties:
     ----------
         scale (float):
-            The scaling factor for the shaped reward. Defaults to -1.0 meaning
-            if for example reward shaping condition is met and use_std is True,
-            the shaped reward will be mean + (-1) * std.
+            Shaped reward is either mean + scale * std or scale * min/max.
         
     Args:
     -----
@@ -316,7 +313,7 @@ class AbstractFixedRewardShaper(RewardWrapper, ABC):
     Raises:
     ------
         AssertionError:
-            If both `use_min` and `use_std` parameters are set to a non-None    
+            If both `use_min` and `use_std` parameters are set to a non-None
             value, or if both are set to None.
         
     Notes:
@@ -354,8 +351,8 @@ class AbstractFixedRewardShaper(RewardWrapper, ABC):
                 value in shaping the reward. If False, the maximum
                 reward value is used.
             scale (float, optional): The scaling factor for the
-                shaped reward. Defaults to -1.0. In this case
-                reward = mean + (-1) * std.
+                shaped reward. Defaults to -1.0. shaped reward is either
+                mean + scale * std or scale * min/max.
         
         Raises:
         ------
@@ -379,9 +376,7 @@ class AbstractFixedRewardShaper(RewardWrapper, ABC):
     @property
     def scale(self) -> float:
         """
-        The scaling factor for the shaped reward. Defaults to -1.0 meaning if
-        for example reward shaping condition is met and use_std is True, the
-        shaped reward will be mean + (-1) * std.
+        The scaling factor for the shaped reward.
 
         Returns:
         --------
@@ -415,20 +410,13 @@ class AbstractFixedRewardShaper(RewardWrapper, ABC):
             float
                 A float value representing the shaped reward.
 
-        Raises
-        ------
-            ValueError
-                If both `use_min` and `use_std` parameters are set to a
-                non-None value, or if both are set to None.
-
         Examples
         --------
         If `use_min` is True, and scale is 2, the shaped reward is
         calculated as self.reward_statistics.minimum * 2. If `use_std` is
         used instead, and scale = -3 the shaped reward is calculated as
-        mean + std * (-3).
+        mean + (-3) * std.
         """
-
         if self.use_min is not None:
             shaped_reward = (self.scale * self.reward_statistics.minimum
                              if self.use_min else self.scale *
