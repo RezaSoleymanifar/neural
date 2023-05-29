@@ -726,12 +726,13 @@ class AlpacaDataClient(AbstractDataClient, AlpacaClient):
             asset_type=AssetType
             ) -> Tuple[Callable, BaseTimeseriesDataRequest]:
         """
-        Get the downloader and the request object for the specified
-        dataset type and asset type. The request object is used to
-        specify the parameters for the data request, i.e.
-        downloader(request) returns the deisired dataset. The downloader
-        is used to retrieve the data. Request object for bars has the
-        following attributes:
+        Given asset type and dataset type, returns the facilities for
+        downloading the dataset. Returns the downloader (callable) and
+        the request (object) for the specified dataset type and asset
+        type. The request object is used to specify the parameters for
+        the data request, i.e. downloader(request) returns the deisired
+        dataset. The downloader is used to retrieve the data. Request
+        object for bars has the following attributes:
             - symbol_or_symbols
             - start
             - end
@@ -766,6 +767,8 @@ class AlpacaDataClient(AbstractDataClient, AlpacaClient):
         Notes:
         ------
             Crypto does not have quotes historical data in Alpaca API.
+            Crypto orderbook data is provided but only for latest
+            snapshot.
         """
         client_map = {
             AssetType.STOCK: self.clients['stocks'],
