@@ -62,9 +62,12 @@ Classes:
 """
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
 from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING, List
+
 import numpy as np
+
+from neural.data.base import AbstractAsset
 
 if TYPE_CHECKING:
     from neural.data.base import AbstractDataSource
@@ -162,7 +165,7 @@ class AbstractTradeClient(AbstractClient):
     """
     Abstract base class for a client that connects to a trading service
     or API. Trade clients are enforced to provide the bare minimum
-    functionality required for agent to make trading decisions. This is 
+    functionality required for agent to make trading decisions. This is
     an extension of the AbstractClient class that in addition to
     connectivity, provides trading functionality. The Trader class
     expects the client to provide the following information:
@@ -173,33 +176,33 @@ class AbstractTradeClient(AbstractClient):
         - check_connection
         - place_order
 
-    Attributes
+    Properties
     ----------
-    cash : float
-        The current amount of cash available to the trader. Cash can be
-        positive or negative. Negative cash indicates that the trader is
-        in debt.
-    asset_quantities : np.ndarray[float]
-        The current quantity of each asset held by the trader. Asset
-        quantities can be positive or negative. Negative quantities
-        indicate that the trader has shorted the asset, namely the
-        trader owes the asset to the broker.
+        cash (float):
+            The current amount of cash available to the trader. Cash can
+            be positive or negative. Negative cash indicates that the
+            trader is in debt.
 
     Raises
     ------
-    NotImplementedError
-        If the `cash` or `asset_quantities` properties are not
-        implemented in the subclass.
+        NotImplementedError
+            If the `cash` or `asset_quantities` properties are not
+            implemented in the subclass.
 
     Methods
     -------
-    check_connection
-        Check the connection to the service. If the connection is
-        not successful, an error should be raised. The
-        Trader class will use this method to check the connection before
-        execution of trading process.
-    place_order
-        Place an order for a single asset.
+        asset_quantities : np.ndarray[float]
+            The current quantity of each asset held by the trader. Asset
+            quantities can be positive or negative. Negative quantities
+            indicate that the trader has shorted the asset, namely the
+            trader owes the asset to the broker.
+        check_connection
+            Check the connection to the service. If the connection is
+            not successful, an error should be raised. The Trader class
+            will use this method to check the connection before
+            execution of trading process.
+        place_order
+            Place an order for a single asset.
 
     Examples
     --------
@@ -214,8 +217,7 @@ class AbstractTradeClient(AbstractClient):
     ...         # Return the current amount of cash available to the
     ...         # trader.
     ...         pass
-    ...     @property
-    ...     def asset_quantities(self) -> np.ndarray[float]:
+    ...     def get_asset_quantities(self) -> np.ndarray[float]:
     ...         # Return the current quantity of each asset held by the
     ...         # trader.
     ...         pass
@@ -249,7 +251,7 @@ class AbstractTradeClient(AbstractClient):
         raise NotImplementedError
 
     @abstractmethod
-    def get_asset_quantities(self, *args, **kwargs) -> np.ndarray[float]:
+    def get_asset_quantities(self, assets: List[AbstractAsset], *args, **kwargs) -> np.ndarray[float]:
         """
         The current quantity of each asset held by the trader. Asset
         quantities can be positive or negative. Negative quantities
@@ -262,7 +264,7 @@ class AbstractTradeClient(AbstractClient):
                 This property must be implemented by a subclass.
         """
         raise NotImplementedError
-    
+
     @abstractmethod
     def check_connection(self, *args, **kwargs):
         """
@@ -281,7 +283,7 @@ class AbstractTradeClient(AbstractClient):
     @abstractmethod
     def place_order(self, *args, **kwargs):
         """
-        Abstract method for placing an order for a single asset. The 
+        Abstract method for placing an order for a single asset. The
         restrictions of the API should be enforced in this method.
         """
         raise NotImplementedError
