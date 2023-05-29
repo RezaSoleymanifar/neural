@@ -760,7 +760,7 @@ class AlpacaDataClient(AbstractDataClient, AlpacaClient):
             RESTClient:
                 A dictionary mapping client names to RESTClient objects.
         """
-        clients = super()._get_clients()
+        clients = AlpacaClient._get_clients(self)
         clients['crypto'] = CryptoHistoricalDataClient(api_key=self.key,
                                                        secret_key=self.secret)
         clients['stocks'] = StockHistoricalDataClient(api_key=self.key,
@@ -777,7 +777,7 @@ class AlpacaDataClient(AbstractDataClient, AlpacaClient):
         downloading the dataset. Returns the downloader (callable) and
         the request (object) for the specified dataset type and asset
         type. The request object is used to specify the parameters for
-        the data request, i.e. downloader(request) returns the deisired
+        the data request, i.e. downloader(request) returns the desired
         dataset. The downloader is used to retrieve the data. Request
         object for bars has the following attributes:
             - symbol_or_symbols
