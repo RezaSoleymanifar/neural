@@ -655,6 +655,36 @@ class AlpacaDataClient(AbstractDataClient, AlpacaClient):
         """
         return AlpacaDataSource
 
+    @staticmethod
+    def safe_method_call(object, method_name):
+        """" 
+        A helper method to safely call a method on an object. If
+        the object does not have the specified method, an AttributeError
+        will be raised.
+
+        Args:
+        ------
+            object: 
+                The object to call the method on.
+            method_name:
+                The name of the method to call.
+            
+        Returns:
+        ---------
+            The result of calling the method on the object. If the
+            object does not have the specified method, an AttributeError
+            will be raised.
+        
+        Raises:
+        -------
+            AttributeError: 
+                If the object does not have the specified method.
+        """
+        if hasattr(object, method_name):
+            return getattr(object, method_name)
+        else:
+            raise AttributeError(f"Client does not have method '{method_name}'")
+        
     def connect(self):
         """
         Uses the connect method of the AlpacaClient class to connect to
@@ -674,6 +704,9 @@ class AlpacaDataClient(AbstractDataClient, AlpacaClient):
             - Get crypto bars
             - Get crypto trades
 
+        * crypto does not have quotes data type in Alpaca API.
+        * crypto orderbook data is provided but only for latest snapshot.
+
         StockHistoricalDataClient functionalities:
             - Get stock bars
             - Get stock quotes
@@ -686,36 +719,6 @@ class AlpacaDataClient(AbstractDataClient, AlpacaClient):
         clients['stocks'] = StockHistoricalDataClient(api_key=self.key,
                                                       secret_key=self.secret)
         return clients
-    
-    @staticmethod
-    def safe_method_call(object, method_name):
-        """"
-        A helper method to safely call a method on an object. If the
-        object does not have the specified method, an AttributeError
-        will be raised.
-
-        Args:
-        ------
-            object: 
-                The object to call the method on.
-            method_name:
-                The name of the method to call.
-            
-        Returns:
-        ---------
-            The result of calling the method on the object. If the
-            object does not have the specified method, an
-            AttributeError will be raised.
-        
-        Raises:
-        -------
-            AttributeError: If the object does not have the specified
-            method.
-        """
-        if hasattr(object, method_name):
-            return getattr(object, method_name)
-        else:
-            raise AttributeError(f"Client does not have method '{method_name}'")
 
     def get_downloader_and_request(
             self,
