@@ -702,7 +702,7 @@ class AlpacaDataClient(AbstractDataClient, AlpacaClient):
     @staticmethod
     def safe_method_call(object: object, method_name: str) -> Callable:
         """"
-        A helper method to safely call a method on an object. If
+        A helper method to safely call a method of an object. If
         the object does not have the specified method, an AttributeError
         will be raised.
 
@@ -715,9 +715,8 @@ class AlpacaDataClient(AbstractDataClient, AlpacaClient):
             
         Returns:
         ---------
-            The result of calling the method on the object. If the
-            object does not have the specified method, an AttributeError
-            will be raised.
+            Callable:
+                The method of the object with name method_name.
         
         Raises:
         -------
@@ -728,7 +727,7 @@ class AlpacaDataClient(AbstractDataClient, AlpacaClient):
             raise AttributeError(
                 f"{object} does not have method '{method_name}'")
         return getattr(object, method_name)
-    
+
     def connect(self) -> None:
         """
         Uses the connect method of the AlpacaClient class to connect to
@@ -783,15 +782,15 @@ class AlpacaDataClient(AbstractDataClient, AlpacaClient):
         the data request, i.e. downloader(request) returns the desired
         dataset. The downloader is used to retrieve the data. Request
         object for bars has the following attributes:
-            - symbol_or_symbols
-            - start
-            - end
-            - timeframe
+            - symbol_or_symbols: str or List[str]
+            - start: datetime
+            - end: datetime
+            - timeframe: TimeFrame
         Request object for quotes and trades has the following
         attributes:
-            - symbol_or_symbols
-            - start
-            - end
+            - symbol_or_symbols: str or List[str]
+            - start: datetime
+            - end: datetime
         
         Possible dataset types are:
             - AlpacaDataSource.DatasetType.BAR
@@ -811,11 +810,11 @@ class AlpacaDataClient(AbstractDataClient, AlpacaClient):
 
         Args:
         ------
-            dataset_type:
+            dataset_type (AlpacaDataSource.DatasetType):
                 The type of dataset to retrieve. The dataset types are:
                     - AlpacaDataSource.DatasetType.BAR
                     - AlpacaDataSource.DatasetType.QUOTE
-            asset_type:
+            asset_type (AssetType):
                 The type of asset to retrieve. The asset types are:
                     - AssetType.STOCK
                     - AssetType.CRYPTOCURRENCY
@@ -885,21 +884,22 @@ class AlpacaDataClient(AbstractDataClient, AlpacaClient):
 
         Args:
         ------
-            stream_type:
+            stream_type (AlpacaDataSource.StreamType):
                 The type of stream to retrieve. The stream types are:
                     - AlpacaDataSource.StreamType.BAR
                     - AlpacaDataSource.StreamType.QUOTE
                     - AlpacaDataSource.StreamType.TRADE
             
-            asset_type:
+            asset_type (AssetType):
                 The type of asset to retrieve. The asset types are:
                     - AssetType.STOCK
                     - AssetType.CRYPTOCURRENCY
 
         Returns:
         ---------
-            Callable: The streamer for the specified stream type and
-            asset type.
+            Callable: 
+                The streamer for the specified stream type and asset
+                type.
         """
         stream_map = {
             AlpacaDataSource.StreamType.BAR: {
@@ -940,7 +940,7 @@ class AlpacaDataClient(AbstractDataClient, AlpacaClient):
         
         Args:
         ------
-            symbols: List[str]
+            symbols (List[str]):
                 A list of symbols to convert to Asset objects.
 
         Returns:
@@ -996,8 +996,7 @@ class AlpacaDataClient(AbstractDataClient, AlpacaClient):
 class AlpacaTradeClient(AbstractTradeClient, AlpacaClient):
     """
     This is an extension of the AlpacaClient class. It provides a simple
-    interface for placing orders and provide trading related API
-    services.
+    interface for placing orders and trading related API services.
 
     Args:
     ------
