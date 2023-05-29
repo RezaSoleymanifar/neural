@@ -40,14 +40,14 @@ from alpaca.data.requests import (CryptoBarsRequest, CryptoTradesRequest,
                                   StockBarsRequest, StockQuotesRequest,
                                   StockTradesRequest, BaseTimeseriesDataRequest)
 from alpaca.trading import TradingClient, MarketOrderRequest
-from alpaca.trading.models import Order, TradeAccount, Asset
 from alpaca.trading.enums import (AccountStatus, AssetExchange, AssetClass,
                                   AssetStatus, OrderSide, TimeInForce)
+from alpaca.trading.models import Order, TradeAccount, Asset
 
-from neural.common.log import logger
-from neural.common.constants import API_KEY, API_SECRET
 from neural.client.base import (AbstractClient, AbstractTradeClient,
                                 AbstractDataClient)
+from neural.common.constants import API_KEY, API_SECRET
+from neural.common.log import logger
 from neural.data.base import AlpacaDataSource, AlpacaAsset
 from neural.data.enums import AssetType
 from neural.utils.misc import objects_list_to_dataframe
