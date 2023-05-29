@@ -1208,8 +1208,9 @@ class AlpacaTradeClient(AbstractTradeClient, AlpacaClient):
     def get_asset_quantities(self,
                              assets: List[AlpacaAsset]) -> np.ndarray[float]:
         """
-        Returns a numpy array of  asset quantities for the specified
-        list of AlpacaAsset objects.
+        Returns a numpy array of asset quantities for the specified
+        list of AlpacaAsset objects. If asset is shorted, the quantity
+        is negative. If asset is long, the quantity is positive.
 
         Returns:
         ---------
@@ -1235,14 +1236,15 @@ class AlpacaTradeClient(AbstractTradeClient, AlpacaClient):
         asset_quantities = np.array(asset_quantities)
         return asset_quantities
 
-    def check_connection(self):
+    def check_connection(self) -> bool:
         """
-        Check if the connection to the Alpaca API is active. Used by 
-        trader to before letting agent start trading.
+        Checks if the connection to the Alpaca API is active. Used by 
+        trader to before starting the trading process.
 
         Returns:
         ---------
-            bool: True if the connection is active, False otherwise.
+            bool: 
+                True if the connection is active, False otherwise.
         """
 
         status = True if self.account.status == AccountStatus.ACTIVE else False
@@ -1255,9 +1257,10 @@ class AlpacaTradeClient(AbstractTradeClient, AlpacaClient):
         time_in_force: str = 'ioc',
     ) -> None | Order:
         """
-        This method places orders in Alpaca API uses quantity of asset
-        to buy or sell. If quantity is positive, the order is a buy
-        order. If quantity is negative, the order is a sell order. 
+        This method places orders in Alpaca API and uses quantity of
+        asset to submit buy or sell orders. If quantity is positive, the
+        order is a buy order. If quantity is negative, the order is a
+        sell order. 
 
         All order are market orders. Market orders are the most likely
         type of order to be executed. Link:
@@ -1270,13 +1273,14 @@ class AlpacaTradeClient(AbstractTradeClient, AlpacaClient):
            - Immediate or cancel = "ioc"
            - Fill or kill = "fok"
 
-        Day order is the default time in force option. Day order is an
-        order that is valid until the end of the trading day on which it
-        was placed. If the order is not filled by the end of the trading
-        day, it will be cancelled. Good 'til cancelled is an order that
-        is valid until it is filled or cancelled. Immediate or cancel is
-        an order that must be filled immediately or cancelled. Fill or
-        kill is an order that must be filled immediately or cancelled.
+        Immediate or cancel is the default time in force option. Day
+        order is an order that is valid until the end of the trading day
+        on which it was placed. If the order is not filled by the end of
+        the trading day, it will be cancelled. Good 'til cancelled is an
+        order that is valid until it is filled or cancelled. Immediate
+        or cancel is an order that must be filled immediately or
+        cancelled. Fill or kill is an order that must be filled (even if
+        partially) immediately or cancelled.
 
         Args:
         ------
@@ -1301,8 +1305,8 @@ class AlpacaTradeClient(AbstractTradeClient, AlpacaClient):
         
         Raises:
         -------
-            ValueError: If the time in force is not valid.
-            ValueError: If the time in force is not valid for
+            ValueError: If the time in force is not valid. ValueError:
+            If the time in force is not valid for
 
         Notes:
         ------

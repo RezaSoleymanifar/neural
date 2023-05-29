@@ -195,8 +195,9 @@ class AbstractTradeClient(AbstractClient):
             broker.
         check_connection(*args, **kwargs):
             Check the connection to the service. If the connection is
-            not successful, an error should be raised. The Trader class
-            will use this method to check the connection before
+            successful returns True, else False. The Trader class will
+            use this method to check the connection before start of
+            trading process.
             execution of trading process.
         place_order(*args, **kwargs):
             Place an order for a single asset.
@@ -284,9 +285,9 @@ class AbstractTradeClient(AbstractClient):
     @abstractmethod
     def check_connection(self, *args, **kwargs):
         """
-        check the connection to the service. If the connection is not
-        successful it raises an error. The Trader class will use this
-        method to check the connection before execution of trading
+        check the connection to the service. If the connection is
+        successful returns True, else False. The Trader class will use
+        this method to check the connection before execution of trading
         process.
 
         Raises:
