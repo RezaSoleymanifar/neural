@@ -20,9 +20,9 @@ class AbstractClient(ABC):
 
     Parameters
     ----------
-    *args : tuple
+    *args : Tuple
         Positional arguments to be passed to the `_connect` method.
-    **kwargs : dict
+    **kwargs : Dict
         Keyword arguments to be passed to the `_connect` method.
 
     Raises
@@ -45,8 +45,17 @@ class AbstractClient(ABC):
     def __init__(self, *args, **kwargs):
         """
         Initialize the client and connect to the API.
+
+        Args
+        ----
+        *args : Tuple   
+            Positional arguments to be passed to the `_connect` method.
+        **kwargs : Dict 
+            Keyword arguments to be passed to the `_connect` method.
+
         """
         self.connect(*args, **kwargs)
+        
 
     @abstractmethod
     def connect(self, *args, **kwargs):

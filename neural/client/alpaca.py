@@ -221,7 +221,7 @@ class AlpacaClient(AbstractClient):
 
         Returns:
         ---------
-            dict: 
+            Dict[str:RESTClient]: 
                 A dictionary mapping client names to RESTClient
                 objects. clients['trade'] is the trading client
                 of type TradingClient in Alpaca API.
@@ -245,7 +245,8 @@ class AlpacaClient(AbstractClient):
 
         Returns:
         ---------
-            Account: The account object.
+            TradeAccount: 
+                The account object.
         """
         return self._account
 
@@ -270,10 +271,9 @@ class AlpacaClient(AbstractClient):
         
         Returns:
         ---------
-            DataFrame: A dataframe of all assets available on Alpaca
-            API.
+            DataFrame: 
+                A dataframe of all assets available on Alpaca API.
         """
-
         if self._assets is None:
             self._assets = self.clients['trade'].get_all_assets()
 
@@ -303,7 +303,8 @@ class AlpacaClient(AbstractClient):
 
         Returns:
         ---------
-            dict: A dictionary mapping symbols to Asset objects.
+            Dict[str, Asset]: 
+                A dictionary mapping symbols to Asset objects.
         """
         if self._symbols is None:
             self._symbols = {asset.symbol: asset for asset in self.assets}
@@ -324,7 +325,6 @@ class AlpacaClient(AbstractClient):
         """
         asset_type_map = {AssetClass.US_EQUITY: AssetType.STOCK,
                             AssetClass.CRYPTO: AssetType.CRYPTOCURRENCY}
-        
         if self._asset_types is None:
             self._asset_types = [asset_type_map[item] for item in AssetClass]
 
@@ -349,7 +349,8 @@ class AlpacaClient(AbstractClient):
 
         Returns:
         ---------
-            list: A list of exchanges available on Alpaca API.
+            list: 
+                A list of exchanges available on Alpaca API.
         
         Notes:
         ------
