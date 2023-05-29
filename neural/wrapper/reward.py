@@ -343,6 +343,15 @@ class AbstractFixedRewardShaper(RewardWrapper, ABC):
         """
 
         super().__init__(env)
+
+        if use_min is not None and use_std is not None:
+            raise ValueError(
+                "Cannot set both use_min and use_std parameters at the same time."
+            )
+
+        if use_min is None and use_std is None:
+            raise ValueError("Either use_min or use_std parameter must be set.")
+        
         self.use_std = use_std
         self.use_min = use_min
         self._scale = scale
@@ -427,13 +436,6 @@ class AbstractFixedRewardShaper(RewardWrapper, ABC):
         used instead, and scale = -3 the shaped reward is calculated as
         mean + std * (-3).
         """
-        if use_min is not None and use_std is not None:
-            raise ValueError(
-                "Cannot set both use_min and use_std parameters at the same time."
-            )
-
-        if use_min is None and use_std is None:
-            raise ValueError("Either use_min or use_std parameter must be set.")
 
         if use_min is not None:
             shaped_reward = (
