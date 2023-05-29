@@ -334,7 +334,6 @@ class AbstractFixedRewardShaper(RewardWrapper, ABC):
         env: Env,
         use_std: Optional[bool] = None,
         use_min: Optional[bool] = None,
-        scale: float = -1.0,
     ) -> None:
         """
         Initializes the abstract fixed reward shaper wrapper.
@@ -350,9 +349,6 @@ class AbstractFixedRewardShaper(RewardWrapper, ABC):
                 A boolean indicating whether to use the minimum reward
                 value in shaping the reward. If False, the maximum
                 reward value is used.
-            scale (float, optional): The scaling factor for the
-                shaped reward. Defaults to -1.0. shaped reward is either
-                mean + scale * std or scale * min/max.
         
         Raises:
         ------
@@ -370,7 +366,6 @@ class AbstractFixedRewardShaper(RewardWrapper, ABC):
 
         self.use_std = use_std
         self.use_min = use_min
-        self._scale = scale
         self.reward_statistics = RunningStatistics()
 
     @property
@@ -380,7 +375,7 @@ class AbstractFixedRewardShaper(RewardWrapper, ABC):
         The scaling factor for the shaped reward. This will determine the
         direction and intensity of the reward shaping. It should be implemented
         by the user. It can be a fixed value or a dynamic value that changes
-        based on 
+        based on deviation from desired behavior.
 
         Returns:
         --------
@@ -483,6 +478,7 @@ class AbstractFixedRewardShaper(RewardWrapper, ABC):
     scale value provided at constructor. This is a blueprint class for fixed
     reward shaping wrappers. This class is designed to be subclassed for
     creating custom fixed reward shaping wrappers for market environments.
+    Output is either mean + scale * std or scale * min/max.
 
     Args:
     -----
@@ -499,8 +495,7 @@ class AbstractFixedRewardShaper(RewardWrapper, ABC):
         scale (float, optional): The scaling factor for the
             shaped reward. Scale is received from the user. Defaults to -1.0
             meaning if for example reward shaping condition is met and use_std
-            is True, the shaped reward will be the mean minus the standard
-            deviation.
+            is True, the shaped reward will be the mean + (-1.0) * std.
         reward_statistics (RunningStatistics, optional):
             A running statistics object for tracking reward statistics.
 
@@ -516,6 +511,9 @@ class AbstractFixedRewardShaper(RewardWrapper, ABC):
             use_min = Flase, then with default scale = -1 the shaped reward
             will be -1 * max meaning if reward condition is met the shaped
             reward will be the negative maximum reward.
+        _scale (float):
+            fixed scale provided by the user. output is either mean + scale *
+            std or scale * min/max.
         reward_statistics (RunningStatistics):
             A running statistics object for tracking reward statistics.
 
@@ -529,10 +527,10 @@ class AbstractFixedRewardShaper(RewardWrapper, ABC):
     -------
         check_condition(*args, **kwargs) -> bool:
             An abstract method for checking whether to apply reward shaping.
-        reward(reward: float, *args, **kwargs) -> float:    
-            An abstract method for shaping the reward signal.
         shape_reward(reward: float) -> float:
             Calculate the shaped reward based on the input parameters.
+        reward(reward: float, *args, **kwargs) -> float:    
+            An abstract method for shaping the reward signal.
         step(action) -> tuple:
             Advances the environment by one step and updates the reward signal,
             if condition is met.
