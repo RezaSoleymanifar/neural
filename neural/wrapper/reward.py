@@ -630,14 +630,16 @@ class AbstractFixedRewardShaper(AbstractRewardShaper, ABC):
 class AbstractDynamicRewardShaper(AbstractRewardShaper, ABC):
     """
     Abstract base class for a dynamic reward shaper wrapper. For positive scale
-    and base the shaped reward will be reward = base ** (deviation_ratio *
-    multiplier) where deviation ratio is a measure for the intensity of
-    deviation from expected behavior. This allows to dynamically adjust reward
-    based on deviation or its linear and/or exponential scaling. This class
-    defines the interface for a dynamic reward shaper wrapper, which shapes the
-    reward signal of an environment based on a dynamically adjusted scale. To
-    create a custom dynamic reward shaper, users must inherit from this class
-    and implement the abstract methods: `metric`, and `threshold`.
+    and base the shaped reward will be reward = sign(multiplier) * base **
+    (deviation_ratio * abs(multiplier)) where deviation ratio is define as
+    metric / threshold. If metric > threshold, the deviation ratio will be
+    greater than 1. If metric < threshold, the deviation ratio will be zero.
+    This allows to dynamically adjust reward based on deviation or its linear
+    and/or exponential modification. This class defines the interface for a
+    dynamic reward shaper wrapper, which shapes the reward signal of an
+    environment based on a dynamically adjusted scale. To create a custom
+    dynamic reward shaper, users must inherit from this class and implement the
+    abstract methods: `metric`, and `threshold`.
 
     Attributes: -
         env (Env): 
@@ -748,6 +750,11 @@ class AbstractDynamicRewardShaper(AbstractRewardShaper, ABC):
         
         scale is computed as sign(multiplier) * base ** (deviation_ratio *
         abs(multiplier)) where deviation_ratio = metric / threshold.
+
+        Returns:
+        --------    
+            float:
+                The scaling factor for the shaped reward.
         """
 
         scale = (
@@ -786,6 +793,11 @@ class AbstractDynamicRewardShaper(AbstractRewardShaper, ABC):
         episode state. By default returns True if metric > threshold. If
         metric < threshold is desired use inverse of metric, and
         threshold.
+
+        Returns:
+        --------
+            bool:
+                True if the reward should be shaped, False otherwise.
         """
         return True if self.deviation_ratio > 1 else False
 
@@ -793,7 +805,7 @@ class AbstractDynamicRewardShaper(AbstractRewardShaper, ABC):
 @metadata
 class FixedExcessMarginRatioRewardShaper(AbstractFixedRewardShaper):
     """
-    a reward shaping wrapper that penalizes the excess margin ratio
+    A reward shaping wrapper that penalizes the excess margin ratio
     falling below a given threshold.
     """
 
@@ -803,7 +815,7 @@ class FixedExcessMarginRatioRewardShaper(AbstractFixedRewardShaper):
         excess_margin_ratio_threshold: float = 0.2,
         use_std: bool = None,
         use_min: bool = None,
-        scale: float = 1.0,
+        scale: float = -1.0,
     ) -> None:
         super().__init__(env, use_std=use_std, use_min=use_min, scale=scale)
 
