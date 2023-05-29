@@ -520,7 +520,7 @@ class AlpacaDataClient(AbstractDataClient, AlpacaClient):
             The asset types available on Alpaca API.
         _exchanges:
             A list of exchanges available on Alpaca API.
-            
+
     Properties:
     -----------
         clients:
@@ -616,17 +616,17 @@ class AlpacaDataClient(AbstractDataClient, AlpacaClient):
                 - easy_to_borrow
         
     Examples:
-    ---------
-    Option 1: Instantiate an instance of the AlpacaDataClient class
-    with your API key and secret.
-
+    ----------
+    Option 1: Instantiate an instance of the AlpacaClient class with
+    your API key and secret.
+    >>> from neural.client.alpaca import AlpacaDataClient
     >>> client = AlpacaDataClient(key=..., secret=...)
-    >>> assets = client.assets()
 
-    Option 2: Instantiate an instance of the AlpacaDataClient by
-    passing values to constants.
-    
+    Option 2: Instantiate an instance of the AlpacaClient by passing
+    values to constants.
+
     >>> from neural.common.constants import API_KEY, API_SECRET
+    >>> from neural.client.alpaca import AlpacaDataClient
     >>> API_KEY = ...
     >>> API_SECRET = ...
     >>> client = AlpacaDataClient()
@@ -634,14 +634,12 @@ class AlpacaDataClient(AbstractDataClient, AlpacaClient):
     Option 3: Instantiate an instance of the AlpacaClient class with
     environment variables.
 
-    # Set the environment variables for API key and secret on #
-    Unix-like operating systems (Linux, macOS, etc.): 
+    Set the environment variables for API key and secret on Unix-like
+    operating systems (Linux, macOS, etc.): 
         BASH: export API_KEY = <your_api_key> BASH: export API_SECRET =
         <your_secret_key>
-
-    # Instantiate an instance of the AlpacaClient class 
     
-    >>> from neural.connect.alpaca import AlpacaDataClient 
+    >>> from neural.client.alpaca import AlpacaDataClient 
     >>> client = AlpacaDataClient()
     """
     def __init__(self, *args, **kwargs):
