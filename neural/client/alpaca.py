@@ -200,6 +200,7 @@ class AlpacaClient(AbstractClient):
     >>> from neural.client.alpaca import AlpacaClient 
     >>> client = AlpacaClient()
     """
+
     def __init__(self,
                  key: Optional[str] = None,
                  secret: Optional[str] = None,
@@ -356,8 +357,10 @@ class AlpacaClient(AbstractClient):
         ---------
             list: A list of asset types available on Alpaca API.
         """
-        asset_type_map = {AssetClass.US_EQUITY: AssetType.STOCK,
-                            AssetClass.CRYPTO: AssetType.CRYPTOCURRENCY}
+        asset_type_map = {
+            AssetClass.US_EQUITY: AssetType.STOCK,
+            AssetClass.CRYPTO: AssetType.CRYPTOCURRENCY
+        }
         if self._asset_types is None:
             self._asset_types = [asset_type_map[item] for item in AssetClass]
 
@@ -639,22 +642,22 @@ class AlpacaDataClient(AbstractDataClient, AlpacaClient):
         
     Examples:
     ----------
-    Option 1: Instantiate an instance of the AlpacaTradeClient class
+    Option 1: Instantiate an instance of the AlpacaDataClient class
     with your API key and secret. 
 
-    >>> from neural.client.alpaca import AlpacaTradeClient 
-    >>> client = AlpacaTradeClient(key=...,secret=...)
+    >>> from neural.client.alpaca import AlpacaDataClient 
+    >>> client = AlpacaDataClient(key=...,secret=...)
 
     Option 2: Instantiate an instance of the AlpacaClient by passing
     values to constants.
 
     >>> from neural.common.constants import API_KEY, API_SECRET
-    >>> from neural.client.alpaca import AlpacaTradeClient
+    >>> from neural.client.alpaca import AlpacaDataClient
     >>> API_KEY = ...
     >>> API_SECRET = ...
-    >>> client = AlpacaTradeClient()
+    >>> client = AlpacaDataClient()
 
-    Option 3: Instantiate an instance of the AlpacaTradeClient class
+    Option 3: Instantiate an instance of the AlpacaDataClient class
     with environment variables.
 
     Set the environment variables for API key and secret on Unix-like
@@ -662,9 +665,10 @@ class AlpacaDataClient(AbstractDataClient, AlpacaClient):
         - BASH: export API_KEY = <your_api_key> 
         - BASH: export API_SECRET = <your_secret_key>
     
-    >>> from neural.client.alpaca import AlpacaTradeClient 
-    >>> client = AlpacaTradeClient()
+    >>> from neural.client.alpaca import AlpacaDataClient 
+    >>> client = AlpacaDataClient()
     """
+
     def __init__(self, *args, **kwargs) -> None:
         """
         Initialize an instance of the AlpacaDataClient class.
@@ -772,8 +776,7 @@ class AlpacaDataClient(AbstractDataClient, AlpacaClient):
     def get_downloader_and_request(
             self,
             dataset_type: AlpacaDataSource.DatasetType,
-            asset_type=AssetType
-            ) -> Tuple[Callable, BaseTimeseriesDataRequest]:
+            asset_type=AssetType) -> Tuple[Callable, BaseTimeseriesDataRequest]:
         """
         Given asset type and dataset type, returns the facilities for
         downloading the dataset. Returns the downloader (callable) and
@@ -861,13 +864,12 @@ class AlpacaDataClient(AbstractDataClient, AlpacaClient):
         }
 
         try:
-            downloader_method_name, request = downloader_request_map[dataset_type][
-                asset_type]
+            downloader_method_name, request = downloader_request_map[
+                dataset_type][asset_type]
         except KeyError:
             raise ValueError(
                 f'Dataset type {dataset_type}, asset type {asset_type} '
-                 'is not a valid combination.'
-            )
+                'is not a valid combination.')
         downloader = AlpacaDataClient.safe_method_call(
             object=client, method_name=downloader_method_name)
 
@@ -980,8 +982,8 @@ class AlpacaDataClient(AbstractDataClient, AlpacaClient):
                 logger.warning(f'Symbol {symbol} is not easy to borrow (ETB).')
 
             asset_type = asset_type_map[alpaca_asset.asset_class]
-            maintenance_margin = (
-                alpaca_asset.maintenance_margin_requirement/100)
+            maintenance_margin = (alpaca_asset.maintenance_margin_requirement /
+                                  100)
             assets.append(
                 AlpacaAsset(symbol=symbol,
                             asset_type=asset_type,
@@ -1070,7 +1072,15 @@ class AlpacaTradeClient(AbstractTradeClient, AlpacaClient):
             be positive or negative.
         equity (float):
             The current net worth of the trader. This along with market
-            data will be used by agent to make decisions.
+            data will be used by agent to make decisions. More
+            concretely, the equity in a margin account is defined as
+            E = L + C - S where
+                - E is equity
+                - L is long market value
+                - C is cash balance
+                - S is short market value
+            Equity thus shows the total value of the account if all the
+            positions were closed at the current market prices.
         
     Methods:
     --------
@@ -1100,7 +1110,36 @@ class AlpacaTradeClient(AbstractTradeClient, AlpacaClient):
             negative. Negative quantities indicate that the trader has
             shorted the asset, namely the trader owes the asset to the
             broker.
+    
+    Examples:
+    ----------
+    Option 1: Instantiate an instance of the AlpacaTradeClient class
+    with your API key and secret. 
+
+    >>> from neural.client.alpaca import AlpacaTradeClient 
+    >>> client = AlpacaTradeClient(key=...,secret=...)
+
+    Option 2: Instantiate an instance of the AlpacaClient by passing
+    values to constants.
+
+    >>> from neural.common.constants import API_KEY, API_SECRET
+    >>> from neural.client.alpaca import AlpacaTradeClient
+    >>> API_KEY = ...
+    >>> API_SECRET = ...
+    >>> client = AlpacaTradeClient()
+
+    Option 3: Instantiate an instance of the AlpacaTradeClient class
+    with environment variables.
+
+    Set the environment variables for API key and secret on Unix-like
+    operating systems (Linux, macOS, etc.): 
+        - BASH: export API_KEY = <your_api_key> 
+        - BASH: export API_SECRET = <your_secret_key>
+    
+    >>> from neural.client.alpaca import AlpacaTradeClient 
+    >>> client = AlpacaTradeClient()
     """
+
     def __init__(self, *args, **kwargs):
 
         super().__init__(*args, **kwargs)
@@ -1118,7 +1157,8 @@ class AlpacaTradeClient(AbstractTradeClient, AlpacaClient):
 
         Returns:
         ---------
-            float: The current amount of cash available to the trader.
+            float: 
+                The current amount of cash available to the trader.
         """
         self._cash = self.account.cash
 
@@ -1148,15 +1188,17 @@ class AlpacaTradeClient(AbstractTradeClient, AlpacaClient):
 
         return self._equity
 
-    def get_asset_quantities(self, assets: List[AlpacaAsset]) -> np.ndarray[float]:
+    def get_asset_quantities(self,
+                             assets: List[AlpacaAsset]) -> np.ndarray[float]:
         """
         Returns a numpy array of symbols and asset quantities for the
         specified list of assets.
 
         Returns:
         ---------
-            array: A numpy array of asset quantities for the specified 
-            list of assets.
+            np.ndarray[float]: 
+                A numpy array of asset quantities for the specified list
+                of assets.
         """
 
         asset_quantities = list()
@@ -1188,9 +1230,7 @@ class AlpacaTradeClient(AbstractTradeClient, AlpacaClient):
             DataFrame: A dataframe of all current positions in the
             account.
         """
-
         self._positions = self.clients['trading'].get_all_positions()
-
         positions_dataframe = objects_list_to_dataframe(self._positions)
 
         return positions_dataframe
@@ -1280,9 +1320,8 @@ class AlpacaTradeClient(AbstractTradeClient, AlpacaClient):
             return None
 
         if time_in_force not in ['day', 'gtc', 'ioc', 'fok']:
-            raise ValueError(
-                f'Time in force {time_in_force} is not valid.'
-                'valid options are: "day", "gtc", "ioc", "fok"')
+            raise ValueError(f'Time in force {time_in_force} is not valid.'
+                             'valid options are: "day", "gtc", "ioc", "fok"')
 
         if asset.asset_type == AssetType.CRYPTOCURRENCY:
             if time_in_force not in ['gtc', 'ioc']:
