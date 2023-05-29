@@ -593,12 +593,12 @@ class AlpacaDataClient(AbstractDataClient, AlpacaClient):
 
     Methods:
     --------
-        connect:
+        connect(self) -> None: 
             Connect to the Alpaca API and set up the REST clients. Will
             be called automatically when the client is instantiated.
-        _validate_credentials:
+        _validate_credentials(self) -> bool:
             Ensure that the API key and secret are valid.
-        _get_clients:
+        _get_clients(self) -> RESTClient:
             Gets the rest client objects from Alpaca API. Rest clients
             include the trading client, the stock historical data
             client, and the crypto historical data client. The trading
@@ -608,17 +608,22 @@ class AlpacaDataClient(AbstractDataClient, AlpacaClient):
             used to retrieve historical crypto data. The clients are
             stored in a dictionary with the keys 'trade', 'stocks', and
             'crypto'.
-        safe_method_call:
+        _get_account(self) -> TradeAccount:
+            The account object is used to perform account related tasks
+            such as checking the account status, getting the account
+            balance, and getting the account positions.
+        safe_method_call(self) -> Callable:
             A helper method to safely call a method on an object. If the
             object does not have the specified method, an AttributeError
             will be raised.
-        get_downloader_and_request:
+        get_downloader_and_request(self) -> Tuple[Callable,
+        BaseTimeseriesDataRequest]:
             Returns the downloader and the request object for the
             specified dataset type and asset type.
-        get_streamer:
+        get_streamer(self) -> Callable:
             A method to get the streamer for the specified stream type
             and asset type. The streamer is used to retrieve live data.
-        symbols_to_assets:
+        symbols_to_assets(self) -> List[AlpacaAsset]:
             This method converts a list of symbols to a list of Asset
             objects. AlpacaAsset objects have the following attributes:
                 - symbol
@@ -631,10 +636,11 @@ class AlpacaDataClient(AbstractDataClient, AlpacaClient):
         
     Examples:
     ----------
-    Option 1: Instantiate an instance of the AlpacaTradeClient class with
-    your API key and secret.
-    >>> from neural.client.alpaca import AlpacaTradeClient
-    >>> client = AlpacaTradeClient(key=..., secret=...)
+    Option 1: Instantiate an instance of the AlpacaTradeClient class
+    with your API key and secret. 
+
+    >>> from neural.client.alpaca import AlpacaTradeClient 
+    >>> client = AlpacaTradeClient(key=...,secret=...)
 
     Option 2: Instantiate an instance of the AlpacaClient by passing
     values to constants.
@@ -645,8 +651,8 @@ class AlpacaDataClient(AbstractDataClient, AlpacaClient):
     >>> API_SECRET = ...
     >>> client = AlpacaTradeClient()
 
-    Option 3: Instantiate an instance of the AlpacaTradeClient class with
-    environment variables.
+    Option 3: Instantiate an instance of the AlpacaTradeClient class
+    with environment variables.
 
     Set the environment variables for API key and secret on Unix-like
     operating systems (Linux, macOS, etc.): 
@@ -661,12 +667,17 @@ class AlpacaDataClient(AbstractDataClient, AlpacaClient):
         AlpacaClient.__init__(self, *args, **kwargs)
 
     @property
-    def data_source(self):
+    def data_source(self) -> AlpacaDataSource:
         """
         Determines the data source for this client. Provides a
         standardized way to refer to the specific type of data provided
         by Alpaca API. Data source is also used to match clients to
         stream metadata.
+
+        Returns:
+        ---------
+            AlpacaDataSource:
+                The data source for the Alpaca API.
         """
         return AlpacaDataSource
 
