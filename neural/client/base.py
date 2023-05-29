@@ -1,5 +1,12 @@
 """
 base.py
+
+Abstract base classes for API clients. These classes define the
+blueprint for API clients. The Trader class expects the clients to
+provide the following information:
+    - cash
+    - asset_quantities
+    
 """
 from __future__ import annotations
 
@@ -160,7 +167,6 @@ class AbstractTradeClient(AbstractClient):
             NotImplementedError: 
                 This property must be implemented by a subclass.
         """
-
         raise NotImplementedError
 
     @property
@@ -177,23 +183,21 @@ class AbstractTradeClient(AbstractClient):
             NotImplementedError: 
                 This property must be implemented by a subclass.
         """
-
         raise NotImplementedError
 
     @abstractmethod
     def check_connection(self, *args, **kwargs):
         """
-        check the connection to the service. If the connection is
-        successful, the method should return True, otherwise False. The
-        Trader class will use this method to check the connection before
-        execution of trading process.
+        check the connection to the service. If the connection is not
+        successful it raises an error. The Trader class will use this
+        method to check the connection before execution of trading
+        process.
 
         Raises:
         --------
             NotImplementedError: 
                 This method must be implemented by a subclass.
         """
-
         raise NotImplementedError
 
     @abstractmethod
@@ -202,7 +206,6 @@ class AbstractTradeClient(AbstractClient):
         Abstract method for placing an order for a single asset. The 
         restrictions of the API should be enforced in this method.
         """
-
         raise NotImplementedError
 
 
@@ -210,18 +213,14 @@ class AbstractDataClient(AbstractClient):
     """
     Abstract base class for a client that connects to a data service or
     API. This class defines a blueprint for clients that provide data
-    functionality. In addition to connectivity, data clients are
-    enforced to provide the following information:
-        - data_source
-    
-    Data source is the name of the data source. This will be used to map
-    clients to constituents of stream metadata that specify a data
-    source. For example a Trader class may use multiple data clients at
-    construction (e.g. one borker data client and one twitter data
-    client). The Trader class will use the data source attribute of each
-    client to map the client to the corresponding stream metadata.
+    functionality. data_source property will be used to map clients to
+    constituents of stream metadata that has data_source attribute. For
+    example a Trader class may use multiple data clients at construction
+    (e.g. one borker data client and one twitter data client). The
+    Trader class will use the data source attribute of each client to
+    map the client to the corresponding stream metadata, for live
+    streaming of data.
     """
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
