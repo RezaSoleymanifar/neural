@@ -836,13 +836,14 @@ class AlpacaDataClient(AbstractDataClient, AlpacaClient):
         ------
             stream_type:
                 The type of stream to retrieve. The stream types are:
-                    - BAR
-                    - QUOTE
-                    - TRADE
+                    - AlpacaDataSource.StreamType.BAR
+                    - AlpacaDataSource.StreamType.QUOTE
+                    - AlpacaDataSource.StreamType.TRADE
+            
             asset_type:
                 The type of asset to retrieve. The asset types are:
-                    - STOCK
-                    - CRYPTOCURRENCY
+                    - AssetType.STOCK
+                    - AssetType.CRYPTOCURRENCY
 
         Returns:
         ---------
