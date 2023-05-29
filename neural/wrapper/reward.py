@@ -842,30 +842,28 @@ class DynamicExcessMarginRewardShaper(AbstractDynamicRewardShaper):
     A reward shaping wrapper that penalizes the excess margin ratio.
     Uses deviation from excess margin ratio threshold to shape the
     reward. If excess margin ratio is smaller than the threshold, the
-    reward will be shaped.
+    reward will be shaped. Incentivizes the agent to maintain excess
+    margin ratio above the threshold. Can teach agent to avoid margin
+    calls and maintain constant liquidity for unhindered trading.
 
     Attributes:
     ----------
-        env (gym.Env):
-            The environment to wrap.
-        excess_margin_ratio_threshold (float):
-            The threshold for the excess margin ratio. If the excess
-            margin ratio is smaller than the threshold, the reward will
-            be shaped. The default value is 0.2.
-        use_std (bool or None, optional): 
-            Whether to use the standard deviation of the rewards.
-            Defaults to None.
-        use_min (bool or None, optional): 
-            Whether to use the min/max reward statistics. Defaults
-            to None. if use_min = Flase, then with default scale =
-            -1 the shaped reward will be -1 * max meaning if reward
-            condition is met the shaped reward will be the negative
-            maximum reward. 
-        scale (float, optional): The scaling factor for the
-            shaped reward. Defaults to -1.0 meaning if for example
-            reward shaping condition is met and use_std is True, the
-            shaped reward will be the mean minus the standard
-            deviation.
+        env (Env): 
+            The environment to wrap. 
+        use_std : bool, optional
+            A boolean indicating whether to use the reward's standard deviation
+            in shaping the reward. Default is None.
+        use_min : bool, optional
+            A boolean indicating whether to use the minimum reward value in
+            shaping the reward. If False, the maximum reward value is used.
+        multiplier : float, optional
+            reward = sign(multiplier) * base ** (deviation_ratio *
+            abs(multiplier)). Defaults to +1.0. Thus with default multiplier =
+            1.0, base = 1.0, the shaped reward will be reward =
+            deviation_ratio.
+        base (float, optional): 
+            The base value used in the exponential scaling adjustment. Defaults
+            to 1.0.
     """
 
     def __init__(
@@ -873,13 +871,13 @@ class DynamicExcessMarginRewardShaper(AbstractDynamicRewardShaper):
         env: Env,
         use_std: bool = None,
         use_min: bool = None,
-        scale: Optional[float] = None,
+        multiplier: Optional[float] = None,
         base: float = 1.0,
     ) -> None:
         super().__init__(env=env,
                          use_std=use_std,
                          use_min=use_min,
-                         multiplier=scale,
+                         multiplier=multiplier,
                          base=base)
 
     @property
