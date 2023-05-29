@@ -26,6 +26,11 @@ Classes:
         simple interface for retrieving data from the Alpaca API, in
         addition to the functionalities provided by the AlpacaClient
         class.
+    AlpacaTradeClient(AbstractTradeClient, AlpacaClient):
+        This is an extension of the AlpacaClient class. It provides a
+        simple interface for placing orders and performing account
+        related tasks, in addition to the functionalities provided by
+        the AlpacaClient class.
 """
 from typing import Optional, Dict, List, Callable, Tuple
 
@@ -1042,8 +1047,6 @@ class AlpacaTradeClient(AbstractTradeClient, AlpacaClient):
         _equity (float):
             The current net worth of the trader. This along with market
             data will be used by agent to make decisions.
-        
-
 
     Properties:
     -----------
@@ -1156,12 +1159,12 @@ class AlpacaTradeClient(AbstractTradeClient, AlpacaClient):
             quantity is negative. If asset is long, the quantity is
             positive.
         place_order(self, asset: AlpacaAsset, quantity: float,
-        time_in_force: str = 'ioc') -> None | Order:    
+        time_in_force: str) -> None | Order:    
             This method places orders in Alpaca API and uses quantity of
             asset to submit buy or sell orders. If quantity is positive,
             the order is a buy order. If quantity is negative, the order
             is a sell order. If quantity is zero, no order is placed.
-            The order is placed with time in force set to 'ioc'
+            The order is placed with time in force set to 'fok'
             (immediate or cancel). The order is placed as a market
             order.
     
@@ -1306,7 +1309,7 @@ class AlpacaTradeClient(AbstractTradeClient, AlpacaClient):
         self,
         asset: AlpacaAsset,
         quantity: float,
-        time_in_force: str = 'ioc',
+        time_in_force: str = 'fok',
     ) -> None | Order:
         """
         This method places orders in Alpaca API and uses quantity of
@@ -1344,7 +1347,7 @@ class AlpacaTradeClient(AbstractTradeClient, AlpacaClient):
                 positive, the order is a buy order. If quantity is
                 negative, the order is a sell order.
             time_in_force (str):
-                The time in force for the order. Defaults to "ioc". Time
+                The time in force for the order. Defaults to "fok". Time
                 in force options:
                     - Day order = "day"
                     - Good 'til cancelled = "gtc"
