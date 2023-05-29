@@ -180,6 +180,13 @@ class AbstractTradeClient(AbstractClient):
 
         raise NotImplementedError
 
+    @abstractmethod
+    def connect(self, *args, **kwargs):
+        """
+        Connect to the API. This method must be implemented in the
+        subclass.
+        """
+        raise NotImplementedError
 
     @abstractmethod
     def check_connection(self, *args, **kwargs):
