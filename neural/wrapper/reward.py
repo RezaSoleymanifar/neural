@@ -254,63 +254,76 @@ class AbstractFixedRewardShaper(RewardWrapper, ABC):
     """
     Fixed reward shaper wrapper. Fixed because the reward shaping is
     independent from magnitude of deviation from target behavior. If a
-    condition is met then applies a fixed reward shaping based on the
-    reward statistics. This is a blueprint class for fixed reward
-    shaping wrappers. This class is designed to be subclassed for
-    creating custom fixed reward shaping wrappers for market
-    environments.
+    condition is met then applies a fixed reward shaping based on the reward
+    statistics. This is a blueprint class for fixed reward shaping wrappers.
+    This class is designed to be subclassed for creating custom fixed reward
+    shaping wrappers for market environments.
 
     Attributes:
     ----------  
         env (gym.Env):
             The environment to wrap.
+        use_std (bool or None, optional):
+            Whether to use the standard deviation of the rewards. Defaults to
+            None.
+        use_min (bool or None, optional):
+            Whether to use the min/max reward statistics. Defaults to None. if
+            use_min = Flase, then with default scale = -1 the shaped reward
+            will be -1 * max meaning if reward condition is met the shaped
+            reward will be the negative maximum reward.
         reward_statistics (RunningStatistics):
             A running statistics object for tracking reward statistics.
 
+    Properties:
+    ----------
+        scale (float):
+            The scaling factor for the shaped reward. Defaults to -1.0 meaning
+            if for example reward shaping condition is met and use_std is True,
+            the shaped reward will be mean + (-1) * std.
+        
     Args:
     -----
         env (Env): 
             The environment to wrap. 
         use_std (bool or None, optional): 
-            Whether to use the standard deviation of the rewards.
-            Defaults to None.
+            Whether to use the standard deviation of the rewards. Defaults to
+            None.
         use_min (bool or None, optional): 
-            Whether to use the min/max reward statistics. Defaults
-            to None. if use_min = Flase, then with default scale =
-            -1 the shaped reward will be -1 * max meaning if reward
-            condition is met the shaped reward will be the negative
-            maximum reward. 
+            Whether to use the min/max reward statistics. Defaults to None. if
+            use_min = Flase, then with default scale = -1 the shaped reward
+            will be -1 * max meaning if reward condition is met the shaped
+            reward will be the negative maximum reward. 
         scale (float, optional): The scaling factor for the
-            shaped reward. Defaults to -1.0 meaning if for example
-            reward shaping condition is met and use_std is True, the
-            shaped reward will be the mean minus the standard
-            deviation.
+            shaped reward. Defaults to -1.0 meaning if for example reward
+            shaping condition is met and use_std is True, the shaped reward
+            will be the mean minus the standard deviation.
+        reward_statistics (RunningStatistics, optional):
+            A running statistics object for tracking reward statistics.
+
 
     Methods:
     -------
         check_condition(*args, **kwargs) -> bool:
-            An abstract method for checking whether to apply reward
-            shaping.
+            An abstract method for checking whether to apply reward shaping.
         reward(reward: float, *args, **kwargs) -> float:    
             An abstract method for shaping the reward signal.
         shape_reward(reward: float) -> float:
             Calculate the shaped reward based on the input parameters.
         step(action) -> tuple:
-            Advances the environment by one step and updates the reward
-            signal, if condition is met.
+            Advances the environment by one step and updates the reward signal,
+            if condition is met.
     
     Notes:
     ------
-        Reward shaping wrappers are used to modify the reward
-        signal obtained by an agent in order to encourage or discourage
-        certain behaviours during training. highly useful for pretraining an
-        agent with some degrees of freedom in actions. Apply relevant reward
-        shaping wrappers to define and restrict unwanted actions. Start with
-        a pipe of wrappers that enforce the desired behaviour and later
-        remove the influencing wrappers to allow the agent to learn the
-        desired behaviour. if desired behavior is a starting point, then in
-        a final step remove the reward shaping wrapper and the agent may
-        learn to improve on it.
+        Reward shaping wrappers are used to modify the reward signal obtained
+        by an agent in order to encourage or discourage certain behaviours
+        during training. highly useful for pretraining an agent with some
+        degrees of freedom in actions. Apply relevant reward shaping wrappers
+        to define and restrict unwanted actions. Start with a pipe of wrappers
+        that enforce the desired behaviour and later remove the influencing
+        wrappers to allow the agent to learn the desired behaviour. if desired
+        behavior is a starting point, then in a final step remove the reward
+        shaping wrapper and the agent may learn to improve on it.
     """
 
     def __init__(
@@ -361,7 +374,9 @@ class AbstractFixedRewardShaper(RewardWrapper, ABC):
     @property
     def scale(self) -> float:
         """
-        The scaling factor for the shaped reward. Defaults to -1.0
+        The scaling factor for the shaped reward. Defaults to -1.0 meaning if
+        for example reward shaping condition is met and use_std is True, the
+        shaped reward will be mean + (-1) * std.
 
         Returns:
         --------
@@ -371,21 +386,12 @@ class AbstractFixedRewardShaper(RewardWrapper, ABC):
         return self._scale
 
     @abstractmethod
-    def check_condition(self, *args, **kwargs) -> bool:
+    def check_condition(self) -> bool:
         """
         An abstract method for checking whether to apply reward shaping.
 
         This method should be implemented by subclasses to determine
-        whether to apply reward shaping to the current step. The method
-        takes an arbitrary number of arguments and keyword arguments,
-        depending on the specific condition to be checked.
-
-        Args:
-        -----
-            *args:
-                Variable length argument list.
-            **kwargs:
-                Arbitrary keyword arguments.
+        whether to apply reward shaping to the current step.
 
         Returns:
         --------
