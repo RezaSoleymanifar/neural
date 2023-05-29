@@ -250,7 +250,7 @@ class LiabilityInterstRewardWrapper(RewardWrapper):
         return debt_interest
 
 
-class AbstractFixedRewardShaper(RewardWrapper, ABC):
+class AbstractRewardShaper(RewardWrapper, ABC):
     """
     Fixed reward shaper wrapper. Fixed because the reward shaping uses a fixed
     scale value. If a condition is met then applies a reward shaping
@@ -472,7 +472,7 @@ class AbstractFixedRewardShaper(RewardWrapper, ABC):
         return observation, reward, done, info
 
 
-class AbstractFixedRewardShaper(RewardWrapper, ABC):
+class AbstractFixedRewardShaper(AbstractRewardShaper, ABC):
     """
     Fixed reward shaper wrapper. Fixed because the reward shaping uses a fixed
     scale value provided at constructor. This is a blueprint class for fixed
@@ -599,7 +599,6 @@ class AbstractFixedRewardShaper(RewardWrapper, ABC):
         self.reward_statistics = RunningStatistics()
 
     @property
-    @abstractmethod
     def scale(self) -> float:
         """
         The scaling factor for the shaped reward.
@@ -625,91 +624,18 @@ class AbstractFixedRewardShaper(RewardWrapper, ABC):
         """
         raise NotImplementedError
 
-    def shape_reward(self) -> float:
-        """
-        Calculate the shaped reward based on scale and reward statistics.
-        Outpus a scalar that is either mean + scale * std or scale * min/max.
 
-        Returns
-        -------
-            float
-                A float value representing the shaped reward.
-        """
-        if self.use_min is not None:
-            shaped_reward = (self.scale * self.reward_statistics.minimum
-                             if self.use_min else self.scale *
-                             self.reward_statistics.maximum)
-
-        elif self.use_std is not None:
-            shaped_reward = (self.reward_statistics.mean +
-                             self.scale * self.reward_statistics.std)
-
-        return shaped_reward
-
-    def reward(self, reward: float) -> float:
-        """
-        Shapes the reward when check_condition is True.
-
-        Args:
-        ------
-            reward (float): 
-                The original reward.
-
-        Returns:
-        --------
-            float: 
-                The shaped reward.
-        """
-        if self.check_condition():
-            reward = self.shape_reward()
-        return reward
-
-    def step(
-        self,
-        action: np.ndarray[float] | Dict[str, np.ndarray[float]],
-    ) -> np.ndarray[float] | Dict[str, np.ndarray[float]]:
-        """
-        Advances the environment by one step and updates the reward
-        signal.
-
-        Args:
-        -----
-            action (int, Tuple[int], Any): 
-                The action taken by the agent.
-
-        Returns:
-        --------
-            observation (np.ndarray[float] | Dict[str,
-            np.ndarray[float]]):
-                The observation of the environment.
-            reward (float):
-                The shaped reward.
-            done (bool):
-                Whether the episode is done.
-            info (dict):
-                A dictionary containing additional information about the
-                environment.
-        """
-        observation, reward, done, info = self.env.step(action)
-        self.reward_statistics.update(reward)
-
-        if self.check_condition():
-            reward = self.reward(reward)
-
-        return observation, reward, done, info
-    
-
-class AbstractDynamicRewardShaper(AbstractFixedRewardShaper, ABC):
+class AbstractDynamicRewardShaper(AbstractRewardShaper, ABC):
     """
     Abstract base class for a dynamic reward shaper wrapper. For positive scale
     and base the shaped reward will be reward = base ** (deviation_ratio *
-    scale) where deviation ratio is a measure for the intensity of deviation
-    from expected behavior. This allows to dynamically adjust reward based on
-    deviation or its linear and exponential scaling. This class
+    multiplier) where deviation ratio is a measure for the intensity of
+    deviation from expected behavior. This allows to dynamically adjust reward
+    based on deviation or its linear and/or exponential scaling. This class
     defines the interface for a dynamic reward shaper wrapper, which shapes the
     reward signal of an environment based on a dynamically adjusted scale. To
     create a custom dynamic reward shaper, users must inherit from this class
-    and implement the abstract methods: `check_condition`, `metric`, and
+    and implement the abstract methods: `metric`, and
     `threshold`.
 
     Attributes: -
@@ -721,10 +647,10 @@ class AbstractDynamicRewardShaper(AbstractFixedRewardShaper, ABC):
         use_min : bool, optional
             A boolean indicating whether to use the minimum reward value in
             shaping the reward. If False, the maximum reward value is used.
-        scale : float, optional
-            reward = base ** (deviation_ratio * scale). Defaults to +1.0.
-            Thus with default scale = 1.0, base = 1.0, the shaped reward will
-            be reward = deviation_ratio.
+        multiplier : float, optional
+            reward = base ** (deviation_ratio * multiplier). Defaults to +1.0. Thus
+            with default multiplier = 1.0, base = 1.0, the shaped reward will be
+            reward = deviation_ratio.
         base (float, optional): 
             The base value used in the scaling factor adjustment. Defaults to
             1.0.
