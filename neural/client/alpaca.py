@@ -1188,11 +1188,28 @@ class AlpacaTradeClient(AbstractTradeClient, AlpacaClient):
 
         return self._equity
 
+    def get_positions_dataframe(self) -> pd.DataFrame:
+        """
+        Get all current positions in the account. Position is defined as
+        the notional value of each asset in portfolio whether it is long
+        (owned), or short (borrowed). The position value is calculated
+        as the product of the asset price and the number of shares held.
+
+        Returns:
+        ---------
+            DataFrame: 
+                A dataframe of all current positions in the account.
+        """
+        self._positions = self.clients['trading'].get_all_positions()
+        positions_dataframe = objects_list_to_dataframe(self._positions)
+
+        return positions_dataframe
+    
     def get_asset_quantities(self,
                              assets: List[AlpacaAsset]) -> np.ndarray[float]:
         """
-        Returns a numpy array of symbols and asset quantities for the
-        specified list of assets.
+        Returns a numpy array of  asset quantities for the specified
+        list of AlpacaAsset objects.
 
         Returns:
         ---------
@@ -1215,25 +1232,8 @@ class AlpacaTradeClient(AbstractTradeClient, AlpacaClient):
             quantity = row['qty'] if row['side'] == 'long' else -1 * row['qty']
 
             asset_quantities.append(quantity)
-            asset_quantities = np.array(asset_quantities)
+        asset_quantities = np.array(asset_quantities)
         return asset_quantities
-
-    def get_positions_dataframe(self) -> pd.DataFrame:
-        """
-        Get all current positions in the account. Position is defined as
-        the notional value of each asset in portfolio whether it is long
-        (owned), or short (borrowed). The position value is calculated
-        as the product of the asset price and the number of shares held.
-
-        Returns:
-        ---------
-            DataFrame: A dataframe of all current positions in the
-            account.
-        """
-        self._positions = self.clients['trading'].get_all_positions()
-        positions_dataframe = objects_list_to_dataframe(self._positions)
-
-        return positions_dataframe
 
     def check_connection(self):
         """
