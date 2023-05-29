@@ -431,20 +431,18 @@ class AlpacaClient(AbstractClient):
         Gets the rest client objects from Alpaca API. The trading REST client
         is used to place orders and perform account related tasks.
 
-        TradingClient functionalities:
-            - Submit order
-            - Cancel order
-            - Get orders
-            - Get positions
-            - Get account
-            - Get clock
-            - Get calendar
-            - Get assets
-
         Notes:
         ------
-        Crypto does not need key, and secret but download will be faster if
-        provided.
+            clients['trade'] is the trading client of type TradingClient
+            in Alpaca API. TradingClient functionalities:
+                - Submit order
+                - Cancel order
+                - Get orders
+                - Get positions
+                - Get account
+                - Get clock
+                - Get calendar
+                - Get assets
         """
         clients = dict()
         clients['trade'] = TradingClient(api_key=self.key,
@@ -461,11 +459,13 @@ class AlpacaClient(AbstractClient):
 
         Raises:
         -------
-            Exception: If the account setup fails.
+            Exception: 
+                If the account setup fails.
 
         Returns:
         ---------
-            Account: The account object.
+            Account: 
+                The account object.
         """
         try:
             account = self.clients['trading'].get_account()
@@ -495,6 +495,32 @@ class AlpacaDataClient(AbstractDataClient, AlpacaClient):
             API. Defaults to False. If using paper account credentials,
             this should be set to True.
 
+    Attributes:
+    -----------
+        key (str):
+            The API key for the Alpaca API.
+        secret (str):
+            The secret key for the Alpaca API.
+        paper (bool):
+            Whether to use the paper trading API or the live trading
+            API. Defaults to False. If using paper account credentials,
+            this should be set to True.
+        _clients:
+            Dictionary of all clients available on Alpaca API. The
+            corresponding values are the RESTClient objects.
+        _account:
+            A TradeAccount object that contains information about the
+            account.
+        _assets:
+            A list of all assets available on Alpaca API.
+        _symbols:
+            A dictionary of all symbols available on Alpaca API. Values
+            are asset objects.
+        _asset_types:
+            The asset types available on Alpaca API.
+        _exchanges:
+            A list of exchanges available on Alpaca API.
+            
     Properties:
     -----------
         clients:
