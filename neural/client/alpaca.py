@@ -134,7 +134,7 @@ class AlpacaClient(AbstractClient):
             Returns the asset types available on Alpaca API. The asset
             types are:
                 - STOCK
-                - CRYPTOCURRENCY    
+                - CRYPTOCURRENCY
         exchanges (List[AssetExchange]):
             A list of exchanges available on Alpaca API. The exchanges
             are:
@@ -518,35 +518,40 @@ class AlpacaDataClient(AbstractDataClient, AlpacaClient):
             Whether to use the paper trading API or the live trading
             API. Defaults to False. If using paper account credentials,
             this should be set to True.
-        _clients:
+        _clients (Dict[str, RESTClient]):
             Dictionary of all clients available on Alpaca API. The
             corresponding values are the RESTClient objects.
-        _account:
+        _account (TradeAccount):
             A TradeAccount object that contains information about the
             account.
-        _assets:
+        _assets (List[Asset]):
             A list of all assets available on Alpaca API.
-        _symbols:
+        _symbols (Dict[str, Asset]):
             A dictionary of all symbols available on Alpaca API. Values
             are asset objects.
-        _asset_types:
+        _asset_types :
             The asset types available on Alpaca API.
-        _exchanges:
+        _exchanges :
             A list of exchanges available on Alpaca API.
 
     Properties:
     -----------
-        clients:
+        clients (Dict[str, RESTClient]):
             Returns a dictionary of all clients available on Alpaca API.
             The corresponding values are the RESTClient objects.
-        account:
+        account (TradeAccount):
             A TradeAccount object that contains information about the
             account. Functionalities of TradeAccount:
                 - Get account status
                 - Get account balance
                 - Get account positions
                 - Get account portfolio value
-        assets:
+                - Get account pattern day trader status
+                - Get account equity
+                - Get account maintenance margin
+                - Get account initial margin
+                - Get account buying power
+        assets (pd.DataFrame):
             Returns a dataframe of all assets available on Alpaca API.
             Asset objects have the flowing attributes:
                 - symbol
@@ -562,15 +567,15 @@ class AlpacaDataClient(AbstractDataClient, AlpacaClient):
                 - initial_margin
                 - day_trade_ratio
                 - last_updated_at
-        symbols:
+        symbols (Dict[str, Asset])):
             Returns a dictionary of all symbols available on Alpaca API.
             The corresponding values are the Asset objects.
-        asset_types:
+        asset_types (List[AssetType]):
             Returns the asset types available on Alpaca API. The asset
             types are:
                 - STOCK
                 - CRYPTOCURRENCY
-        exchanges:
+        exchanges (List[AssetExchange]):
             A list of exchanges available on Alpaca API. The exchanges
             are:
                 - AMEX
@@ -585,7 +590,7 @@ class AlpacaDataClient(AbstractDataClient, AlpacaClient):
                 - ERSX
                 - OTC
                 - CRYPTO
-        data_source:
+        data_source (AlpacaDataSource):
             The data source for the Alpaca API. The data source is used
             to retrieve data from the Alpaca API.
 
@@ -719,11 +724,11 @@ class AlpacaDataClient(AbstractDataClient, AlpacaClient):
             AttributeError: 
                 If the object does not have the specified method.
         """
-        if hasattr(object, method_name):
-            return getattr(object, method_name)
-        else:
-            raise AttributeError(f"{object} does not have method '{method_name}'")
-
+        if not hasattr(object, method_name):
+            raise AttributeError(
+                f"{object} does not have method '{method_name}'")
+        return getattr(object, method_name)
+    
     def connect(self) -> None:
         """
         Uses the connect method of the AlpacaClient class to connect to
