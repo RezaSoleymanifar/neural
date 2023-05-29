@@ -1110,6 +1110,25 @@ class AlpacaTradeClient(AbstractTradeClient, AlpacaClient):
             negative. Negative quantities indicate that the trader has
             shorted the asset, namely the trader owes the asset to the
             broker.
+        check_connection(self) -> bool:
+            Checks if the connection to the Alpaca API is active. Used
+            by trader to before starting the trading process.
+        place_order(self, asset: AlpacaAsset, quantity: float,
+        time_in_force: str = 'ioc') -> None | Order:    
+            This method places orders in Alpaca API and uses quantity of
+            asset to submit buy or sell orders. If quantity is positive,
+            the order is a buy order. If quantity is negative, the order
+            is a sell order. If quantity is zero, no order is placed.
+            The order is placed with time in force set to 'ioc'
+            (immediate
+            or cancel). This means that if the order is not filled
+            immediately, it will be cancelled. The order is placed as a
+            market order. The order is placed as a day order. This means
+            that if the order is not filled by the end of the trading
+            day, it will be cancelled.
+        get_positions_dataframe(self) -> pd.DataFrame:
+            Get all current positions in the account. Position is
+
     
     Examples:
     ----------
@@ -1188,6 +1207,20 @@ class AlpacaTradeClient(AbstractTradeClient, AlpacaClient):
 
         return self._equity
 
+    def check_connection(self) -> bool:
+        """
+        Checks if the connection to the Alpaca API is active. Used by 
+        trader to before starting the trading process.
+
+        Returns:
+        ---------
+            bool: 
+                True if the connection is active, False otherwise.
+        """
+
+        status = True if self.account.status == AccountStatus.ACTIVE else False
+        return status
+    
     def get_positions_dataframe(self) -> pd.DataFrame:
         """
         Get all current positions in the account. Position is defined as
@@ -1236,20 +1269,6 @@ class AlpacaTradeClient(AbstractTradeClient, AlpacaClient):
         asset_quantities = np.array(asset_quantities)
         return asset_quantities
 
-    def check_connection(self) -> bool:
-        """
-        Checks if the connection to the Alpaca API is active. Used by 
-        trader to before starting the trading process.
-
-        Returns:
-        ---------
-            bool: 
-                True if the connection is active, False otherwise.
-        """
-
-        status = True if self.account.status == AccountStatus.ACTIVE else False
-        return status
-
     def place_order(
         self,
         asset: AlpacaAsset,
@@ -1285,13 +1304,13 @@ class AlpacaTradeClient(AbstractTradeClient, AlpacaClient):
 
         Args:
         ------
-            asset:
+            asset (AlpacaAsset):
                 The asset to buy or sell.
-            quantity:
+            quantity (float):
                 The quantity of the asset to buy or sell. If quantity is
                 positive, the order is a buy order. If quantity is
                 negative, the order is a sell order.
-            time_in_force:
+            time_in_force (str):
                 The time in force for the order. Defaults to "ioc". Time
                 in force options:
                     - Day order = "day"
@@ -1301,24 +1320,25 @@ class AlpacaTradeClient(AbstractTradeClient, AlpacaClient):
 
         Returns:
         ---------
-            None | Order: The order object. if quantity is zero, None is
-            returned.
+            None | Order: 
+                The order object. if quantity is zero, None is returned.
         
         Raises:
         -------
-            ValueError: If the time in force is not valid. ValueError:
-            If the time in force is not valid for
+            ValueError: 
+                If the time in force is not valid. 
 
         Notes:
         ------
         Time in force options for crypto assets:
-            Good 'til cancelled = "gtc" Immediate or cancel = "ioc"
+            - Good 'til cancelled = "gtc" 
+            - Immediate or cancel = "ioc"
 
         Trader typically cancels all unfufilled orders before submitting
-        new orders for decisions that agent make. Thus for example 'day'
-        and 'gtc' orders will only stay open at most for a single
-        trading interval determined by the trading resolution (e.g.
-        '1Min', '1H').
+        new batch of orders for decisions that agent make. Thus for
+        example 'day' and 'gtc' orders will only stay open at most for a
+        single trading interval determined by the trading resolution
+        (e.g. '1Min', '1H').
         """
 
         if quantity == 0:
@@ -1332,13 +1352,13 @@ class AlpacaTradeClient(AbstractTradeClient, AlpacaClient):
             if time_in_force not in ['gtc', 'ioc']:
                 raise ValueError(
                     f'Time in force {time_in_force} is not valid for '
-                    'cryptocurrency assets.')
+                    'cryptocurrency assets. Valid options are: "gtc", "ioc"')
 
+        quantity = abs(quantity)
         side = OrderSide.BUY if np.sign(quantity) > 0 else OrderSide.SELL
         time_in_force = TimeInForce(time_in_force)
-
         market_order_request = MarketOrderRequest(symbol=asset.symbol,
-                                                  qty=abs(quantity),
+                                                  qty=quantity,
                                                   side=side,
                                                   time_in_force=time_in_force)
 
