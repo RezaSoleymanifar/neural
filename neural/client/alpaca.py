@@ -195,8 +195,8 @@ class AlpacaClient(AbstractClient):
 
     Set the environment variables for API key and secret on Unix-like
     operating systems (Linux, macOS, etc.): 
-        BASH: export API_KEY = <your_api_key> BASH: export API_SECRET =
-        <your_secret_key>
+        - BASH: export API_KEY = <your_api_key> 
+        - BASH: export API_SECRET = <your_secret_key>
     
     >>> from neural.client.alpaca import AlpacaClient 
     >>> client = AlpacaClient()
@@ -480,9 +480,9 @@ class AlpacaClient(AbstractClient):
 
 class AlpacaDataClient(AbstractDataClient, AlpacaClient):
     """
-    This is an extension of the AlpacaClient class. It provides a
-    simple interface for retrieving data from the Alpaca API, in
-    addition to the functionalities provided by the AlpacaClient class.
+    This is an extension of the AlpacaClient class. It provides a simple
+    interface for retrieving data from the Alpaca API, in addition to
+    the functionalities provided by the AlpacaClient class.
 
     Args:
     ------
@@ -605,7 +605,7 @@ class AlpacaDataClient(AbstractDataClient, AlpacaClient):
             A method to get the streamer for the specified stream type
             and asset type. The streamer is used to retrieve live data.
         symbols_to_assets:
-            This method converts a list of symbols to a list of Asset   
+            This method converts a list of symbols to a list of Asset
             objects. AlpacaAsset objects have the flowing attributes:
                 - symbol
                 - asset_type
@@ -617,10 +617,9 @@ class AlpacaDataClient(AbstractDataClient, AlpacaClient):
         
     Examples:
     ----------
-    Option 1: Instantiate an instance of the AlpacaClient class with
-    your API key and secret.
-    >>> from neural.client.alpaca import AlpacaDataClient
-    >>> client = AlpacaDataClient(key=..., secret=...)
+    Option 1: Instantiate an instance of the AlpacaDataClient class with
+    your API key and secret. >>> from neural.client.alpaca import
+    AlpacaDataClient >>> client = AlpacaDataClient(key=..., secret=...)
 
     Option 2: Instantiate an instance of the AlpacaClient by passing
     values to constants.
@@ -636,8 +635,8 @@ class AlpacaDataClient(AbstractDataClient, AlpacaClient):
 
     Set the environment variables for API key and secret on Unix-like
     operating systems (Linux, macOS, etc.): 
-        BASH: export API_KEY = <your_api_key> BASH: export API_SECRET =
-        <your_secret_key>
+        - BASH: export API_KEY = <your_api_key> 
+        - BASH: export API_SECRET = <your_secret_key>
     
     >>> from neural.client.alpaca import AlpacaDataClient 
     >>> client = AlpacaDataClient()
@@ -648,7 +647,12 @@ class AlpacaDataClient(AbstractDataClient, AlpacaClient):
 
     @property
     def data_source(self):
-
+        """
+        Determines the data source for this client. Provides a
+        standardized way to refer to the specific type of data provided
+        by Alpaca API. Data source is also used to match clients to
+        stream metadata.
+        """
         return AlpacaDataSource
 
     def connect(self):
@@ -666,10 +670,8 @@ class AlpacaDataClient(AbstractDataClient, AlpacaClient):
         used to retrieve historical stock data. The crypto historical data
         client is used to retrieve historical crypto data.
 
-
         CryptoHistoricalDataClient functionalities:
             - Get crypto bars
-            - Get crypto quotes
             - Get crypto trades
 
         StockHistoricalDataClient functionalities:
