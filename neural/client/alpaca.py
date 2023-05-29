@@ -35,34 +35,14 @@ class AlpacaClient(AbstractClient):
 
     Args:
     ------
-        key (str): The API key for the Alpaca API. secret (str): The
-        secret key for the Alpaca API. paper (bool): Whether to use the
-        paper trading API or the live
-            trading API. Defaults to False.
+        key (str): 
+            The API key for the Alpaca API. 
+        secret (str): The
+            secret key for the Alpaca API. 
+        paper (bool): Whether to use the
+            paper trading API or the live trading API. Defaults to
+            False.
 
-
-    Methods:
-    --------
-        connect: 
-            Connect to the Alpaca API and set up the REST clients. Will
-            be called automatically when the client is instantiated.
-        _validate_credentials:
-            Ensure that the API key and secret are valid.
-        _get_clients:
-            Gets the rest client objects from Alpaca API. Rest clients
-            include the trading client, the stock historical data
-            client, and the crypto historical data client. The trading
-            client is used to place orders and perform account related
-            tasks. The stock historical data client is used to retrieve
-            historical stock data. The crypto historical data client is
-            used to retrieve historical crypto data. The clients are
-            stored in a dictionary with the keys 'trade', 'stocks', and
-            'crypto'.
-        _get_account:
-            The account object is used to perform account related tasks
-            such as checking the account status, getting the account
-            balance, and getting the account positions.
-        
     Properties:
     -----------
         clients:
@@ -99,21 +79,7 @@ class AlpacaClient(AbstractClient):
                 - last_updated_at
         symbols:
             Returns a dictionary of all symbols available on Alpaca API.
-            The corresponding values are the Asset objects. Asset
-            objects have the flowing attributes:
-                - symbol
-                - asset_class
-                - exchange
-                - status
-                - tradable
-                - marginable
-                - shortable
-                - easy_to_borrow
-                - fractionable
-                - maintenance_margin
-                - initial_margin
-                - day_trade_ratio
-                - last_updated_at
+            The corresponding values are the Asset objects.
         asset_types:
             Returns the asset types available on Alpaca API. The asset
             types are:
@@ -134,6 +100,28 @@ class AlpacaClient(AbstractClient):
                 - ERSX
                 - OTC
                 - CRYPTO
+
+    Methods:
+    --------
+        connect(self) -> None: 
+            Connect to the Alpaca API and set up the REST clients. Will
+            be called automatically when the client is instantiated.
+        _validate_credentials(self) -> bool:
+            Ensure that the API key and secret are valid.
+        _get_clients(self) -> RESTClient:
+            Gets the rest client objects from Alpaca API. Rest clients
+            include the trading client, the stock historical data
+            client, and the crypto historical data client. The trading
+            client is used to place orders and perform account related
+            tasks. The stock historical data client is used to retrieve
+            historical stock data. The crypto historical data client is
+            used to retrieve historical crypto data. The clients are
+            stored in a dictionary with the keys 'trade', 'stocks', and
+            'crypto'.
+        _get_account(self) -> TradeAccount:
+            The account object is used to perform account related tasks
+            such as checking the account status, getting the account
+            balance, and getting the account positions.
 
     Examples:
     ---------
@@ -202,84 +190,6 @@ class AlpacaClient(AbstractClient):
 
         return None
 
-    def connect(self):
-        """
-        Connect to the Alpaca API and set up the client. Will be called
-        automatically when the client is instantiated. Sets up the
-        trading client, and the account object.
-        """
-        self._validate_credentials()
-        self._clients = self._get_clients()
-        self._account = self._get_account()
-
-        return None
-
-    def _validate_credentials(self) -> bool:
-        """
-        Ensure that the API key and secret are valid. If the API key and
-        secret are not valid, an exception will be raised.
-
-        Raises:
-        -------
-            ValueError: If the API key and secret are not valid.
-        """
-        if self.key is None or self.secret is None:
-            raise ValueError(
-                'API key and secret are required to connect to Alpaca API.')
-
-        return None
-
-    def _get_clients(self) -> RESTClient:
-        """
-        Gets the rest client objects from Alpaca API. The trading REST client
-        is used to place orders and perform account related tasks.
-
-        TradingClient functionalities:
-            - Submit order
-            - Cancel order
-            - Get orders
-            - Get positions
-            - Get account
-            - Get clock
-            - Get calendar
-            - Get assets
-
-        Notes:
-        ------
-        Crypto does not need key, and secret but download will be faster if
-        provided.
-        """
-        clients = dict()
-        clients['trade'] = TradingClient(api_key=self.key,
-                                         secret_key=self.secret,
-                                         paper=self.paper)
-
-        return clients
-
-    def _get_account(self) -> TradeAccount:
-        """
-        The account object is used to perform account related tasks such
-        as checking the account status, getting the account balance, and
-        getting the account positions.
-
-        Raises:
-        -------
-            Exception: If the account setup fails.
-
-        Returns:
-        ---------
-            Account: The account object.
-        """
-        try:
-            account = self.clients['trading'].get_account()
-            if not self.account.status == AccountStatus.ACTIVE:
-                logger.warning(f'Account Status: {self.account.status}')
-
-        except Exception as exception:
-            logger.exception(f'Account setup failed: {exception}')
-
-        return account
-
     @property
     def clients(self) -> Dict[str:RESTClient]:
         """
@@ -288,8 +198,9 @@ class AlpacaClient(AbstractClient):
 
         Returns:
         ---------
-            dict: A dictionary mapping client names to RESTClient
-            objects.
+            dict: 
+                A dictionary mapping client names to RESTClient
+                objects.
         """
         return self._clients
 
@@ -426,6 +337,84 @@ class AlpacaClient(AbstractClient):
 
         exchanges = [item.value for item in self._exchanges]
         return exchanges
+
+    def connect(self):
+        """
+        Connect to the Alpaca API and set up the client. Will be called
+        automatically when the client is instantiated. Sets up the
+        trading client, and the account object.
+        """
+        self._validate_credentials()
+        self._clients = self._get_clients()
+        self._account = self._get_account()
+
+        return None
+
+    def _validate_credentials(self) -> bool:
+        """
+        Ensure that the API key and secret are valid. If the API key and
+        secret are not valid, an exception will be raised.
+
+        Raises:
+        -------
+            ValueError: If the API key and secret are not valid.
+        """
+        if self.key is None or self.secret is None:
+            raise ValueError(
+                'API key and secret are required to connect to Alpaca API.')
+
+        return None
+
+    def _get_clients(self) -> RESTClient:
+        """
+        Gets the rest client objects from Alpaca API. The trading REST client
+        is used to place orders and perform account related tasks.
+
+        TradingClient functionalities:
+            - Submit order
+            - Cancel order
+            - Get orders
+            - Get positions
+            - Get account
+            - Get clock
+            - Get calendar
+            - Get assets
+
+        Notes:
+        ------
+        Crypto does not need key, and secret but download will be faster if
+        provided.
+        """
+        clients = dict()
+        clients['trade'] = TradingClient(api_key=self.key,
+                                         secret_key=self.secret,
+                                         paper=self.paper)
+
+        return clients
+
+    def _get_account(self) -> TradeAccount:
+        """
+        The account object is used to perform account related tasks such
+        as checking the account status, getting the account balance, and
+        getting the account positions.
+
+        Raises:
+        -------
+            Exception: If the account setup fails.
+
+        Returns:
+        ---------
+            Account: The account object.
+        """
+        try:
+            account = self.clients['trading'].get_account()
+            if not self.account.status == AccountStatus.ACTIVE:
+                logger.warning(f'Account Status: {self.account.status}')
+
+        except Exception as exception:
+            logger.exception(f'Account setup failed: {exception}')
+
+        return account
 
 
 class AlpacaDataClient(AlpacaClient, AbstractDataClient):
