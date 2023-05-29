@@ -178,13 +178,14 @@ class AlpacaClient(AbstractClient):
     ----------
     Option 1: Instantiate an instance of the AlpacaClient class with
     your API key and secret.
-
+    >>> from neural.client.alpaca import AlpacaClient
     >>> client = AlpacaClient(key=..., secret=...)
 
     Option 2: Instantiate an instance of the AlpacaClient by passing
     values to constants.
 
     >>> from neural.common.constants import API_KEY, API_SECRET
+    >>> from neural.client.alpaca import AlpacaClient
     >>> API_KEY = ...
     >>> API_SECRET = ...
     >>> client = AlpacaClient()
@@ -197,7 +198,7 @@ class AlpacaClient(AbstractClient):
         BASH: export API_KEY = <your_api_key> BASH: export API_SECRET =
         <your_secret_key>
     
-    >>> from neural.connect.alpaca import AlpacaClient 
+    >>> from neural.client.alpaca import AlpacaClient 
     >>> client = AlpacaClient()
     """
 
@@ -246,9 +247,20 @@ class AlpacaClient(AbstractClient):
         Returns:
         ---------
             Dict[str:RESTClient]: 
-                A dictionary mapping client names to RESTClient
-                objects. clients['trade'] is the trading client
-                of type TradingClient in Alpaca API.
+                A dictionary mapping client names to RESTClient objects.
+
+        Notes:
+        ------
+            clients['trade'] is the trading client of type TradingClient
+            in Alpaca API. TradingClient functionalities:
+                - Submit order
+                - Cancel order
+                - Get orders
+                - Get positions
+                - Get account
+                - Get clock
+                - Get calendar
+                - Get assets
         """
         return self._clients
 
