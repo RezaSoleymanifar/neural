@@ -606,7 +606,7 @@ class AlpacaDataClient(AbstractDataClient, AlpacaClient):
             and asset type. The streamer is used to retrieve live data.
         symbols_to_assets:
             This method converts a list of symbols to a list of Asset
-            objects. AlpacaAsset objects have the flowing attributes:
+            objects. AlpacaAsset objects have the following attributes:
                 - symbol
                 - asset_type
                 - fractionable
@@ -617,20 +617,21 @@ class AlpacaDataClient(AbstractDataClient, AlpacaClient):
         
     Examples:
     ----------
-    Option 1: Instantiate an instance of the AlpacaDataClient class with
-    your API key and secret. >>> from neural.client.alpaca import
-    AlpacaDataClient >>> client = AlpacaDataClient(key=..., secret=...)
+    Option 1: Instantiate an instance of the AlpacaTradeClient class with
+    your API key and secret.
+    >>> from neural.client.alpaca import AlpacaTradeClient
+    >>> client = AlpacaTradeClient(key=..., secret=...)
 
     Option 2: Instantiate an instance of the AlpacaClient by passing
     values to constants.
 
     >>> from neural.common.constants import API_KEY, API_SECRET
-    >>> from neural.client.alpaca import AlpacaDataClient
+    >>> from neural.client.alpaca import AlpacaTradeClient
     >>> API_KEY = ...
     >>> API_SECRET = ...
-    >>> client = AlpacaDataClient()
+    >>> client = AlpacaTradeClient()
 
-    Option 3: Instantiate an instance of the AlpacaClient class with
+    Option 3: Instantiate an instance of the AlpacaTradeClient class with
     environment variables.
 
     Set the environment variables for API key and secret on Unix-like
@@ -638,8 +639,8 @@ class AlpacaDataClient(AbstractDataClient, AlpacaClient):
         - BASH: export API_KEY = <your_api_key> 
         - BASH: export API_SECRET = <your_secret_key>
     
-    >>> from neural.client.alpaca import AlpacaDataClient 
-    >>> client = AlpacaDataClient()
+    >>> from neural.client.alpaca import AlpacaTradeClient 
+    >>> client = AlpacaTradeClient()
     """
     def __init__(self, *args, **kwargs):
 
