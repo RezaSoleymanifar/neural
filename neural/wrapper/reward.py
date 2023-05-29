@@ -313,6 +313,12 @@ class AbstractFixedRewardShaper(RewardWrapper, ABC):
             Advances the environment by one step and updates the reward signal,
             if condition is met.
     
+    Raises:
+    ------
+        AssertionError:
+            If both `use_min` and `use_std` parameters are set to a non-None    
+            value, or if both are set to None.
+        
     Notes:
     ------
         Reward shaping wrappers are used to modify the reward signal obtained
@@ -340,31 +346,30 @@ class AbstractFixedRewardShaper(RewardWrapper, ABC):
         -----
             env (Env): 
                 The environment to wrap. 
-            use_std (bool or None, optional): 
-                Whether to use the standard deviation of the rewards.
-                Defaults to None.
-            use_min (bool or None, optional): 
-                Whether to use the min/max reward statistics. Defaults
-                to None. if use_min = Flase, then with default scale =
-                -1 the shaped reward will be -1 * max meaning if reward
-                condition is met the shaped reward will be the negative
-                maximum reward. 
+            use_std : bool, optional
+                A boolean indicating whether to use the reward's
+                standard deviation in shaping the reward.
+            use_min : bool, optional
+                A boolean indicating whether to use the minimum reward
+                value in shaping the reward. If False, the maximum
+                reward value is used.
             scale (float, optional): The scaling factor for the
-                shaped reward. Defaults to -1.0 meaning if for example
-                reward shaping condition is met and use_std is True, the
-                shaped reward will be the mean minus the standard
-                deviation.
+                shaped reward. Defaults to -1.0. In this case
+                reward = mean + (-1) * std.
+        
+        Raises:
+        ------
+            AssertionError:
+                If both `use_min` and `use_std` parameters are set to a
         """
-
         super().__init__(env)
-
         if use_min is not None and use_std is not None:
-            raise ValueError(
+            raise AssertionError(
                 "Cannot set both use_min and use_std parameters at the same time."
             )
 
         if use_min is None and use_std is None:
-            raise ValueError("Either use_min or use_std parameter must be set.")
+            raise AssertionError("Either use_min or use_std parameter must be set.")
 
         self.use_std = use_std
         self.use_min = use_min
@@ -404,23 +409,6 @@ class AbstractFixedRewardShaper(RewardWrapper, ABC):
     def shape_reward(self) -> float:
         """
         Calculate the shaped reward based on the input parameters.
-
-        Args
-        ----------
-            use_std : bool, optional
-                A boolean indicating whether to use the reward's
-                standard deviation in shaping the reward. Default is
-                None.
-            use_min : bool, optional
-                A boolean indicating whether to use the minimum reward
-                value in shaping the reward. If None, the maximum reward
-                value is used.
-            scale : float, optional
-                A float value used to scale the shaped reward based on
-                chosen method. Default is -1. If use_std is True, reward
-                = scale * std. In this case behavior is discouraged, by
-                providing negative signal based on the standard
-                deviation of the reward.
 
         Returns
         -------
