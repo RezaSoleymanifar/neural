@@ -1,16 +1,17 @@
+"""
+base.py
+"""
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 from abc import ABC, abstractmethod
 import numpy as np
 
-
 if TYPE_CHECKING:
     from neural.data.base import AbstractDataSource
 
 
 class AbstractClient(ABC):
-
     """
     Abstract base class for API clients. Provides facility for
     connecting to the API at construction. Child classes are expected to
@@ -18,17 +19,17 @@ class AbstractClient(ABC):
     should be passed to the constructor. This client can provide trading
     and/or data functionality.
 
-    Parameters
+    Args
     ----------
-    *args : Tuple
-        Positional arguments to be passed to the `_connect` method.
-    **kwargs : Dict
-        Keyword arguments to be passed to the `_connect` method.
+        *args : Tuple
+            Positional arguments to be passed to the `connect` method.
+        **kwargs : Dict
+            Keyword arguments to be passed to the `connect` method.
 
     Raises
     ------
-    NotImplementedError
-        If the `connect` method is not implemented in the subclass.
+        NotImplementedError
+            If the `connect` method is not implemented in the subclass.
 
     Examples
     --------
@@ -47,11 +48,11 @@ class AbstractClient(ABC):
         Initialize the client and connect to the API.
 
         Args
-        ----
-        *args : Tuple   
+        ------
+        *args : Tuple
             Positional arguments to be passed to the `_connect` method.
-        **kwargs : Dict 
-            Keyword arguments to be passed to the `_connect` method.
+        **kwargs : Dict
+            Keyword arguments to be passed to the `connect` method.
         """
         self.connect(*args, **kwargs)
 
@@ -64,9 +65,9 @@ class AbstractClient(ABC):
         Args
         ----
         *args : Tuple   
-            Positional arguments to be passed to the `_connect` method.
+            Positional arguments to be passed to the `connect` method.
         **kwargs : Dict
-            Keyword arguments to be passed to the `_connect` method.
+            Keyword arguments to be passed to the `connect` method.
         """
         raise NotImplementedError
 
