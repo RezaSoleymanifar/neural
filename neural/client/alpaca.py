@@ -469,8 +469,18 @@ class AlpacaClient(AbstractClient):
 
         Returns:
         ---------
-            Account: 
-                The account object.
+            TradeAccount: 
+                The account object in Alpaca API. Functionalities of
+                TradeAccount:
+                    - Get account status
+                    - Get account balance
+                    - Get account positions
+                    - Get account portfolio value
+                    - Get account pattern day trader status
+                    - Get account equity
+                    - Get account maintenance margin
+                    - Get account initial margin
+                    - Get account buying power
         """
         try:
             account = self.clients['trading'].get_account()
@@ -538,7 +548,6 @@ class AlpacaDataClient(AbstractDataClient, AlpacaClient):
                 - Get account balance
                 - Get account positions
                 - Get account portfolio value
-
         assets:
             Returns a dataframe of all assets available on Alpaca API.
             Asset objects have the flowing attributes:
