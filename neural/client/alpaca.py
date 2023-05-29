@@ -656,17 +656,17 @@ class AlpacaDataClient(AbstractDataClient, AlpacaClient):
         return AlpacaDataSource
 
     @staticmethod
-    def safe_method_call(object, method_name):
-        """" 
+    def safe_method_call(object: object, method_name: str):
+        """"
         A helper method to safely call a method on an object. If
         the object does not have the specified method, an AttributeError
         will be raised.
 
         Args:
         ------
-            object: 
+            object: object 
                 The object to call the method on.
-            method_name:
+            method_name: str
                 The name of the method to call.
             
         Returns:
@@ -683,7 +683,7 @@ class AlpacaDataClient(AbstractDataClient, AlpacaClient):
         if hasattr(object, method_name):
             return getattr(object, method_name)
         else:
-            raise AttributeError(f"Client does not have method '{method_name}'")
+            raise AttributeError(f"{object} does not have method '{method_name}'")
         
     def connect(self):
         """
@@ -700,17 +700,17 @@ class AlpacaDataClient(AbstractDataClient, AlpacaClient):
         used to retrieve historical stock data. The crypto historical data
         client is used to retrieve historical crypto data.
 
+        StockHistoricalDataClient functionalities:
+            - Get stock bars
+            - Get stock quotes
+            - Get stock trades
+
         CryptoHistoricalDataClient functionalities:
             - Get crypto bars
             - Get crypto trades
 
         * crypto does not have quotes data type in Alpaca API.
         * crypto orderbook data is provided but only for latest snapshot.
-
-        StockHistoricalDataClient functionalities:
-            - Get stock bars
-            - Get stock quotes
-            - Get stock trades
         """
         clients = super()._get_clients()
 
@@ -723,17 +723,21 @@ class AlpacaDataClient(AbstractDataClient, AlpacaClient):
     def get_downloader_and_request(
             self,
             dataset_type: AlpacaDataSource.DatasetType,
-            asset_type=AssetType) -> Tuple[Callable, BaseTimeseriesDataRequest]:
+            asset_type=AssetType
+            ) -> Tuple[Callable, BaseTimeseriesDataRequest]:
         """
-        Get the downloader and the request object for the specified dataset
-        type and asset type. The request object is used to specify the
-        parameters for the data request. The downloader is used to retrieve
-        the data. Request object for bars has the following attributes:
+        Get the downloader and the request object for the specified
+        dataset type and asset type. The request object is used to
+        specify the parameters for the data request, i.e.
+        downloader(request) returns the deisired dataset. The downloader
+        is used to retrieve the data. Request object for bars has the
+        following attributes:
             - symbol_or_symbols
             - start
             - end
             - timeframe
-        Request object for quotes and trades has the following attributes:
+        Request object for quotes and trades has the following
+        attributes:
             - symbol_or_symbols
             - start
             - end
