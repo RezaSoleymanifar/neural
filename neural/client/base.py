@@ -215,7 +215,6 @@ class AbstractTradeClient(AbstractClient):
 
 
 class AbstractDataClient(AbstractClient):
-
     """
     Abstract base class for a client that connects to a data service or
     API. This class defines a blueprint for clients that provide data
