@@ -1,14 +1,27 @@
 """
 base.py
 
-Abstract base classes for API clients. These classes define the
-blueprint for API clients.
+Description:
+------------
+    This module provides basic functionality for API clients. The
+    inheritance structure of classes provided are as follows:
+        
+        AbstractClient 
+            |- AbstractTradeClient 
+            |- AbstractDataClient
+    
+    AbstractClient is an abstract base class for API clients that
+    provides connectivity functionality. Concrete classes are expected
+    to implement connection logic in the `connect` method.
+    AbstractTradeClient and AbstractDataClient extend the AbstractClient
+    to handle trading and data functionality respectively.
+
 
 License:
 --------
     MIT License. See LICENSE.md file.
 
-Author:
+Author(s):
 -------
     Reza Soleymanifar, Email: Reza@Soleymanifar.com
 
@@ -22,7 +35,7 @@ Classes:
         provide trading and/or data functionality.
 
     AbstractTradeClient(AbstractClient):
-        Abstract base class for a client that connects to a trading 
+        Abstract base class for a client that connects to a trading
         service or API. Trade clients are enforced to provide the bare
         minimum functionality required for agent to make trading
         decisions. This is an extension of the AbstractClient class that
@@ -38,7 +51,7 @@ Classes:
 
     AbstractDataClient(AbstractClient):
         Abstract base class for a client that connects to a data service
-        or API. This class defines a blueprint for clients that provide 
+        or API. This class defines a blueprint for clients that provide
         data functionality. data_source property will be used to map
         clients to constituents of stream metadata that has data_source
         attribute. For example a Trader class may use multiple data
