@@ -1010,7 +1010,41 @@ class AlpacaTradeClient(AbstractTradeClient, AlpacaClient):
             Whether to use the paper trading API or the live trading
             API. Defaults to False. If using paper account credentials,
             this should be set to True.
+    
+    Attributes:
+    -----------
+        key (str):
+            The API key for the Alpaca API.
+        secret (str):
+            The secret key for the Alpaca API.
+        paper (bool):
+            Whether to use the paper trading API or the live trading
+            API. Defaults to False. If using paper account credentials,
+            this should be set to True.
+        _clients (Dict[str, RESTClient]):
+            Dictionary of all clients available on Alpaca API. The
+            corresponding values are the RESTClient objects.
+        _account (TradeAccount):
+            A TradeAccount object that contains information about the
+            account.
+        _assets (List[Asset]):
+            A list of all assets available on Alpaca API.
+        _symbols (Dict[str, Asset]):
+            A dictionary of all symbols available on Alpaca API. Values
+            are asset objects.
+        _asset_types :
+            The asset types available on Alpaca API.
+        _exchanges :
+            A list of exchanges available on Alpaca API.
+        _cash (float):
+            The current amount of cash available to the trader. Cash can
+            be positive or negative.
+        _equity (float):
+            The current net worth of the trader. This along with market
+            data will be used by agent to make decisions.
         
+
+
     Properties:
     -----------
         clients (Dict[str, RESTClient]):
@@ -1073,8 +1107,8 @@ class AlpacaTradeClient(AbstractTradeClient, AlpacaClient):
         equity (float):
             The current net worth of the trader. This along with market
             data will be used by agent to make decisions. More
-            concretely, the equity in a margin account is defined as
-            E = L + C - S where
+            concretely, the equity in a margin account is defined as E =
+            L + C - S where
                 - E is equity
                 - L is long market value
                 - C is cash balance
@@ -1113,6 +1147,14 @@ class AlpacaTradeClient(AbstractTradeClient, AlpacaClient):
         check_connection(self) -> bool:
             Checks if the connection to the Alpaca API is active. Used
             by trader to before starting the trading process.
+        get_positions_dataframe(self) -> pd.DataFrame:
+            Get all current positions in the account. Position is
+        get_asset_quantities(self, assets: List[AlpacaAsset]) ->
+        np.ndarray[float]:
+            Returns a numpy array of asset quantities for the specified
+            list of AlpacaAsset objects. If asset is shorted, the
+            quantity is negative. If asset is long, the quantity is
+            positive.
         place_order(self, asset: AlpacaAsset, quantity: float,
         time_in_force: str = 'ioc') -> None | Order:    
             This method places orders in Alpaca API and uses quantity of
@@ -1120,15 +1162,8 @@ class AlpacaTradeClient(AbstractTradeClient, AlpacaClient):
             the order is a buy order. If quantity is negative, the order
             is a sell order. If quantity is zero, no order is placed.
             The order is placed with time in force set to 'ioc'
-            (immediate
-            or cancel). This means that if the order is not filled
-            immediately, it will be cancelled. The order is placed as a
-            market order. The order is placed as a day order. This means
-            that if the order is not filled by the end of the trading
-            day, it will be cancelled.
-        get_positions_dataframe(self) -> pd.DataFrame:
-            Get all current positions in the account. Position is
-
+            (immediate or cancel). The order is placed as a market
+            order.
     
     Examples:
     ----------
@@ -1166,8 +1201,6 @@ class AlpacaTradeClient(AbstractTradeClient, AlpacaClient):
         self._cash = None
         self._asset_quantities = None
         self._equity = None
-        self._longs = None
-        self._shorts = None
 
     @property
     def cash(self):
