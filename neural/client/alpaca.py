@@ -990,10 +990,10 @@ class AlpacaDataClient(AbstractDataClient, AlpacaClient):
         return assets
 
 
-class AlpacaTradeClient(AlpacaClient, AbstractTradeClient):
+class AlpacaTradeClient(AbstractTradeClient, AlpacaClient):
     """
     This is an extension of the AlpacaClient class. It provides a simple
-    interface for placing orders and provide trading related client
+    interface for placing orders and provide trading related API
     services.
 
     Args:
