@@ -11,7 +11,7 @@ License:
     MIT License. See LICENSE.md file.
 
 Author(s):
--------`
+-------
     Reza Soleymanifar, Email: Reza@Soleymanifar.com
 
 Classes:
@@ -662,9 +662,23 @@ class AlpacaDataClient(AbstractDataClient, AlpacaClient):
     >>> from neural.client.alpaca import AlpacaTradeClient 
     >>> client = AlpacaTradeClient()
     """
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
+        """
+        Initialize an instance of the AlpacaDataClient class.
 
+        Args:
+        ------
+            key (str):
+                The API key for the Alpaca API.
+            secret (str):
+                The secret key for the Alpaca API.
+            paper (bool):
+                Whether to use the paper trading API or the live trading
+                API. Defaults to False.
+        """
         AlpacaClient.__init__(self, *args, **kwargs)
+
+        return None
 
     @property
     def data_source(self) -> AlpacaDataSource:
@@ -679,10 +693,11 @@ class AlpacaDataClient(AbstractDataClient, AlpacaClient):
             AlpacaDataSource:
                 The data source for the Alpaca API.
         """
-        return AlpacaDataSource
+        data_source = AlpacaDataSource
+        return data_source
 
     @staticmethod
-    def safe_method_call(object: object, method_name: str):
+    def safe_method_call(object: object, method_name: str) -> Callable:
         """"
         A helper method to safely call a method on an object. If
         the object does not have the specified method, an AttributeError
@@ -710,14 +725,15 @@ class AlpacaDataClient(AbstractDataClient, AlpacaClient):
             return getattr(object, method_name)
         else:
             raise AttributeError(f"{object} does not have method '{method_name}'")
-        
-    def connect(self):
+
+    def connect(self) -> None:
         """
         Uses the connect method of the AlpacaClient class to connect to
         the Alpaca API and set up the REST clients. Will be called
         automatically when the client is instantiated.
         """
-        return AlpacaClient.connect(self)
+        AlpacaClient.connect(self)
+        return None
 
     def _get_clients(self) -> RESTClient:
         """
@@ -736,10 +752,15 @@ class AlpacaDataClient(AbstractDataClient, AlpacaClient):
             - Get crypto trades
 
         * crypto does not have quotes data type in Alpaca API.
-        * crypto orderbook data is provided but only for latest snapshot.
+        * crypto orderbook data is provided but only for latest
+          snapshot.
+        
+        Returns:
+        ---------
+            RESTClient:
+                A dictionary mapping client names to RESTClient objects.
         """
         clients = super()._get_clients()
-
         clients['crypto'] = CryptoHistoricalDataClient(api_key=self.key,
                                                        secret_key=self.secret)
         clients['stocks'] = StockHistoricalDataClient(api_key=self.key,
