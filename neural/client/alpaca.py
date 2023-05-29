@@ -1011,10 +1011,10 @@ class AlpacaTradeClient(AbstractTradeClient, AlpacaClient):
         
     Properties:
     -----------
-        clients: Dict[str:RESTClient]:
+        clients (Dict[str, RESTClient]):
             Returns a dictionary of all clients available on Alpaca API.
             The corresponding values are the RESTClient objects.
-        account:
+        account (TradeAccount):
             A TradeAccount object that contains information about the
             account. Functionalities of TradeAccount:
                 - Get account status
@@ -1026,7 +1026,7 @@ class AlpacaTradeClient(AbstractTradeClient, AlpacaClient):
                 - Get account maintenance margin
                 - Get account initial margin
                 - Get account buying power
-        assets:
+        assets (pd.DataFrame):
             Returns a dataframe of all assets available on Alpaca API.
             Asset objects have the flowing attributes:
                 - symbol
@@ -1042,15 +1042,15 @@ class AlpacaTradeClient(AbstractTradeClient, AlpacaClient):
                 - initial_margin
                 - day_trade_ratio
                 - last_updated_at
-        symbols:
+        symbols (Dict[str, Asset])):
             Returns a dictionary of all symbols available on Alpaca API.
-            The corresponding values are the Asset objects. 
-        asset_types:
+            The corresponding values are the Asset objects.
+        asset_types (List[AssetType]):
             Returns the asset types available on Alpaca API. The asset
             types are:
                 - STOCK
                 - CRYPTOCURRENCY
-        exchanges:
+        exchanges (List[AssetExchange]):
             A list of exchanges available on Alpaca API. The exchanges
             are:
                 - AMEX
@@ -1064,14 +1064,14 @@ class AlpacaTradeClient(AbstractTradeClient, AlpacaClient):
                 - GNSS
                 - ERSX
                 - OTC
-        cash:
+                - CRYPTO
+        cash (float):
             The current amount of cash available to the trader. Cash can
             be positive or negative.
-        asset_quantities:
-            Returns a dictionary of symbols and asset quantities for the
-            trader's current positions. This will be used by agent to
-            make decisions.
-        equity:
+        asset_quantities (np.ndarray[float]):
+            Returns a numpy array of asset quantities for the specified
+            list of assets.
+        equity (float):
             The current net worth of the trader. This along with market
             data will be used by agent to make decisions.
         
@@ -1123,8 +1123,7 @@ class AlpacaTradeClient(AbstractTradeClient, AlpacaClient):
 
         return self._cash
 
-    @property
-    def asset_quantities(self, assets: List[AlpacaAsset]) -> np.ndarray[float]:
+    def get_asset_quantities(self, assets: List[AlpacaAsset]) -> np.ndarray[float]:
         """
         Returns a numpy array of symbols and asset quantities for the
         specified list of assets.

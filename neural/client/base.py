@@ -131,6 +131,33 @@ class AbstractClient(ABC):
         raise NotImplementedError
 
 
+class AbstractDataClient(AbstractClient):
+    """
+    Abstract base class for a client that connects to a data service or
+    API. This class defines a blueprint for clients that provide data
+    functionality. data_source property will be used to map clients to
+    constituents of stream metadata that has data_source attribute. For
+    example a Trader class may use multiple data clients at construction
+    (e.g. one borker data client and one twitter data client). The
+    Trader class will use the data source attribute of each client to
+    map the client to the corresponding stream metadata, for live
+    streaming of data.
+    """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    @property
+    @abstractmethod
+    def data_source(self) -> AbstractDataSource:
+        """
+        The name of the data source. Data clients are enforced to have a
+        data source attribute. This helps mapping clients to
+        constituents of stream metadata that specify a data source.
+        """
+
+        raise NotImplementedError
+    
+
 class AbstractTradeClient(AbstractClient):
     """
     Abstract base class for a client that connects to a trading service
@@ -221,9 +248,8 @@ class AbstractTradeClient(AbstractClient):
         """
         raise NotImplementedError
 
-    @property
     @abstractmethod
-    def asset_quantities(self, *args, **kwargs) -> np.ndarray[float]:
+    def get_asset_quantities(self, *args, **kwargs) -> np.ndarray[float]:
         """
         The current quantity of each asset held by the trader. Asset
         quantities can be positive or negative. Negative quantities
@@ -236,7 +262,7 @@ class AbstractTradeClient(AbstractClient):
                 This property must be implemented by a subclass.
         """
         raise NotImplementedError
-
+    
     @abstractmethod
     def check_connection(self, *args, **kwargs):
         """
@@ -258,31 +284,4 @@ class AbstractTradeClient(AbstractClient):
         Abstract method for placing an order for a single asset. The 
         restrictions of the API should be enforced in this method.
         """
-        raise NotImplementedError
-
-
-class AbstractDataClient(AbstractClient):
-    """
-    Abstract base class for a client that connects to a data service or
-    API. This class defines a blueprint for clients that provide data
-    functionality. data_source property will be used to map clients to
-    constituents of stream metadata that has data_source attribute. For
-    example a Trader class may use multiple data clients at construction
-    (e.g. one borker data client and one twitter data client). The
-    Trader class will use the data source attribute of each client to
-    map the client to the corresponding stream metadata, for live
-    streaming of data.
-    """
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-    @property
-    @abstractmethod
-    def data_source(self) -> AbstractDataSource:
-        """
-        The name of the data source. Data clients are enforced to have a
-        data source attribute. This helps mapping clients to
-        constituents of stream metadata that specify a data source.
-        """
-
         raise NotImplementedError
