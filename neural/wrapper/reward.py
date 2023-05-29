@@ -475,48 +475,48 @@ class AbstractFixedRewardShaper(RewardWrapper, ABC):
 
 class AbstractDynamicRewardShaper(AbstractFixedRewardShaper, ABC):
     """
-    Abstract base class for a dynamic reward shaper wrapper. This class
-    defines the interface for a dynamic reward shaper wrapper, which
-    shapes the reward signal of an environment based on a dynamically
-    adjusted scale. To create a custom dynamic reward shaper,
-    users must inherit from this class and implement the abstract
-    methods: `check_condition`, `metric`, and `threshold`.
+    Abstract base class for a dynamic reward shaper wrapper. For positive scale
+    and base the shaped reward will be reward = base ** (deviation_ratio *
+    scale) where deviation ratio is a measure for the intensity of deviation
+    from expected behavior. This allows to dynamically adjust reward based on
+    deviation or its linear and exponential scaling. This class
+    defines the interface for a dynamic reward shaper wrapper, which shapes the
+    reward signal of an environment based on a dynamically adjusted scale. To
+    create a custom dynamic reward shaper, users must inherit from this class
+    and implement the abstract methods: `check_condition`, `metric`, and
+    `threshold`.
 
-    Attributes:
-    -
+    Attributes: -
         env (Env): 
             The environment to wrap. 
         use_std : bool, optional
-            A boolean indicating whether to use the reward's
-            standard deviation in shaping the reward. Default is
-            None.
+            A boolean indicating whether to use the reward's standard deviation
+            in shaping the reward. Default is None.
         use_min : bool, optional
-            A boolean indicating whether to use the minimum reward
-            value in shaping the reward. If False, the maximum reward
-            value is used.
+            A boolean indicating whether to use the minimum reward value in
+            shaping the reward. If False, the maximum reward value is used.
         scale : float, optional
-            If provided it overrides the dynamic scaling
-        factor (float, optional):
-            The factor used to adjust the scaling factor. Defaults  
-            to -1.0.
+            reward = base ** (deviation_ratio * scale). Defaults to +1.0.
+            Thus with default scale = 1.0, base = 1.0, the shaped reward will
+            be reward = deviation_ratio.
         base (float, optional): 
-            The base value used in the scaling factor adjustment.
-            Defaults to 1.0.
+            The base value used in the scaling factor adjustment. Defaults to
+            1.0.
 
     Methods:
     -------
         check_condition() -> bool:
-            Abstract method that checks whether the reward should be
-            shaped based on the current episode state.
+            Abstract method that checks whether the reward should be shaped
+            based on the current episode state.
         metric() -> float:
             Abstract property that defines the metric used to adjust the
             scaling factor.
         threshold() -> float:
-            Abstract property that defines the threshold used for
-            shaping the reward.
+            Abstract property that defines the threshold used for shaping the
+            reward.
         reward(reward: float) -> float:
-            Shapes the reward signal based on the check_condition method
-            and the adjusted scaling factor.
+            Shapes the reward signal based on the check_condition method and
+            the adjusted scaling factor.
     """
 
     def __init__(
@@ -524,7 +524,7 @@ class AbstractDynamicRewardShaper(AbstractFixedRewardShaper, ABC):
         env: Env,
         use_std: bool = None,
         use_min: bool = None,
-        scale: Optional[float] = None,
+        scale: Optional[float] = 1,
         base: float = 1.0,
     ) -> None:
         """
