@@ -26,13 +26,13 @@ def objects_list_to_dataframe(
     ------
         objects_list List[object]:
             A list of objects, where each object's dictionary
-            representation is used 
+            representation is used to create the dataframe.
 
     Returns:
-        pd.DataFrame: 
-            A DataFrame containing the converted objects.
+    ---------
+        pd.DataFrame:
+            A DataFrame containing the information on objects.
     """
-
     objects_collection_ = objects_list.copy()
     for index, object_ in enumerate(objects_collection_):
         object_dict = dict(object_)
