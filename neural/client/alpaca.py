@@ -175,8 +175,7 @@ class AlpacaClient(AbstractClient):
             balance, and getting the account positions.
 
     Examples:
-    ---------
-
+    ----------
     Option 1: Instantiate an instance of the AlpacaClient class with
     your API key and secret.
 
@@ -206,7 +205,7 @@ class AlpacaClient(AbstractClient):
                  key: Optional[str] = None,
                  secret: Optional[str] = None,
                  paper: bool = False) -> None:
-        
+
         """
         Initialize an instance of the AlpacaClient class.
 
