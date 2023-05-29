@@ -937,7 +937,7 @@ class AlpacaDataClient(AbstractDataClient, AlpacaClient):
         
         Args:
         ------
-            symbols:
+            symbols: List[str]
                 A list of symbols to convert to Asset objects.
 
         Returns:
@@ -993,10 +993,8 @@ class AlpacaDataClient(AbstractDataClient, AlpacaClient):
 class AlpacaTradeClient(AlpacaClient, AbstractTradeClient):
     """
     This is an extension of the AlpacaClient class. It provides a simple
-    interface for placing orders, in addition to the functionalities
-    provided by the AlpacaClient class. The Trader class will use the
-    functionality provided by this class to realize orders specified by
-    the agent in the environment.
+    interface for placing orders and provide trading related client
+    services.
 
     Args:
     ------
