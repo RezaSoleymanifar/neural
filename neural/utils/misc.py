@@ -24,9 +24,9 @@ def objects_list_to_dataframe(
 
     Args:
     ------
-        object_collection List[Asset]: 
-            A collection of enum objects, where each object is a
-            dictionary containing property-value pairs.
+        objects_list List[object]:
+            A collection of objects, where each object's dictionary
+            representation is used 
 
     Returns:
         pd.DataFrame: 
@@ -47,18 +47,23 @@ def objects_list_to_dataframe(
 def to_timeframe(time_frame: str):
 
     """
-    Parses a string representation of a time frame into a TimeFrame object.
+    Parses a string representation of a time frame into a TimeFrame
+    object.
 
     Args:
     ------
-        time_frame (str): A string representing a time frame, in the format "<amount><unit>",
-            where <amount> is an integer and <unit> is one of 'Min', 'Hour', 'Day', 'Week', or 'Month'.
+        time_frame (str): 
+            A string representing a time frame, in the format
+            "<amount><unit>", where <amount> is an integer and <unit> is
+            one of 'Min', 'Hour', 'Day', 'Week', or 'Month'.
 
     Returns:
-        TimeFrame: A TimeFrame object representing the parsed time frame.
+        TimeFrame: A TimeFrame object representing the parsed time
+        frame.
 
     Raises:
-        ValueError: If the input string is not a valid time frame. Valid time frame examples include
+        ValueError: If the input string is not a valid time frame. Valid
+        time frame examples include
             '59Min', '23Hour', '1Day', '1Week', and '12Month'.
     """
     
