@@ -1270,17 +1270,18 @@ class AlpacaTradeClient(AbstractTradeClient, AlpacaClient):
         
            - Day order = "day"
            - Good 'til cancelled = "gtc"
-           - Immediate or cancel = "ioc"
            - Fill or kill = "fok"
+           - Immediate or cancel = "ioc"
 
         Immediate or cancel is the default time in force option. Day
         order is an order that is valid until the end of the trading day
         on which it was placed. If the order is not filled by the end of
         the trading day, it will be cancelled. Good 'til cancelled is an
-        order that is valid until it is filled or cancelled. Immediate
-        or cancel is an order that must be filled immediately or
-        cancelled. Fill or kill is an order that must be filled (even if
-        partially) immediately or cancelled.
+        order that is valid until it is filled or cancelled. Fill or
+        kill is an order that must be filled in its entirety immediately
+        or cancelled. Immediate or cancel is an order that must be
+        filled immediately or cancelled. If equity is not enough then
+        immediate partial filling is allowed.
 
         Args:
         ------
