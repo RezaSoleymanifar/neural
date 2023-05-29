@@ -1,3 +1,6 @@
+"""
+misc.py
+"""
 from typing import Iterable, Dict
 from enum import Enum
 
@@ -13,7 +16,7 @@ def objects_to_dataframe(
     ) -> pd.DataFrame:
     """
     Converts a collection of enum objects into a pandas DataFrame.
-    Used in the AlpacaClient class to convert the assets property into a DataFrame.
+    Used in the AlpacaDataClient class to convert the assets property into a DataFrame.
 
     Args:
     ------
