@@ -374,6 +374,234 @@ class AbstractFixedRewardShaper(RewardWrapper, ABC):
         self.reward_statistics = RunningStatistics()
 
     @property
+    @abstractmethod
+    def scale(self) -> float:
+        """
+        The scaling factor for the shaped reward. This will determine the
+        direction and intensity of the reward shaping. It should be implemented
+        by the user. It can be a fixed value or a dynamic value that changes
+        based on 
+
+        Returns:
+        --------
+            float:
+                The scaling factor for the shaped reward.
+        """
+        return self._scale
+
+    @abstractmethod
+    def check_condition(self) -> bool:
+        """
+        An abstract method for checking whether to apply reward shaping. This
+        method should be implemented by subclasses to determine whether to
+        apply reward shaping to the current step.
+
+        Returns:
+        --------
+            bool: 
+                True if the reward should be shaped, False otherwise.
+        """
+        raise NotImplementedError
+
+    def shape_reward(self) -> float:
+        """
+        Calculate the shaped reward based on scale and reward statistics.
+        Outpus a scalar that is either mean + scale * std or scale * min/max.
+
+        Returns
+        -------
+            float
+                A float value representing the shaped reward.
+        """
+        if self.use_min is not None:
+            shaped_reward = (self.scale * self.reward_statistics.minimum
+                             if self.use_min else self.scale *
+                             self.reward_statistics.maximum)
+
+        elif self.use_std is not None:
+            shaped_reward = (self.reward_statistics.mean +
+                             self.scale * self.reward_statistics.std)
+
+        return shaped_reward
+
+    def reward(self, reward: float) -> float:
+        """
+        Shapes the reward when check_condition is True.
+
+        Args:
+        ------
+            reward (float): 
+                The original reward.
+
+        Returns:
+        --------
+            float: 
+                The shaped reward.
+        """
+        if self.check_condition():
+            reward = self.shape_reward()
+        return reward
+
+    def step(
+        self,
+        action: np.ndarray[float] | Dict[str, np.ndarray[float]],
+    ) -> np.ndarray[float] | Dict[str, np.ndarray[float]]:
+        """
+        Advances the environment by one step and updates the reward
+        signal.
+
+        Args:
+        -----
+            action (int, Tuple[int], Any): 
+                The action taken by the agent.
+
+        Returns:
+        --------
+            observation (np.ndarray[float] | Dict[str,
+            np.ndarray[float]]):
+                The observation of the environment.
+            reward (float):
+                The shaped reward.
+            done (bool):
+                Whether the episode is done.
+            info (dict):
+                A dictionary containing additional information about the
+                environment.
+        """
+        observation, reward, done, info = self.env.step(action)
+        self.reward_statistics.update(reward)
+
+        if self.check_condition():
+            reward = self.reward(reward)
+
+        return observation, reward, done, info
+
+
+class AbstractFixedRewardShaper(RewardWrapper, ABC):
+    """
+    Fixed reward shaper wrapper. Fixed because the reward shaping uses a fixed
+    scale value provided at constructor. This is a blueprint class for fixed
+    reward shaping wrappers. This class is designed to be subclassed for
+    creating custom fixed reward shaping wrappers for market environments.
+
+    Args:
+    -----
+        env (Env): 
+            The environment to wrap. 
+        use_std (bool or None, optional): 
+            Whether to use the standard deviation of the rewards. Defaults to
+            None.
+        use_min (bool or None, optional): 
+            Whether to use the min/max reward statistics. Defaults to None. if
+            use_min = Flase, then with default scale = -1 the shaped reward
+            will be -1 * max meaning if reward condition is met the shaped
+            reward will be the negative maximum reward. 
+        scale (float, optional): The scaling factor for the
+            shaped reward. Scale is received from the user. Defaults to -1.0
+            meaning if for example reward shaping condition is met and use_std
+            is True, the shaped reward will be the mean minus the standard
+            deviation.
+        reward_statistics (RunningStatistics, optional):
+            A running statistics object for tracking reward statistics.
+
+    Attributes:
+    ----------  
+        env (gym.Env):
+            The environment to wrap.
+        use_std (bool or None, optional):
+            Whether to use the standard deviation of the rewards. Defaults to
+            None.
+        use_min (bool or None, optional):
+            Whether to use the min/max reward statistics. Defaults to None. if
+            use_min = Flase, then with default scale = -1 the shaped reward
+            will be -1 * max meaning if reward condition is met the shaped
+            reward will be the negative maximum reward.
+        reward_statistics (RunningStatistics):
+            A running statistics object for tracking reward statistics.
+
+    Properties:
+    ----------
+        scale (float):
+            Shaped reward is either mean + scale * std or scale * min/max.
+
+
+    Methods:
+    -------
+        check_condition(*args, **kwargs) -> bool:
+            An abstract method for checking whether to apply reward shaping.
+        reward(reward: float, *args, **kwargs) -> float:    
+            An abstract method for shaping the reward signal.
+        shape_reward(reward: float) -> float:
+            Calculate the shaped reward based on the input parameters.
+        step(action) -> tuple:
+            Advances the environment by one step and updates the reward signal,
+            if condition is met.
+    
+    Raises:
+    ------
+        AssertionError:
+            If both `use_min` and `use_std` parameters are set to a non-None
+            value, or if both are set to None.
+        
+    Notes:
+    ------
+        Reward shaping wrappers are used to modify the reward signal obtained
+        by an agent in order to encourage or discourage certain behaviours
+        during training. highly useful for pretraining an agent with some
+        degrees of freedom in actions. Apply relevant reward shaping wrappers
+        to define and restrict unwanted actions. Start with a pipe of wrappers
+        that enforce the desired behaviour and later remove the influencing
+        wrappers to allow the agent to learn the desired behaviour. if desired
+        behavior is a starting point, then in a final step remove the reward
+        shaping wrapper and the agent may learn to improve on it.
+    """
+
+    def __init__(
+        self,
+        env: Env,
+        use_std: Optional[bool] = None,
+        use_min: Optional[bool] = None,
+        scale: float = -1.0,
+    ) -> None:
+        """
+        Initializes the abstract fixed reward shaper wrapper.
+
+        Args:
+        -----
+            env (Env): 
+                The environment to wrap. 
+            use_std : bool, optional
+                A boolean indicating whether to use the reward's
+                standard deviation in shaping the reward.
+            use_min : bool, optional
+                A boolean indicating whether to use the minimum reward
+                value in shaping the reward. If False, the maximum
+                reward value is used.
+            scale (float, optional): The scaling factor for the
+                shaped reward. Defaults to -1.0. shaped reward is either
+                mean + scale * std or scale * min/max.
+        
+        Raises:
+        ------
+            AssertionError:
+                If both `use_min` and `use_std` parameters are set to a
+        """
+        super().__init__(env)
+        if use_min is not None and use_std is not None:
+            raise AssertionError(
+                "Cannot set both use_min and use_std parameters at the same time."
+            )
+
+        if use_min is None and use_std is None:
+            raise AssertionError("Either use_min or use_std parameter must be set.")
+
+        self.use_std = use_std
+        self.use_min = use_min
+        self._scale = scale
+        self.reward_statistics = RunningStatistics()
+
+    @property
+    @abstractmethod
     def scale(self) -> float:
         """
         The scaling factor for the shaped reward.
@@ -471,7 +699,7 @@ class AbstractFixedRewardShaper(RewardWrapper, ABC):
             reward = self.reward(reward)
 
         return observation, reward, done, info
-
+    
 
 class AbstractDynamicRewardShaper(AbstractFixedRewardShaper, ABC):
     """
