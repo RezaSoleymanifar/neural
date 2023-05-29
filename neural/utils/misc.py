@@ -11,12 +11,12 @@ from alpaca.data.timeframe import TimeFrame, TimeFrameUnit
 def objects_to_dataframe(
     object_collection: Iterable[Dict[str, str]]
     ) -> pd.DataFrame:
-    
     """
     Converts a collection of enum objects into a pandas DataFrame.
     Used in the AlpacaClient class to convert the assets property into a DataFrame.
 
     Args:
+    ------
         object_collection (Iterable[Dict[str, str]]): A collection of enum objects, 
         where each object is a dictionary containing key-value pairs.
 
@@ -43,6 +43,7 @@ def to_timeframe(time_frame: str):
     Parses a string representation of a time frame into a TimeFrame object.
 
     Args:
+    ------
         time_frame (str): A string representing a time frame, in the format "<amount><unit>",
             where <amount> is an integer and <unit> is one of 'Min', 'Hour', 'Day', 'Week', or 'Month'.
 
