@@ -4,6 +4,14 @@ base.py
 Abstract base classes for API clients. These classes define the
 blueprint for API clients.
 
+License:
+--------
+    MIT License. See LICENSE.md file.
+
+Author:
+-------
+    Reza Soleymanifar, Email: Reza@Soleymanifar.com
+
 Classes:
 --------
     AbstractClient(ABC):
