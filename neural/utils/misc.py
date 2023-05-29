@@ -3,13 +3,11 @@ misc.py
 """
 from typing import List
 from enum import Enum
-
-import pandas as pd
 import re
 
+import pandas as pd
+
 from alpaca.data.timeframe import TimeFrame, TimeFrameUnit
-
-
 
 
 def objects_list_to_dataframe(
@@ -43,23 +41,23 @@ def objects_list_to_dataframe(
     return pd.DataFrame(objects_list_)
 
 
-
-def to_timeframe(time_frame: str):
+def to_timeframe(timeframe: str):
 
     """
-    Parses a string representation of a time frame into a TimeFrame
+    Parses a string representation of a timeframe into a TimeFrame
     object.
 
     Args:
     ------
-        time_frame (str): 
+        timeframe (str): 
             A string representing a time frame, in the format
-            "<amount><unit>", where <amount> is an integer and <unit> is
+            "{amount}{unit}", where <amount> is an integer and <unit> is
             one of 'Min', 'Hour', 'Day', 'Week', or 'Month'.
 
     Returns:
-        TimeFrame: A TimeFrame object representing the parsed time
-        frame.
+    ---------
+        TimeFrame: 
+            A TimeFrame object representing the parsed time frame.
 
     Raises:
         ValueError: If the input string is not a valid time frame. Valid
@@ -68,7 +66,7 @@ def to_timeframe(time_frame: str):
     """
     
 
-    match = re.search(r'(\d+)(\w+)', time_frame)
+    match = re.search(r'(\d+)(\w+)', timeframe)
 
     if not match:
         raise ValueError(
@@ -77,12 +75,11 @@ def to_timeframe(time_frame: str):
     amount = int(match.group(1))
     unit = match.group(2)
 
-    map = {
+    timeframe_map= {
         'Min': TimeFrameUnit.Minute,
         'Hour': TimeFrameUnit.Hour,
         'Day': TimeFrameUnit.Day,
         'Week': TimeFrameUnit.Week,
         'Month': TimeFrameUnit.Month}
 
-    return TimeFrame(amount, map[unit])
-
+    return TimeFrame(amount, timeframe_map[unit])
