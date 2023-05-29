@@ -15,13 +15,15 @@ def objects_to_dataframe(
     object_collection: Iterable[Dict[str, str]]
     ) -> pd.DataFrame:
     """
-    Converts a collection of enum objects into a pandas DataFrame.
-    Used in the AlpacaDataClient class to convert the assets property into a DataFrame.
+    Converts a collection of enum objects into a pandas DataFrame. Used
+    in the AlpacaClient class to convert the assets property into a
+    DataFrame.
 
     Args:
     ------
-        object_collection (Iterable[Dict[str, str]]): A collection of enum objects, 
-        where each object is a dictionary containing key-value pairs.
+        object_collection (Iterable[Dict[str, str]]): 
+            A collection of enum objects, where each object is a
+            dictionary containing key-value pairs.
 
     Returns:
         pd.DataFrame: A DataFrame containing the converted objects.
