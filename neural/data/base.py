@@ -617,14 +617,12 @@ class AbstractDataSource(ABC):
             valid because there can be multiple dataset types that can be
             mapped to the same stream type.
         """
+        if not isinstance(dataset_type, AbstractDataSource.DatasetType):
+            raise ValueError(
+                f'{dataset_type} must be of type '
+                f'{AbstractDataSource.DatasetType.__name__}')
 
-        stream_map = {
-            dataset_type: cls.StreamType(dataset_type.value)
-            for dataset_type in cls.DatasetType
-        }
-
-        try:
-            stream_type = stream_map[dataset_type]
+            stream_type = cls.StreamType(dataset_type.value)
 
         except KeyError as key_error:
             raise KeyError(
