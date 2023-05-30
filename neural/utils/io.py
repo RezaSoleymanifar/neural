@@ -132,8 +132,9 @@ def from_hdf5(
     dataset_list = list()
     dataset_metadata_list = list()
 
-    sorted_datasets = sorted(h5f, key=lambda dataset: hdf5_file[dataset].id.get_offset())
-    for dataset_name in hdf5_file:
+    sorted_hdf5_file = sorted(
+        hdf5_file, key=lambda dataset: hdf5_file[dataset].id.get_offset())
+    for dataset_name in sorted_hdf5_file:
 
         dataset_metadata, dataset = extract_hdf5_dataset(
             hdf5_file=hdf5_file, dataset_name=dataset_name)
@@ -209,7 +210,6 @@ def get_file_like(object: object,
             The file-like object.
     """
 
-
     if isinstance(object, os.PathLike):
         path = object
         file = open(path, 'rb')
@@ -245,7 +245,7 @@ def add_to_tarfile(file_path, file_tar_info, file_like):
     with tarfile.open(file_path, 'w') as file:
 
         file.addfile(tarinfo=file_tar_info, fileobj=file_like)
-    
+
     return None
 
 
