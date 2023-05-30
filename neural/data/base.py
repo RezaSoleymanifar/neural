@@ -428,26 +428,26 @@ class AbstractDataSource(ABC):
 
     class DatasetType(Enum):
         """
-        Enumeration class that defines constants for the different types
-        of datasets.
+        Enumeration class that defines constants for the different types of
+        datasets.
 
         Attributes:
         -----------
             data_source:
-                A property that returns a pointer to the data source
-                class in the outer scope. This allows the enumeration
-                constants to access the data source's methods and
-                properties.
+                A property that returns a pointer to the data source class in
+                the containing scope. This allows the enumeration constants to
+                access the data source's methods and properties.
             stream:
-                A property that uses the stream implementation of the
-                data source to map the dataset type to a stream type.
-                This is useful for obtaining a stream of data for a
-                particular dataset type.
+                A property that uses the stream implementation of the data
+                source to map the dataset type to a stream type. This is useful
+                for obtaining a matching stream type for a dataset type.
         
         Methods:
         --------
             __eq__(self, other):
-                Convenience method to check if other is a dataset type.
+                Convenience method to check if other is a dataset type. If the
+                other object inherits from AbstractDataSource.DatasetType then
+                this will return True.
         """
 
         @property
@@ -462,6 +462,15 @@ class AbstractDataSource(ABC):
                 AbstractDataSource: 
                     A pointer to the data source class in the outer
                     scope.
+            
+            Notes:
+            ------
+            __qualname__ is a magic attribute that returns the fully
+            qualified name of the class. It contains the containing
+            module and classes separated by dots. for example
+            'neural.data.base.AbstractDataSource.DatasetType'. This
+            attribute is used to access the data source class in the
+            outer scope.
             """
             data_source = globals()[self.__class__.__qualname__.split(
                 '.', maxsplit=1)[0]]
