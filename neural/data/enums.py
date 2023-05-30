@@ -312,14 +312,16 @@ class AssetType(str, Enum):
 
 
 class Resolution:
-    NANO_SECOND = 'NANO_SECOND'
-    MICRO_SECOND = 'MICRO_SECOND'
-    MILLI_SECOND = 'MILLI_SECOND'
-    SECOND = 'SECOND'
-    MINUTE = 'MINUTE'
-    HOUR = 'HOUR'
 
-    def __init__(self, amount, unit):
+    class Unit(Enum):
+        NANO_SECOND = 'NANO_SECOND'
+        MICRO_SECOND = 'MICRO_SECOND'
+        MILLI_SECOND = 'MILLI_SECOND'
+        SECOND = 'SECOND'
+        MINUTE = 'MINUTE'
+        HOUR = 'HOUR'
+
+    def __init__(self, amount: int, unit: Unit):
         self.validate_resolution(amount, unit)
         self.amount = amount
         self.unit = unit
