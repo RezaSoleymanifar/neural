@@ -67,9 +67,8 @@ from typing import TYPE_CHECKING, List
 
 import numpy as np
 
-from neural.data.base import AbstractAsset
-
 if TYPE_CHECKING:
+    from neural.data.base import AbstractAsset
     from neural.data.base import AbstractDataSource
 
 
