@@ -45,7 +45,6 @@ from neural.common.constants import CALENDAR
 
 
 class CalendarType(Enum):
-
     """
     An enum object that standardizes different types of trading
     calendars.
@@ -156,10 +155,11 @@ class CalendarType(Enum):
         ---------
         >>> CalendarType.NEW_YORK_STOCK_EXCHANGE.schedule(start_date, end_date)
         """
-        schedule =  CALENDAR(self.value).schedule
+        schedule = CALENDAR(self.value).schedule
         schedule = lambda start_date, end_date: schedule(
             self, start_date, end_date)
         return schedule
+
 
 class FeatureType(Enum):
     """
@@ -321,33 +321,47 @@ class Resolution:
         MINUTE = 'MINUTE'
         HOUR = 'HOUR'
 
-    def __init__(self, amount: int, unit: Unit):
-        self.validate_resolution(amount, unit)
-        self.amount = amount
+    def __init__(self, quantity: int, unit: Unit):
+        self.validate_resolution(quantity, unit)
+        self.quantity = quantity
         self.unit = unit
 
-    @staticmethod
-    def validate_resolution(amount, unit):
-        if amount <= 0:
-            raise ValueError("Amount must be a positive integer value.")
+    def validate_resolution(self, quantity: int, unit: Unit):
+        if not isinstance(quantity, int):
+            raise TypeError("Quantity must be an integer value.")
+        
+        if not isinstance(unit, Resolution.Unit):
+            raise TypeError(
+                f"Unit must be an instance of {Resolution.Unit.__name__}.")
 
-        if unit == Resolution.TimeFrameUnit.NANOSECOND and amount > 999:
-            raise ValueError("Nanosecond units can only be used with amounts between 1-999.")
+        if quantity <= 0:
+            raise ValueError("Quantity must be a positive integer value.")
 
-        if unit == Resolution.TimeFrameUnit.MICROSECOND and amount > 999:
-            raise ValueError("Microsecond units can only be used with amounts between 1-999.")
+        if unit == Resolution.TimeFrameUnit.NANOSECOND and quantity > 999:
+            raise ValueError(
+                "Nanosecond units can only be used with quantities between 1-999.")
 
-        if unit == Resolution.TimeFrameUnit.MILLISECOND and amount > 999:
-            raise ValueError("Millisecond units can only be used with amounts between 1-999.")
+        if unit == Resolution.TimeFrameUnit.MICROSECOND and quantity > 999:
+            raise ValueError(
+                "Microsecond units can only be used with quantities between 1-999."
+            )
 
-        if unit == Resolution.TimeFrameUnit.SECOND and amount > 59:
-            raise ValueError("Second units can only be used with amounts between 1-59.")
+        if unit == Resolution.TimeFrameUnit.MILLISECOND and quantity > 999:
+            raise ValueError(
+                "Millisecond units can only be used with quantities between 1-999."
+            )
 
-        if unit == Resolution.TimeFrameUnit.MINUTE and amount > 59:
-            raise ValueError("Minute units can only be used with amounts between 1-59.")
+        if unit == Resolution.TimeFrameUnit.SECOND and quantity > 59:
+            raise ValueError(
+                "Second units can only be used with quantities between 1-59.")
 
-        if unit == Resolution.TimeFrameUnit.HOUR and amount > 23:
-            raise ValueError("Hour units can only be used with amounts between 1-23.")
+        if unit == Resolution.TimeFrameUnit.MINUTE and quantity > 59:
+            raise ValueError(
+                "Minute units can only be used with quantities between 1-59.")
+
+        if unit == Resolution.TimeFrameUnit.HOUR and quantity > 23:
+            raise ValueError(
+                "Hour units can only be used with quantities between 1-23.")
 
     def __str__(self):
-        return f"{self.amount}{self.unit}"
+        return f"{self.quantity}{self.unit}"
