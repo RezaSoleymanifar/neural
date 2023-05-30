@@ -455,24 +455,24 @@ class AbstractDataSource(ABC):
 
         Properties:
         -----------
-            data_source:
+            data_source (AbstractDataSource):
                 A property that returns a pointer to the data source class in
                 the containing scope. This allows the enumeration constants to
                 access the data source's methods and properties.
-            stream:
+            stream (AbstractDataSource.StreamType)):
                 A property that uses the stream implementation of the data
                 source to map the dataset type to a stream type. This is useful
                 for obtaining a matching stream type for a dataset type.
         
         Methods:
         --------
-            __eq__(self, other):
+            __eq__(self, other) -> bool:
                 Convenience method to check if other is a dataset type. If the
                 other object inherits from AbstractDataSource.DatasetType then
                 this will return True.
         """
         @property
-        def data_source(self):
+        def data_source(self) -> AbstractDataSource:
             """
             Returns a pointer to the data source class in the outer
             scope. This allows the enumeration constants to access the
@@ -499,11 +499,11 @@ class AbstractDataSource(ABC):
             return data_source
 
         @property
-        def stream(self):
+        def stream(self) -> AbstractDataSource.StreamType:
             """
             Uses the stream implementation of the data source to map the
-            dataset type to a stream type. This is useful for obtaining
-            a stream of data for a particular dataset type.
+            dataset type to a stream type. This is useful for obtaining a
+            matching stream of data for a particular dataset type.
 
             Returns:
             --------
@@ -512,10 +512,22 @@ class AbstractDataSource(ABC):
             """
             return self.data_source.stream(self)
 
-        def __eq__(self, other):
+        def __eq__(self, other) -> bool:
             """
             convenience method to check if other is a dataset type.
             This equality is independent of the data source.
+
+            Args:
+            -----
+                other (object):
+                    The object to be compared with the current dataset
+                    type.
+            
+            Returns:
+            --------
+                bool:
+                    True if the other object is a dataset type, False   
+                    otherwise.
             """
             return isinstance(other, AbstractDataSource.DatasetType)
 
