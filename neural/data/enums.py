@@ -60,7 +60,11 @@ class CalendarType(Enum):
             A function that returns a dataframe with trading dates and
             times. Start and end dates are any type that can be handle
             by to_datetime() method of pandas. The dataframe will have
-            output similar to:
+            output similar to the following. It Rows correspond to
+            trading dates and columns correspond to start and end times
+            of trading intervals. For instance, if the calendar is 24/7,
+            then the start and end times will be 00:00:00 and 00:00:00
+            (next day) respectively.
 
             >>> schedule(start_date, end_date)
                         start                       end
@@ -83,8 +87,8 @@ class CalendarType(Enum):
     If not happy with the default calendar, user can specify a different
     calendar by setting the CALENDAR constant in
     neural/common/constants.py to a calendar following the interface of
-    AbstractCalendar class. This allows handling local calendars that
-    are not supported by pandas_market_calendars.
+    AbstractCalendar class in neural.utils.time. This allows handling
+    local calendars that are not supported by pandas_market_calendars.
 
     Examples:
     ----------
