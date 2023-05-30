@@ -390,7 +390,22 @@ class AbstractDataSource(ABC):
             prices, weather data, social media data, etc. Dataset types are
             used to organize the types of datasets that are available for
             training. Since these types are source dependent, they are defined
-            in the data source class. Attr
+            in the data source class. properties and methods:
+                - data_source (AbstractDataSource): 
+                    A property that returns a pointer to the data source class
+                    in the containing scope. This allows the enumeration
+                    constants to access the data source's methods and
+                    properties.
+                - stream (AbstractDataSource.StreamType)): 
+                    A property that uses the stream implementation of the data
+                    source to map the dataset type to a stream type. This is
+                    useful for obtaining a matching stream type for a dataset
+                    type.
+                - __eq__(self, other) -> bool: 
+                    Convenience method to check if other is a dataset type. If
+                    the other object inherits from
+                    AbstractDataSource.DatasetType then this will return True.
+
 
         StreamType : Enum
             Enumeration class that defines the available stream types for the
@@ -402,7 +417,13 @@ class AbstractDataSource(ABC):
             the type of data that was used to train the agent on. Any dataset
             type should logically have a corresponding stream type, otherwise
             agent will not be deployable in a live trading environment, if
-            trained on that dataset type.
+            trained on that dataset type. properties and methods:
+                - data_source (AbstractDataSource):
+                    A property that returns a pointer to the data source class
+                    in the outer scope.
+                - __eq__(self, other) -> bool:  
+                    Convenience method to check if another object is a stream
+                    type.
     
     Methods:
     -----------
