@@ -480,10 +480,14 @@ class AbstractDataMetaData:
             - asset group 1:
                 - price data
                 - other data
+                - ...
             - asset group 2:
                 - price data
                 - other data
+                - ...
             - ...
+        Note that by default any present asset in the final joined dataset
+        will be traded and should have a price mask.
     """
     data_schema: Dict[AbstractDataSource.DatasetType:Tuple[AbstractAsset]] | Dict[
         AbstractDataSource.StreamType:Tuple[AbstractAsset]]
