@@ -72,6 +72,123 @@ from neural.client.base import AbstractDataClient
 from neural.data.enums import FeatureType, AssetType, CalendarType
 
 
+class Resolution:
+    """
+    Class for representing the resolution of a dataset or stream. The
+    resolution is the fixed length of time interval in the dataset or
+    stream. The resolution is represented as a string with the quantity
+    and unit of time.
+
+    Attributes:
+    -----------
+        quantity (int):
+            An integer representing the quantity of the resolution.
+        unit (Resolution.Unit):
+            An instance of the `Resolution.Unit` enum class representing
+            the unit of time of the resolution.
+
+    Methods:
+    --------
+        validate_resolution(quantity: int, unit: Resolution.Unit) -> None:
+            Validates the resolution.
+
+    Raises:
+    -------
+        TypeError:
+            If quantity is not an integer or unit is not an instance of
+            Resolution.Unit.
+        ValueError:
+            If quantity is not a positive integer or if unit is not
+            compatible with the quantity.
+
+    Example:
+    --------
+        >>> resolution = Resolution(43, Resolution.Unit.NANO_SECOND)
+        >>> print(resolution)
+        43Unit.NANO_SECOND
+    """
+    class Unit(Enum):
+        """
+        Enumeration class that defines the available units of time for
+        representing the resolution of a dataset or stream. The
+        resolution is the fixed length of time interval in the dataset
+        or stream. The resolution is represented as a string with the
+        quantity and unit of time.
+
+        Attributes:
+        -----------
+            NANO_SECOND (str):
+                A string representing the nanosecond unit of time.
+            MICRO_SECOND (str):
+                A string representing the microsecond unit of time.
+            MILLI_SECOND (str):
+                A string representing the millisecond unit of time.
+            SECOND (str):
+                A string representing the second unit of time.
+            MINUTE (str):
+                A string representing the minute unit of time.
+            HOUR (str):
+                A string representing the hour unit of time.
+            DAY (str):
+                A string representing the day unit of time.
+        """
+        NANO_SECOND = 'NANO_SECOND'
+        MICRO_SECOND = 'MICRO_SECOND'
+        MILLI_SECOND = 'MILLI_SECOND'
+        SECOND = 'SECOND'
+        MINUTE = 'MINUTE'
+        HOUR = 'HOUR'
+        DAY = 'DAY'
+
+    def __init__(self, quantity: int, unit: Unit):
+        self.validate_resolution(quantity, unit)
+        self.quantity = quantity
+        self.unit = unit
+
+    def validate_resolution(self, quantity: int, unit: Unit):
+
+        if not isinstance(quantity, int):
+            raise TypeError("Quantity must be an integer value.")
+        if not isinstance(unit, Resolution.Unit):
+            raise TypeError(
+                f"Unit must be an instance of {Resolution.Unit.__name__}.")
+
+        if quantity <= 0:
+            raise ValueError("Quantity must be a positive integer value."
+                )
+        if unit == Resolution.Unit.NANO_SECOND and quantity > 999:
+            raise ValueError(
+                "Nanosecond units can only be used with quantities between 1-999."
+                )
+        if unit == Resolution.Unit.MICRO_SECOND and quantity > 999:
+            raise ValueError(
+                "Microsecond units can only be used with quantities between 1-999."
+            )
+        if unit == Resolution.Unit.MILLI_SECOND and quantity > 999:
+            raise ValueError(
+                "Millisecond units can only be used with quantities between 1-999."
+            )
+        if unit == Resolution.Unit.SECOND and quantity > 59:
+            raise ValueError(
+                "Second units can only be used with quantities between 1-59."
+            )
+        if unit == Resolution.Unit.MINUTE and quantity > 59:
+            raise ValueError(
+                "Minute units can only be used with quantities between 1-59."
+            )
+        if unit == Resolution.Unit.HOUR and quantity > 23:
+            raise ValueError(
+                "Hour units can only be used with quantities between 1-23."
+            )
+        if unit == Resolution.Unit.DAY and quantity != 1:
+            raise ValueError(
+                "Day units can only be used with quantities equal to 1."
+            )
+
+    def __str__(self):
+        return f"{self.quantity}{self.unit}"
+
+
 @dataclass(frozen=True)
 class AbstractAsset(ABC):
     """
