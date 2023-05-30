@@ -53,6 +53,8 @@ class CalendarType(Enum):
 
     """
 
+    Notes:
+    ----------
     If an asset does not fall under these calendar categories it can be
     handled by user speciying the CalendarType.MY_CALENDAR_TYPE =
     'VALID_PANDAS_CALENDAR' and providing a valid
