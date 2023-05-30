@@ -102,6 +102,7 @@ class AbstractAsset(ABC):
     asset_type: AssetType
     fractionable: bool
 
+
 @dataclass(frozen=True)
 class AlpacaAsset(AbstractAsset):
     """
@@ -215,7 +216,7 @@ class AlpacaAsset(AbstractAsset):
         allows easy to borrow assets to be shorted.
         """
         return self.easy_to_borrow if self.marginable else False
-    
+
     def get_initial_margin(self, short: bool = False) -> float | None:
         """
         A float representing the initial margin of the asset. 25% margin
@@ -233,7 +234,8 @@ class AlpacaAsset(AbstractAsset):
         -----
             short (bool):
                 A boolean indicating whether the initial margin is for a
-                short position. By default False.
+                short position. By default False. If asset is
+                nonmarginable returns 1.0.
         
         Returns:
         --------
@@ -287,7 +289,8 @@ class AlpacaAsset(AbstractAsset):
         maintenance margin.
         """
 
-        def default_maintenance_margin(price, short):
+        def default_maintenance_margin(price: float,
+                                       short: bool = False) -> float:
             """
             Link: https://alpaca.markets/docs/introduction/. The
             maintenance margin is by default calculated based on the
@@ -308,7 +311,7 @@ class AlpacaAsset(AbstractAsset):
 
             TODO: Add support for 2x and 3x ETFs. Currently there is no
             way in API to distinguish between ETFs and stocks. This
-            
+            means that 2x and 3x ETFs are treated as stocks.
             """
 
             if not self.marginable:
@@ -322,7 +325,7 @@ class AlpacaAsset(AbstractAsset):
 
             elif short:
                 if price < 5.00:
-                    return max(2.5 / price, 1)
+                    return max(2.5 / price, 1.0)
                 elif price >= 5.00:
                     return max(5.0 / price, 0.3)
 
@@ -798,7 +801,7 @@ class AbstractDataMetaData:
                                                end_date=end_date)
 
         return schedule
-    
+
     @staticmethod
     def create_feature_schema(dataframe: pd.DataFrame):
         """
@@ -1209,7 +1212,7 @@ class DatasetMetadata(AbstractDataMetaData):
                                 calendar_type=self.calendar_type)
 
         return stream
-    
+
     @property
     def days(self):
         """
@@ -1219,7 +1222,7 @@ class DatasetMetadata(AbstractDataMetaData):
 
         days = len(self.schedule)
         return days
-    
+
     @property
     def n_rows(self):
 
@@ -1230,7 +1233,7 @@ class DatasetMetadata(AbstractDataMetaData):
         intervals_per_day = (market_durations / resolution_offset).astype(int)
         n_rows = sum(intervals_per_day)
         return n_rows
-    
+
     def __or__(self, other: AbstractDataMetaData) -> AbstractDataMetaData:
         """
         This is useful for joining datasets that are large to download
