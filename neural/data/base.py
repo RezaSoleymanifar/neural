@@ -150,32 +150,33 @@ class AlpacaAsset(AbstractAsset):
             margin requirement is violated the brokerage will issue a
             margin call. More info here:
             https://www.investopedia.com/terms/m/maintenance_margin.asp.
-            
-            Alpaca API in
-            reality enforces this at the end of day or when it is
-            violated by a greate extent.
-        
+            Alpaca API in reality enforces this at the end of day or
+            when it is violated by a greate extent.
+
     Properties:
     -----------
-        initial_margin: float | None
-            A float representing the initial margin of the asset.
-        maintenance_margin: float | None
-            A float representing the maintenance margin of the asset.
         shortable: bool | None
             A boolean indicating whether the asset can be sold short
             (i.e., sold before buying to profit from a price decrease).
         easy_to_borrow: bool | None
             A boolean indicating whether the asset can be borrowed
             easily.
-        
+
+    Methods:
+    --------
+        get_initial_margin(self, short: bool = False) -> float | None
+            A float representing the initial margin of the asset.
+        get_maintenance_margin(self, price: float, short: bool = False)
+            -> float | None A float representing the maintenance margin
+            of the asset.
     Notes:
     ------
-        The marginable, shortable, easy_to_borrow, intial_margin, and
-        maintenance_margin properties are only valid for assets that are
-        marginable. For example, cryptocurrencies are not marginable and
-        therefore do not need to set these attributes. By default
-        boolean valued attributes are returned as False and maintenance
-        margin and initial margin are returned as 0 and 1 respectively.
+        The easy_to_borrow, intial_margin, and maintenance_margin
+        properties are only valid for assets that are marginable. For
+        example, cryptocurrencies are not marginable and therefore do
+        not need to set these attributes. By default boolean valued
+        attributes are returned as False and maintenance margin and
+        initial margin are returned as 0 and 1 respectively.
         nonmarginable assets can only be purchased using cash and cannot
         be shorted. There are rare cases where non-marginable assets can
         be shorted, but this is not supported by this library due to the
@@ -189,6 +190,31 @@ class AlpacaAsset(AbstractAsset):
     shortable: Optional[bool] = None
     easy_to_borrow: Optional[bool] = None
 
+    @property
+    def shortable(self) -> bool | None:
+        """
+        A boolean indicating whether the asset can be sold short (i.e.,
+        sold before buying to profit from a price decrease). In Alpaca
+        API shorted assets cannot have faractional quantities. Also if
+        asset is not marginable it cannot be shorted. There are rare
+        cases where non-marginable assets can be shorted, but this is
+        not supported by this library due to the complexity of the
+        process. A mix of marginable and non-marginable assets in
+        portoflio is not supporeted either to the same level of
+        irregularities.
+        """
+        return self.shortable if self.marginable else False
+
+    @property
+    def easy_to_borrow(self) -> bool | None:
+        """
+        A boolean indicating whether the asset can be borrowed easily.
+        Alpaca API has restrictive rules for hard to borrow assets and
+        in general HTB assets cannot be shorted. This library only
+        allows easy to borrow assets to be shorted.
+        """
+        return self.easy_to_borrow if self.marginable else False
+    
     def get_initial_margin(self, short: bool = False) -> float | None:
         """
         A float representing the initial margin of the asset. 25% margin
@@ -298,31 +324,6 @@ class AlpacaAsset(AbstractAsset):
         return max(self.maintenance_margin,
                    default_maintenance_margin(price, short),
                    self.get_initial_margin(short)) if self.marginable else 0
-
-    @property
-    def shortable(self) -> bool | None:
-        """
-        A boolean indicating whether the asset can be sold short (i.e.,
-        sold before buying to profit from a price decrease). In Alpaca
-        API shorted assets cannot have faractional quantities. Also if
-        asset is not marginable it cannot be shorted. There are rare
-        cases where non-marginable assets can be shorted, but this is
-        not supported by this library due to the complexity of the
-        process. A mix of marginable and non-marginable assets in
-        portoflio is not supporeted either to the same level of
-        irregularities.
-        """
-        return self.shortable if self.marginable else False
-
-    @property
-    def easy_to_borrow(self) -> bool | None:
-        """
-        A boolean indicating whether the asset can be borrowed easily.
-        Alpaca API has restrictive rules for hard to borrow assets and
-        in general HTB assets cannot be shorted. This library only
-        allows easy to borrow assets to be shorted.
-        """
-        return self.easy_to_borrow if self.marginable else False
 
 
 class AbstractDataSource(ABC):
