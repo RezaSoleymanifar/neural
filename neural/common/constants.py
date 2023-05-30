@@ -79,7 +79,6 @@ Constants:
     CUSTOM_SYMBOLS (list):
         A custom list of stock symbols.
 """
-
 import logging
 
 import os

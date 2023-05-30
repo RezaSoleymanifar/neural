@@ -1,12 +1,22 @@
 """" 
 enums.py
 
+Description:
+------------
 Contains enums for different types of data and assets. These enums are
 used to create a schema for datasets and streams. The schema is a
 dictionary that contains boolean masks for different types of data and
 assets. The schema is used to filter data and assets for training
 environments. The schema is also used to create feature vectors for
 each asset.
+
+License:
+--------
+    MIT License. See LICENSE.md file.
+
+Author(s):
+-------
+    Reza Soleymanifar, Email: Reza@Soleymanifar.com
 
 Classes:
 ---------
@@ -29,20 +39,6 @@ Classes:
     AssetType:
         An enum class representing different categories of financial
         instruments.
-    
-Notes:
----------
-    This module is not a representative list of all the feature types
-    that can be used in datasets and streams. This is just a list of
-    the most common feature types that are frequently used in a way
-    that needs to be distinguished them from other feature types, for
-    example for feature engineering, using OHLC prices, or for
-    filtering text columns for passing to large language models. This
-    list can be extended to include other feature types that are not
-    included here using the FeatureType.MY_FEATURE_TYPE = 'KEY_WORD'
-    syntax. Feature schema will automatically look for columns that
-    contain name 'KEY_WORD' and create a boolean mask for them in
-    feature shema.
 """
 from enum import Enum
 from neural.common.constants import CALENDAR
