@@ -378,7 +378,9 @@ class AbstractDataSource(ABC):
     static data namely dataset that aggreates old data streams useful for
     training. Or it can provide a live stream of data that is used for high
     frequency trading. It also defines a set of nested enums for standardizing
-    the available dataset and stream types.
+    the available dataset and stream types. When defining a new data source the
+    dataset and stream types will inherit from DatasetType and StreamType
+    enums.
 
     Attributes:
     -----------
@@ -392,15 +394,15 @@ class AbstractDataSource(ABC):
 
         StreamType : Enum
             Enumeration class that defines the available stream types for the
-            data source. This can include types such as price data, volume data,
-            order book data, tweets etc. Stream types are used to stream live
-            data for high frequency trading. Usually an algorithm is trained
-            usinsg a static historical dataset and it's dataset metadata is
-            mappped to a stream type for streaming and aggregating the type of
-            data that was used to train the agent on. Any dataset type should
-            logically have a corresponding stream type, otherwise agent
-            will not be deployable in a live trading environment, if trained
-            on that dataset type.
+            data source. This can include types such as price data, volume
+            data, order book data, tweets etc. Stream types are used to stream
+            live data for high frequency trading. Usually an algorithm is
+            trained usinsg a static historical dataset and it's dataset
+            metadata is mappped to a stream type for streaming and aggregating
+            the type of data that was used to train the agent on. Any dataset
+            type should logically have a corresponding stream type, otherwise
+            agent will not be deployable in a live trading environment, if
+            trained on that dataset type.
     
     Methods:
     -----------
@@ -408,7 +410,7 @@ class AbstractDataSource(ABC):
             Returns the stream type corresponding to the specified dataset
             type. By default maps to corresponding stream type using the value
             of the dataset type enum. This means a dataset type with value
-            'STOCK' will be mapped to a stream type with value 'STOCK'. This
+            'BAR' will be mapped to a stream type with value 'BAR'. This
             behavior can be overriden to provide custom mapping between dataset
             and stream types.
 
