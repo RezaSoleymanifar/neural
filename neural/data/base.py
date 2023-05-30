@@ -72,8 +72,8 @@ from typing import Dict, Tuple, Iterable, Optional, List
 
 import dill
 import h5py as h5
-import pandas as pd
 import numpy as np
+import pandas as pd
 
 from neural.client.base import AbstractDataClient
 from neural.data.enums import FeatureType, AssetType, CalendarType
@@ -123,9 +123,9 @@ class AlpacaAsset(AbstractAsset):
             cryptocurrencies or stocks that are expensive to buy as a
             whole share.
         marginable: bool
-            A boolean indicating whether the asset can be bought on
-            margin (i.e., borrowed funds). If an asset is not
-            marginable, then it cannot be shorted.
+            A boolean indicating whether the asset is a marginable
+            asset. Marginable assets can be used as collateral for
+            mar
         shortable: bool
             A boolean indicating whether the asset can be sold short
             (i.e., sold before buying to profit from a price decrease).
