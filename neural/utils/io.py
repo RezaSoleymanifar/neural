@@ -100,7 +100,7 @@ def from_hdf5(
     the last in the list. Following chronological ordering of datasets
     guarantees that the order of assets in the price mask matches the
     order of assets in the data schema and loaded aggregate dataset is
-    valid for training:
+    valid for training (newest to oldest):
             - asset group 1:
                 - price data
                 - other data
