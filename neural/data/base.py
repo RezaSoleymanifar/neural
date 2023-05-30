@@ -204,6 +204,12 @@ class AlpacaAsset(AbstractAsset):
         cases where non-marginable assets can be shorted, but this is
         not supported by this library due to the complexity of the
         process.
+
+        Returns:
+        --------
+            bool:
+                A boolean indicating whether the asset can be sold
+                short.
         """
         return self.shortable if self.marginable else False
 
@@ -214,6 +220,12 @@ class AlpacaAsset(AbstractAsset):
         Alpaca API has restrictive rules for hard to borrow assets and
         in general HTB assets cannot be shorted. This library only
         allows easy to borrow assets to be shorted.
+
+        Returns:
+        --------
+            bool:
+                A boolean indicating whether the asset can be borrowed
+                easily.
         """
         return self.easy_to_borrow if self.marginable else False
 
@@ -287,6 +299,20 @@ class AlpacaAsset(AbstractAsset):
         the end maximum of default margin, initial margin, and
         maintenance margin is used for final calculation of the
         maintenance margin.
+
+        Args:
+        -----
+            price (float):
+                A float representing the price of the asset.
+            short (bool):
+                A boolean indicating whether the maintenance margin is
+                for a short position. By default False. 
+        
+        Returns:
+        --------
+            float:
+                A float representing the maintenance margin of the
+                asset.
         """
 
         def default_maintenance_margin(price: float,
@@ -312,6 +338,14 @@ class AlpacaAsset(AbstractAsset):
             TODO: Add support for 2x and 3x ETFs. Currently there is no
             way in API to distinguish between ETFs and stocks. This
             means that 2x and 3x ETFs are treated as stocks.
+
+            Args:
+            -----
+                price (float):
+                    A float representing the price of the asset.
+                short (bool):
+                    A boolean indicating whether the maintenance margin
+                    is for a short position. By default False.
             """
 
             if not self.marginable:
@@ -349,11 +383,11 @@ class AbstractDataSource(ABC):
     Attributes:
     -----------
         DatasetType : Enum
-            Enumeration class that defines the available dataset types for the
-            data source. This can include types such as stock prices, weather
-            data, social media data, etc. Dataset types are used to organize
-            the data and to ensure that consistent data processing methods are
-            used across datasets.
+            Enumeration class that defines the available historical dataset
+            types for the data source. This can include types such as stock
+            prices, weather data, social media data, etc. Dataset types are
+            used to organize the types of datasets that are available for
+            training.
 
         StreamType : Enum
             Enumeration class that defines the available stream types for the
