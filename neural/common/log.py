@@ -1,6 +1,8 @@
 """
 log.py
 
+Description:
+------------
 A module for logging messages to a file and/or console. This module
 contains a logger named 'neural' that can be used to log messages to a
 file and/or console. The logger can be configured by setting the
@@ -26,9 +28,20 @@ following constants in neural/common/constants.py:
         that selected level are filtered out. CRITICAL > ERROR > WARNING
         > INFO > DEBUG > NOTSET
 
-Create a rotating file handler with the specified file name, maximum
-size, and backup count. If LOG_PATH is None, then set the file handler
-to a NullHandler, which will not log any messages to a file. 
+License:
+--------
+    MIT License. See LICENSE.md file.
+
+Author(s):
+-------
+    Reza Soleymanifar, Email: Reza@Soleymanifar.com
+    
+Notes:
+------
+    If LOG_PATH is provided, creates a rotating file handler with the
+    specified file name, maximum size, and backup count. If LOG_PATH is
+    None, then set the file handler to a NullHandler, which will not log
+    any messages to a file. 
 
 Example:
 ---------
@@ -52,9 +65,7 @@ from neural.common.constants import (
 
 # =========================setup logger=============================
 
-# Create a logger named 'neural'
 logger = logging.getLogger('neural')
-# Set the logging level for the logger
 logger.setLevel(LOG_LEVEL)
 
 # =========================file/console handler=============================
@@ -65,24 +76,17 @@ if LOG_PATH is not None:
                                        backupCount=LOG_BACKUP_COUNT)
 else:
     file_handler = logging.NullHandler()
-
-# Set the logging level for the file handler
 file_handler.setLevel(LOG_LEVEL)
 
-# Create a console handler for logging messages to the console.
 console_handler = logging.StreamHandler()
 console_handler.setLevel(LOG_LEVEL)
 
-# Add the file handler to the 'neural' logger
 logger.addHandler(file_handler)
-# Add the console handler to the 'neural' logger
 logger.addHandler(console_handler)
 
 # =========================logger formatter=============================
 
-# Create a formatter for the file handler
 formatter = logging.Formatter('%(levelname)s - %(message)s')
 
-# Set the formatter for the file handler
 file_handler.setFormatter(formatter)
 console_handler.setFormatter(formatter)
