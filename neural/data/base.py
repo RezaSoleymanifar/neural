@@ -337,46 +337,44 @@ class AlpacaAsset(AbstractAsset):
 
 class AbstractDataSource(ABC):
     """
-    Abstract base class for a data source that standardizes the
-    interface for accessing data from different sources. A data source
-    is typically an API or a database that provides access to data. This
-    class defines the interface for accessing data from a data source.
-    The data source can either provide a static data namely dataset that
-    aggreates old data streams useful for training. Or it can provide a
-    live stream of data that is used for high frequency trading. It also
-    defines a set of nested enums for standardizing the available
-    dataset and stream types.
+    Abstract base class for a data source that standardizes the interface for
+    accessing data from different sources. A data source is typically an API or
+    a database that provides access to data. This class defines the interface
+    for accessing data from a data source. The data source can either provide a
+    static data namely dataset that aggreates old data streams useful for
+    training. Or it can provide a live stream of data that is used for high
+    frequency trading. It also defines a set of nested enums for standardizing
+    the available dataset and stream types.
 
     Attributes:
     -----------
         DatasetType : Enum
-            Enumeration class that defines the available dataset types
-            for the data source. This can include types such as stock
-            prices, weather data, social media data, etc. Dataset types
-            are used to organize the data and to ensure that consistent
-            data processing methods are used across datasets.
+            Enumeration class that defines the available dataset types for the
+            data source. This can include types such as stock prices, weather
+            data, social media data, etc. Dataset types are used to organize
+            the data and to ensure that consistent data processing methods are
+            used across datasets.
 
         StreamType : Enum
-            Enumeration class that defines the available stream types
-            for the data source. This can include types such as tick
-            data, volume data, order book data, tweets etc. Stream types
-            are used to stream live data for high frequency trading.
-            Usually an algorithm is trained usinsg a static data and
-            it's dataset metadata is mappped to a stream type for
-            streaming and aggregating the type of data that was used to
-            train the agent on. Any dataset type should logically have a
-            corresponding stream type, otherwise trained agent will not
-            be deployable in a live trading environment.
+            Enumeration class that defines the available stream types for the
+            data source. This can include types such as tick data, volume data,
+            order book data, tweets etc. Stream types are used to stream live
+            data for high frequency trading. Usually an algorithm is trained
+            usinsg a static data and it's dataset metadata is mappped to a
+            stream type for streaming and aggregating the type of data that was
+            used to train the agent on. Any dataset type should logically have
+            a corresponding stream type, otherwise trained agent will not be
+            deployable in a live trading environment.
     
     Methods:
     -----------
         stream(dataset_type: DatasetType) -> StreamType
-            Returns the stream type corresponding to the specified
-            dataset type. By default maps to corresponding stream type
-            using the value of the dataset type enum. This means a
-            dataset type with value 'STOCK' will be mapped to a stream
-            type with value 'STOCK'. This behavior can be overriden to
-            provide custom mapping between dataset and stream types.
+            Returns the stream type corresponding to the specified dataset
+            type. By default maps to corresponding stream type using the value
+            of the dataset type enum. This means a dataset type with value
+            'STOCK' will be mapped to a stream type with value 'STOCK'. This
+            behavior can be overriden to provide custom mapping between dataset
+            and stream types.
 
     Example:
     -----------
