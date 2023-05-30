@@ -320,6 +320,7 @@ class Resolution:
         SECOND = 'SECOND'
         MINUTE = 'MINUTE'
         HOUR = 'HOUR'
+        DAY = 'DAY'
 
     def __init__(self, quantity: int, unit: Unit):
         self.validate_resolution(quantity, unit)
@@ -327,9 +328,9 @@ class Resolution:
         self.unit = unit
 
     def validate_resolution(self, quantity: int, unit: Unit):
+
         if not isinstance(quantity, int):
             raise TypeError("Quantity must be an integer value.")
-        
         if not isinstance(unit, Resolution.Unit):
             raise TypeError(
                 f"Unit must be an instance of {Resolution.Unit.__name__}.")
@@ -337,31 +338,30 @@ class Resolution:
         if quantity <= 0:
             raise ValueError("Quantity must be a positive integer value.")
 
-        if unit == Resolution.TimeFrameUnit.NANOSECOND and quantity > 999:
+        if unit == Resolution.Unit.NANO_SECOND and quantity > 999:
             raise ValueError(
                 "Nanosecond units can only be used with quantities between 1-999.")
 
-        if unit == Resolution.TimeFrameUnit.MICROSECOND and quantity > 999:
+        if unit == Resolution.Unit.MICRO_SECOND and quantity > 999:
             raise ValueError(
                 "Microsecond units can only be used with quantities between 1-999."
             )
-
-        if unit == Resolution.TimeFrameUnit.MILLISECOND and quantity > 999:
+        if unit == Resolution.Unit.MILLI_SECOND and quantity > 999:
             raise ValueError(
                 "Millisecond units can only be used with quantities between 1-999."
             )
-
-        if unit == Resolution.TimeFrameUnit.SECOND and quantity > 59:
+        if unit == Resolution.Unit.SECOND and quantity > 59:
             raise ValueError(
                 "Second units can only be used with quantities between 1-59.")
-
-        if unit == Resolution.TimeFrameUnit.MINUTE and quantity > 59:
+        if unit == Resolution.Unit.MINUTE and quantity > 59:
             raise ValueError(
                 "Minute units can only be used with quantities between 1-59.")
-
-        if unit == Resolution.TimeFrameUnit.HOUR and quantity > 23:
+        if unit == Resolution.Unit.HOUR and quantity > 23:
             raise ValueError(
                 "Hour units can only be used with quantities between 1-23.")
+        if unit == Resolution.Unit.DAY and quantity != 1:
+            raise ValueError(
+                "Day units can only be used with quantities equal to 1.")
 
     def __str__(self):
         return f"{self.quantity}{self.unit}"
