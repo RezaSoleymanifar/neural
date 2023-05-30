@@ -398,7 +398,8 @@ class AbstractDataMetaData:
         from the data.
     resolution (str):
         A string representing the resolution of the data, which is the fixed
-        length of each time interval in the dataset or stream.
+        length of time interval in the dataset or stream. Example of resolution
+        is '1Min', '30Min', etc.
     calendar_type (CalendarType):
         An instance of the `CalendarType` enum class that represents the type
         of calendar used to organize the data. The calendar type can affect how
@@ -407,16 +408,16 @@ class AbstractDataMetaData:
     Properties:
     -----------
     n_columns: int
-        Returns the number of columns in the dataset. This is useful for
-        checking if the dataset has been downloaded correctly.
+        Returns the number of columns in the dataset.
     assets: List[Asset]
-        Returns a list of unique assets in the data schema. Order is preserved.
+        Returns a list of unique assets in the data schema. Order is preserved
+        and determined by the order of appearance of assets in the data schema.
     asset_prices_mask:
         Returns a mask for the asset close price feature type. This price is
         used by market environments as the point of reference for placing
         orders. When a time interval is over and features are observed, the
-        closing price of the interval is used to immediately place orders. The
-        order of price mask matches the order of symbols in the data schema.
+        closing price of the interval is used to place orders. The order of
+        price mask matches the order of symbols in the data schema.
     valid: bool
         Ensures that all symbols have a price mask associated with them. This
         property can be violated during merging, since some feature types may
