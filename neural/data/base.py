@@ -328,10 +328,11 @@ class AlpacaAsset(AbstractAsset):
                     return max(2.5 / price, 1.0)
                 elif price >= 5.00:
                     return max(5.0 / price, 0.3)
-
-        return max(self.maintenance_margin,
-                   default_maintenance_margin(price, short),
-                   self.get_initial_margin(short)) if self.marginable else 0
+                
+        required_margin = max(self.maintenance_margin,
+                              default_maintenance_margin(price, short),
+                              self.get_initial_margin(short))
+        return required_margin
 
 
 class AbstractDataSource(ABC):
