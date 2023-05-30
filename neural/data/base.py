@@ -621,7 +621,8 @@ class AbstractDataSource(ABC):
             raise ValueError(
                 f'{dataset_type} must be of type '
                 f'{AbstractDataSource.DatasetType.__name__}')
-
+        
+        try:
             stream_type = cls.StreamType(dataset_type.value)
 
         except KeyError as key_error:
