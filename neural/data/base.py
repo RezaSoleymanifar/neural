@@ -471,8 +471,8 @@ class AbstractDataMetaData:
         masks are simply concatenated to indicate the features type
         locations in the joined dataset/stream.
     """
-    data_schema: Dict[AbstractDataSource.DatasetType:Tuple[AlpacaAsset]] | Dict[
-        AbstractDataSource.StreamType:Tuple[AlpacaAsset]]
+    data_schema: Dict[AbstractDataSource.DatasetType:Tuple[AbstractAsset]] | Dict[
+        AbstractDataSource.StreamType:Tuple[AbstractAsset]]
     feature_schema: Dict[FeatureType, Tuple[bool]]
     resolution: str
     calendar_type: CalendarType
