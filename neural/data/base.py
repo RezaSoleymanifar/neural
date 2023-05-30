@@ -385,13 +385,17 @@ class AbstractDataMetaData:
     Attributes:
     -----------
     data_schema:
-        A dictionary mapping data source types to tuples of assets. The data
-        schema defines the structure and format of the data for each asset in
-        the dataset or stream.
+        A dictionary mapping data types to tuples of assets. example of data
+        schema: {DatasetType.BAR: (AAPL, MSFT, GOOG), DatasetType.QUOTE: (MSFT,
+        GOOG)} or {StreamType.BAR: (AAPL, MSFT, GOOG), StreamType.QUOTE: (MSFT,
+        GOOG)}. This attribute can be used to reconstruct the matching stream
+        for a dataset.
     feature_schema Dict[FeatureType, Tuple[bool]]]:
         A dictionary mapping feature types to tuples of booleans, where each
         boolean indicates whether the corresponding feature is present in the
-        data.
+        data. Example of feature schema: {FeatureType.ASSET_CLOSE_PRICE: (True,
+        False, True)}. This attribute can be used to retrive target features
+        from the data.
     resolution (str):
         A string representing the resolution of the data, which is the fixed
         length of each time interval in the dataset or stream.
