@@ -33,8 +33,9 @@ Constants:
         The logging level for the logger. The logger will log messages
         with a level greater than or equal to LOG_LEVEL. The available
         logging levels are: DEBUG, INFO, WARNING, ERROR, and CRITICAL.
-        lower level = more messages, i.e. messages at lower levels are filtered out.
-CRITICAL > ERROR > WARNING > INFO > DEBUG > NOTSET
+        lower level means more messages, i.e. messages for lower levels
+        that selected level are filtered out. CRITICAL > ERROR > WARNING
+        > INFO > DEBUG > NOTSET
     ALPACA_ACCEPTED_DOWNLOAD_RESOLUTIONS (set):
         The accepted download resolutions for Alpaca API.
     HDF5_DEFAULT_MAX_ROWS (int):
@@ -42,19 +43,25 @@ CRITICAL > ERROR > WARNING > INFO > DEBUG > NOTSET
         files occupy a contiguous block of memory and they have size of
         HDF5_DEFAULT_MAX_ROWS even when empty.
     ACCEPTED_OBSERVATION_TYPES (set):
-        The accepted observation types for neural environments.
+        The accepted observation types in this library. Accepted types
+        are numpy arrays and dictionaries. If a dictionary is passed,
+        then it will be checked to be a dictionary of numpy arrays.
     ACCEPTED_ACTION_TYPES (set):
-        The accepted action types for neural environments.
+        The accepted action types for neural environments. Accepted
+        types are numpy arrays and dictionaries. If a dictionary is
+        passed, then it will be checked to be a dictionary of numpy
+        arrays.
     GLOBAL_DATA_TYPE (type):
         The global numerical precision. This is used for all
         computations that involve numpy arrays. Note that default data
         type of tensors in PyTorch is torch.float32.
     ALPACA_MINIMUM_SHORT_MARRGIN_EQUITY (int):
-        The minimum net worth required for short and margin trading in
-        Alpaca API.
-    PATTERN_DAY_TRADER_MINIMUM_NET_WORTH (int):
-        The minimum net worth required for a pattern day trader to
-        continue doing day trading.
+        Set the minimum net equity required for short and margin trading
+        in Alpaca API.
+    PATTERN_DAY_TRADER_MINIMUM_EQUITY (int):
+        Set the minimum net worth for a pattern day trader to continue
+        day trading. If equity falls below this value, then the trader
+        will be restricted from day trading for 90 days.
     DOW_JONES_SYMBOLS (list):
         A list of Dow Jones Industrial Average symbols.
     CRYPTO_SYMBOLS (list):
@@ -84,37 +91,21 @@ CALENDAR = Calendar
 LOG_PATH = None
 MAX_LOG_SIZE = 10_000_000  # 10 MB
 LOG_BACKUP_COUNT = 10
-
-# Set the logging level for the logger/file/console handler 
-
 LOG_LEVEL = logging.INFO
 
 # =====================================DATA====================================
 
 ALPACA_ACCEPTED_DOWNLOAD_RESOLUTIONS = {'1Min', '5Min', '15Min', '30Min'}
-# Set the default maximum number of rows for HDF5 storage. Note hdf5
-# files occupy a contiguous block of memory and they have size of
-# HDF5_DEFAULT_MAX_ROWS even when empty.
 HDF5_DEFAULT_MAX_ROWS = 5_000_000
 
-# dictionary observations will be checked to be dict of numpy arrays.
 ACCEPTED_OBSERVATION_TYPES = {np.ndarray, dict}
-
-# dictionary actions will be checked to be dict of numpy arrays.
 ACCEPTED_ACTION_TYPES = {np.ndarray, dict}
 
-# sets global numerical precision. This is used for all computations
-# that involve numpy arrays. Note that default data type of tensors in
-# PyTorch is torch.float32.
 GLOBAL_DATA_TYPE = np.float32
 
 #=====================================TRADE====================================
 
-# Set the minimum net worth required for short and margin trading in
-# Alpaca API.
 ALPACA_MINIMUM_SHORT_MARRGIN_EQUITY = 2_000
-
-# Set the minimum net worth for a pattern day trader
 PATTERN_DAY_TRADER_MINIMUM_EQUITY = 25_000
 
 # Dow Jones Industrial Average symbols
