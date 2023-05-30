@@ -135,7 +135,22 @@ class CalendarType(Enum):
         ---------
             function: 
                 A function that returns a dataframe with trading dates
-                and times.
+                and times. Start and end dates are any type that can be
+                handle by to_datetime() method of pandas. The dataframe
+                will have output similar to the following. It Rows
+                correspond to trading dates and columns correspond to
+                start and end times of trading intervals. For instance,
+                if the calendar is 24/7, then the start and end times
+                will be 00:00:00 and 00:00:00 (next day) respectively.
+
+            >>> schedule(start_date, end_date)
+                        start                       end
+            2022-01-03  2022-01-03 00:00:00+00:00   2022-01-04 00:00:00+00:00
+            2022-01-04  2022-01-04 00:00:00+00:00   2022-01-05 00:00:00+00:00
+            2022-01-05  2022-01-05 00:00:00+00:00   2022-01-06 00:00:00+00:00
+            2022-01-06  2022-01-06 00:00:00+00:00   2022-01-07 00:00:00+00:00
+            2022-01-07  2022-01-07 00:00:00+00:00   2022-01-08 00:00:00+00:00
+            2022-01-10  2022-01-10 00:00:00+00:00   2022-01-11 00:00:00+00:00
             
         Examples:
         ---------
@@ -147,7 +162,6 @@ class CalendarType(Enum):
         return schedule
 
 class FeatureType(Enum):
-
     """
     Enumeration class that defines constants for the different types of
     features in data. Typically used to define the feature schema of a

@@ -65,7 +65,7 @@ Constants:
         The global numerical precision. This is used for all
         computations that involve numpy arrays. Note that default data
         type of tensors in PyTorch is torch.float32.
-    ALPACA_MINIMUM_SHORT_MARRGIN_EQUITY (int):
+    ALPACA_MINIMUM_SHORT_MARGIN_EQUITY (int):
         Set the minimum net equity required for short and margin trading
         in Alpaca API.
     PATTERN_DAY_TRADER_MINIMUM_EQUITY (int):
@@ -87,23 +87,16 @@ import numpy as np
 from neural.utils.time import Calendar
 
 # =====================================CONNECTION==============================
-
 API_KEY = os.environ.get('API_KEY', None)
 API_SECRET = os.environ.get('API_SECRET', None)
-
 # =====================================CALENDAR================================
-
 CALENDAR = Calendar
-
 # =====================================LOG=====================================
-
 LOG_PATH = None
 MAX_LOG_SIZE = 10_000_000  # 10 MB
 LOG_BACKUP_COUNT = 10
 LOG_LEVEL = logging.INFO
-
 # =====================================DATA====================================
-
 ALPACA_ACCEPTED_DOWNLOAD_RESOLUTIONS = {'1Min', '5Min', '15Min', '30Min'}
 HDF5_DEFAULT_MAX_ROWS = 5_000_000
 
@@ -111,10 +104,8 @@ ACCEPTED_OBSERVATION_TYPES = {np.ndarray, dict}
 ACCEPTED_ACTION_TYPES = {np.ndarray, dict}
 
 GLOBAL_DATA_TYPE = np.float32
-
 #=====================================TRADE====================================
-
-ALPACA_MINIMUM_SHORT_MARRGIN_EQUITY = 2_000
+ALPACA_MINIMUM_SHORT_MARGIN_EQUITY = 2_000
 PATTERN_DAY_TRADER_MINIMUM_EQUITY = 25_000
 
 DOW_JONES_SYMBOLS = [
