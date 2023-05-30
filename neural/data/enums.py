@@ -309,3 +309,43 @@ class AssetType(str, Enum):
     OPTIONS = 'OPTIONS'
     EXCHANGE_TRADED_FUND = 'ETF'
     COMMODITY = 'COMMODITY'
+
+
+class Resolution:
+    NANO_SECOND = 'NANO_SECOND'
+    MICRO_SECOND = 'MICRO_SECOND'
+    MILLI_SECOND = 'MILLI_SECOND'
+    SECOND = 'SECOND'
+    MINUTE = 'MINUTE'
+    HOUR = 'HOUR'
+
+    def __init__(self, amount, unit):
+        self.validate_resolution(amount, unit)
+        self.amount = amount
+        self.unit = unit
+
+    @staticmethod
+    def validate_resolution(amount, unit):
+        if amount <= 0:
+            raise ValueError("Amount must be a positive integer value.")
+
+        if unit == Resolution.TimeFrameUnit.NANOSECOND and amount > 999:
+            raise ValueError("Nanosecond units can only be used with amounts between 1-999.")
+
+        if unit == Resolution.TimeFrameUnit.MICROSECOND and amount > 999:
+            raise ValueError("Microsecond units can only be used with amounts between 1-999.")
+
+        if unit == Resolution.TimeFrameUnit.MILLISECOND and amount > 999:
+            raise ValueError("Millisecond units can only be used with amounts between 1-999.")
+
+        if unit == Resolution.TimeFrameUnit.SECOND and amount > 59:
+            raise ValueError("Second units can only be used with amounts between 1-59.")
+
+        if unit == Resolution.TimeFrameUnit.MINUTE and amount > 59:
+            raise ValueError("Minute units can only be used with amounts between 1-59.")
+
+        if unit == Resolution.TimeFrameUnit.HOUR and amount > 23:
+            raise ValueError("Hour units can only be used with amounts between 1-23.")
+
+    def __str__(self):
+        return f"{self.amount}{self.unit}"
