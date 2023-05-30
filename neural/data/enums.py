@@ -238,53 +238,58 @@ class AssetType(str, Enum):
     """
     An enum class representing different categories of financial
     instruments amenable to high frequency trading. This enum is used to
-    standardize the asset type of different financial instruments in 
-    the library.
+    standardize the asset type of different financial instruments in the
+    library.
 
-    STOCK: Represents ownership in a publicly traded corporation. Stocks
-    can be traded on stock exchanges, and their value can fluctuate
-    based on various factors such as the company's financial performance
-    and market conditions.
-
-    CURRENCY: Represents a unit of currency, such as the US dollar,
-    Euro, or Japanese yen. Currencies can be traded on the foreign
-    exchange market (Forex), and their value can fluctuate based on
-    various factors such as interest rates, g eopolitical events, and
-    market sentiment.
-
-    CRYPTOCURRENCY: Represents a digital or virtual currency that uses
-    cryptography for security and operates independently of a central
-    bank. Cryptocurrencies can be bought and sold on various
-    cryptocurrency exchanges, and their value can fluctuate based on
-    various factors such as supply and demand, adoption rates, and
-    regulatory developments.
-
-    FUTURES: Represents a standardized contract to buy or sell an
-    underlying asset at a predetermined price and date in the future.
-    Futures can be traded on various futures exchanges, and their value
-    can fluctuate based on various factors such as supply and demand,
-    geopolitical events, and market sentiment.
-
-    OPTIONS: Represents a financial contract that gives the buyer the
-    right, but not the obligation, to buy or sell an underlying asset at
-    a specified price on or before a specified date. Options can be
-    traded on various options exchanges, and their value can fluctuate
-    based on various factors such as the price of the underlying asset,
-    the time until expiration, and market volatility.
-
-    EXCHANGE_TRADED_FUND: Represents a type of investment fund traded on
-    stock exchanges, similar to mutual funds, but with shares that can
-    be bought and sold like individual stocks. ETFs can provide exposure
-    to a wide range of asset classes, such as stocks, bonds, and
-    commodities, and their value can fluctuate based on various factors
-    such as the performance of the underlying assets and market
-    conditions.
-
-    COMMODITY: Represents a physical or virtual product that can be
-    bought or sold, such as gold, oil, or currencies. Commodities can be
-    traded on various commodity exchanges, and their value can fluctuate
-    based on various factors such as supply and demand, geopolitical
-    events, and market sentiment.
+    Attributes:
+    ------------
+        STOCK: 
+            Represents ownership in a publicly traded corporation.
+            Stocks can be traded on stock exchanges, and their value can
+            fluctuate based on various factors such as the company's
+            financial performance and market conditions.
+        CURRENCY: 
+            Represents a unit of currency, such as the US dollar, Euro,
+            or Japanese yen. Currencies can be traded on the foreign
+            exchange market (Forex), and their value can fluctuate based
+            on various factors such as interest rates, geopolitical
+            events, and market sentiment.
+        CRYPTOCURRENCY: 
+            Represents a digital or virtual currency that uses
+            cryptography for security and operates independently of a
+            central bank. Cryptocurrencies can be bought and sold on
+            various cryptocurrency exchanges, and their value can
+            fluctuate based on various factors such as supply and
+            demand, adoption rates, and regulatory developments.
+        FUTURES: 
+            Represents a standardized contract to buy or sell an
+            underlying asset at a predetermined price and date in the
+            future. Futures can be traded on various futures exchanges,
+            and their value can fluctuate based on various factors such
+            as supply and demand, geopolitical events, and market
+            sentiment.
+        OPTIONS: 
+            Represents a financial contract that gives the buyer the
+            right, but not the obligation, to buy or sell an underlying
+            asset at a specified price on or before a specified date.
+            Options can be traded on various options exchanges, and
+            their value can fluctuate based on various factors such as
+            the price of the underlying asset, the time until
+            expiration, and market volatility.
+        EXCHANGE_TRADED_FUND: 
+            Represents a type of investment fund traded on stock
+            exchanges, similar to mutual funds, but with shares that can
+            be bought and sold like individual stocks. ETFs can provide
+            exposure to a wide range of asset classes, such as stocks,
+            bonds, and commodities, and their value can fluctuate based
+            on various factors such as the performance of the underlying
+            assets and market conditions.
+        COMMODITY: 
+            Represents a physical or virtual product that can be bought
+            or sold, such as gold, oil, or currencies. Commodities can
+            be traded on various commodity exchanges, and their value
+            can fluctuate based on various factors such as supply and
+            demand, geopolitical events, and market sentiment.
     """
 
     STOCK = 'STOCK'
