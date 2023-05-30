@@ -174,15 +174,16 @@ class AlpacaAsset(AbstractAsset):
         The easy_to_borrow, intial_margin, and maintenance_margin
         properties are only valid for assets that are marginable. For
         example, cryptocurrencies are not marginable and therefore do
-        not need to set these attributes. By default boolean valued
-        attributes are returned as False and maintenance margin and
-        initial margin are returned as 0 and 1 respectively.
-        nonmarginable assets can only be purchased using cash and cannot
-        be shorted. There are rare cases where non-marginable assets can
-        be shorted, but this is not supported by this library due to the
-        complexity of the process. A mix of marginable and
-        non-marginable assets in portoflio is not supporeted either to
-        the same level of irregularities.
+        not need to set these attributes. For consistency for
+        nonmarginable assets default boolean valued attributes are
+        returned as False and maintenance margin and initial margin are
+        returned as 0 and 1 respectively. nonmarginable assets can only
+        be purchased using cash and we assume they cannot be shorted.
+        There are rare cases where non-marginable assets can be shorted,
+        but this is not supported by this library due to the complexity
+        of the process. A mix of marginable and non-marginable assets in
+        portoflio is not supporeted either due to the same level of
+        irregularities.
     """
 
     marginable: bool
@@ -199,9 +200,7 @@ class AlpacaAsset(AbstractAsset):
         asset is not marginable it cannot be shorted. There are rare
         cases where non-marginable assets can be shorted, but this is
         not supported by this library due to the complexity of the
-        process. A mix of marginable and non-marginable assets in
-        portoflio is not supporeted either to the same level of
-        irregularities.
+        process.
         """
         return self.shortable if self.marginable else False
 
@@ -222,11 +221,11 @@ class AlpacaAsset(AbstractAsset):
         FINRA requirement:
         https://www.finra.org/filing-reporting/regulation-t-filings.
         Alpaca API has a 50% margin requirement for opening positions,
-        by default. Initial margin for nonmarginable assets is 1 namely
-        entire value of trade needs to be available in cash. Since
-        nonmarginable assets cannot be margined this is an abuse of
-        terminalogy to provide a convenient interface for working with
-        marginable and onnmarginable assets.
+        by default. Initial margin for nonmarginable assets is 1.0
+        namely entire value of trade needs to be available in cash.
+        Since nonmarginable assets cannot be margined this is an abuse
+        of terminalogy to provide a convenient interface for working
+        with marginable and onnmarginable assets in a consistent way.
 
         Args:
         -----
