@@ -382,7 +382,7 @@ class AbstractDataSource(ABC):
     dataset and stream types will inherit from DatasetType and StreamType
     enums.
 
-    Attributes:
+    Classes:
     -----------
         DatasetType : Enum
             Enumeration class that defines the available historical dataset
@@ -390,7 +390,7 @@ class AbstractDataSource(ABC):
             prices, weather data, social media data, etc. Dataset types are
             used to organize the types of datasets that are available for
             training. Since these types are source dependent, they are defined
-            in the data source class.
+            in the data source class. Attr
 
         StreamType : Enum
             Enumeration class that defines the available stream types for the
@@ -429,9 +429,10 @@ class AbstractDataSource(ABC):
     class DatasetType(Enum):
         """
         Enumeration class that defines constants for the different types of
-        datasets.
+        datasets. AbstractDataSource.DatasetType should be subclassed to define
+        dataset types for a particular data source.
 
-        Attributes:
+        Properties:
         -----------
             data_source:
                 A property that returns a pointer to the data source class in
@@ -449,7 +450,6 @@ class AbstractDataSource(ABC):
                 other object inherits from AbstractDataSource.DatasetType then
                 this will return True.
         """
-
         @property
         def data_source(self):
             """
@@ -467,7 +467,7 @@ class AbstractDataSource(ABC):
             ------
             __qualname__ is a magic attribute that returns the fully
             qualified name of the class. It contains the containing
-            module and classes separated by dots. for example
+            modules and classes separated by dots. for example
             'neural.data.base.AbstractDataSource.DatasetType'. This
             attribute is used to access the data source class in the
             outer scope.
@@ -494,14 +494,15 @@ class AbstractDataSource(ABC):
         def __eq__(self, other):
             """
             convenience method to check if other is a dataset type.
+            This equality is independent of the data source.
             """
-
             return isinstance(other, AbstractDataSource.DatasetType)
 
     class StreamType(Enum):
         """
         Enumeration class that defines constants for the different types
-        of data streams.
+        of data streams. AbstractDataSource.StreamType should be
+        subclassed to define stream types for a particular data source.
 
         Attributes:
         ----------
