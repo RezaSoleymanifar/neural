@@ -44,7 +44,6 @@ Notes:
     contain name 'KEY_WORD' and create a boolean mask for them in
     feature shema.
 """
-
 from enum import Enum
 from neural.common.constants import CALENDAR
 
@@ -62,14 +61,15 @@ class CalendarType(Enum):
             times. Start and end dates are any type that can be handle
             by to_datetime() method of pandas. The dataframe will have
             output similar to:
-                                start                       end
-        2022-01-03  2022-01-03 00:00:00+00:00   2022-01-04
-        00:00:00+00:00 2022-01-04  2022-01-04 00:00:00+00:00
-        2022-01-05 00:00:00+00:00 2022-01-05  2022-01-05 00:00:00+00:00
-        2022-01-06 00:00:00+00:00 2022-01-06  2022-01-06 00:00:00+00:00
-        2022-01-07 00:00:00+00:00 2022-01-07  2022-01-07 00:00:00+00:00
-        2022-01-08 00:00:00+00:00 2022-01-10  2022-01-10 00:00:00+00:00
-        2022-01-11 00:00:00+00:00
+
+            >>> schedule(start_date, end_date)
+                        start                       end
+            2022-01-03  2022-01-03 00:00:00+00:00   2022-01-04 00:00:00+00:00
+            2022-01-04  2022-01-04 00:00:00+00:00   2022-01-05 00:00:00+00:00
+            2022-01-05  2022-01-05 00:00:00+00:00   2022-01-06 00:00:00+00:00
+            2022-01-06  2022-01-06 00:00:00+00:00   2022-01-07 00:00:00+00:00
+            2022-01-07  2022-01-07 00:00:00+00:00   2022-01-08 00:00:00+00:00
+            2022-01-10  2022-01-10 00:00:00+00:00   2022-01-11 00:00:00+00:00
     Notes:
     ----------
     If an asset does not fall under these calendar categories it can be

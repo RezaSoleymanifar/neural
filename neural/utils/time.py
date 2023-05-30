@@ -73,9 +73,9 @@ class AbstractCalendar(ABC):
 
 class Calendar:
     """
-    This is a class for creating trading calendars for different
-    exchanges. The default trading calendars are based on
-    pandas_market_calendars. More information can be found here:
+    This is a class for creating trading calendars for different exchanges. The
+    default trading calendars are based on pandas_market_calendars. More
+    information can be found here:
     https://pandas-market-calendars.readthedocs.io/en/latest/usage.html.
 
     Attributes:
