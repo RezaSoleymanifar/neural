@@ -6,27 +6,35 @@ This module contains constants for the neural package.
 Constants:
 ----------
     API_KEY (str): 
-        The default API key for the client API.
+        The default API key for the client API. Tries to load from
+        environment variable API_KEY. If not found, then API_KEY is set
+        to None.
     API_SECRET (str):
-        The default API secret for the client API.
+        The default API secret for the client API. Tries to load from
+        environment variable API_SECRET. If not found, then API_SECRET
+        is set to None.
     CALENDAR (Calendar):
-        The calendar to use for all time related computations.
+        if not set, the default calendar from neural.utils.time will be
+        used. If set, the calendar will be used for all time related
+        computations.
     LOG_PATH (str):
-        The path to the log file. If None, then no log file will be
-        created.
+        if not set no log files will be created. If set, the log files
+        will be created at specified path.
     MAX_LOG_SIZE (int):
-        The maximum size of the log file in bytes. If the log file
-        exceeds this size, then it will be truncated.
+        maximum size of log file in bytes. If the size of log file
+        exceeds this value, a backup will be created.
     LOG_BACKUP_COUNT (int):
         The number of backup log files to keep. If the log file exceeds
         MAX_LOG_SIZE, then it will be truncated and renamed to
-        <LOG_PATH>.1. If <LOG_PATH>.1 exists, then it will be renamed
-        to <LOG_PATH>.2, and so on. If LOG_BACKUP_COUNT is 0, then no
+        <LOG_PATH>.1. If <LOG_PATH>.1 exists, then it will be renamed to
+        <LOG_PATH>.2, and so on. If LOG_BACKUP_COUNT is 0, then no
         backup log files will be kept.
     LOG_LEVEL (int):
         The logging level for the logger. The logger will log messages
         with a level greater than or equal to LOG_LEVEL. The available
         logging levels are: DEBUG, INFO, WARNING, ERROR, and CRITICAL.
+        lower level = more messages, i.e. messages at lower levels are filtered out.
+CRITICAL > ERROR > WARNING > INFO > DEBUG > NOTSET
     ALPACA_ACCEPTED_DOWNLOAD_RESOLUTIONS (set):
         The accepted download resolutions for Alpaca API.
     HDF5_DEFAULT_MAX_ROWS (int):
@@ -64,30 +72,20 @@ from neural.utils.time import Calendar
 
 # =====================================CONNECTION==============================
 
-# Load the API key and secret from environment variables
 API_KEY = os.environ.get('API_KEY', None)
 API_SECRET = os.environ.get('API_SECRET', None)
 
 # =====================================CALENDAR================================
-# if not set, the default calendar will be used. If set, the calendar
-# will be used for all time related computations.
+
 CALENDAR = Calendar
 
 # =====================================LOG=====================================
 
-# if not set no log files will be created. If set, the log files will be
-# created at specified path.
 LOG_PATH = None
-# maximum size of log file in bytes. If the size of log file exceeds
-# this value, a backup will be created.
 MAX_LOG_SIZE = 10_000_000  # 10 MB
-# maximum number of log files to keep. If the number of log files
-# exceeds this value, the oldest log file will be deleted.
 LOG_BACKUP_COUNT = 10
 
-# Set the logging level for the logger/file/console handler lower level
-# = more messages, i.e. messages at lower levels are filtered out.
-# CRITICAL > ERROR > WARNING > INFO > DEBUG > NOTSET
+# Set the logging level for the logger/file/console handler 
 
 LOG_LEVEL = logging.INFO
 
