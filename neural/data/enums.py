@@ -179,7 +179,8 @@ class FeatureType(Enum):
             The type of column for high price data of asset within an
             interval.
         ASSET_LOW_PRICE (str): 
-            The type of column for low price data.
+            The type of column for low price data of asset within an
+            interval.
         ASSET_CLOSE_PRICE (str): 
             The type of column for closing price data. by default
             training environments use this column as the price of asset
@@ -193,12 +194,15 @@ class FeatureType(Enum):
             between -1 and 1. 1 meaning very positive and -1 meaning
             very negative. However it is possible to have a different
             range of values, or multiple sentiment columns. 
-        EMBEDDING (str): The type of column for word embedding data.
-        This is a vector of floats that is the result of a word
-        embedding algorithm such as BERT, word2vec or GloVe aggregated
-        over a time interval. TEXT (str): The type of column for text
-        data. This is a string that is the result of concatenation of
-        all the text data in a time interval.
+        EMBEDDING (str): 
+            The type of column for word embedding data. This is a vector
+            of floats that is the result of a word embedding algorithm
+            such as BERT, word2vec or GloVe aggregated over a time
+            interval. 
+        TEXT (str): 
+            The type of column for text data. This is a string that is
+            the result of concatenation of all the text data in a time
+            interval.
     
     Notes:
     --------------
@@ -210,16 +214,15 @@ class FeatureType(Enum):
         filtering text columns for passing to large language models.
         This list can be extended to include other feature types that
         are not included here using the FeatureType.MY_FEATURE_TYPE =
-        'KEY_WORD' syntax. Feature schema will automatically look for
-        columns that contain name 'KEY_WORD' and create a boolean mask
-        for them in feature shema.
+        'MY_FEATURE_TYPE' syntax. Feature schema will automatically look for
+        columns that contain name 'MY_FEATURE_TYPE' and create a boolean mask
+        for those columns in feature schema.
     
     Examples:
     --------------
     >>> from neural.data.enums import FeatureType
-    >>> FeatureType.MY_FEATURE_TYPE = 'KEY_WORD'
+    >>> FeatureType.MY_FEATURE_TYPE = 'MY_FEATURE_TYPE'
     """
-
     ASSET_OPEN_PRICE = 'OPEN'
     ASSET_HIGH_PRICE = 'HIGH'
     ASSET_LOW_PRICE = 'LOW'
@@ -232,7 +235,6 @@ class FeatureType(Enum):
 
 
 class AssetType(str, Enum):
-
     """
     An enum class representing different categories of financial
     instruments amenable to high frequency trading. This enum is used to
