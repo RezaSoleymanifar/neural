@@ -387,18 +387,20 @@ class AbstractDataSource(ABC):
             types for the data source. This can include types such as stock
             prices, weather data, social media data, etc. Dataset types are
             used to organize the types of datasets that are available for
-            training.
+            training. Since these types are source dependent, they are defined
+            in the data source class.
 
         StreamType : Enum
             Enumeration class that defines the available stream types for the
-            data source. This can include types such as tick data, volume data,
+            data source. This can include types such as price data, volume data,
             order book data, tweets etc. Stream types are used to stream live
             data for high frequency trading. Usually an algorithm is trained
-            usinsg a static data and it's dataset metadata is mappped to a
-            stream type for streaming and aggregating the type of data that was
-            used to train the agent on. Any dataset type should logically have
-            a corresponding stream type, otherwise trained agent will not be
-            deployable in a live trading environment.
+            usinsg a static historical dataset and it's dataset metadata is
+            mappped to a stream type for streaming and aggregating the type of
+            data that was used to train the agent on. Any dataset type should
+            logically have a corresponding stream type, otherwise agent
+            will not be deployable in a live trading environment, if trained
+            on that dataset type.
     
     Methods:
     -----------
