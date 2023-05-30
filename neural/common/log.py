@@ -6,27 +6,34 @@ contains a logger named 'neural' that can be used to log messages to a
 file and/or console. The logger can be configured by setting the
 following constants in neural/common/constants.py:
 
-    LOG_PATH: The path to the log file. If None, then no log file will
-    be created.
+    LOG_PATH (str):
+        if not set no log files will be created. If set, the log files
+        will be created at specified path.
+    MAX_LOG_SIZE (int):
+        maximum size of log file in bytes. If the size of log file
+        exceeds this value, a backup will be created.
+    LOG_BACKUP_COUNT (int):
+        The number of backup log files to keep. If the log file exceeds
+        MAX_LOG_SIZE, then it will be truncated and renamed to
+        <LOG_PATH>.1. If <LOG_PATH>.1 exists, then it will be renamed to
+        <LOG_PATH>.2, and so on. If LOG_BACKUP_COUNT is 0, then no
+        backup log files will be kept.
+    LOG_LEVEL (int):
+        The logging level for the logger. The logger will log messages
+        with a level greater than or equal to LOG_LEVEL. The available
+        logging levels are: DEBUG, INFO, WARNING, ERROR, and CRITICAL.
+        lower level means more messages, i.e. messages for lower levels
+        that selected level are filtered out. CRITICAL > ERROR > WARNING
+        > INFO > DEBUG > NOTSET
 
-    MAX_LOG_SIZE: The maximum size of the log file in bytes. If the log
-    file exceeds this size, then it will be truncated.
-
-    LOG_BACKUP_COUNT: The number of backup log files to keep. If the
-    log file exceeds MAX_LOG_SIZE, then it will be truncated and
-    renamed to <LOG_PATH>.1. If <LOG_PATH>.1 exists, then it will be
-    renamed to <LOG_PATH>.2, and so on. If LOG_BACKUP_COUNT is 0, then
-    no backup log files will be kept.
-
-    LOG_LEVEL: The logging level for the logger. The logger will log
-    messages with a level greater than or equal to LOG_LEVEL. The
-    available logging levels are: DEBUG, INFO, WARNING, ERROR, and
-    CRITICAL.
+Create a rotating file handler with the specified file name, maximum
+size, and backup count. If LOG_PATH is None, then set the file handler
+to a NullHandler, which will not log any messages to a file. 
 
 Example:
 ---------
     >>> from neural.common.log import logger
-
+    >>> from 
     >>> logger.debug('This is a debug message.')
     >>> logger.info('This is an info message.')
     >>> logger.warning('This is a warning message.')
@@ -48,10 +55,6 @@ logger = logging.getLogger('neural')
 logger.setLevel(LOG_LEVEL)
 
 # =========================file/console handler=============================
-
-# Create a rotating file handler with the specified file name, maximum size,
-# and backup count. If LOG_PATH is None, then set the file handler to a
-# NullHandler, which will not log any messages to a file.
 
 if LOG_PATH is not None:
     file_handler = RotatingFileHandler(filename=LOG_PATH,
