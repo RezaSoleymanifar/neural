@@ -5,7 +5,7 @@ Contains enums for different types of data and assets. These enums are
 used to create a schema for datasets and streams. The schema is a
 dictionary that contains boolean masks for different types of data and
 assets. The schema is used to filter data and assets for training
-environments. The schema is also used to create a feature vector for
+environments. The schema is also used to create feature vectors for
 each asset.
 
 Classes:
