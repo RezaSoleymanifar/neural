@@ -92,7 +92,7 @@ def from_hdf5(
     all datasets in the file will be loaded. If dataset_name is
     specified, only the dataset with the specified name will be loaded.
     If all datasets are loaded, the datasets will be returned in a list
-    and the metadata will be joined. If only one dataset is loaded, the 
+    and the metadata will be joined. If only one dataset is loaded, the
     dataset will be returned as a list and the metadata will be returned
     as a single object.
 
@@ -114,8 +114,8 @@ def from_hdf5(
     ---------
         Assume x, y are metadata objects corresponding to two datasets
         in the hdf5 file. Then the loaded metadata will be x | y and the
-        loaded datasets will be [dataset_x, dataset_y].
-        More on joining metadata objects: neural/data/base.py
+        loaded datasets will be [dataset_x, dataset_y]. More on joining
+        metadata objects: neural/data/base.py
     """
 
     validate_path(file_path=file_path)
@@ -132,6 +132,7 @@ def from_hdf5(
     dataset_list = list()
     dataset_metadata_list = list()
 
+    sorted_datasets = sorted(h5f, key=lambda dataset: hdf5_file[dataset].id.get_offset())
     for dataset_name in hdf5_file:
 
         dataset_metadata, dataset = extract_hdf5_dataset(
