@@ -92,15 +92,18 @@ class CalendarType(Enum):
 
     Examples:
     ----------
-    Option 1: use default calendar and pandas_market_calendars >>>
-    CalendarType.MY_CALENDAR_TYPE = 'VALID_PANDAS_CALENDAR'
+    Option 1: use default calendar and pandas_market_calendars:
+    
+    >>> CalendarType.MY_CALENDAR_TYPE = 'VALID_PANDAS_CALENDAR'
 
-    Option 2: use custom calendar that is not supported by
-    pandas_market_calendars >>> from neural.data.enums import
-    CalendarType >>> CalendarType.MY_CALENDAR_TYPE = 'MY_CALENDAR' >>>
-    from neural.common.constants import CALENDAR >>> CALENDAR =
-    CustomCalendarClass >>>
-    CalendarType.MY_CALENDAR_TYPE.schedule(start_date, end_date)
+    Option 2: use custom calendar and custom calendar type that is not
+    supported by pandas_market_calendars:
+    
+    >>> from neural.data.enums import CalendarType 
+    >>> from neural.common.constants import CALENDAR 
+    >>> CalendarType.MY_CALENDAR_TYPE = 'MY_CALENDAR' 
+    >>> CALENDAR = CustomCalendarClass 
+    >>> CalendarType.MY_CALENDAR_TYPE.schedule(start_date, end_date)
     """
 
     TWENTY_FOUR_SEVEN = '24/7'
@@ -160,7 +163,7 @@ class FeatureType(Enum):
     commpute a derivative feature such as MACD or RSI financial
     indicators. Downloaders use the value of feature enums as a filter
     to generate boolean mask for corresponding features. This means that
-    dowlnloaders look for columns with name equal to the value of the
+    downloaders look for columns with name equal to the value of the
     enum, for example 'OPEN' corresponding to ASSET_OPEN_PRICE enum and
     then return a boolean mask that indicates the location of any column
     names in the dataset/stream that matches the name 'OPEN'. Column
