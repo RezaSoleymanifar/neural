@@ -52,7 +52,24 @@ from neural.common.constants import CALENDAR
 class CalendarType(Enum):
 
     """
+    An enum object that standardizes different types of trading
+    calendars.
 
+    Properties:
+    ------------
+        schedule (Callable[[Any, Any], pd.DataFrame]):
+            A function that returns a dataframe with trading dates and
+            times. Start and end dates are any type that can be handle
+            by to_datetime() method of pandas. The dataframe will have
+            output similar to:
+                                start                       end
+        2022-01-03  2022-01-03 00:00:00+00:00   2022-01-04
+        00:00:00+00:00 2022-01-04  2022-01-04 00:00:00+00:00
+        2022-01-05 00:00:00+00:00 2022-01-05  2022-01-05 00:00:00+00:00
+        2022-01-06 00:00:00+00:00 2022-01-06  2022-01-06 00:00:00+00:00
+        2022-01-07 00:00:00+00:00 2022-01-07  2022-01-07 00:00:00+00:00
+        2022-01-08 00:00:00+00:00 2022-01-10  2022-01-10 00:00:00+00:00
+        2022-01-11 00:00:00+00:00
     Notes:
     ----------
     If an asset does not fall under these calendar categories it can be
@@ -71,16 +88,15 @@ class CalendarType(Enum):
 
     Examples:
     ----------
-    Option 1: use default calendar and pandas_market_calendars
-    >>> CalendarType.MY_CALENDAR_TYPE = 'VALID_PANDAS_CALENDAR'
+    Option 1: use default calendar and pandas_market_calendars >>>
+    CalendarType.MY_CALENDAR_TYPE = 'VALID_PANDAS_CALENDAR'
 
     Option 2: use custom calendar that is not supported by
-    pandas_market_calendars
-    >>> from neural.data.enums import CalendarType
-    >>> CalendarType.MY_CALENDAR_TYPE = 'MY_CALENDAR'
-    >>> from neural.common.constants import CALENDAR
-    >>> CALENDAR = CustomCalendarClass
-    >>> CalendarType.MY_CALENDAR_TYPE.schedule(start_date, end_date)
+    pandas_market_calendars >>> from neural.data.enums import
+    CalendarType >>> CalendarType.MY_CALENDAR_TYPE = 'MY_CALENDAR' >>>
+    from neural.common.constants import CALENDAR >>> CALENDAR =
+    CustomCalendarClass >>>
+    CalendarType.MY_CALENDAR_TYPE.schedule(start_date, end_date)
     """
 
     TWENTY_FOUR_SEVEN = '24/7'

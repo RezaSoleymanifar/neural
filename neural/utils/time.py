@@ -73,7 +73,10 @@ class AbstractCalendar(ABC):
 
 class Calendar:
     """
-    A class representing a trading calendar for different asset classes.
+    This is a class for creating trading calendars for different
+    exchanges. The default trading calendars are based on
+    pandas_market_calendars. More information can be found here:
+    https://pandas-market-calendars.readthedocs.io/en/latest/usage.html.
 
     Attributes:
     ---------
@@ -82,8 +85,7 @@ class Calendar:
 
     Methods:
     ---------
-        schedule(calendar_type, start_date, end_date) ->
-        pd.DataFrame:
+        schedule(calendar_type, start_date, end_date) -> pd.DataFrame:
             Returns a schedule dataframe with trading dates and times.
 
     Example:
@@ -100,12 +102,12 @@ class Calendar:
 
         >>> schedule
                     start                       end
-        2022-01-03	2022-01-03 00:00:00+00:00	2022-01-04 00:00:00+00:00
-        2022-01-04	2022-01-04 00:00:00+00:00	2022-01-05 00:00:00+00:00
-        2022-01-05	2022-01-05 00:00:00+00:00	2022-01-06 00:00:00+00:00
-        2022-01-06	2022-01-06 00:00:00+00:00	2022-01-07 00:00:00+00:00
-        2022-01-07	2022-01-07 00:00:00+00:00	2022-01-08 00:00:00+00:00
-        2022-01-10	2022-01-10 00:00:00+00:00	2022-01-11 00:00:00+00:00
+        2022-01-03  2022-01-03 00:00:00+00:00   2022-01-04 00:00:00+00:00
+        2022-01-04  2022-01-04 00:00:00+00:00   2022-01-05 00:00:00+00:00
+        2022-01-05  2022-01-05 00:00:00+00:00   2022-01-06 00:00:00+00:00
+        2022-01-06  2022-01-06 00:00:00+00:00   2022-01-07 00:00:00+00:00
+        2022-01-07  2022-01-07 00:00:00+00:00   2022-01-08 00:00:00+00:00
+        2022-01-10  2022-01-10 00:00:00+00:00   2022-01-11 00:00:00+00:00
 
     Option 2, using custom calendar:
 
