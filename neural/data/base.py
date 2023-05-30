@@ -109,6 +109,8 @@ class AlpacaAsset(AbstractAsset):
     https://alpaca.markets/. This can be a stock, or cryptocurrency.
     This class standardizes the representation of assets in Alpaca API.
     Natively encodes the mechanics for opening and closing positions.
+    When creating nonmarginable assets, maintenance_margin, shortable,
+    and easy_to_borrow attributes are set to None by default.
 
     Attributes:
     ----------
@@ -243,6 +245,8 @@ class AlpacaAsset(AbstractAsset):
             Investigate why Alpaca API does not follow FINRA 150% margin
             requirement for short positions. This still works since
             Alpaca requires 50% initial margin for short positions.
+            Reducing this to 50% can unlock more leverage for short
+            positions.
         """
         if not self.marginable:
             return 1
@@ -272,8 +276,8 @@ class AlpacaAsset(AbstractAsset):
         change given price change and position change. Thus taking max
         of default maintenace margin and maintenance margin attribute
         ensures that the most conservative value is used for calculating
-        the maintenance. Because Alpaca API checks both initial and
-        maintenance margin at the end of day, we set the maintenance
+        the maintenance margin. Because Alpaca API checks both initial
+        and maintenance margin at the end of day, we set the maintenance
         margin to be the maximum of the two. This is not a common
         behavior since typically initial margin is used for opening
         positions and maintenance margin is used for maintaining
@@ -298,11 +302,13 @@ class AlpacaAsset(AbstractAsset):
             | S   | SP < $5.0 | Max $2.50/S or 100% |
             | S   | SP >= $5.0| Max $5.00/S or 30% |
 
-            where SP is the stock price and S is the short position. L
-            and S are long and short positions respectively. EOD MV is
-            the end of day market value of the position.
+            where SP is the stock price and ETF is the exchange traded
+            fund. L and S are long and short positions respectively. EOD
+            MV is the end of day market value of the position.
 
-            TODO: Add support for 2x and 3x ETFs.
+            TODO: Add support for 2x and 3x ETFs. Currently there is no
+            way in API to distinguish between ETFs and stocks. This
+            
             """
 
             if not self.marginable:
