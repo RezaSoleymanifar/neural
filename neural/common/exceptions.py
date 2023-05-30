@@ -17,44 +17,60 @@ Exceptions:
 -----------
     CorruptDataError: 
         Raised when data is found to be corrupt or inconsistent.
+        Typically used to match dataset metadata with actual data.
     IncompatibleWrapperError: 
-        Raised when a wrapper is found to be incompatible with other 
-        enclosed wrappers.
+        Raised when a wrapper is found to be incompatible with other
+        enclosed wrappers. Can be used to enforce proper ordering of
+        wrappers.
     TradeConstraintViolationError:
         Raised when certain trade constraints or rules are violated.
+        This can include a variety of constraints, pattern day trading
+        minimum violation, receiving margin calls, etc.
 """
 class CorruptDataError(Exception):
     """
-    Custom exception for handling corrupt data errors.
-    Raised when data is found to be corrupt or inconsistent.
+    Custom exception for handling corrupt data errors. Raised when data
+    is found to be corrupt or inconsistent. Typically used to match
+    dataset metadata with actual data.
     """
 
-    def __init__(self, message):
+    def __init__(self, message) -> None:
         """
         Initialize the CorruptDataError with an error message.
+
+        Args:
+        -----
+            message (str): 
+                A string describing the corrupt data error.
         """
 
         self.message = message
         super().__init__(self.message)
 
+        return None
 
 class IncompatibleWrapperError(Exception):
     """
-    Custom exception for handling incompatible wrapper errors.
-    Raised when a wrapper is found to be incompatible with other enclosed wrappers.
+    Custom exception for handling incompatible wrapper errors. Raised
+    when a wrapper is found to be incompatible with other enclosed
+    wrappers. Used to enforce proper ordering of wrappers.
     """
 
-    def __init__(self, message):
+    def __init__(self, message) -> None:
         """
         Initialize the IncompatibleWrapperError with an error message.
 
         Args:
         
-            message (str): A string describing the incompatible wrapper error.
+            message (str): 
+            A string describing the incompatible wrapper
+            error.
         """
 
         self.message = message
         super().__init__(self.message)
+
+        return None
 
 
 class TradeConstraintViolationError(Exception):
@@ -65,11 +81,13 @@ class TradeConstraintViolationError(Exception):
 
     def __init__(self, message):
         """
-        Initialize the TradeConstraintViolationError with an error message.
+        Initialize the TradeConstraintViolationError with an error
+        message.
 
         Args:
         -----
-            message (str): A string describing the trade constraint violation error.
+            message (str): A string describing the trade constraint
+            violation error.
         """
         self.message = message
         super().__init__(self.message)
