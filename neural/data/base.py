@@ -465,11 +465,16 @@ class AbstractDataMetaData:
     
     Notes:
     ------
-        The order of assets of price mask boolean values does not necessarilty
-        matche the order of assets in the data schema. When joining moultiple
-        datasets (each on HDF5) one by one. The assets in each dataset's data
-        schema may or may not have the FeatureType.ASSET_CLOSE_PRICE. If they
-        have all False values for this feature type, 
+        The order of assets of price mask boolean values does not necessarily
+        matche the order of assets in the data schema. The order of asstes in
+        data schema is determined by the order of appearance of unique assets
+        in the data schema. When joining moultiple datasets (each on HDF5) one
+        by one. The assets in each dataset's data schema may or may not have
+        the FeatureType.ASSET_CLOSE_PRICE. If they have all False values for
+        this feature type, then its price data should be joined before joining
+        any other dataset that has price data for different assets. This
+        guarantees that the order of assets in the price mask matches the order
+        of assets in the data schema.
     """
     data_schema: Dict[AbstractDataSource.DatasetType:Tuple[AbstractAsset]] | Dict[
         AbstractDataSource.StreamType:Tuple[AbstractAsset]]
