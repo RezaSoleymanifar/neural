@@ -539,18 +539,18 @@ class AbstractDataSource(ABC):
 
         Attributes:
         ----------
-            data_source:
+            data_source (AbstractDataSource):
                 A property that returns a pointer to the data source
                 class in the outer scope.
         Methods:
         --------
-            __eq__(self, other):    
+            __eq__(self, other) -> bool:    
                 Convenience method to check if another object is a
                 stream type.
         """
 
         @property
-        def data_source(self):
+        def data_source(self) -> AbstractDataSource:
             """
             Returns a pointer to the data source class in the outer
             scope.
@@ -566,7 +566,7 @@ class AbstractDataSource(ABC):
 
             return data_source
 
-        def __eq__(self, other):
+        def __eq__(self, other) -> bool:
             """
             Convenience method to check if another object is a stream
             type.
@@ -588,34 +588,34 @@ class AbstractDataSource(ABC):
     @classmethod
     def stream(cls, dataset_type: DatasetType) -> StreamType:
         """
-        Returns a StreamType enum member corresponding to the given
-        DatasetType enum member. If a different behavior is intended
-        subclasses can override this method to provide custom mapping
-        between dataset and stream types.
+        Returns a StreamType enum member corresponding to the given DatasetType
+        enum member. If a different behavior is intended subclasses can
+        override this method to provide custom mapping between dataset and
+        stream types.
 
         Args:
         ---------
             dataset_type (DatasetType): 
-                A member of the DatasetType enum that represents the
-                type of dataset.
+                A member of the DatasetType enum that represents the type of
+                dataset.
 
         Returns:
         --------
             StreamType: 
-                A member of the StreamType enum that corresponds to the
-                given dataset_type.
+                A member of the StreamType enum that corresponds to the given
+                dataset_type.
 
         Raises: 
         -------
-            ValueError: If dataset_type is not a valid member of the
-            DatasetType enum, or if there is no corresponding member of
-            the StreamType enum.
+            ValueError: 
+                If dataset_type is not a valid member of the DatasetType enum,
+                or if there is no corresponding member of the StreamType enum.
 
         Notes:
         ------
-            The other direction of mapping from stream to dataset type
-            is not valid because there can be multiple dataset types
-            that can be mapped to the same stream type.
+            The other direction of mapping from stream to dataset type is not
+            valid because there can be multiple dataset types that can be
+            mapped to the same stream type.
         """
 
         stream_map = {
