@@ -125,10 +125,18 @@ class AlpacaAsset(AbstractAsset):
         marginable: bool
             A boolean indicating whether the asset is a marginable
             asset. Marginable assets can be used as collateral for
-            mar
+            margin trading. Margin trading is a process where the
+            brokerage lends money to the trader to buy more assets than
+            the trader can afford. More info here:
+            https://www.investopedia.com/terms/m/margin.asp.
         shortable: bool
-            A boolean indicating whether the asset can be sold short
-            (i.e., sold before buying to profit from a price decrease).
+            A boolean indicating whether the asset can be sold short.
+            When asset is sold short you sell the asset when you do not
+            own it. This way an asset debt is recorded in your account.
+            You can then buy the asset at a lower price and return it to
+            the brokerage. This form of trading allows making profit in
+            a bear market. More info here:
+            https://www.investopedia.com/terms/s/shortselling.asp.
         easy_to_borrow: bool
             A boolean indicating whether the asset can be borrowed
             easily. Alpaca API has restrictive rules for hard to borrow
@@ -136,11 +144,16 @@ class AlpacaAsset(AbstractAsset):
         maintenance_margin: float | None
             A float representing the maintenance margin of the asset.
             This means that maintenace_margin * position_value should be
-            available in marginable equity. Maintenance margin is
-            cumulative for all assets and needs to be satisfied at all
-            times. Alpaca API in reality enforces this at the end of day
-            or when it is violated by a greate amount. We enforce this
-            at all times in a conservative manner.
+            available in marginable equity at all times. In practice the
+            gross maintenance margin for entire portfolio is used to
+            measure maintenance margin requirement. If maintenance
+            margin requirement is violated the brokerage will issue a
+            margin call. More info here:
+            https://www.investopedia.com/terms/m/maintenance_margin.asp.
+            
+            Alpaca API in
+            reality enforces this at the end of day or when it is
+            violated by a greate extent.
         
     Properties:
     -----------
