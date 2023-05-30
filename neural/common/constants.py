@@ -1,7 +1,17 @@
 """
 constants.py
 
-This module contains constants for the neural package.
+Description:
+------------
+    This is a module for storing constants used in the library.
+
+License:
+--------
+    MIT License. See LICENSE.md file.
+
+Author(s):
+-------
+    Reza Soleymanifar, Email: Reza@Soleymanifar.com
 
 Constants:
 ----------
@@ -65,7 +75,7 @@ Constants:
     DOW_JONES_SYMBOLS (list):
         A list of Dow Jones Industrial Average symbols.
     CRYPTO_SYMBOLS (list):
-        A list of crypto symbols with high market capitalization.
+        A custom list of crypto symbols.
     CUSTOM_SYMBOLS (list):
         A custom list of stock symbols.
 """
@@ -108,20 +118,15 @@ GLOBAL_DATA_TYPE = np.float32
 ALPACA_MINIMUM_SHORT_MARRGIN_EQUITY = 2_000
 PATTERN_DAY_TRADER_MINIMUM_EQUITY = 25_000
 
-# Dow Jones Industrial Average symbols
 DOW_JONES_SYMBOLS = [
     'AAPL', 'AXP', 'BA', 'CAT', 'CSCO', 'CVX', 'DD', 'DIS', 'GE', 'GS', 'HD',
     'IBM', 'INTC', 'JNJ', 'JPM', 'KO', 'MCD', 'MMM', 'MRK', 'MSFT', 'NKE',
     'PFE', 'PG', 'TRV', 'UNH', 'V', 'VZ', 'WMT'
 ]
-
-# a list of crypto symbols with high market capitalization
-CRYPTO_SYMBOLS = [
+CUSTOM_CRYPTO_SYMBOLS = [
     'ADA', 'BCH', 'BTC', 'DOGE', 'DOT', 'ETH', 'LINK', 'LTC', 'UNI', 'XRP'
 ]
-
-# a custom list of stock symbols
-CUSTOM_SYMBOLS = [
+CUSTOM_STOCK_SYMBOLS = [
     'AAPL', 'ABBV', 'ABT', 'ACN', 'ADBE', 'AMZN', 'BA', 'BAC', 'BLK', 'BMY',
     'CMCSA', 'COST', 'CRM', 'CSCO', 'CVX', 'DIS', 'FB', 'FIS', 'GOOGL', 'HD',
     'HON', 'IBM', 'INTC', 'JNJ', 'JPM', 'KO', 'LOW', 'MA', 'MAA', 'MDT', 'MRK',
