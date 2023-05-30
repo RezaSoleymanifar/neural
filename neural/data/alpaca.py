@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from datetime import datetime
 from typing import List, Optional
 import os
@@ -11,11 +12,325 @@ from neural.common.constants import (
     ALPACA_ACCEPTED_DOWNLOAD_RESOLUTIONS, GLOBAL_DATA_TYPE)
 from neural.data.base import (
     DatasetMetadata, AlpacaDataSource, CalendarType, AlpacaAsset)
+from neural.data.base import AbstractDataSource, AbstractAsset
 from neural.data.enums import AssetType
 from neural.utils.io import to_hdf5
 from neural.utils.base import (
     progress_bar, validate_path, RunningStatistics)
 from neural.utils.misc import to_timeframe
+
+
+class AlpacaDataSource(AbstractDataSource):
+    """
+    Represents Alpaca API as a data source. Provides standardized enums
+    for historical and live data from Alpaca API.
+    """
+
+    class DatasetType(AbstractDataSource.DatasetType):
+        """
+        Enumeration class that defines constants for the different types
+        of datasets.
+
+        Attributes
+        ----------
+        BAR : str
+            The type of dataset for aggregated trade stream data. Also
+            known as bars data.
+        TRADE : str
+            The type of dataset for aggregated trade stream data.
+        QUOTE : str
+            The type of dataset for aggregated quote stream.
+        ORDER_BOOK : str
+            The type of dataset for aggregated order book data.
+        """
+        BAR = 'BAR'
+        TRADE = 'TRADE'
+        QUOTE = 'QUOTE'
+        ORDER_BOOK = 'ORDER_BOOK'
+
+    class StreamType(AbstractDataSource.StreamType):
+        """
+        Enumeration class that defines constants for the different types
+        of data streams.
+
+        Attributes
+        ----------
+        QUOTE : str
+            The type of data stream for quotes.
+        TRADE : str
+            The type of data stream for trades.
+        ORDER_BOOK : str
+            The type of data stream for order book data.
+        """
+        BAR = 'BAR'
+        TRADE = 'TRADE'
+        QUOTE = 'QUOTE'
+
+
+@dataclass(frozen=True)
+class AlpacaAsset(AbstractAsset):
+    """
+    A dataclass representing a financial asset in Alpaca API:
+    https://alpaca.markets/. This can be a stock, or cryptocurrency.
+    This class standardizes the representation of assets in Alpaca API.
+    Natively encodes the mechanics for opening and closing positions.
+    When creating nonmarginable assets, maintenance_margin, shortable,
+    and easy_to_borrow attributes are set to None by default.
+
+    Attributes:
+    ----------
+        symbol: str
+            A string representing the symbol or ticker of the asset.
+        asset_type: AssetType
+            An instance of the `AssetType` enum class representing the
+            type of asset.
+        fractionable: bool
+            A boolean indicating whether the asset can be traded in
+            fractional shares. This is useful for trading for example
+            cryptocurrencies or stocks that are expensive to buy as a
+            whole share.
+        marginable: bool
+            A boolean indicating whether the asset is a marginable
+            asset. Marginable assets can be used as collateral for
+            margin trading. Margin trading is a process where the
+            brokerage lends money to the trader to buy more assets than
+            the trader can afford. More info here:
+            https://www.investopedia.com/terms/m/margin.asp.
+        shortable: bool
+            A boolean indicating whether the asset can be sold short.
+            When asset is sold short you sell the asset when you do not
+            own it. This way an asset debt is recorded in your account.
+            You can then buy the asset at a lower price and return it to
+            the brokerage. This form of trading allows making profit in
+            a bear market. More info here:
+            https://www.investopedia.com/terms/s/shortselling.asp.
+        easy_to_borrow: bool
+            A boolean indicating whether the asset can be borrowed
+            easily. Alpaca API has restrictive rules for hard to borrow
+            assets and in general HTB assets cannot be shorted.
+        maintenance_margin: float | None
+            A float representing the maintenance margin of the asset.
+            This means that maintenace_margin * position_value should be
+            available in marginable equity at all times. In practice the
+            gross maintenance margin for entire portfolio is used to
+            measure maintenance margin requirement. If maintenance
+            margin requirement is violated the brokerage will issue a
+            margin call. More info here:
+            https://www.investopedia.com/terms/m/maintenance_margin.asp.
+            Alpaca API in reality enforces this at the end of day or
+            when it is violated by a greate extent.
+
+    Properties:
+    -----------
+        shortable: bool | None
+            A boolean indicating whether the asset can be sold short
+            (i.e., sold before buying to profit from a price decrease).
+        easy_to_borrow: bool | None
+            A boolean indicating whether the asset can be borrowed
+            easily.
+
+    Methods:
+    --------
+        get_initial_margin(self, short: bool = False) -> float | None
+            A float representing the initial margin of the asset.
+        get_maintenance_margin(self, price: float, short: bool = False)
+            -> float | None A float representing the maintenance margin
+            of the asset.
+    Notes:
+    ------
+        The easy_to_borrow, intial_margin, and maintenance_margin
+        properties are only valid for assets that are marginable. For
+        example, cryptocurrencies are not marginable and therefore do
+        not need to set these attributes. For consistency for
+        nonmarginable assets default boolean valued attributes are
+        returned as False and maintenance margin and initial margin are
+        returned as 0 and 1 respectively. nonmarginable assets can only
+        be purchased using cash and we assume they cannot be shorted.
+        There are rare cases where non-marginable assets can be shorted,
+        but this is not supported by this library due to the complexity
+        of the process. A mix of marginable and non-marginable assets in
+        portoflio is not supporeted either due to the same level of
+        irregularities.
+    """
+
+    marginable: bool
+    maintenance_margin: Optional[float] = None
+    shortable: Optional[bool] = None
+    easy_to_borrow: Optional[bool] = None
+
+    @property
+    def shortable(self) -> bool | None:
+        """
+        A boolean indicating whether the asset can be sold short (i.e.,
+        sold before buying to profit from a price decrease). In Alpaca
+        API shorted assets cannot have faractional quantities. Also if
+        asset is not marginable it cannot be shorted. There are rare
+        cases where non-marginable assets can be shorted, but this is
+        not supported by this library due to the complexity of the
+        process.
+
+        Returns:
+        --------
+            bool:
+                A boolean indicating whether the asset can be sold
+                short.
+        """
+        return self.shortable if self.marginable else False
+
+    @property
+    def easy_to_borrow(self) -> bool | None:
+        """
+        A boolean indicating whether the asset can be borrowed easily.
+        Alpaca API has restrictive rules for hard to borrow assets and
+        in general HTB assets cannot be shorted. This library only
+        allows easy to borrow assets to be shorted.
+
+        Returns:
+        --------
+            bool:
+                A boolean indicating whether the asset can be borrowed
+                easily.
+        """
+        return self.easy_to_borrow if self.marginable else False
+
+    def get_initial_margin(self, short: bool = False) -> float | None:
+        """
+        A float representing the initial margin of the asset. 25% margin
+        for long positions and 150% margin for short positions is a
+        FINRA requirement:
+        https://www.finra.org/filing-reporting/regulation-t-filings.
+        Alpaca API has a 50% margin requirement for opening positions,
+        by default. Initial margin for nonmarginable assets is 1.0
+        namely entire value of trade needs to be available in cash.
+        Since nonmarginable assets cannot be margined this is an abuse
+        of terminalogy to provide a convenient interface for working
+        with marginable and onnmarginable assets in a consistent way.
+
+        Args:
+        -----
+            short (bool):
+                A boolean indicating whether the initial margin is for a
+                short position. By default False. If asset is
+                nonmarginable returns 1.0.
+        
+        Returns:
+        --------
+            float:
+                A float representing the initial margin of the asset.
+
+        TODO:
+        -----
+            Investigate why Alpaca API does not follow FINRA 150% margin
+            requirement for short positions. This still works since
+            Alpaca requires 50% initial margin for short positions.
+            Reducing this to 50% can unlock more leverage for short
+            positions.
+        """
+        if not self.marginable:
+            return 1
+        elif not short:
+            return 0.5
+        elif short:
+            return 1.5
+
+    def get_maintenance_margin(self,
+                               price: float,
+                               short: bool = False) -> float | None:
+        """
+        A float representing the maintenance margin of the asset. This
+        means that maintenace_margin * position_value should be
+        available in marginable equity. Maintenance margin is cumulative
+        for all assets and needs to be satisfied at all times. Alpaca
+        API in reality enforces this at the end of day or when it is
+        violated by a greate amount intraday. We enforce this at all
+        times in a conservative manner. Maintenance margin for
+        nonmarginable assets is 0. Since nonmarginable assets cannot be
+        margined this is an abuse of terminalogy to provide a convenient
+        interface for working with marginable and onnmarginable assets.
+        
+        Default maintenance marigin is the maintenance margin that
+        Alpaca API reports by default. maintenance margin attribute is
+        the value received from Alpaca API, however it is subject to
+        change given price change and position change. Thus taking max
+        of default maintenace margin and maintenance margin attribute
+        ensures that the most conservative value is used for calculating
+        the maintenance margin. Because Alpaca API checks both initial
+        and maintenance margin at the end of day, we set the maintenance
+        margin to be the maximum of the two. This is not a common
+        behavior since typically initial margin is used for opening
+        positions and maintenance margin is used for maintaining
+        positions. However Alpaca API enforces both at end of day. In
+        the end maximum of default margin, initial margin, and
+        maintenance margin is used for final calculation of the
+        maintenance margin.
+
+        Args:
+        -----
+            price (float):
+                A float representing the price of the asset.
+            short (bool):
+                A boolean indicating whether the maintenance margin is
+                for a short position. By default False. 
+        
+        Returns:
+        --------
+            float:
+                A float representing the maintenance margin of the
+                asset.
+        """
+
+        def default_maintenance_margin(price: float,
+                                       short: bool = False) -> float:
+            """
+            Link: https://alpaca.markets/docs/introduction/. The
+            maintenance margin is by default calculated based on the
+            following table:
+
+            | Pos | Cond      | Margin Req        |
+            | --- | --------- | ----------------- |
+            | L   | SP < $2.5 | 100% of EOD MV    |
+            | L   | SP >= $2.5| 30% of EOD MV     |
+            | L   | 2x ETF    | 100% of EOD MV    |
+            | L   | 3x ETF    | 100% of EOD MV    |
+            | S   | SP < $5.0 | Max $2.50/S or 100% |
+            | S   | SP >= $5.0| Max $5.00/S or 30% |
+
+            where SP is the stock price and ETF is the exchange traded
+            fund. L and S are long and short positions respectively. EOD
+            MV is the end of day market value of the position.
+
+            TODO: Add support for 2x and 3x ETFs. Currently there is no
+            way in API to distinguish between ETFs and stocks. This
+            means that 2x and 3x ETFs are treated as stocks.
+
+            Args:
+            -----
+                price (float):
+                    A float representing the price of the asset.
+                short (bool):
+                    A boolean indicating whether the maintenance margin
+                    is for a short position. By default False.
+            """
+
+            if not self.marginable:
+                return 0
+
+            elif not short:
+                if price >= 2.50:
+                    return 0.3
+                else:
+                    return 1.0
+
+            elif short:
+                if price < 5.00:
+                    return max(2.5 / price, 1.0)
+                elif price >= 5.00:
+                    return max(5.0 / price, 0.3)
+                
+        required_margin = max(self.maintenance_margin,
+                              default_maintenance_margin(price, short),
+                              self.get_initial_margin(short))
+        return required_margin
 
 
 
