@@ -162,14 +162,13 @@ class FeatureType(Enum):
     for feature engineering where a certain type of input is required to
     commpute a derivative feature such as MACD or RSI financial
     indicators. Downloaders use the value of feature enums as a filter
-    to generate boolean mask for corresponding features. This means that
-    downloaders look for columns with name equal to the value of the
+    to generate boolean mask for corresponding features. Downloaders
+    look for columns with name equal to the value of the FeatureType
     enum, for example 'OPEN' corresponding to ASSET_OPEN_PRICE enum and
     then return a boolean mask that indicates the location of any column
     names in the dataset/stream that matches the name 'OPEN'. Column
     names in Output of downloaders are guaranteed to be consistent with
-    this method to create valid boolean masks.
-
+    this method to create valid boolean masks for underlying features.
 
     Attributes:
     --------------
@@ -196,11 +195,10 @@ class FeatureType(Enum):
             range of values, or multiple sentiment columns. 
         EMBEDDING (str): The type of column for word embedding data.
         This is a vector of floats that is the result of a word
-        embedding algorithm such as BERT, word2vec or GloVe aggregated 
-        over a time interval. 
-        TEXT (str): The type of column for text data. This is a string
-        that is the result of concatenation of all the text data in a
-        time interval.
+        embedding algorithm such as BERT, word2vec or GloVe aggregated
+        over a time interval. TEXT (str): The type of column for text
+        data. This is a string that is the result of concatenation of
+        all the text data in a time interval.
     
     Notes:
     --------------
