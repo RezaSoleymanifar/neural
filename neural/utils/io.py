@@ -94,7 +94,21 @@ def from_hdf5(
     If all datasets are loaded, the datasets will be returned in a list
     and the metadata will be joined. If only one dataset is loaded, the
     dataset will be returned as a list and the metadata will be returned
-    as a single object.
+    as a single object. Order of joining datasets is chronological
+    namely the order in which they were added to the file. The oldest
+    dataset will be the first in the list and the newest dataset will be
+    the last in the list. Following chronological ordering of datasets
+    guarantees that the order of assets in the price mask matches the
+    order of assets in the data schema and loaded aggregate dataset is
+    valid for training:
+            - asset group 1:
+                - price data
+                - other data
+                - ...
+            - asset group 2:
+                - price data
+                - other data
+                - ...
 
     Args:
     -------
