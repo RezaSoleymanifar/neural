@@ -416,8 +416,7 @@ class AbstractDataMetaData:
         Returns a mask for the asset close price feature type. This price is
         used by market environments as the point of reference for placing
         orders. When a time interval is over and features are observed, the
-        closing price of the interval is used to place orders. The order of
-        price mask matches the order of symbols in the data schema.
+        closing price of the interval is used to place orders.
     valid: bool
         Ensures that all symbols have a price mask associated with them. This
         property can be violated during merging, since some feature types may
@@ -463,6 +462,14 @@ class AbstractDataMetaData:
         Joins feature schemas of two datasets or streams. The boolean masks are
         simply concatenated to indicate the features type locations in the
         joined dataset/stream.
+    
+    Notes:
+    ------
+        The order of assets of price mask boolean values does not necessarilty
+        matche the order of assets in the data schema. When joining moultiple
+        datasets (each on HDF5) one by one. The assets in each dataset's data
+        schema may or may not have the FeatureType.ASSET_CLOSE_PRICE. If they
+        have all False values for this feature type, 
     """
     data_schema: Dict[AbstractDataSource.DatasetType:Tuple[AbstractAsset]] | Dict[
         AbstractDataSource.StreamType:Tuple[AbstractAsset]]
