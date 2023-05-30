@@ -1,7 +1,18 @@
 """
 exceptions.py
 
-This module contains custom exceptions for the neural package.
+Description:
+------------
+    This is a module for storing constants used in the library.
+
+License:
+--------
+    MIT License. See LICENSE.md file.
+
+Author(s):
+-------
+    Reza Soleymanifar, Email: Reza@Soleymanifar.com
+
 Exceptions:
 -----------
     CorruptDataError: 
