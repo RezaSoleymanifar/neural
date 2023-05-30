@@ -384,7 +384,8 @@ class AbstractDataMetaData:
 
     Attributes:
     -----------
-    data_schema:
+    data_schema (Dict[AbstractDataSource.DatasetType:Tuple[AbstractAsset]] |
+    Dict[AbstractDataSource.StreamType:Tuple[AbstractAsset]]):
         A dictionary mapping data types to tuples of assets. example of data
         schema: {DatasetType.BAR: (AAPL, MSFT, GOOG), DatasetType.QUOTE: (MSFT,
         GOOG)} or {StreamType.BAR: (AAPL, MSFT, GOOG), StreamType.QUOTE: (MSFT,
@@ -474,7 +475,15 @@ class AbstractDataMetaData:
         this feature type, then its price data should be joined before joining
         any other dataset that has price data for different assets. This
         guarantees that the order of assets in the price mask matches the order
-        of assets in the data schema.
+        of assets in the data schema. As a rule of thumb, ensure datasets
+        have the following strcuture:
+            - asset group 1:
+                - price data
+                - other data
+            - asset group 2:
+                - price data
+                - other data
+            - ...
     """
     data_schema: Dict[AbstractDataSource.DatasetType:Tuple[AbstractAsset]] | Dict[
         AbstractDataSource.StreamType:Tuple[AbstractAsset]]
