@@ -385,17 +385,22 @@ class DataSchema:
         self.data_schema[data_type] = (assets, feature_schema)
 
     def __add__(self, other):
+        data_schema = self.data_schema.copy()
         for data_type in other.data_schema.keys():
             if data_type in self.data_schema:
                 # if assets have common values raise error:
                 if set(self.data_schema[data_type][0]).intersection(
                         set(other.data_schema[data_type][0])):
                     raise ValueError(
-                        f'Assets of data type {data_type} are not unique.')
-                self.data_schema[data_type][0] += other.data_schema[data_type][0]
-                self.data_schema[data_type][1] += other.data_schema[data_type][1]
-                
-
+                        f'Assets of data type {data_type} overlap '
+                        f'between {self.data_schema[data_type][0]} '
+                        f'and {other.data_schema[data_type][0]}.')
+                # if feature schema does not have same keys
+                data_schema[data_type][0] += other.data_schema[data_type][0]
+                data_schema[data_type][1] += other.data_schema[data_type][1]
+            else:
+                data_schema[data_type] = other.data_schema[data_type]
+        return data_schema
 
 
 class FeatureSchema:
