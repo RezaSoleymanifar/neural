@@ -716,6 +716,7 @@ class AbstractDataMetaData:
         joined_metadata = self.__class__(data_schema=data_schema,
                                          feature_schema=feature_schema,
                                          resolution=self.resolution,
+                                         calendar_type=self.calendar_type,
                                          **kwargs)
 
         return joined_metadata
