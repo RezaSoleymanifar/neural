@@ -369,32 +369,34 @@ class AbstractDataSource(ABC):
 
 class DataSchema:
     """
-    A class to represent a data schema. A data schema is an object that
-    maps data types to tuples of assets. Example of data schema:
-    {DatasetType.BAR: (AAPL, MSFT, GOOG), DatasetType.QUOTE: (MSFT,
-    GOOG)} or {StreamType.BAR: (AAPL, MSFT, GOOG), StreamType.QUOTE:
-    (MSFT, GOOG)}.
+    A class that represents a data schema. A data schema is internally a
+    dictionary that maps data types (dataset type or stream type) to
+    the corresponding assets and feature schema. The feature schema is
+    a dictionary that maps feature types to boolean masks. The boolean
+    masks indicate where the columns of the corresponding feature
+    types are located in the data. Lenght of boolean mask is equal to
+    the number columns in the data. Lenght of True values in the
+    boolean mask is equal to the number of assets in the data schema.
+
+    Example:
+    --------
+    >>> data_schema = DataSchema(
+    
     """
 
     def __init__(self, data_type: AbstractDataSource.DatasetType
                  | AbstractDataSource.StreamType, assets: List[AbstractAsset],
                  feature_schema: FeatureSchema) -> None:
-        self.data_schema = OrderedDict()
-        # check if all features schema masks have same length as
-        # len(assets)
-
-        if any(
-                len(mask.count(True)) != len(assets)
-                for mask in feature_schema.feature_schema.values()):
-            raise ValueError(
-                'Feature schema masks have different lengths than assets.')
 
         for mask in feature_schema.feature_schema.values():
             if len(mask.count(True)) != len(assets):
                 raise ValueError(
-                    f'Mask {mask} has different length than assets {assets}.')
-
-        self.data_schema[data_type] = (assets, feature_schema)
+                    f'Mask {mask} has different length than '
+                    f'number of assets: {len(assets)}.')
+            
+        self.data_schema = OrderedDict()
+        self.data_schema[data_type]['assets'] = assets
+        self.data_schema[data_type]['feature_schema'] = feature_schema
 
     def __add__(self, other):
         data_schema = self.data_schema.copy()
