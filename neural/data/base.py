@@ -378,10 +378,26 @@ class DataSchema:
     the number columns in the data. Lenght of True values in the
     boolean mask is equal to the number of assets in the data schema.
 
+    Notes:
+    ------
+        Data schemas can be added together to represent a monolithic
+        data schema that consists of smaller data schemas. This is
+        useful for have a unified interface for joined datasets or
+        streams that abstracts away the construction of data.
+    
+    Attributes:
+    -----------
+        data_schema
+        (Dict[AbstractDataSource.DatasetType:Tuple[AbstractAsset]]
+        
     Example:
     --------
     >>> data_schema = DataSchema(
-    
+    ...     DatasetType.BAR, (AAPL, MSFT, GOOG), feature_schema)
+    >>> data_schema.data_schema[DatasetType.BAR]['assets']
+    (AAPL, MSFT, GOOG)
+    >>> data_schema.data_schema[DatasetType.BAR]['feature_schema']
+    {FeatureType.ASSET_CLOSE_PRICE: [True, False, True, False, True, False]}
     """
 
     def __init__(self, data_type: AbstractDataSource.DatasetType
