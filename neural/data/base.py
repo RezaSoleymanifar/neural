@@ -380,6 +380,20 @@ class DataSchema:
                  | AbstractDataSource.StreamType, assets: List[AbstractAsset],
                  feature_schema: FeatureSchema) -> None:
         self.data_schema = OrderedDict()
+        # check if all features schema masks have same length as
+        # len(assets)
+
+        if any(
+                len(mask.count(True)) != len(assets)
+                for mask in feature_schema.feature_schema.values()):
+            raise ValueError(
+                'Feature schema masks have different lengths than assets.')
+
+        for mask in feature_schema.feature_schema.values():
+            if len(mask.count(True)) != len(assets):
+                raise ValueError(
+                    f'Mask {mask} has different length than assets {assets}.')
+
         self.data_schema[data_type] = (assets, feature_schema)
 
     def __add__(self, other):
@@ -448,6 +462,7 @@ class FeatureSchema:
         for feature_type in self.feature_schema.keys():
             merged_schema[feature_type] = self.feature_schema[
                 feature_type] + other.schema[feature_type]
+
         return merged_schema
 
     def create_feature_schema(
