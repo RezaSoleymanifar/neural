@@ -408,7 +408,7 @@ class DataSchema:
                  | AbstractDataSource.StreamType, assets: List[AbstractAsset],
                  feature_schema: FeatureSchema) -> None:
 
-        for mask in feature_schema.feature_schema.values():
+        for mask in feature_schema.schema.values():
             if len(mask.count(True)) != len(assets):
                 raise ValueError(f'Mask {mask} has different length than '
                                  f'number of assets: {len(assets)}.')
@@ -433,7 +433,7 @@ class DataSchema:
         else:
             raise ValueError(f'{data_type} is not a valid data type.')
 
-    def __add__(self, other):
+    def __add__(self, other) -> DataSchema:
         if other.data_type != self.data_type:
             raise ValueError('Data schemas do not have same data type.')
         for data_type in other.schema.keys():
@@ -449,8 +449,8 @@ class DataSchema:
                 self.schema[data_type]['feature_schema'] += other.schema[
                     data_type]['feature_schema']
             else:
-                self.data_schema[data_type] = other.data_schema[data_type]
-        return data_schema
+                self.schema[data_type] = other.schema[data_type]
+        return self
 
 
 class FeatureSchema:
@@ -459,16 +459,16 @@ class FeatureSchema:
     an object that maps feature types to boolean masks. The boolean
     masks indicate where the columns of the corresponding feature
     types are located in the data. Lenght of boolean mask is equal to
-    the number columns in the data.
+    the number columns in the data. Length of True values in the
+    boolean mask is equal to the number of assets in the data schema.
     """
 
     def __init__(self, dataframe: pd.DataFrame) -> None:
-        self.feature_schema = self.create_feature_schema(dataframe)
-
+        self.schema = self.create_feature_schema(dataframe)
         return None
 
     def __repr__(self) -> str:
-        return str(self.feature_schema)
+        return str(self.schema)
 
     def __add__(self, other):
         """
@@ -493,15 +493,13 @@ class FeatureSchema:
                 if the feature schemas of the two metadata objects are
                 not compatible.
         """
-        if set(self.feature_schema.keys()) != set(other.schema.keys()):
+        if set(self.schema.keys()) != set(other.schema.keys()):
             raise ValueError('Feature schemas do not have same feature types.')
 
-        merged_schema = dict()
-        for feature_type in self.feature_schema.keys():
-            merged_schema[feature_type] = self.feature_schema[
-                feature_type] + other.schema[feature_type]
+        for feature_type in self.schema.keys():
+            self[feature_type] += other.schema[feature_type]
 
-        return merged_schema
+        return self
 
     def create_feature_schema(
             self, dataframe: pd.DataFrame) -> Dict[FeatureType, List[bool]]:
