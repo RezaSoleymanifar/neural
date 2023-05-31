@@ -571,8 +571,8 @@ class AbstractDataMetaData:
     @property
     def schedule(self) -> Callable[[datetime, datetime], pd.DataFrame]:
         """
-        Returns a DataFrame representing the schedule of the dataset
-        according to its calendar type.
+        Returns a function that returns a DataFrame representing the
+        
 
         Returns:
         --------
