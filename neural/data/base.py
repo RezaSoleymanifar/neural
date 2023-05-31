@@ -734,7 +734,6 @@ class AbstractDataMetaData:
                 True if all assets have a price mask associated with
                 them, False otherwise.
         """
-
         return True if len(
             self.assets) == self.asset_prices_mask.count(True) else False
 
