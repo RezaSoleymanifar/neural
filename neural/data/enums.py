@@ -199,20 +199,26 @@ class FeatureType(Enum):
             The type of column for bid price data.
         ASSET_ASK_PRICE (str): 
             The type of column for ask price data.
-        SENTIMENT (str): 
+        ASSET_SENTIMENT (str): 
             The type of column for sentiment data. usualy a float
             between -1 and 1. 1 meaning very positive and -1 meaning
             very negative. However it is possible to have a different
             range of values, or multiple sentiment columns. 
-        EMBEDDING (str): 
+        ASSET_EMBEDDING (str): 
             The type of column for word embedding data. This is a vector
             of floats that is the result of a word embedding algorithm
             such as BERT, word2vec or GloVe aggregated over a time
             interval. 
-        TEXT (str): 
+        ASSET_TEXT (str): 
             The type of column for text data. This is a string that is
             the result of concatenation of all the text data in a time
             interval.
+        INDEX (str):
+            Financial index data. This is a column that contains the
+            value of a financial index such as S&P 500 or Dow Jones
+            Industrial Average. Can be used as a feature or training
+            agents.
+
     
     Notes:
     --------------
@@ -242,6 +248,7 @@ class FeatureType(Enum):
     ASSET_TEXT_EMBEDDING = 'EMBEDDING'
     ASSET_SENTIMENT_SCORE = 'SENTIMENT'
     ASSET_TEXT = 'TEXT'
+    FINANCIAL_INDEX = 'INDEX'
 
 
 class AssetType(str, Enum):

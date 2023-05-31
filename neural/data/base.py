@@ -715,7 +715,6 @@ class AbstractDataMetaData:
             n_columns += len(
                 self.data_schema[data_type]['feature_schema'].values()[0])
 
-        n_columns = len(self.feature_schema.values()[0])
         return n_columns
 
     @property
@@ -729,6 +728,7 @@ class AbstractDataMetaData:
             List[AbsractAsset]: 
                 a list of unique assets in the data schema.
         """
+        
         assets = reduce(lambda x, y: x + y, self.data_schema.values())
         assets = sorted(set(assets), key=assets.index)
         return assets
