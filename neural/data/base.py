@@ -721,7 +721,6 @@ class AbstractDataMetaData:
         for key in self.feature_schema.keys():
             merged_feature_schema[
                 key] = self.feature_schema[key] + other.data_schema[key]
-
         return merged_feature_schema
 
     def __or__(self, other: AbstractDataMetaData,
