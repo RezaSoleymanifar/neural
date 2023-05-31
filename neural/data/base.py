@@ -370,13 +370,13 @@ class AbstractDataSource(ABC):
 class DataSchema:
     """
     A class that represents a data schema. A data schema is internally a
-    dictionary that maps data types (dataset type or stream type) to
-    the corresponding assets and feature schema. The feature schema is
-    a dictionary that maps feature types to boolean masks. The boolean
-    masks indicate where the columns of the corresponding feature
-    types are located in the data. Lenght of boolean mask is equal to
-    the number columns in the data. Lenght of True values in the
-    boolean mask is equal to the number of assets in the data schema.
+    dictionary that maps data types (dataset type or stream type) to the
+    corresponding assets and feature schema. The feature schema is a
+    dictionary that maps feature types to boolean masks. The boolean
+    masks indicate where the columns of the corresponding feature types
+    are located in the data. Lenght of boolean mask is equal to the
+    number columns in the data. Lenght of True values in the boolean
+    mask is equal to the number of assets in the data schema.
 
     Notes:
     ------
@@ -387,16 +387,20 @@ class DataSchema:
     
     Attributes:
     -----------
-        data_schema
-        (Dict[AbstractDataSource.DatasetType:Tuple[AbstractAsset]]
-        
+        schema (Dict[AbstractDataSource.DatasetType:Dict[str,
+        List[bool] | List[AbstractAssets]]] |
+        Dict[AbstractDataSource.StreamType:Dict[str,
+        List[bool] | List[AbstractAssets]]]):
+            A dictionary that maps data types to the corresponding
+            assets and feature schema. The feature schema is a
+            dictionary that maps feature types to boolean masks.
     Example:
     --------
     >>> data_schema = DataSchema(
     ...     DatasetType.BAR, (AAPL, MSFT, GOOG), feature_schema)
-    >>> data_schema.data_schema[DatasetType.BAR]['assets']
+    >>> data_schema.schema[DatasetType.BAR]['assets']
     (AAPL, MSFT, GOOG)
-    >>> data_schema.data_schema[DatasetType.BAR]['feature_schema']
+    >>> data_schema.schema[DatasetType.BAR]['feature_schema']
     {FeatureType.ASSET_CLOSE_PRICE: [True, False, True, False, True, False]}
     """
 
@@ -406,30 +410,31 @@ class DataSchema:
 
         for mask in feature_schema.feature_schema.values():
             if len(mask.count(True)) != len(assets):
-                raise ValueError(
-                    f'Mask {mask} has different length than '
-                    f'number of assets: {len(assets)}.')
-            
-        self.data_schema = OrderedDict()
-        self.data_schema[data_type]['assets'] = assets
-        self.data_schema[data_type]['feature_schema'] = feature_schema
+                raise ValueError(f'Mask {mask} has different length than '
+                                 f'number of assets: {len(assets)}.')
+
+        self.schema = OrderedDict()
+        self.schema[data_type]['assets'] = assets
+        self.schema[data_type]['feature_schema'] = feature_schema
+        
 
     def __add__(self, other):
-        data_schema = self.data_schema.copy()
         for data_type in other.data_schema.keys():
-            if data_type in self.data_schema:
+            if data_type in self.schema:
                 # if assets have common values raise error:
-                if set(self.data_schema[data_type][0]).intersection(
+                if set(self.schema[data_type][0]).intersection(
                         set(other.data_schema[data_type][0])):
-                    raise ValueError(
-                        f'Assets of data type {data_type} overlap '
-                        f'between {self.data_schema[data_type][0]} '
-                        f'and {other.data_schema[data_type][0]}.')
+                    raise ValueError(f'Assets of data type {data_type} overlap '
+                                     f'between {self.schema[data_type][0]} '
+                                     f'and {other.data_schema[data_type][0]}.')
                 # if feature schema does not have same keys
-                data_schema[data_type][0] += other.data_schema[data_type][0]
-                data_schema[data_type][1] += other.data_schema[data_type][1]
+                self.data_schema[data_type]['assets'] += other.data_schema[
+                    data_type]['assets']
+                self.data_schema[data_type][
+                    'feature_schema'] += other.data_schema[data_type][
+                        'feature_schema']
             else:
-                data_schema[data_type] = other.data_schema[data_type]
+                self.data_schema[data_type] = other.data_schema[data_type]
         return data_schema
 
 
