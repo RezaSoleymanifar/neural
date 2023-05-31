@@ -722,12 +722,11 @@ class AbstractDataMetaData:
     def valid(self) -> bool:
         """
         ensures that all assets have a price mask associated with them.
-        This property can be violated during merging, since some feature
-        types may not have a price mask associated with them, due to not
-        being a price related feature type. However post merging the
-        metadata can validate itself using this property. used by data
-        feeders to validate input before feeding data to the market
-        environments.
+        This property can be violated during merging, since some
+        datasets may not have a price mask associated with them. However
+        post merging the metadata can validate itself using this
+        property. Used by data feeders to validate input before feeding
+        data to the market environments.
 
         Returns:
         --------
