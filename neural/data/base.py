@@ -573,28 +573,25 @@ class AbstractDataMetaData:
     trading abstracting away the construction of data from the
     representation of data. Metadata also offers automatic validation
     and updating of joined or appended data making joining multiple
-    sources of data a self-contained process. Note that market
-    environments require price mask to be present for all symbols in the
-    data schema. if this property is violated an error will be raised by
-    the data feeder that uses this metadata before the simulation
-    starts.
+    sources of data a self-contained process. For trading purposes any
+    asset that has FeatureType.ASSET_CLOSE_PRICE will be treated as a 
+    tradable asset. However it is possible to provide other non close 
+    price data for other assets, in the same metadata object.
 
     Attributes:
     -----------
-    data_schema
-    (Dict[AbstractDataSource.DatasetType:Tuple[AbstractAsset]] |
-    Dict[AbstractDataSource.StreamType:Tuple[AbstractAsset]]):
-        A dictionary mapping data types to tuples of assets. example of
-        data schema: {DatasetType.BAR: (AAPL, MSFT, GOOG),
-        DatasetType.QUOTE: (MSFT, GOOG)} or {StreamType.BAR: (AAPL,
-        MSFT, GOOG), StreamType.QUOTE: (MSFT, GOOG)}. This attribute can
-        be used to reconstruct the matching stream for a dataset.
-    feature_schema Dict[FeatureType, Tuple[bool]]]:
-        A dictionary mapping feature types to tuples of booleans, where
-        each boolean indicates whether the corresponding feature is
-        present in the data. Example of feature schema:
-        {FeatureType.ASSET_CLOSE_PRICE: (True, False, True)}. This
-        attribute can be used to retrive target features from the data.
+    data_schema (DataSchema):
+        An instance of the `DataSchema` class that represents the data
+        schema of the data. The data schema is internally a dictionary
+        that maps data types (dataset type or stream type) to the
+        corresponding assets and feature schema. The feature schema is a
+        dictionary that maps feature types to boolean masks. The boolean
+        masks indicate where the columns of the corresponding feature
+        types are located in the data. When loading multiple datasets
+        from HDF5 file they are loaded basedon creation order and
+        reorded based on data types in the data schema. This way all
+        common data types have the same order of appearance in the final
+        feature engineering.
     resolution (Resolution):
         An instance of the `Resolution` enum class that represents the
         resolution of the data. The resolution is the time span of each
@@ -698,11 +695,7 @@ class AbstractDataMetaData:
         Note that by default any present asset in the final joined
         dataset will be traded and should have a price mask.
     """
-    OrderedDict[DataSchema, FeatureSchema]
-    data_schema: OrderedDict[
-        AbstractDataSource.DatasetType:Tuple[AbstractAsset]] | OrderedDict[
-            AbstractDataSource.StreamType:Tuple[AbstractAsset]]
-    feature_schema: Dict[FeatureType, List[bool]]
+    data_schema: DataSchema
     resolution: Resolution
     calendar_type: CalendarType
 
