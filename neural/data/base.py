@@ -365,24 +365,64 @@ class AbstractDataSource(ABC):
             ) from key_error
 
         return stream_type
-    
+
 
 @dataclass
 class DataSchema:
-    data_type: Union[AbstractDataSource.DatasetType, AbstractDataSource.StreamType]
+    """
+    A class that represents a data schema. A data schema is internally a
+    dictionary that maps data types (dataset type or stream type) to the
+    corresponding assets and feature schema. It serves as a nexus to
+    bundle data type, feature schema and assets together.
+    
+    The feature schema is a
+    dictionary that maps feature types to boolean masks. The boolean
+    masks indicate where the columns of the corresponding feature types
+    are located in the data. Lenght of boolean mask is equal to the
+    number columns in the data. Lenght of True values in the boolean
+    mask is equal to the number of assets in the data schema.
+
+    Notes:
+    ------
+        Data schemas can be added together to represent a monolithic
+        data schema that consists of smaller data schemas. This is
+        useful for have a unified interface for joined datasets or
+        streams that abstracts away the construction of data.
+    
+    Attributes:
+    -----------
+        schema (Dict[AbstractDataSource.DatasetType:Dict[str,
+        List[bool] | List[AbstractAssets]]] |
+        Dict[AbstractDataSource.StreamType:Dict[str,
+        List[bool] | List[AbstractAssets]]]):
+            A dictionary that maps data types to the corresponding
+            assets and feature schema. The feature schema is a
+            dictionary that maps feature types to boolean masks.
+    Example:
+    --------
+    >>> data_schema = DataSchema(
+    ...     DatasetType.BAR, (AAPL, MSFT, GOOG), feature_schema)
+    >>> data_schema.schema[DatasetType.BAR]['assets']
+    (AAPL, MSFT, GOOG)
+    >>> data_schema.schema[DatasetType.BAR]['feature_schema']
+    {FeatureType.ASSET_CLOSE_PRICE: [True, False, True, False, True, False]}
+    """
+    data_type: AbstractDataSource.DatasetType | AbstractDataSource.StreamType
     assets: List[AbstractAsset]
     feature_schema: FeatureSchema
-    schema: Dict[Union[AbstractDataSource.DatasetType, AbstractDataSource.StreamType],
-                 Dict[str, Union[List[bool], List[AbstractAsset]]]]
 
     def __post_init__(self):
         for mask in self.feature_schema.schema.values():
             if len(mask.count(True)) != len(self.assets):
                 raise ValueError(f'Mask {mask} has different length than '
                                  f'number of assets: {len(self.assets)}.')
+        self.schema = OrderedDict()
+        self.schema[self.data_type]['assets'] = self.assets
+        self.schema[self.data_type]['feature_schema'] = self.feature_schema
 
     def get_data_type(
-        self, data_type: Union[AbstractDataSource.DatasetType, AbstractDataSource.StreamType]
+        self, data_type: Union[AbstractDataSource.DatasetType,
+                               AbstractDataSource.StreamType]
     ) -> Union[AbstractDataSource.DatasetType, AbstractDataSource.StreamType]:
         if issubclass(data_type, AbstractDataSource.DatasetType):
             return AbstractDataSource.DatasetType
@@ -392,17 +432,20 @@ class DataSchema:
             raise ValueError(f'{data_type} is not a valid data type.')
 
     def __add__(self, other) -> 'DataSchema':
-        if other.data_type != self.data_type:
+        if other.get_data_type(data_type) != self.data_type:
             raise ValueError('Data schemas do not have the same data type.')
         for data_type in other.schema.keys():
             if data_type in self.schema:
                 self_assets = self.schema[data_type]['assets']
                 other_assets = other.schema[data_type]['assets']
                 if set(self_assets).intersection(set(other_assets)):
-                    raise ValueError(f'Assets of data type {data_type} overlap '
-                                     f'between {self_assets} and {other_assets}.')
-                self.schema[data_type]['assets'] += other.schema[data_type]['assets']
-                self.schema[data_type]['feature_schema'] += other.schema[data_type]['feature_schema']
+                    raise ValueError(
+                        f'Assets of data type {data_type} overlap '
+                        f'between {self_assets} and {other_assets}.')
+                self.schema[data_type]['assets'] += other.schema[data_type][
+                    'assets']
+                self.schema[data_type]['feature_schema'] += other.schema[
+                    data_type]['feature_schema']
             else:
                 self.schema[data_type] = other.schema[data_type]
         return self
@@ -667,7 +710,7 @@ class AbstractDataMetaData:
             if schema[data_type]['feature_schema'][
                     FeatureType.ASSET_CLOSE_PRICE].count(True):
                 assets += schema[data_type]['assets']
-            
+
         return assets
 
     @property
