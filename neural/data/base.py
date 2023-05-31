@@ -809,41 +809,52 @@ class AbstractDataMetaData:
         """
         feature_schema = dict()
         for feature_type in FeatureType:
-            mask = dataframe.columns.str.lower().str.match(
+            feature_type_mask = dataframe.columns.str.lower().str.match(
                 '.*' + feature_type.value.lower() + '.*').to_list()
-            feature_schema[feature_type] = mask
+            feature_schema[feature_type] = feature_type_mask
         return feature_schema
 
     def __or__(self, other: AbstractDataMetaData,
                **kwargs) -> AbstractDataMetaData:
         """
-        This is useful for joining datasets that are large to download
-        in one go. Each sub-dataset is downloaded for a fixed time
-        interval and each can correponds to differnt data sources,
-        feature types and symbols. Joining datasets and validating the
-        process is done automatically using this method.
-
+        This is useful for joining datasets that are large to download in one
+        go. Each sub-dataset is downloaded for a fixed span of time and each
+        can correpond to different data sources, feature types and symbols.
+        Joining datasets and validating the process is done automatically using
+        this method. When joining make sure order of datastes follow the
+        strcure bellow, since it guarantees that the order of assets in the
+        price mask matches the order of assets in the data schema.
+            - asset group 1:
+                - price data
+                - other data
+                - ...
+            - asset group 2:
+                - price data
+                - other data
+                - ...
+            - ...
+            
         Args:
         ------
             other (AbstractDataMetaData):
-                The metadata object to be joined with the current
-                metadata object.
+                The metadata object to be joined with the current metadata
+                object.
         Returns:
         --------
             AbstractDataMetaData: 
-                a new metadata object that is the result of joining the
-                current metadata object with the other metadata object.
+                a new metadata object that is the result of joining the current
+                metadata object with the other metadata object.
         Raises:
         -------
             ValueError: 
                 if the data schemas of the two metadata objects are not
                 compatible.
             ValueError: 
-                if the resolutions of the two metadata objects are not
-                the same.
+                if the resolutions of the two metadata objects are not the
+                same.
             ValueError: 
-                if the calendar types of the two metadata objects are
-                not the same.
+                if the calendar types of the two metadata objects are not the
+                same.
         """
 
         if not self._validate_data_schema(other.data_schema):
