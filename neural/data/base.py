@@ -379,9 +379,11 @@ class DataSchema:
         self, data_type: AbstractDataSource.DatasetType
         | AbstractDataSource.StreamType,
         assets: List[AbstractAsset],
+        feature_schema: Dict[FeatureType, List[bool]]
     ) -> None:
         self.data_type = data_type
         self.assets = assets
+        self.feat
     def append(self, )
 
 
@@ -394,9 +396,8 @@ class FeatureSchema:
     the number columns in the data.
     """
 
-    def __init__(self, feature_type: FeatureType, mask: List[bool]) -> None:
-        self.feature_type = feature_type
-        self.mask = mask
+    def __init__(self):
+        self.map = dict()
 
     def __repr__(self) -> str:
         return f'{self.feature_type}: {self.mask}'
