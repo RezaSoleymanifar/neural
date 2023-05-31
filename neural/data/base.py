@@ -478,13 +478,11 @@ class AbstractDataMetaData:
     __add__(self, other: AbstractDataMetaData, **kwargs) ->
     AbstractDataMetaData
         Appends two metadata objects. This is useful for appending
-        datasets that are large to download in one go. At each
-        iteration, the user can download the data in chunks
-        corresponding to a fixed time interval shared between all other
-        chunks and automatically validate the process and update the
-        metadata. For example, downloading trade data for S&P500 stocks
-        for a fixed time interval can happen by downloading the data for
-        a list of symbols at a time.
+        datasets that are large to download in one go. Each datasets
+        can be downloaded for a span of for example two years and later
+        appended using this method. StreamMetadata subclass cannot use
+        this method. Appending stream metadata would not make sense. If
+        used with stream metadata it will raise a not implemented error.
     
     Notes:
     ------
@@ -515,7 +513,7 @@ class AbstractDataMetaData:
     data_schema: Dict[AbstractDataSource.
                       DatasetType:Tuple[AbstractAsset]] | Dict[
                           AbstractDataSource.StreamType:Tuple[AbstractAsset]]
-    feature_schema: Dict[FeatureType, Tuple[bool]]
+    feature_schema: Dict[FeatureType, List[bool]]
     resolution: Resolution
     calendar_type: CalendarType
 
