@@ -671,29 +671,7 @@ class AbstractDataMetaData:
     
     Notes:
     ------
-        The order of assets of price mask boolean values does not
-        necessarily matche the order of assets in the data schema. The
-        order of asstes in data schema is determined by the order of
-        appearance of unique assets in the data schema. When joining
-        moultiple datasets (each on HDF5) one by one. The assets in each
-        dataset's data schema may or may not have the
-        FeatureType.ASSET_CLOSE_PRICE. If they have all False values for
-        this feature type, then its price data should be joined before
-        joining any other dataset that has price data for different
-        assets. This guarantees that the order of assets in the price
-        mask matches the order of assets in the data schema. As a rule
-        of thumb, ensure datasets have the following strcuture:
-            - asset group 1:
-                - price data
-                - other data
-                - ...
-            - asset group 2:
-                - price data
-                - other data
-                - ...
-            - ...
-        Note that by default any present asset in the final joined
-        dataset will be traded and should have a price mask.
+        When joining metadata the data schema updates based on 
     """
     data_schema: DataSchema
     resolution: Resolution
@@ -731,10 +709,6 @@ class AbstractDataMetaData:
         """
         schema = self.data_schema.schema
         for data_type in schema:
-            # if corresponding feature schema has True in its price mask
-            # the asset in data type are tradable. It is guaranteed that
-            # len(asset) = len(True)
-
             if schema[data_type]['feature_schema'][
                     FeatureType.ASSET_CLOSE_PRICE].count(True):
                 assets += schema[data_type]['assets']
