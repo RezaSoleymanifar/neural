@@ -27,6 +27,7 @@ import pandas as pd
 
 from alpaca.data.timeframe import TimeFrame, TimeFrameUnit
 
+from neural.data.base import Resolution
 
 def objects_list_to_dataframe(
     objects_list: List[object]
@@ -59,44 +60,15 @@ def objects_list_to_dataframe(
     return pd.DataFrame(objects_list_)
 
 
-def to_timeframe(timeframe: str):
+def resolution_to_timeframe(resolution: Resolution) -> TimeFrame:
 
-    """
-    Parses a string representation of a timeframe into a TimeFrame
-    object.
-
-    Args:
-    ------
-        timeframe (str): 
-            A string representing a time frame, in the format
-            "{amount}{unit}", where <amount> is an integer and <unit> is
-            one of 'Min', 'Hour', 'Day', 'Week', or 'Month'.
-
-    Returns:
-    ---------
-        TimeFrame: 
-            A TimeFrame object representing the parsed time frame.
-
-    Raises:
-    --------
-        ValueError: If the input string is not a valid time frame. Valid
-        time frame examples include
-            '59Min', '23Hour', '1Day', '1Week', and '12Month'.
-    """
-    match = re.search(r'(\d+)(\w+)', timeframe)
-
-    if not match:
-        raise ValueError(
-            "Invalid timeframe. Valid examples: 59Min, 23Hour, 1Day, 1Week, 12Month")
-
-    amount = int(match.group(1))
+    amount = resolution.quantity
     unit = match.group(2)
 
-    timeframe_map= {
-        'Min': TimeFrameUnit.Minute,
-        'Hour': TimeFrameUnit.Hour,
-        'Day': TimeFrameUnit.Day,
-        'Week': TimeFrameUnit.Week,
-        'Month': TimeFrameUnit.Month}
+    resolution_to_timeframe_map= {
+        Resolution.Unit.MINUTE: TimeFrameUnit.Minute,
+        Resolution.Unit.HOUR: TimeFrameUnit.Hour,
+        Resolution.Unit.DAY: TimeFrameUnit.Day,
+    }
 
     return TimeFrame(amount, timeframe_map[unit])
