@@ -14,7 +14,6 @@ Methods:
         objects into a DataFrame, or convert positions objects into a
         dataframe. If a value is Enum, its string representation is used
         in dataframe.
-    
     to_timeframe(timeframe: str) -> TimeFrame:
         Parses a string representation of a timeframe into a TimeFrame
         object.
@@ -61,14 +60,38 @@ def objects_list_to_dataframe(
 
 
 def resolution_to_timeframe(resolution: Resolution) -> TimeFrame:
+    """
+    Maps a Resolution object to a TimeFrame object from the alpaca
+    library.
 
-    amount = resolution.quantity
-    unit = match.group(2)
+    Args:
+    ------
+        resolution: Resolution:
+            A Resolution object to be mapped to a TimeFrame object.
 
+    Returns:
+    ---------
+        TimeFrame:
+            A TimeFrame object mapped from the Resolution object.
+
+    Raises:
+    -------
+        KeyError:
+            If the resolution unit is not supported.
+    """
     resolution_to_timeframe_map= {
         Resolution.Unit.MINUTE: TimeFrameUnit.Minute,
         Resolution.Unit.HOUR: TimeFrameUnit.Hour,
         Resolution.Unit.DAY: TimeFrameUnit.Day,
     }
 
-    return TimeFrame(amount, timeframe_map[unit])
+    amount = resolution.quantity
+    try:
+        unit = resolution_to_timeframe_map[resolution.unit]
+    except KeyError:
+        raise ValueError(
+            f'Resolution unit {resolution.unit} is not supported.'
+            f' Supported units are {list(resolution_to_timeframe_map.keys())}.'
+        )
+
+    return TimeFrame(amount, unit)
