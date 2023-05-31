@@ -729,29 +729,33 @@ class AbstractDataMetaData:
         fixed time span shared between all other chunks and
         automatically validate the process and update the metadata. For
         example downloading trade data for S&P500 stocks for a fixed
-        time interval can happens by downloading the data for a list of
-        symbols at a time. stream metadata child cannot use this method.
-        appending stream metadata would not make sense.if used with
-        stream metadata it will raise a not implemented error.
+        time interval can happen by downloading the data for every two
+        years and later appending them using this method. StreamMetadata
+        subclass cannot use this method. Appending stream metadata would
+        not make sense.if used with stream metadata it will raise a not
+        implemented error.
 
         Args:
         ------
-            other (AbstractDataMetaData): another metadata object to be
-            appended to the current metadata object.
+            other (AbstractDataMetaData): 
+                another metadata object to be appended to the current
+                metadata object.
+
         Returns:
         --------
-            AbstractDataMetaData: 
+            AbstractDataMetaData:
                 a new metadata object that is the result of appending
                 the current metadata object with the other metadata
                 object.
+
         Raises:
         -------
             ValueError: 
                 if the data schemas of the two metadata objects are not
-                compatible.
+                identical.
             ValueError:
                 if the feature schemas of the two metadata objects are
-                not compatible.
+                not identical.
             ValueError:
                 if the resolutions of the two metadata objects are not
                 the same.
@@ -759,7 +763,6 @@ class AbstractDataMetaData:
                 if the calendar types of the two metadata objects are
                 not the same.
         """
-
         if dill.dumps(self.data_schema) != dill.dumps(other.data_schema):
             raise ValueError('Datasets must have identical data schemas.')
 
