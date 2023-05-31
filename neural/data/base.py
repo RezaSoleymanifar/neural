@@ -379,12 +379,16 @@ class DataSchema:
         self, data_type: AbstractDataSource.DatasetType
         | AbstractDataSource.StreamType,
         assets: List[AbstractAsset],
-        feature_schema: Dict[FeatureType, List[bool]]
+        feature_schema: FeatureSchema
     ) -> None:
-        self.data_type = data_type
-        self.assets = assets
-        self.feat
-    def append(self, )
+        self.schema = OrderedDict()
+        self.schema[data_type] = (assets, feature_schema)
+
+    def __add__(self, other):
+        for data_type in other.schema.keys():
+            if data_type in self.schema:
+                
+
 
 
 class FeatureSchema:
@@ -430,11 +434,11 @@ class FeatureSchema:
         if set(self.schema.keys()) != set(other.schema.keys()):
             raise ValueError('Feature schemas do not have same feature types.')
 
-        merged_feature_schema = dict()
-        for key in self.schema.keys():
-            merged_feature_schema[
-                key] = self.schema[key] + other.data_schema[key]
-        return merged_feature_schema
+        merged_schema = dict()
+        for feature_type in self.schema.keys():
+            merged_schema[
+                feature_type] = self.schema[feature_type] + other.schema[feature_type]
+        return merged_schema
 
     def create_feature_schema(self,
             dataframe: pd.DataFrame) -> Dict[FeatureType, List[bool]]:
