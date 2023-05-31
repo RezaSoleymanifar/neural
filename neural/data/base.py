@@ -371,7 +371,10 @@ class DataSchema:
     """
     A class that represents a data schema. A data schema is internally a
     dictionary that maps data types (dataset type or stream type) to the
-    corresponding assets and feature schema. The feature schema is a
+    corresponding assets and feature schema. It serves as a nexus to
+    bundle data type, feature schema and assets together.
+    
+    The feature schema is a
     dictionary that maps feature types to boolean masks. The boolean
     masks indicate where the columns of the corresponding feature types
     are located in the data. Lenght of boolean mask is equal to the
