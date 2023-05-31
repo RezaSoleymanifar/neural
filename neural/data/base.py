@@ -689,25 +689,22 @@ class AbstractDataMetaData:
         return n_columns
 
     @property
-    def assets(self) -> List[AlpacaAsset]:
+    def assets(self) -> List[AbstractAsset]:
         """
         Returns a list of unique assets in the data schema. Order is
         order of appearance of assets in the data schema.
 
         Returns:
         --------
-            List[Asset]: 
+            List[AbsractAsset]: 
                 a list of unique assets in the data schema.
         """
         assets = reduce(lambda x, y: x + y, self.data_schema.values())
-        symbols = OrderedDict()
-        for asset in assets:
-            symbols[asset.symbol] = asset
-        assets = list(symbols.values())
+        assets = sorted(set(assets), key=assets.index)
         return assets
 
     @property
-    def asset_prices_mask(self):
+    def asset_prices_mask(self) -> List[bool]:
         """
         Returns a mask for the asset close price feature type. This price is
         used by market environments as the point of reference for placing
