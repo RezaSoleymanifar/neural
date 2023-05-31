@@ -366,8 +366,38 @@ class AbstractDataSource(ABC):
 
         return stream_type
 
+
 class FeatureSchema:
-    def __init__(self, feature_type: FeatureType, ) -> None:
+    """
+    A class that represents a feature schema. A feature schema is a
+    an object that maps feature types to boolean masks. The boolean
+    masks indicate where the columns of the corresponding feature
+    types are located in the data. Lenght of boolean mask is equal to
+    the number columns in the data.
+    """
+
+    def __init__(self, feature_type: FeatureType, mask: List[bool]) -> None:
+        self.feature_type = feature_type
+        self.mask = mask
+
+    def __repr__(self) -> str:
+        return f'{self.feature_type}: {self.mask}'
+
+    def __add__(self, other: FeatureSchema) -> FeatureSchema:
+        if self.feature_type != other.feature_type:
+            raise ValueError('Feature types must be the same.')
+        return FeatureSchema(self.feature_type, self.mask + other.mask)
+
+
+class DataSchema:
+    """
+    
+    """
+    def __init__(
+        self, data_type: AbstractDataSource.DatasetType
+        | AbstractDataSource.StreamType,
+        assets: List[AbstractAsset],
+    ) -> None:
         pass
 
 
@@ -515,9 +545,9 @@ class AbstractDataMetaData:
         Note that by default any present asset in the final joined
         dataset will be traded and should have a price mask.
     """
-    data_schema: OrderedDict[AbstractDataSource.
-                      DatasetType:Tuple[AbstractAsset]] | OrderedDict[
-                          AbstractDataSource.StreamType:Tuple[AbstractAsset]]
+    data_schema: OrderedDict[
+        AbstractDataSource.DatasetType:Tuple[AbstractAsset]] | OrderedDict[
+            AbstractDataSource.StreamType:Tuple[AbstractAsset]]
     feature_schema: Dict[FeatureType, List[bool]]
     resolution: Resolution
     calendar_type: CalendarType
@@ -691,9 +721,10 @@ class AbstractDataMetaData:
                 data schema. Returns True if all stream or all datasets,
                 False otherwise.
         """
-        valid = all(all(data_type == self_data_type
-                                for self_data_type in self.data_schema)
-                                for data_type in data_schema)
+        valid = all(
+            all(data_type == self_data_type
+                for self_data_type in self.data_schema)
+            for data_type in data_schema)
         return valid
 
     def _join_feature_schemas(self, other):
@@ -866,7 +897,7 @@ class AbstractDataMetaData:
                                            **kwargs)
 
         return appended_metadata
-    
+
 
 @dataclass
 class StreamMetaData(AbstractDataMetaData):
