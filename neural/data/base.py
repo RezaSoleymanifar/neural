@@ -512,7 +512,7 @@ class AbstractDataMetaData:
         dataset will be traded and should have a price mask.
     """
     data_schema: OrderedDict[AbstractDataSource.
-                      DatasetType:Tuple[AbstractAsset]] | Dict[
+                      DatasetType:Tuple[AbstractAsset]] | OrderedDict[
                           AbstractDataSource.StreamType:Tuple[AbstractAsset]]
     feature_schema: Dict[FeatureType, List[bool]]
     resolution: Resolution
@@ -543,6 +543,7 @@ class AbstractDataMetaData:
             List[AbsractAsset]: 
                 a list of unique assets in the data schema.
         """
+        assets = self.da
         assets = reduce(lambda x, y: x + y, self.data_schema.values())
         assets = sorted(set(assets), key=assets.index)
         return assets
