@@ -413,15 +413,31 @@ class DataSchema:
                 raise ValueError(f'Mask {mask} has different length than '
                                  f'number of assets: {len(assets)}.')
 
+        self.data_type = self.get_data_type(data_type)
         self.schema = OrderedDict()
         self.schema[data_type]['assets'] = assets
         self.schema[data_type]['feature_schema'] = feature_schema
-        
+
+    def get_data_type(
+        self, data_type: AbstractDataSource.DatasetType
+        | AbstractDataSource.StreamType
+    ) -> AbstractDataSource.DatasetType | AbstractDataSource.StreamType:
+        """
+        Returns the data type of the data schema. This is useful to 
+        check if data schema is a dataset or a stream.
+        """
+        if issubclass(data_type, AbstractDataSource.DatasetType):
+            return AbstractDataSource.DatasetType
+        elif issubclass(data_type, AbstractDataSource.StreamType):
+            return AbstractDataSource.StreamType
+        else:
+            raise ValueError(f'{data_type} is not a valid data type.')
 
     def __add__(self, other):
+        if other.data_type != self.data_type:
+            raise ValueError('Data schemas do not have same data type.')
         for data_type in other.data_schema.keys():
             if data_type in self.schema:
-                # if assets have common values raise error:
                 if set(self.schema[data_type][0]).intersection(
                         set(other.data_schema[data_type][0])):
                     raise ValueError(f'Assets of data type {data_type} overlap '
