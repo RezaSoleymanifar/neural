@@ -506,6 +506,15 @@ class Resolution:
         
         return None
 
+    def __eq__(self, other):
+        """
+        Checks if two resolutions are equal. Two resolutions are equal if
+        their quantities and units are equal.
+        """
+        if isinstance(other, Resolution):
+            return self.quantity == other.quantity and self.unit == other.unit
+        return False
+    
     def __str__(self):
         """
         String representation of the resolution. This is useful for

@@ -47,7 +47,8 @@ Constants:
         that selected level are filtered out. CRITICAL > ERROR > WARNING
         > INFO > DEBUG > NOTSET
     ALPACA_ACCEPTED_DOWNLOAD_RESOLUTIONS (set):
-        The accepted download resolutions for Alpaca API.
+        The accepted download resolutions for Alpaca API. Accepted
+        resolutions are 1Min, 5Min, 15Min, and 30Min.
     HDF5_DEFAULT_MAX_ROWS (int):
         The default maximum number of rows for HDF5 storage. Note hdf5
         files occupy a contiguous block of memory and they have size of
@@ -84,6 +85,7 @@ import logging
 import os
 import numpy as np
 
+from neural.data.base import Resolution
 from neural.utils.time import Calendar
 
 # =====================================CONNECTION==============================
@@ -97,7 +99,12 @@ MAX_LOG_SIZE = 10_000_000  # 10 MB
 LOG_BACKUP_COUNT = 10
 LOG_LEVEL = logging.INFO
 # =====================================DATA====================================
-ALPACA_ACCEPTED_DOWNLOAD_RESOLUTIONS = {'1Min', '5Min', '15Min', '30Min'}
+ALPACA_ACCEPTED_DOWNLOAD_RESOLUTIONS = {
+    Resolution(1, Resolution.Unit.Minute), 
+    Resolution(5, Resolution.Unit.Minute),  
+    Resolution(15, Resolution.Unit.Minute), 
+    Resolution(30, Resolution.Unit.Minute)
+    }
 HDF5_DEFAULT_MAX_ROWS = 5_000_000
 
 ACCEPTED_OBSERVATION_TYPES = {np.ndarray, dict}
