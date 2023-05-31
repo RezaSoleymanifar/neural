@@ -731,7 +731,10 @@ class AbstractDataMetaData:
         """
         schema = self.data_schema.schema
         for data_type in schema:
-            if schema[data_type]['feature_schema'][
+            if FeatureType.ASSET_CLOSE_PRICE in schema[data_type]['feature_schema']:
+                # match index of True values
+            
+            schema[data_type]['feature_schema'][
                     FeatureType.ASSET_CLOSE_PRICE]:
                 return schema[data_type]['assets']
             
