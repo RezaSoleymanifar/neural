@@ -572,7 +572,9 @@ class AbstractDataMetaData:
     def schedule(self) -> Callable[[datetime, datetime], pd.DataFrame]:
         """
         Returns a function that returns a DataFrame representing the
-        
+        schedule of the dataset according to its calendar type. This is
+        used in training to map dataset rows to corresponding dates. In 
+        trading this is used to check for market open and close times.
 
         Returns:
         --------
@@ -648,15 +650,14 @@ class AbstractDataMetaData:
             feature_schema[feature_type] = feature_type_mask
         return feature_schema
 
-    def __or__(self, other: AbstractDataMetaData,
-               **kwargs) -> AbstractDataMetaData:
+    def __or__(self, other: AbstractDataMetaData) -> AbstractDataMetaData:
         """
         This is useful for joining datasets that are large to download in one
         go. Each sub-dataset is downloaded for a fixed span of time and each
         can correpond to different data sources, feature types and symbols.
         Joining datasets and validating the process is done automatically using
         this method. When joining make sure order of datastes follow the
-        strcure bellow, since it guarantees that the order of assets in the
+        structure bellow, since it guarantees that the order of assets in the
         price mask matches the order of assets in the data schema.
             - asset group 1:
                 - price data
@@ -667,6 +668,8 @@ class AbstractDataMetaData:
                 - other data
                 - ...
             - ...
+        In order for datasets to be joined they must have the same
+        resolution and calendar type.
             
         Args:
         ------
