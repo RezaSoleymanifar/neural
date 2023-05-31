@@ -100,10 +100,10 @@ LOG_BACKUP_COUNT = 10
 LOG_LEVEL = logging.INFO
 # =====================================DATA====================================
 ALPACA_ACCEPTED_DOWNLOAD_RESOLUTIONS = {
-    Resolution(1, Resolution.Unit.Minute), 
-    Resolution(5, Resolution.Unit.Minute),  
-    Resolution(15, Resolution.Unit.Minute), 
-    Resolution(30, Resolution.Unit.Minute)
+    Resolution(1, Resolution.Unit.MINUTE),
+    Resolution(5, Resolution.Unit.MINUTE),
+    Resolution(15, Resolution.Unit.MINUTE),
+    Resolution(30, Resolution.Unit.MINUTE)
     }
 HDF5_DEFAULT_MAX_ROWS = 5_000_000
 
