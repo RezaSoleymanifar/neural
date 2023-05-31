@@ -543,7 +543,6 @@ class AbstractDataMetaData:
             List[AbsractAsset]: 
                 a list of unique assets in the data schema.
         """
-        assets = self.da
         assets = reduce(lambda x, y: x + y, self.data_schema.values())
         assets = sorted(set(assets), key=assets.index)
         return assets
