@@ -63,7 +63,8 @@ from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 from functools import reduce
-from typing import TYPE_CHECKING, Dict, Tuple, Iterable, Optional, List
+from typing import (
+    TYPE_CHECKING, Dict, List, Callable, Tuple, Iterable, Optional)
 
 import dill
 import h5py as h5
@@ -738,19 +739,21 @@ class AbstractDataMetaData:
             self.assets) == self.asset_prices_mask.count(True) else False
 
     @property
-    def schedule(self) -> pd.DataFrame:
+    def schedule(self) -> Callable[[datetime, datetime], pd.DataFrame]:
         """
-        Returns a DataFrame representing the schedule of the dataset. This is
-        useful for checking if the dataset has been downloaded correctly.
+        Returns a DataFrame representing the schedule of the dataset
+        according to its calendar type.
 
         Returns:
         --------
-            pd.DataFrame:
-                A DataFrame representing the schedule of the dataset.
+            Callable[[datetime, datetime], pd.DataFrame]:
+                A function that returns a DataFrame representing the
+                schedule of the dataset according to its calendar type.
         
         Example:
         --------
-        >>> schedule
+        >>> start_date, end_date = datetime(2022, 1, 3), datetime(2022, 1, 8)
+        >>> schedule(start_date, end_date)
                     start                       end
         2022-01-03  2022-01-03 00:00:00+00:00   2022-01-04 00:00:00+00:00
         2022-01-04  2022-01-04 00:00:00+00:00   2022-01-05 00:00:00+00:00
@@ -759,11 +762,7 @@ class AbstractDataMetaData:
         2022-01-07  2022-01-07 00:00:00+00:00   2022-01-08 00:00:00+00:00
         2022-01-10  2022-01-10 00:00:00+00:00   2022-01-11 00:00:00+00:00
         """
-        start_date = self.start.date()
-        end_date = self.end.date()
-        schedule = self.calendar_type.schedule(start_date=start_date,
-                                               end_date=end_date)
-        return schedule
+        return self.calendar_type.schedule
 
     @staticmethod
     def create_feature_schema(dataframe: pd.DataFrame) -> Dict[FeatureType,
