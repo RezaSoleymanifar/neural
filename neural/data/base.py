@@ -367,6 +367,24 @@ class AbstractDataSource(ABC):
         return stream_type
 
 
+class DataSchema:
+    """
+    A class to represent a data schema. A data schema is an object that
+    maps data types to tuples of assets. Example of data schema:
+    {DatasetType.BAR: (AAPL, MSFT, GOOG), DatasetType.QUOTE: (MSFT,
+    GOOG)} or {StreamType.BAR: (AAPL, MSFT, GOOG), StreamType.QUOTE:
+    (MSFT, GOOG)}.
+    """
+    def __init__(
+        self, data_type: AbstractDataSource.DatasetType
+        | AbstractDataSource.StreamType,
+        assets: List[AbstractAsset],
+    ) -> None:
+        self.data_type = data_type
+        self.assets = assets
+    def append(self, )
+
+
 class FeatureSchema:
     """
     A class that represents a feature schema. A feature schema is a
@@ -387,25 +405,6 @@ class FeatureSchema:
         if self.feature_type != other.feature_type:
             raise ValueError('Feature types must be the same.')
         return FeatureSchema(self.feature_type, self.mask + other.mask)
-
-
-class DataSchema:
-    """
-    A class to represent a data schema. A data schema is an object that
-    maps data types to tuples of assets. Example of data schema:
-    {DatasetType.BAR: (AAPL, MSFT, GOOG), DatasetType.QUOTE: (MSFT,
-    GOOG)} or {StreamType.BAR: (AAPL, MSFT, GOOG), StreamType.QUOTE:
-    (MSFT, GOOG)}.
-    """
-    def __init__(
-        self, data_type: AbstractDataSource.DatasetType
-        | AbstractDataSource.StreamType,
-        assets: List[AbstractAsset],
-        feature_schemas: List[FeatureSchema],
-    ) -> None:
-        self.data_type = data_type
-        self.assets = assets
-        self.feature_schemas = feature_schemas
 
 
 @dataclass
@@ -552,6 +551,7 @@ class AbstractDataMetaData:
         Note that by default any present asset in the final joined
         dataset will be traded and should have a price mask.
     """
+    OrderedDict[DataSchema, FeatureSchema]
     data_schema: OrderedDict[
         AbstractDataSource.DatasetType:Tuple[AbstractAsset]] | OrderedDict[
             AbstractDataSource.StreamType:Tuple[AbstractAsset]]
