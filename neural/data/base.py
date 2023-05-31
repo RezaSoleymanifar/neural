@@ -203,6 +203,7 @@ class AbstractDataSource(ABC):
                 other object inherits from AbstractDataSource.DatasetType then
                 this will return True.
         """
+
         @property
         def data_source(self) -> AbstractDataSource:
             """
@@ -350,10 +351,9 @@ class AbstractDataSource(ABC):
             mapped to the same stream type.
         """
         if not isinstance(dataset_type, AbstractDataSource.DatasetType):
-            raise ValueError(
-                f'{dataset_type} must be of type '
-                f'{AbstractDataSource.DatasetType.__name__}')
-        
+            raise ValueError(f'{dataset_type} must be of type '
+                             f'{AbstractDataSource.DatasetType.__name__}')
+
         try:
             stream_type = cls.StreamType(dataset_type.value)
 
@@ -400,6 +400,7 @@ class Resolution:
         >>> print(resolution)
         43Unit.NANO_SECOND
     """
+
     class Unit(Enum):
         """
         Enumeration class that defines the available units of time for
@@ -478,12 +479,11 @@ class Resolution:
                 f"Unit must be an instance of {Resolution.Unit.__name__}.")
 
         if quantity <= 0:
-            raise ValueError("Quantity must be a positive integer value."
-                )
+            raise ValueError("Quantity must be a positive integer value.")
         if unit == Resolution.Unit.NANO_SECOND and quantity > 999:
             raise ValueError(
                 "Nanosecond units can only be used with quantities between 1-999."
-                )
+            )
         if unit == Resolution.Unit.MICRO_SECOND and quantity > 999:
             raise ValueError(
                 "Microsecond units can only be used with quantities between 1-999."
@@ -494,21 +494,17 @@ class Resolution:
             )
         if unit == Resolution.Unit.SECOND and quantity > 59:
             raise ValueError(
-                "Second units can only be used with quantities between 1-59."
-            )
+                "Second units can only be used with quantities between 1-59.")
         if unit == Resolution.Unit.MINUTE and quantity > 59:
             raise ValueError(
-                "Minute units can only be used with quantities between 1-59."
-            )
+                "Minute units can only be used with quantities between 1-59.")
         if unit == Resolution.Unit.HOUR and quantity > 23:
             raise ValueError(
-                "Hour units can only be used with quantities between 1-23."
-            )
+                "Hour units can only be used with quantities between 1-23.")
         if unit == Resolution.Unit.DAY and quantity != 1:
             raise ValueError(
-                "Day units can only be used with quantities equal to 1."
-            )
-        
+                "Day units can only be used with quantities equal to 1.")
+
         return None
 
     def __eq__(self, other):
@@ -519,7 +515,7 @@ class Resolution:
         if isinstance(other, Resolution):
             return self.quantity == other.quantity and self.unit == other.unit
         return False
-    
+
     def __str__(self):
         """
         String representation of the resolution. This is useful for
@@ -537,7 +533,7 @@ class Resolution:
             43Unit.NANO_SECOND
         """
         return f"{self.quantity}{self.unit}"
-    
+
 
 @dataclass
 class AbstractDataMetaData:
@@ -668,8 +664,9 @@ class AbstractDataMetaData:
         Note that by default any present asset in the final joined dataset
         will be traded and should have a price mask.
     """
-    data_schema: Dict[AbstractDataSource.DatasetType:Tuple[AbstractAsset]] | Dict[
-        AbstractDataSource.StreamType:Tuple[AbstractAsset]]
+    data_schema: Dict[AbstractDataSource.
+                      DatasetType:Tuple[AbstractAsset]] | Dict[
+                          AbstractDataSource.StreamType:Tuple[AbstractAsset]]
     feature_schema: Dict[FeatureType, Tuple[bool]]
     resolution: Resolution
     calendar_type: CalendarType
@@ -712,13 +709,13 @@ class AbstractDataMetaData:
         closing price of interval is used to place orders. The order of price
         mask matches the order of assets in the data schema.
         """
-
-        mask_in_list = [
-            mask for feature_type, mask in self.feature_schema.items()
-            if feature_type == FeatureType.ASSET_CLOSE_PRICE
-        ]
-
-        asset_price_mask = mask_in_list.pop() if mask_in_list else None
+        try:
+            asset_price_mask = self.feature_schema[
+                FeatureType.ASSET_CLOSE_PRICE]
+        except KeyError as key_error:
+            raise KeyError(
+                f'Feature type {FeatureType.ASSET_CLOSE_PRICE} is not found in'
+                f' the feature schema {self.feature_schema}.') from key_error
         return asset_price_mask
 
     @property
@@ -729,7 +726,7 @@ class AbstractDataMetaData:
         types may not have a price mask associated with them, due to not
         being a price related feature type. However post merging the
         metadata can validate itself using this property. used by data
-        feeders to validaete input before feeding data to the market
+        feeders to validate input before feeding data to the market
         environments.
 
         Returns:
@@ -739,9 +736,8 @@ class AbstractDataMetaData:
                 them, False otherwise.
         """
 
-        valid = True if len(
+        return True if len(
             self.assets) == self.asset_prices_mask.count(True) else False
-        return valid
 
     @property
     def schedule(self):
