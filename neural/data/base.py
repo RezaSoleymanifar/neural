@@ -731,15 +731,14 @@ class AbstractDataMetaData:
         """
         schema = self.data_schema.schema
         for data_type in schema:
-            if FeatureType.ASSET_CLOSE_PRICE in schema[data_type]['feature_schema']:
-                # match index of True values
+            # if corresponding feature schema has True in its price mask
+            # the asset in data type are tradable. It is guaranteed that
+            # len(asset) = len(True)
+
+            if schema[data_type]['feature_schema'][
+                    FeatureType.ASSET_CLOSE_PRICE].count(True):
+                assets += schema[data_type]['assets']
             
-            schema[data_type]['feature_schema'][
-                    FeatureType.ASSET_CLOSE_PRICE]:
-                return schema[data_type]['assets']
-            
-        assets = reduce(lambda x, y: x + y, self.data_schema.values())
-        assets = sorted(set(assets), key=assets.index)
         return assets
 
     @property
@@ -751,14 +750,7 @@ class AbstractDataMetaData:
         closing price of interval is used to place orders. The order of price
         mask matches the order of assets in the data schema.
         """
-        try:
-            asset_price_mask = self.feature_schema[
-                FeatureType.ASSET_CLOSE_PRICE]
-        except KeyError as key_error:
-            raise KeyError(
-                f'Feature type {FeatureType.ASSET_CLOSE_PRICE} is not found in'
-                f' the feature schema {self.feature_schema}.') from key_error
-        return asset_price_mask
+        return self.get_features_mask(FeatureType.ASSET_CLOSE_PRICE)
 
     @property
     def valid(self) -> bool:
