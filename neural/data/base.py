@@ -62,8 +62,8 @@ from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 from functools import reduce
-from typing import (
-    TYPE_CHECKING, Dict, List, Callable, Tuple, Iterable, Optional)
+from typing import (TYPE_CHECKING, Dict, List, Callable, Tuple, Iterable,
+                    Optional)
 
 import dill
 import h5py as h5
@@ -598,8 +598,8 @@ class AbstractDataMetaData:
         return self.calendar_type.schedule
 
     @staticmethod
-    def create_feature_schema(dataframe: pd.DataFrame) -> Dict[FeatureType,
-                                                               List[bool]]:
+    def create_feature_schema(
+            dataframe: pd.DataFrame) -> Dict[FeatureType, List[bool]]:
         """
         Creates a feature schema dictionary for a given DataFrame, with
         DataType as keys and boolean masks as values. The boolean masks
@@ -650,13 +650,14 @@ class AbstractDataMetaData:
             feature_schema[feature_type] = feature_type_mask
         return feature_schema
 
-    def __or__(self, other: AbstractDataMetaData) -> AbstractDataMetaData:
+    def __or__(self, other: AbstractDataMetaData,
+               **kwargs) -> AbstractDataMetaData:
         """
         This is useful for joining datasets that are large to download in one
         go. Each sub-dataset is downloaded for a fixed span of time and each
         can correpond to different data sources, feature types and symbols.
         Joining datasets and validating the process is done automatically using
-        this method. When joining make sure order of datastes follow the
+        this method. When joining make sure order of datasets follow the
         structure bellow, since it guarantees that the order of assets in the
         price mask matches the order of assets in the data schema.
             - asset group 1:
@@ -725,9 +726,9 @@ class AbstractDataMetaData:
         appends two metadata objects. This is useful for appending
         datasets that are large to downolad in one go. At each iteration
         the user can download the data in chunks corresponding to a
-        fixed time interval shared between all other chunks and
+        fixed time span shared between all other chunks and
         automatically validate the process and update the metadata. For
-        example downloading tradde data for S&P500 stocks for a fixed
+        example downloading trade data for S&P500 stocks for a fixed
         time interval can happens by downloading the data for a list of
         symbols at a time. stream metadata child cannot use this method.
         appending stream metadata would not make sense.if used with
