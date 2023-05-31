@@ -375,12 +375,10 @@ class DataSchema:
     GOOG)} or {StreamType.BAR: (AAPL, MSFT, GOOG), StreamType.QUOTE:
     (MSFT, GOOG)}.
     """
-    def __init__(
-        self, data_type: AbstractDataSource.DatasetType
-        | AbstractDataSource.StreamType,
-        assets: List[AbstractAsset],
-        feature_schema: FeatureSchema
-    ) -> None:
+
+    def __init__(self, data_type: AbstractDataSource.DatasetType
+                 | AbstractDataSource.StreamType, assets: List[AbstractAsset],
+                 feature_schema: FeatureSchema) -> None:
         self.data_schema = OrderedDict()
         self.data_schema[data_type] = (assets, feature_schema)
 
@@ -413,12 +411,12 @@ class FeatureSchema:
     """
 
     def __init__(self, dataframe: pd.DataFrame) -> None:
-        self.schema = self.create_feature_schema(dataframe)
+        self.feature_schema = self.create_feature_schema(dataframe)
 
         return None
 
     def __repr__(self) -> str:
-        return str(self.schema)
+        return str(self.feature_schema)
 
     def __add__(self, other):
         """
@@ -443,17 +441,17 @@ class FeatureSchema:
                 if the feature schemas of the two metadata objects are
                 not compatible.
         """
-        if set(self.schema.keys()) != set(other.schema.keys()):
+        if set(self.feature_schema.keys()) != set(other.schema.keys()):
             raise ValueError('Feature schemas do not have same feature types.')
 
         merged_schema = dict()
-        for feature_type in self.schema.keys():
-            merged_schema[
-                feature_type] = self.schema[feature_type] + other.schema[feature_type]
+        for feature_type in self.feature_schema.keys():
+            merged_schema[feature_type] = self.feature_schema[
+                feature_type] + other.schema[feature_type]
         return merged_schema
 
-    def create_feature_schema(self,
-            dataframe: pd.DataFrame) -> Dict[FeatureType, List[bool]]:
+    def create_feature_schema(
+            self, dataframe: pd.DataFrame) -> Dict[FeatureType, List[bool]]:
         """
         Creates a feature schema dictionary for a given DataFrame, with
         DataType as keys and boolean masks as values. The boolean masks
@@ -503,7 +501,7 @@ class FeatureSchema:
                 '.*' + feature_type.value.lower() + '.*').to_list()
             feature_schema[feature_type] = feature_type_mask
         return feature_schema
-    
+
 
 @dataclass
 class AbstractDataMetaData:
@@ -778,7 +776,6 @@ class AbstractDataMetaData:
                 for self_data_type in self.data_schema)
             for data_type in data_schema)
         return valid
-
 
     def __or__(self, other: AbstractDataMetaData,
                **kwargs) -> AbstractDataMetaData:
