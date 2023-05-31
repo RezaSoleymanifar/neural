@@ -366,6 +366,10 @@ class AbstractDataSource(ABC):
 
         return stream_type
 
+class FeatureSchema:
+    def __init__(self, feature_type: FeatureType, ) -> None:
+        pass
+
 
 @dataclass
 class AbstractDataMetaData:
