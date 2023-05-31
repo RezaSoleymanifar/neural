@@ -697,7 +697,6 @@ class AbstractDataMetaData:
         """
 
         if not self._validate_data_schema(other.data_schema):
-
             raise ValueError(
                 f'Metadata {other} has data schema {other.data_schema} '
                 'which is not compatible with {self.data_schema}.')
