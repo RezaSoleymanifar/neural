@@ -432,7 +432,7 @@ class DataSchema:
             raise ValueError(f'{data_type} is not a valid data type.')
 
     def __add__(self, other) -> 'DataSchema':
-        if other.get_data_type(data_type) != self.data_type:
+        if other.get_data_type(data_type) != self.get_data_type(data_type):
             raise ValueError('Data schemas do not have the same data type.')
         for data_type in other.schema.keys():
             if data_type in self.schema:
