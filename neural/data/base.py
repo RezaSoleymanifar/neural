@@ -710,6 +710,11 @@ class AbstractDataMetaData:
             int:
                 The number of columns in the dataset.
         """
+        n_columns = 0
+        for data_type in self.data_schema:
+            n_columns += len(
+                self.data_schema[data_type]['feature_schema'].values()[0])
+
         n_columns = len(self.feature_schema.values()[0])
         return n_columns
 
@@ -794,32 +799,13 @@ class AbstractDataMetaData:
         """
         return self.calendar_type.schedule
 
-    def _validate_data_schema(self, data_schema):
-        """
-        Checks if all stream or all datasets. This is useful for
-        validating the data schema of the metadata object before joining
-        or appending. This is used by the __or__ and __add__ methods to
-        validate the data schema of the metadata object before joining
-        or appending.
-
-        Args:
-        ------
-            data_schema
-            (Dict[AbstractDataSource.DatasetType:Tuple[Asset]] |
-            Dict[AbstractDataSource.StreamType:Tuple[Asset]]):
-                The data schema to be validated.
-        Returns:
-        --------
-            bool: 
-                Performs a pairwise comparison of the data types in the
-                data schema. Returns True if all stream or all datasets,
-                False otherwise.
-        """
-        valid = all(
-            all(data_type == self_data_type
-                for self_data_type in self.data_schema)
-            for data_type in data_schema)
-        return valid
+    def get_features_mask(self, feature_type: FeatureType):
+        mask = list()
+        for data_type in self.data_schema:
+            if feature_type in self.data_schema[data_type]['feature_schema']:
+                mask += self.data_schema[data_type]['feature_schema'][
+                    feature_type]
+        return mask
 
     def __or__(self, other: AbstractDataMetaData,
                **kwargs) -> AbstractDataMetaData:
