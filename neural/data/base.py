@@ -1074,8 +1074,7 @@ class DatasetMetadata(AbstractDataMetaData):
         other. This method facilitates updating the metadata object
         automatically and validating the process.
     """
-    data_schema: Dict[AbstractDataSource.DatasetType:Tuple[AlpacaAsset]]
-    feature_schema: Dict[FeatureType, Tuple[bool]]
+    data_schema: DataSchema
     resolution: str
     calendar_type: CalendarType
     start: datetime
