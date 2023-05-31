@@ -709,12 +709,11 @@ class AbstractDataMetaData:
     @property
     def asset_prices_mask(self):
         """
-        Returns a mask for the asset close price feature type. This
-        price is used by market environments as the point of reference
-        for placing orders. when a time interval is over and features
-        are observed the closing price of interval is used to
-        immediately place orders. The order of price mask matches the
-        order of assets in the data schema.
+        Returns a mask for the asset close price feature type. This price is
+        used by market environments as the point of reference for placing
+        orders. when a time interval is over and features are observed the
+        closing price of interval is used to place orders. The order of price
+        mask matches the order of assets in the data schema.
         """
 
         mask_in_list = [
