@@ -752,7 +752,8 @@ class AbstractDataMetaData:
         
         Example:
         --------
-        >>> start_date, end_date = datetime(2022, 1, 3), datetime(2022, 1, 8)
+        >>> start_date, end_date = datetime(2022, 1, 3), datetime(2022, 1, 11)
+        >>> schedule = metadata.schedule
         >>> schedule(start_date, end_date)
                     start                       end
         2022-01-03  2022-01-03 00:00:00+00:00   2022-01-04 00:00:00+00:00
@@ -770,39 +771,45 @@ class AbstractDataMetaData:
         """
         Creates a feature schema dictionary for a given DataFrame, with
         DataType as keys and boolean masks as values. The boolean masks
-        indicate where the columns of the corresponding feature types are
-        located in the data. By default downloaders provide downloaded data in
-        a pandas Dataframe format.
+        indicate where the columns of the corresponding feature types
+        are located in the data. By default downloaders provide
+        downloaded data in a pandas Dataframe format.
 
         Args:
         ------
             dataframe (pd.DataFrame): 
-                The input DataFrame for which the feature schema is to be
-                created. By defaulat all feature types in FeatureType are
-                enumerated and their value is matched against the column names
-                of the input DataFrame. If a column name contains the value of
-                a feature type, the corresponding boolean mask is set to True.
-                this process is case insensitive. For example if dataframe has
-                the column name 'AAPL_close_price' the boolean mask for
+                The input DataFrame for which the feature schema is to
+                be created. By defaulat all feature types in FeatureType
+                are enumerated and their value is matched against the
+                column names of the input DataFrame. If a column name
+                matches the string value of a feature type, the
+                corresponding boolean mask is set to True. this process
+                is case insensitive. For example if dataframe has the
+                column name 'AAPL_close_price' the boolean mask for
                 FeatureType.ASSET_CLOSE_PRICE will be set to True at the
-                position of the column name. Downloaders and streamers should
-                ensure that the column names of the data they provide are
-                consistent with this procedure.
+                position of the column name since string value of
+                ASSET_CLOSE_PRICE is 'CLOSE' and it exists as a
+                substring in the column name 'AAPL_close_price'.
+                Downloaders and streamers should ensure that the column
+                names of the data they provide are consistent with this
+                procedure.
 
         Returns:
         --------
             Dict[FeatureType, List[bool]]: 
-                A dictionary with FeatureType as keys and boolean masks as
-                values.
+                A dictionary with FeatureType as keys and boolean masks
+                as values.
 
         Example:
         --------
-        Assume dataframe has column names 'AAPL_close_price', 'AAPL_OPEN_PRICE'
-        then the feature schema will be: {FeatureType.ASSET_CLOSE_PRICE: [True,
-        False], FeatureType.ASSET_OPEN_PRICE: [False, True]}. Columns are
-        matched due to having "close" and "OPEN" substrings in their names
-        matching the lower case values of FeatureType.ASSET_CLOSE_PRICE and
-        ASSET_OPEN_PRICE respectively. Thus this process is case insensitive.
+        Assume dataframe has column names 'AAPL_close_price',
+        'AAPL_OPEN_PRICE' then the feature schema will be:
+        {FeatureType.ASSET_CLOSE_PRICE: [True, False],
+        FeatureType.ASSET_OPEN_PRICE: [False, True]}. Columns are
+        matched due to having "close" and "OPEN" substrings in their
+        names matching the lower case values of
+        FeatureType.ASSET_CLOSE_PRICE and ASSET_OPEN_PRICE respectively.
+        Thus this process is case insensitive.
         """
         feature_schema = dict()
         for feature_type in FeatureType:
