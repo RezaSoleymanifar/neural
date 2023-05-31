@@ -85,8 +85,7 @@ import logging
 import os
 import numpy as np
 
-from neural.data.base import Resolution
-from neural.utils.time import Calendar
+from neural.utils.time import Calendar, Resolution
 
 # =====================================CONNECTION==============================
 API_KEY = os.environ.get('API_KEY', None)
