@@ -391,14 +391,21 @@ class FeatureSchema:
 
 class DataSchema:
     """
-    
+    A class to represent a data schema. A data schema is an object that
+    maps data types to tuples of assets. Example of data schema:
+    {DatasetType.BAR: (AAPL, MSFT, GOOG), DatasetType.QUOTE: (MSFT,
+    GOOG)} or {StreamType.BAR: (AAPL, MSFT, GOOG), StreamType.QUOTE:
+    (MSFT, GOOG)}.
     """
     def __init__(
         self, data_type: AbstractDataSource.DatasetType
         | AbstractDataSource.StreamType,
         assets: List[AbstractAsset],
+        feature_schemas: List[FeatureSchema],
     ) -> None:
-        pass
+        self.data_type = data_type
+        self.assets = assets
+        self.feature_schemas = feature_schemas
 
 
 @dataclass
