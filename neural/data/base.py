@@ -58,7 +58,6 @@ Classes:
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from collections import OrderedDict
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
@@ -809,7 +808,7 @@ class AbstractDataMetaData:
         matched due to having "close" and "OPEN" substrings in their
         names matching the lower case values of
         FeatureType.ASSET_CLOSE_PRICE and ASSET_OPEN_PRICE respectively.
-        Thus this process is case insensitive.
+        This process is case insensitive.
         """
         feature_schema = dict()
         for feature_type in FeatureType:
