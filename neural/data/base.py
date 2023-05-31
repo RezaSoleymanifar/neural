@@ -805,20 +805,20 @@ class AbstractDataMetaData:
                 The data schema to be validated.
         Returns:
         --------
-            bool: True if all stream or all datasets, False otherwise.
+            bool: 
+                Performs a pairwise comparison of the data types in the
+                data schema. Returns True if all stream or all datasets,
+                False otherwise.
         """
-        #
-        valid = True
-        for data_type in data_schema:
-            valid = valid and all(data_type == self_data_type
-                                  for self_data_type in self.data_schema)
-
+        valid = all(all(data_type == self_data_type
+                                for self_data_type in self.data_schema)
+                                for data_type in data_schema)
         return valid
 
     def _join_feature_schemas(self, other):
         """
         joins feature schemas of two datasets or streams. The boolean
-        masks are simply concatenated to indicate the features type
+        masks are simply concatenated to indicate the feature type
         locations in the joind dataset/stream.
 
         Args:
