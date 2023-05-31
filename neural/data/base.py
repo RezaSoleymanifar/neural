@@ -55,13 +55,15 @@ Classes:
         asynchronous data feeder that is responsible for feeding data
         from a live stream to a market environment.
 """
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
 from collections import OrderedDict
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 from functools import reduce
-from typing import Dict, Tuple, Iterable, Optional, List
+from typing import TYPE_CHECKING, Dict, Tuple, Iterable, Optional, List
 
 import dill
 import h5py as h5
@@ -70,6 +72,9 @@ import pandas as pd
 
 from neural.client.base import AbstractDataClient
 from neural.data.enums import FeatureType, AssetType, CalendarType
+
+if TYPE_CHECKING:
+    from neural.data.alpaca import AlpacaAsset
 
 
 @dataclass(frozen=True)
@@ -674,8 +679,12 @@ class AbstractDataMetaData:
         """
         Returns the number of columns in the dataset. This is useful for
         checking if the dataset has been downloaded correctly. 
-        """
 
+        Returns:
+        --------
+            int:
+                The number of columns in the dataset.
+        """
         n_columns = len(self.feature_schema.values()[0])
         return n_columns
 
@@ -683,11 +692,12 @@ class AbstractDataMetaData:
     def assets(self) -> List[AlpacaAsset]:
         """
         Returns a list of unique assets in the data schema. Order is
-        preserved.
+        order of appearance of assets in the data schema.
 
         Returns:
         --------
-            List[Asset]: a list of unique assets in the data schema.
+            List[Asset]: 
+                a list of unique assets in the data schema.
         """
         assets = reduce(lambda x, y: x + y, self.data_schema.values())
         symbols = OrderedDict()
