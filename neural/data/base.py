@@ -684,8 +684,10 @@ class AbstractDataMetaData:
         Raises:
         -------
             ValueError: 
-                if the data schemas of the two metadata objects are not
-                compatible.
+                If feature schema data types of the two metadata objects
+                are not compatible. Feature schema keys must be all
+                datasets or all streams. Joining datasets and streams
+                will raise an error.
             ValueError: 
                 if the resolutions of the two metadata objects are not the
                 same.
@@ -704,7 +706,6 @@ class AbstractDataMetaData:
             raise ValueError('Datasets must have the same resolution.')
 
         if not self.calendar_type != other.calendar_type:
-
             raise ValueError(
                 f'Metadata {other} has calendar type {other.calendar_type} '
                 'which is not compatible with {self.calendar_type}.')
