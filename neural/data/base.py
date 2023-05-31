@@ -367,7 +367,6 @@ class AbstractDataSource(ABC):
         return stream_type
 
 
-@dataclass
 class DataSchema:
     """
     A class that represents a data schema. A data schema is internally a
@@ -407,23 +406,28 @@ class DataSchema:
     >>> data_schema.schema[DatasetType.BAR]['feature_schema']
     {FeatureType.ASSET_CLOSE_PRICE: [True, False, True, False, True, False]}
     """
-    data_type: AbstractDataSource.DatasetType | AbstractDataSource.StreamType
-    assets: List[AbstractAsset]
-    feature_schema: FeatureSchema
 
-    def __post_init__(self):
-        for mask in self.feature_schema.schema.values():
-            if len(mask.count(True)) != len(self.assets):
+    def __init__(self, data_type: AbstractDataSource.DatasetType
+                 | AbstractDataSource.StreamType, assets: List[AbstractAsset],
+                 feature_schema: FeatureSchema) -> None:
+
+        for mask in feature_schema.schema.values():
+            if len(mask.count(True)) != len(assets):
                 raise ValueError(f'Mask {mask} has different length than '
-                                 f'number of assets: {len(self.assets)}.')
-        self.schema = OrderedDict()
-        self.schema[self.data_type]['assets'] = self.assets
-        self.schema[self.data_type]['feature_schema'] = self.feature_schema
+                                 f'number of assets: {len(assets)}.')
 
-    def get_data_type(
-        self, data_type: Union[AbstractDataSource.DatasetType,
-                               AbstractDataSource.StreamType]
-    ) -> Union[AbstractDataSource.DatasetType, AbstractDataSource.StreamType]:
+        self.schema = OrderedDict()
+        self.schema[data_type]['assets'] = assets
+        self.schema[data_type]['feature_schema'] = feature_schema
+
+    @property
+    def data_type(
+        self) -> AbstractDataSource.DatasetType | AbstractDataSource.StreamType:
+        """
+        Returns the data type of the data schema. This is useful to 
+        check if data schema is a dataset or a stream.
+        """
+        data_type = self.schema.keys()[0]
         if issubclass(data_type, AbstractDataSource.DatasetType):
             return AbstractDataSource.DatasetType
         elif issubclass(data_type, AbstractDataSource.StreamType):
@@ -431,17 +435,19 @@ class DataSchema:
         else:
             raise ValueError(f'{data_type} is not a valid data type.')
 
-    def __add__(self, other) -> 'DataSchema':
-        if other.get_data_type(data_type) != self.get_data_type(data_type):
-            raise ValueError('Data schemas do not have the same data type.')
+    def __add__(self, other) -> DataSchema:
+        if other.data_type != self.data_type:
+            raise ValueError(f'Data types {self.data_type} and '
+                             f'{other.data_type} are not compatible.')
+        
         for data_type in other.schema.keys():
             if data_type in self.schema:
                 self_assets = self.schema[data_type]['assets']
                 other_assets = other.schema[data_type]['assets']
                 if set(self_assets).intersection(set(other_assets)):
-                    raise ValueError(
-                        f'Assets of data type {data_type} overlap '
-                        f'between {self_assets} and {other_assets}.')
+                    raise ValueError(f'Assets of data type {data_type} overlap '
+                                     f'between {self_assets} '
+                                     f'and {other_assets}.')
                 self.schema[data_type]['assets'] += other.schema[data_type][
                     'assets']
                 self.schema[data_type]['feature_schema'] += other.schema[
@@ -449,7 +455,6 @@ class DataSchema:
             else:
                 self.schema[data_type] = other.schema[data_type]
         return self
-
 
 class FeatureSchema:
     """
@@ -710,7 +715,7 @@ class AbstractDataMetaData:
             if schema[data_type]['feature_schema'][
                     FeatureType.ASSET_CLOSE_PRICE].count(True):
                 assets += schema[data_type]['assets']
-
+            
         return assets
 
     @property
