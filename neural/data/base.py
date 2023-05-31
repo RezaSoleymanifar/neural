@@ -58,6 +58,7 @@ Classes:
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from collections import OrderedDict
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
@@ -510,7 +511,7 @@ class AbstractDataMetaData:
         Note that by default any present asset in the final joined
         dataset will be traded and should have a price mask.
     """
-    data_schema: Dict[AbstractDataSource.
+    data_schema: OrderedDict[AbstractDataSource.
                       DatasetType:Tuple[AbstractAsset]] | Dict[
                           AbstractDataSource.StreamType:Tuple[AbstractAsset]]
     feature_schema: Dict[FeatureType, List[bool]]
