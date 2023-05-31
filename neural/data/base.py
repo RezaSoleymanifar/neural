@@ -720,15 +720,21 @@ class AbstractDataMetaData:
     @property
     def assets(self) -> List[AbstractAsset]:
         """
-        Returns a list of unique assets in the data schema. Order is
-        order of appearance of assets in the data schema.
-
+        Returns a list of assets that have a price mask associated with
+        them. This is useful to filter out tradable assets from the
+        assets that exist to provide feature information for the
+        tradable assets.
         Returns:
         --------
             List[AbsractAsset]: 
                 a list of unique assets in the data schema.
         """
-        
+        schema = self.data_schema.schema
+        for data_type in schema:
+            if schema[data_type]['feature_schema'][
+                    FeatureType.ASSET_CLOSE_PRICE]:
+                return schema[data_type]['assets']
+            
         assets = reduce(lambda x, y: x + y, self.data_schema.values())
         assets = sorted(set(assets), key=assets.index)
         return assets
