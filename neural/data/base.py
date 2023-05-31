@@ -381,12 +381,19 @@ class DataSchema:
         assets: List[AbstractAsset],
         feature_schema: FeatureSchema
     ) -> None:
-        self.schema = OrderedDict()
-        self.schema[data_type] = (assets, feature_schema)
+        self.data_schema = OrderedDict()
+        self.data_schema[data_type] = (assets, feature_schema)
 
     def __add__(self, other):
-        for data_type in other.schema.keys():
-            if data_type in self.schema:
+        for data_type in other.data_schema.keys():
+            if data_type in self.data_schema:
+                # if assets have common values raise error:
+                if set(self.data_schema[data_type][0]).intersection(
+                        set(other.data_schema[data_type][0])):
+                    raise ValueError(
+                        f'Assets of data type {data_type} are not unique.')
+                self.data_schema[data_type][0] += other.data_schema[data_type][0]
+                self.data_schema[data_type][1] += other.data_schema[data_type][1]
                 
 
 
