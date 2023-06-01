@@ -915,7 +915,6 @@ class AbstractDataMetaData:
 
         return appended_metadata
 
-
 @dataclass
 class StreamMetaData(AbstractDataMetaData):
     """
@@ -955,10 +954,6 @@ class StreamMetaData(AbstractDataMetaData):
             metadata would not make sense. If used with stream metadata
             it will raise a not implemented error.
     """
-    data_schema: DataSchema
-    resolution: str
-    calendar_type: CalendarType
-
     @property
     def n_rows(self) -> int:
         """
@@ -1067,9 +1062,6 @@ class DatasetMetadata(AbstractDataMetaData):
         other. This method facilitates updating the metadata object
         automatically and validating the process.
     """
-    data_schema: DataSchema
-    resolution: str
-    calendar_type: CalendarType
     start: datetime
     end: datetime
 
