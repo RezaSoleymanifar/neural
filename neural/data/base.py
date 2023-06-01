@@ -1336,7 +1336,7 @@ class StaticDataFeeder(AbstractDataFeeder):
         self.n_chunks = n_chunks
 
         self._cumulative_daily_rows = self._get_cumulative_daily_rows()
-
+        self._index = self.start_index
         return None
 
     @property
@@ -1411,19 +1411,18 @@ class StaticDataFeeder(AbstractDataFeeder):
                 'does not match a row index corresponding to the start/end of a day.'
             )
 
-    def get_date(self, index: int) -> datetime:
+    def get_date(self) -> datetime:
         """
         Returns the date corresponding to the current index. This is
         useful for mapping the index of the dataset to the date of the
-        episode. This is used by the market environment to check for
-        market open and close times.
+        episode.
 
         Returns:
         --------
             date (datetime):
                 The date corresponding to the current index.
         """
-        day_index = (index < self._cumulative_daily_rows).argmax()
+        day_index = (self.index < self._cumulative_daily_rows).argmax()
         date = self.dataset_metadata.schedule.loc[day_index, 'start']
         return date
 
@@ -1442,7 +1441,7 @@ class StaticDataFeeder(AbstractDataFeeder):
                 a generator object returning features corresponding to each
                 time interval as a numpy array.
         """
-        self._index = 0
+        self._index = self.start_index
         chunk_edge_indices = np.linspace(start=self.start_index,
                                          stop=self.end_index,
                                          num=self.n_chunks + 1,
