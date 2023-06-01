@@ -10,6 +10,7 @@ pandas_market_calendars.
 from __future__ import annotations
 
 from abc import abstractmethod, ABC
+from enum import Enum
 from typing import Any, TYPE_CHECKING
 
 import pandas as pd
@@ -200,40 +201,6 @@ class Resolution:
         >>> print(resolution)
         43Unit.NANO_SECOND
     """
-
-    class Unit(Enum):
-        """
-        Enumeration class that defines the available units of time for
-        representing the resolution of a dataset or stream. The
-        resolution is the fixed length of time interval in the dataset
-        or stream. The resolution is represented as a string with the
-        quantity and unit of time.
-
-        Attributes:
-        -----------
-            NANO_SECOND (str):
-                A string representing the nanosecond unit of time.
-            MICRO_SECOND (str):
-                A string representing the microsecond unit of time.
-            MILLI_SECOND (str):
-                A string representing the millisecond unit of time.
-            SECOND (str):
-                A string representing the second unit of time.
-            MINUTE (str):
-                A string representing the minute unit of time.
-            HOUR (str):
-                A string representing the hour unit of time.
-            DAY (str):
-                A string representing the day unit of time.
-        """
-        NANO_SECOND = 'NANO_SECOND'
-        MICRO_SECOND = 'MICRO_SECOND'
-        MILLI_SECOND = 'MILLI_SECOND'
-        SECOND = 'SECOND'
-        MINUTE = 'MINUTE'
-        HOUR = 'HOUR'
-        DAY = 'DAY'
-
     def __init__(self, quantity: int, unit: Unit):
         """
         Initializes a new instance of the Resolution class.
@@ -250,6 +217,29 @@ class Resolution:
         self.quantity = quantity
         self.unit = unit
 
+    @property
+    def pandas_timedelta(self):
+        """
+        Returns a pandas Timedelta object representing the resolution.
+
+        Returns:
+        --------
+            pd.Timedelta:
+                A pandas Timedelta object representing the resolution.
+        """
+        pandas_unit = {
+            Resolution.Unit.NANO_SECOND: 'ns',
+            Resolution.Unit.MICRO_SECOND: 'us',
+            Resolution.Unit.MILLI_SECOND: 'ms',
+            Resolution.Unit.SECOND: 'S',
+            Resolution.Unit.MINUTE: 'T',
+            Resolution.Unit.HOUR: 'H',
+            Resolution.Unit.DAY: 'D'
+        }
+        unit_str = pandas_unit[self.unit]
+        timedelta_str = f"{self.quantity}{unit_str}"
+        return pd.Timedelta(timedelta_str)
+    
     def validate_resolution(self, quantity: int, unit: Unit):
         """
         Validates the resolution.
@@ -333,3 +323,37 @@ class Resolution:
             43Unit.NANO_SECOND
         """
         return f"{self.quantity}{self.unit}"
+
+    class Unit(Enum):
+        """
+        Enumeration class that defines the available units of time for
+        representing the resolution of a dataset or stream. The
+        resolution is the fixed length of time interval in the dataset
+        or stream. The resolution is represented as a string with the
+        quantity and unit of time.
+
+        Attributes:
+        -----------
+            NANO_SECOND (str):
+                A string representing the nanosecond unit of time.
+            MICRO_SECOND (str):
+                A string representing the microsecond unit of time.
+            MILLI_SECOND (str):
+                A string representing the millisecond unit of time.
+            SECOND (str):
+                A string representing the second unit of time.
+            MINUTE (str):
+                A string representing the minute unit of time.
+            HOUR (str):
+                A string representing the hour unit of time.
+            DAY (str):
+                A string representing the day unit of time.
+        """
+        NANO_SECOND = 'NANO_SECOND'
+        MICRO_SECOND = 'MICRO_SECOND'
+        MILLI_SECOND = 'MILLI_SECOND'
+        SECOND = 'SECOND'
+        MINUTE = 'MINUTE'
+        HOUR = 'HOUR'
+        DAY = 'DAY'
+        

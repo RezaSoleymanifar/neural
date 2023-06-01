@@ -1104,9 +1104,8 @@ class DatasetMetadata(AbstractDataMetaData):
 
     @property
     def n_rows(self):
-
-        resolution = self.resolution
-        resolution_offset = pd.to_timedelta(resolution)
+        
+        resolution_offset = self.resolution
         market_durations = (self.schedule['end'] - self.schedule['start'])
 
         intervals_per_day = (market_durations / resolution_offset).astype(int)
