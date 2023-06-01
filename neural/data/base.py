@@ -1341,8 +1341,7 @@ class StaticDataFeeder(AbstractDataFeeder):
 
         return None
 
-    @property
-    def day(self) -> int:
+    def get_day(self, index: int) -> int:
         """
         The current day of the episode, updated based on the market
         environment's index and resolution. Day count starts at 1.
