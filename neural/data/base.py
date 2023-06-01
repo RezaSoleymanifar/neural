@@ -522,7 +522,7 @@ class FeatureSchema:
             raise ValueError('Feature schemas do not have same feature types.')
 
         for feature_type in self.schema.keys():
-            self[feature_type] += other.schema[feature_type]
+            self.schema[feature_type] += other.schema[feature_type]
 
         return self
 
@@ -731,6 +731,12 @@ class AbstractDataMetaData:
         --------
             List[AbsractAsset]: 
                 a list of unique assets in the data schema.
+
+        Notes:
+        ------
+            By default number of True values in the price mask is equal
+            to the number of assets in the data schema. This is enforced
+            at time of creation of the data schema.
         """
         schema = self.data_schema.schema
         for data_type in schema:
