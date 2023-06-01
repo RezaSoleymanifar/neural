@@ -428,19 +428,18 @@ class DataSchema:
             feature_schema (FeatureSchema):
                 A dictionary that maps feature types to boolean masks.
         """
-        n_price_mask_assets =  schema[data_type]['feature_schema'][
-                    FeatureType.ASSET_CLOSE_PRICE].count(True)
+        n_price_mask_assets = schema[data_type]['feature_schema'][
+            FeatureType.ASSET_CLOSE_PRICE].count(True)
         if n_price_mask_assets != len(assets):
             raise ValueError(
                 f'Number of assets with price mask ({n_price_mask_assets}) '
                 f'is not equal to the number of assets ({len(assets)}) in '
                 'the data schema. If asset has price mask it should exist '
                 'for all assets.')
-        
+
         self.schema = OrderedDict()
         self.schema[data_type]['assets'] = assets
         self.schema[data_type]['feature_schema'] = feature_schema
-
 
     @property
     def is_dataset(self) -> bool:
@@ -800,11 +799,15 @@ class AbstractDataMetaData:
             to the number of assets in the data schema. This is enforced
             at time of creation of the data schema.
         """
+        assets = list()
         schema = self.data_schema.schema
         for data_type in schema:
-            if schema[data_type]['feature_schema'][
-                    FeatureType.ASSET_CLOSE_PRICE].count(True):
-                assets += schema[data_type]['assets']
+            asset_prices_mask = schema[data_type]['feature_schema'][
+                FeatureType.ASSET_CLOSE_PRICE]
+            assets.extend([
+                asset for asset, mask_value in zip(schema[data_type]['assets'],
+                                                asset_prices_mask) if mask_value
+            ])
 
         return assets
 
