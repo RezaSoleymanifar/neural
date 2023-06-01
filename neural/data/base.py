@@ -759,25 +759,6 @@ class AbstractDataMetaData:
         return self.get_features_mask(FeatureType.ASSET_CLOSE_PRICE)
 
     @property
-    def valid(self) -> bool:
-        """
-        ensures that all assets have a price mask associated with them.
-        This property can be violated during merging, since some
-        datasets may not have a price mask associated with them. However
-        post merging the metadata can validate itself using this
-        property. Used by data feeders to validate input before feeding
-        data to the market environments.
-
-        Returns:
-        --------
-            bool: 
-                True if all assets have a price mask associated with
-                them, False otherwise.
-        """
-        return True if len(
-            self.assets) == self.asset_prices_mask.count(True) else False
-
-    @property
     def schedule(self) -> Callable[[datetime, datetime], pd.DataFrame]:
         """
         Returns a function that returns a DataFrame representing the
@@ -807,6 +788,13 @@ class AbstractDataMetaData:
         return self.calendar_type.schedule
 
     def get_features_mask(self, feature_type: FeatureType):
+        """
+        Retrievs the boolean mask for a given feature type. This is
+        useful for filtering out features of a particular type from the
+        data. For example if the user wants to filter out all features
+        that are text based, they can use this method to get the mask
+        for text features FeatureType.TEXT and filter out the columns
+        """
         mask = list()
         for data_type in self.data_schema:
             mask += self.data_schema[data_type]['feature_schema'][
@@ -858,7 +846,6 @@ class AbstractDataMetaData:
         data_schema = self.data_schema + other.data_schema
 
         joined_metadata = self.__class__(data_schema=data_schema,
-                                         feature_schema=feature_schema,
                                          resolution=self.resolution,
                                          calendar_type=self.calendar_type,
                                          **kwargs)
@@ -911,22 +898,17 @@ class AbstractDataMetaData:
         if dill.dumps(self.data_schema) != dill.dumps(other.data_schema):
             raise ValueError('Datasets must have identical data schemas.')
 
-        if dill.dumps(self.feature_schema) != dill.dumps(other.feature_schema):
-            raise ValueError('Datasets must have identical feature schemas.')
-
         if self.resolution != other.resolution:
             raise ValueError(
                 f'Dataset resolutions{self.resolution} and {other.resolution} '
                 'are mismatched.')
 
         if not self.calendar_type != other.calendar_type:
-
             raise ValueError(
                 f'Metadata {other} has calendar type {other.calendar_type} '
-                'which is not compatible with {self.calendar_type}.')
+                f'which is not compatible with {self.calendar_type}.')
 
         appended_metadata = self.__class__(data_schema=self.data_schema,
-                                           feature_schema=self.feature_schema,
                                            resolution=self.resolution,
                                            calendar_type=self.calendar_type,
                                            **kwargs)
@@ -973,8 +955,7 @@ class StreamMetaData(AbstractDataMetaData):
             metadata would not make sense. If used with stream metadata
             it will raise a not implemented error.
     """
-    data_schema: Dict[AbstractDataSource.StreamType:Tuple[str]]
-    feature_schema: Dict[FeatureType, Tuple[bool]]
+    data_schema: DataSchema
     resolution: str
     calendar_type: CalendarType
 
