@@ -1363,7 +1363,16 @@ class StaticDataFeeder(AbstractDataFeeder):
     
     @property
     def n_features(self):
-        self.n_columns = self.dataset_metadata.n_columns
+        return self.dataset_metadata.n_columns
+    
+    @property
+    def index(self):
+        return self._index
+    
+    @property
+    def done(self):
+        return True if self.index == self.end_index - 1 else False
+
     def _get_cumulative_daily_rows(self) -> int:
         """
         Returns a pandas Series object that contains the cumulative
@@ -1427,6 +1436,7 @@ class StaticDataFeeder(AbstractDataFeeder):
                 a generator object returning features corresponding to each
                 time interval as a numpy array.
         """
+        self._index = 0
         chunk_edge_indices = np.linspace(start=self.start_index,
                                          stop=self.end_index,
                                          num=self.n_chunks + 1,
@@ -1439,6 +1449,7 @@ class StaticDataFeeder(AbstractDataFeeder):
                 [dataset[start:end, :] for dataset in self.datasets])
 
             for row in joined_chunks_in_memory:
+                self._index += 1
                 yield row
 
     def split(self, n: int = 1 | float):
