@@ -480,7 +480,7 @@ class DataSchema:
         return assets
 
     @property
-    def n_columns(self) -> int:
+    def n_features(self) -> int:
         """
         Returns the number of columns in the dataset. Can be used to
         compare against the number columns in the underlying data for 
@@ -491,10 +491,10 @@ class DataSchema:
             int:
                 The number of columns in the dataset.
         """
-        n_columns = sum(
-            len(self.data_schema[data_type]['feature_schema'].values()[0])
-            for data_type in self.data_schema)
-        return n_columns
+        n_features = sum(
+            len(self.schema[data_type]['feature_schema'].values()[0])
+            for data_type in self.schema)
+        return n_features
 
     @property
     def asset_prices_mask(self) -> List[bool]:
@@ -831,7 +831,7 @@ class AbstractDataMetaData:
             int:
                 The number of columns in the dataset.
         """
-        return self.data_schema.n_columns
+        return self.data_schema.n_features
 
     @property
     def assets(self) -> List[AbstractAsset]:
