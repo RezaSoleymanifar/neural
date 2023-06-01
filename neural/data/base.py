@@ -1338,28 +1338,21 @@ class StaticDataFeeder(AbstractDataFeeder):
         self.n_columns = self.dataset_metadata.n_columns
         self.n_chunks = n_chunks
 
-        self.cumulative_intervals = self.get_cumulative_intervals()
+        self._cumulative_intervals = self.get_cumulative_intervals()
 
         return None
 
-    def get_cumulative_intervals(self) -> int:
-        """
-        Computes the cumulative number of intervals per day. This is
-        useful for mapping the index of the dataset to the date of the
-        episode.
+    @property
+    def cumulative_intervals(self) -> int:
+        if not self._cumulative_intervals
+            schedule = self.dataset_metadata.schedule
+            resolution = self.dataset_metadata.resolution
+            daily_durations = schedule['end'] - schedule['start']
+            intervals_per_day = (
+                daily_durations / resolution.pandas_timedelta).astype(int)
+            self._cumulative_intervals = intervals_per_day.cumsum()
+        return self._cumulative_intervals
 
-        Returns:
-        --------    
-            cumulative_intervals (int):
-                The cumulative number of intervals per day.
-        """
-        schedule = self.dataset_metadata.schedule
-        resolution = self.dataset_metadata.resolution
-        daily_durations = schedule['end'] - schedule['start']
-        intervals_per_day = (
-            daily_durations / resolution.pandas_timedelta).astype(int)
-        cumulative_intervals = intervals_per_day.cumsum()
-        return cumulative_intervals
 
     def get_date(self, index: int) -> datetime:
         """
@@ -1424,18 +1417,14 @@ class StaticDataFeeder(AbstractDataFeeder):
         """
 
         if isinstance(n, int):
-
             if not n > 0:
                 raise ValueError("n must be a positive integer")
-
             edge_indices = np.linspace(start=self.start_index,
                                        stop=self.end_index,
                                        num=n + 1,
                                        dtype=int,
                                        endpoint=True)
-        
-        if isinstance(n, float):
-
+        elif isinstance(n, float):
             if not 0 < n <= 1:
                 raise ValueError("n must be a float in (0, 1]")
 
