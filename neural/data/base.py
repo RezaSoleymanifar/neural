@@ -1449,6 +1449,11 @@ class StaticDataFeeder(AbstractDataFeeder):
                                        dtype=int,
                                        endpoint=True)
 
+        cumulative_closest_indices = np.searchsorted(
+            self.cumulative_intervals, chunk_edge_indices[1:-1], side='right')
+        cumulative_closest_indices = np.concatenate(
+            ([0], cumulative_closest_indices, [len(self.cumulative_intervals)-1]))
+        
         elif isinstance(n, float):
 
             if not 0 < n <= 1:
