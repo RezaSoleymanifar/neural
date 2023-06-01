@@ -20,7 +20,7 @@ from neural.data.enums import AssetType
 from neural.utils.io import to_hdf5
 from neural.utils.base import (
     progress_bar, validate_path, RunningStatistics)
-
+from neural.utils.misc import resolution_to_timeframe
 
 class AlpacaDataSource(AbstractDataSource):
     """
@@ -394,7 +394,7 @@ class AlpacaDataDownloader():
         return None
 
 
-    def _validate_resolution(self, resolution):
+    def _validate_resolution(self, resolution, schdule):
         
         """
         Validates the resolution of the dataset. Resolutions not
@@ -415,6 +415,11 @@ class AlpacaDataDownloader():
             If the resolution is not accepted.
         """
 
+        daily_durations = schedule['end'] - schedule['start']
+        rows_per_day = (daily_durations /
+                        resolution.pandas_timedelta).astype(int)
+        self._cumulative_daily_rows = rows_per_day.cumsum().values
+        
         if resolution not in ALPACA_ACCEPTED_DOWNLOAD_RESOLUTIONS:
             raise ValueError(
                 f'Accepted resolutions: {ALPACA_ACCEPTED_DOWNLOAD_RESOLUTIONS}.')
@@ -427,7 +432,7 @@ class AlpacaDataDownloader():
         dataset_type: AlpacaDataSource.DatasetType,
         asset_type: AssetType,
         symbols: List[AlpacaAsset],
-        resolution: str,
+        timeframe: str,
         start: datetime,
         end: datetime,
         ) -> None:
@@ -474,7 +479,7 @@ class AlpacaDataDownloader():
                 The raw dataset downloaded from the Alpaca API.
         """
 
-        resolution = to_timeframe(resolution)
+        timeframe = resolution_to_timeframe(timeframe)
 
         downloader, request = self.data_client.get_downloader_and_request(
             dataset_type=dataset_type,
@@ -482,7 +487,7 @@ class AlpacaDataDownloader():
 
         data = downloader(request(
             symbol_or_symbols=symbols,
-            timeframe=resolution,
+            timeframe=timeframe,
             start=start,
             end=end))
 
@@ -570,7 +575,6 @@ class AlpacaDataDownloader():
         """
 
         validate_path(file_path=file_path)
-        self._validate_resolution(resolution=resolution)
 
         if not symbols:
             raise ValueError(
@@ -601,6 +605,7 @@ class AlpacaDataDownloader():
             raise ValueError(
                 f'No market hours in date range {start_date}-{end_date}.')
         
+        self._validate_resolution(resolution=resolution, schedule = schedule)
         days = len(schedule)
         n_assets = len(assets)
         logger.info('Downloading dataset:'
@@ -617,7 +622,7 @@ class AlpacaDataDownloader():
                 dataset_type=dataset_type,
                 asset_type=asset_type,
                 symbols=symbols,
-                resolution=resolution,
+                timeframe=resolution,
                 start=start,
                 end=end)
 
