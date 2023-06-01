@@ -1343,7 +1343,16 @@ class StaticDataFeeder(AbstractDataFeeder):
         return None
 
     def get_cumulative_intervals(self) -> int:
+        """
+        Computes the cumulative number of intervals per day. This is
+        useful for mapping the index of the dataset to the date of the
+        episode.
 
+        Returns:
+        --------    
+            cumulative_intervals (int):
+                The cumulative number of intervals per day.
+        """
         schedule = self.dataset_metadata.schedule
         resolution = self.dataset_metadata.resolution
         daily_durations = schedule['end'] - schedule['start']
@@ -1366,7 +1375,7 @@ class StaticDataFeeder(AbstractDataFeeder):
                 The current day index of the episode.
         """
 
-        day_index = (index < self._cumulative_intervals).argmax()
+        day_index = (index < self.cumulative_intervals).argmax()
         return day_index
     
     def get_date(self, index: int) -> datetime:
@@ -1383,7 +1392,6 @@ class StaticDataFeeder(AbstractDataFeeder):
         """
         date = self.dataset_metadata.schedule.loc[index, 'start']
         return date
-
 
     def get_features_generator(self) -> Iterable[np.ndarray]:
         """
