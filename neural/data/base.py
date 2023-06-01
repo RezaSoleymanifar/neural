@@ -1424,7 +1424,7 @@ class StaticDataFeeder(AbstractDataFeeder):
         stable baselines vector env to parallelize running multiple
         trading environments, leading to significant speedup of training
         process. Ensures that the sub-feeders are non-overlapping,
-        contiguous and match the start and end of days.
+        contiguous and match integer number of days in length.
 
         Args:
         ------
@@ -1465,7 +1465,17 @@ class StaticDataFeeder(AbstractDataFeeder):
             self.cumulative_intervals, edge_indices[1:-1], side='right') - 1
         cumulative_closest_indices = np.concatenate(
             ([self.start_index], cumulative_closest_indices, [self.end_index]))
-        
+
+
+        if len(cumulative_closest_indices) != len(
+                np.unique(cumulative_closest_indices)):
+            raise ValueError(
+                f"Value of n is too large for 
+                 
+                  and cannot be split into {n} "
+                "non-overlapping contiguous sub-feeders
+                ")
+
         static_data_feeders = list()
 
         for start, end in zip(edge_indices[:-1], edge_indices[1:]):
