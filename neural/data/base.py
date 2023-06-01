@@ -1336,7 +1336,7 @@ class StaticDataFeeder(AbstractDataFeeder):
         self.n_chunks = n_chunks
 
         self._cumulative_daily_rows = self._get_cumulative_daily_rows()
-        self._index = self.start_index
+        self._index = None
         return None
 
     @property
@@ -1371,6 +1371,13 @@ class StaticDataFeeder(AbstractDataFeeder):
         """
         return self.get_date(self.end_index)
 
+    @property
+    def date(self):
+        """
+        Returns the current date of the episode.
+        """
+        return self.get_date(self.index)
+    
     @property
     def days(self):
         """
@@ -1411,7 +1418,7 @@ class StaticDataFeeder(AbstractDataFeeder):
                 'does not match a row index corresponding to the start/end of a day.'
             )
 
-    def get_date(self) -> datetime:
+    def get_date(self, index) -> datetime:
         """
         Returns the date corresponding to the current index. This is
         useful for mapping the index of the dataset to the date of the
@@ -1422,7 +1429,7 @@ class StaticDataFeeder(AbstractDataFeeder):
             date (datetime):
                 The date corresponding to the current index.
         """
-        day_index = (self.index < self._cumulative_daily_rows).argmax()
+        day_index = (index < self._cumulative_daily_rows).argmax()
         date = self.dataset_metadata.schedule.loc[day_index, 'start']
         return date
 
@@ -1441,18 +1448,16 @@ class StaticDataFeeder(AbstractDataFeeder):
                 a generator object returning features corresponding to each
                 time interval as a numpy array.
         """
-        self._index = self.start_index
         chunk_edge_indices = np.linspace(start=self.start_index,
                                          stop=self.end_index,
                                          num=self.n_chunks + 1,
                                          dtype=int,
                                          endpoint=True)
+        self._index = self.start_index - 1
 
         for start, end in zip(chunk_edge_indices[:-1], chunk_edge_indices[1:]):
-
             joined_chunks_in_memory = np.hstack(
                 [dataset[start:end, :] for dataset in self.datasets])
-
             for row in joined_chunks_in_memory:
                 self._index += 1
                 yield row
