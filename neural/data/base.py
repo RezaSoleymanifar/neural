@@ -952,19 +952,6 @@ class StreamMetaData(AbstractDataMetaData):
             it will raise a not implemented error.
     """
 
-    @property
-    def n_rows(self) -> int:
-        """
-        Just to provide a consistent interface with DatasetMetaData and
-        avoid boilerplate code.
-
-        Returns:
-        --------
-            int: np.inf
-        """
-
-        n_rows = np.inf
-        return n_rows
 
     def __add__(self, other: AbstractDataMetaData,
                 **kwargs) -> AbstractDataMetaData:
@@ -1254,6 +1241,23 @@ class AbstractDataFeeder(ABC):
         """
         raise NotImplementedError
 
+    @property
+    @abstractmethod
+    def n_rows(self):
+        raise NotImplementedError
+
+    @property
+    def n_features(self):
+        raise NotImplementedError
+
+    @property
+    def index(self):
+        raise NotImplementedError
+
+    @property
+    def done(self):
+        return True if self.index == self.end_index - 1 else False
+    
 
 class StaticDataFeeder(AbstractDataFeeder):
     """
@@ -1333,6 +1337,22 @@ class StaticDataFeeder(AbstractDataFeeder):
         return None
 
     @property
+    def n_rows(self):
+        return self.end_index - self.start_index
+    
+    @property
+    def n_features(self):
+        return self.dataset_metadata.n_columns
+    
+    @property
+    def index(self):
+        return self._index
+    
+    @property
+    def done(self):
+        return True if self.index == self.end_index - 1 else False
+    
+    @property
     def start_date(self):
         """
         Returns the date corresponding to the start index. This is
@@ -1356,22 +1376,6 @@ class StaticDataFeeder(AbstractDataFeeder):
         """
         days = (self.end_date - self.start_date).days
         return days
-
-    @property
-    def n_rows(self):
-        return self.end_index - self.start_index
-    
-    @property
-    def n_features(self):
-        return self.dataset_metadata.n_columns
-    
-    @property
-    def index(self):
-        return self._index
-    
-    @property
-    def done(self):
-        return True if self.index == self.end_index - 1 else False
 
     def _get_cumulative_daily_rows(self) -> int:
         """
