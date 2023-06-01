@@ -1329,7 +1329,6 @@ class StaticDataFeeder(AbstractDataFeeder):
         days. Right now metadata that depends on calculating date won't 
         work with this type of breaking up datasets.
         """
-
         self.dataset_metadata = dataset_metadata
         self.datasets = datasets
         self.start_index = start_index
@@ -1339,21 +1338,20 @@ class StaticDataFeeder(AbstractDataFeeder):
         self.n_columns = self.dataset_metadata.n_columns
         self.n_chunks = n_chunks
 
-        self._cumulative_intervals = None
+        self.cumulative_intervals = self.get_cumulative_intervals()
 
         return None
 
-    def get_cumulative_intervals(self, index: int) -> int:
+    def get_cumulative_intervals(self) -> int:
 
         schedule = self.dataset_metadata.schedule
-        if not self._cumulative_intervals:
-            resolution = self.dataset_metadata.resolution
-            daily_durations = (self.schedule['end'] - self.schedule['start'])
+        resolution = self.dataset_metadata.resolution
+        daily_durations = schedule['end'] - schedule['start']
+        intervals_per_day = (
+            daily_durations / resolution.pandas_timedelta).astype(int)
+        cumulative_intervals = intervals_per_day.cumsum()
+        return cumulative_intervals
 
-            intervals_per_day = (
-                daily_durations / resolution.pandas_timedelta).astype(int)
-            self._cumulative_intervals = intervals_per_day.cumsum()
-            
     def get_day_index(self, index: int) -> int:
         """
         The current day of the episode, updated based on the market
