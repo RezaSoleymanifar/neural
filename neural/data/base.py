@@ -1612,8 +1612,7 @@ class StaticDataFeeder(AbstractDataFeeder):
         if len(edge_indices) != len(np.unique(edge_indices)):
             raise ValueError(
                 f'Value of n is too large for n_rows: {self.n_rows} '
-                f'and cannot be split dataset into {n} non-overlapping '
-                'contiguous sub-feeders.')
+                f'cannot be split dataset into {n} sub-feeders.')
 
         static_data_feeders = list()
 
