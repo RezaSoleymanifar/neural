@@ -480,13 +480,35 @@ class FeatureSchema:
     [True, False, True, False, True, False]
     This mask now can be applied to a row to return the close prices.
     """
-    def __init__(self, data_type: AbstractDataSource.DatasetType
-                 | AbstractDataSource.StreamType,
-                 dataframe: pd.DataFrame) -> None:
+    def __init__(self, dataframe: pd.DataFrame) -> None:
+        """
+        Initializes the feature schema using a pandas DataFrame. The
+        columns of the dataframe are matched against the string values
+        of the feature types in FeatureType enum. If a column name
+        matches the string value of a feature type, the corresponding
+        boolean mask is set to True. this process is case insensitive.
+
+        Args:
+        ------
+            dataframe (pd.DataFrame):
+                The input DataFrame for which the feature schema is to
+                be created. By defaulat all feature types in FeatureType
+                are enumerated and their value is matched against the
+                column names of the input DataFrame.
+        """
         self.schema = self.create_feature_schema(dataframe)
         return None
 
     def __repr__(self) -> str:
+        """
+        Returns a string representation of the feature schema.
+
+        Returns:
+        --------
+            str:
+                A string representation of the feature schema.
+                example: {FeatureType.ASSET_CLOSE_PRICE: [True, False]}
+        """
         return str(self.schema)
 
     def __add__(self, other):
