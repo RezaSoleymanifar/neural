@@ -422,8 +422,8 @@ class TrainMarketEnv(AbstractMarketEnv):
                 An array representing the current asset prices of the
                 assets.
         """
-        asset_price_mask = self.data_metadata.asset_price_mask
-        self._asset_prices = self.features[asset_price_mask]
+        asset_prices_mask = self.data_metadata.asset_prices_mask
+        self._asset_prices = self.features[asset_prices_mask]
 
         return self._asset_prices
 
