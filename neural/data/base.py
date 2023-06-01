@@ -432,6 +432,11 @@ class DataSchema:
         self.schema[data_type]['assets'] = assets
         self.schema[data_type]['feature_schema'] = feature_schema
 
+        schema = self.data_schema.schema
+        n_price_mask_assets =  schema[data_type]['feature_schema'][
+                    FeatureType.ASSET_CLOSE_PRICE].count(True)
+        assets += schema[data_type]['assets']
+        
     @property
     def is_dataset(self) -> bool:
         """
