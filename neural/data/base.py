@@ -818,22 +818,9 @@ class AbstractDataMetaData:
         """
         This is useful for joining datasets that are large to download in one
         go. Each sub-dataset is downloaded for a fixed span of time and each
-        can correpond to different data sources, feature types and symbols.
+        can correpond to different data sources, feature types and assets.
         Joining datasets and validating the process is done automatically using
-        this method. When joining make sure order of datasets follow the
-        structure bellow, since it guarantees that the order of assets in the
-        price mask matches the order of assets in the data schema.
-            - asset group 1:
-                - price data
-                - other data
-                - ...
-            - asset group 2:
-                - price data
-                - other data
-                - ...
-            - ...
-        In order for datasets to be joined they must have the same
-        resolution and calendar type.
+        this method.
             
         Args:
         ------
@@ -860,11 +847,6 @@ class AbstractDataMetaData:
                 same.
         """
 
-        if not self._validate_data_schema(other.data_schema):
-            raise ValueError(
-                f'Metadata {other} has data schema {other.data_schema} '
-                'which is not compatible with {self.data_schema}.')
-
         if self.resolution != other.resolution:
             raise ValueError('Datasets must have the same resolution.')
 
@@ -873,8 +855,7 @@ class AbstractDataMetaData:
                 f'Metadata {other} has calendar type {other.calendar_type} '
                 'which is not compatible with {self.calendar_type}.')
 
-        data_schema = self.data_schema.update(other.data_schema)
-        feature_schema = self._join_feature_schemas(other)
+        data_schema = self.data_schema + other.data_schema
 
         joined_metadata = self.__class__(data_schema=data_schema,
                                          feature_schema=feature_schema,
