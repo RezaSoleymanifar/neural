@@ -1338,20 +1338,20 @@ class StaticDataFeeder(AbstractDataFeeder):
         self.n_columns = self.dataset_metadata.n_columns
         self.n_chunks = n_chunks
 
-        self._cumulative_intervals = self.get_cumulative_intervals()
+        self._cumulative_daily_rows = None
 
         return None
 
     @property
-    def cumulative_intervals(self) -> int:
-        if not self._cumulative_intervals
+    def cumulative_daily_intervals(self) -> int:
+        if not self._cumulative_daily_rows:
             schedule = self.dataset_metadata.schedule
             resolution = self.dataset_metadata.resolution
             daily_durations = schedule['end'] - schedule['start']
-            intervals_per_day = (
+            rows_per_day = (
                 daily_durations / resolution.pandas_timedelta).astype(int)
-            self._cumulative_intervals = intervals_per_day.cumsum()
-        return self._cumulative_intervals
+            self._cumulative_daily_rows = rows_per_day.cumsum()
+        return self._cumulative_daily_rows
 
 
     def get_date(self, index: int) -> datetime:
@@ -1366,7 +1366,7 @@ class StaticDataFeeder(AbstractDataFeeder):
             date (datetime):
                 The date corresponding to the current index.
         """
-        day_index = (index < self.cumulative_intervals).argmax()
+        day_index = (index < self.cumulative_daily_intervals).argmax()
         date = self.dataset_metadata.schedule.loc[day_index, 'start']
         return date
 
@@ -1436,7 +1436,7 @@ class StaticDataFeeder(AbstractDataFeeder):
 
         start, end, middle = edge_indices[0], edge_indices[1], edge_indices[1:-1]
         cumulative_closest_indices = np.searchsorted(
-            self.cumulative_intervals, middle, side='right') - 1
+            self.cumulative_daily_intervals, middle, side='right') - 1
         edge_indices = np.concatenate(
             (start, cumulative_closest_indices, end))
 
