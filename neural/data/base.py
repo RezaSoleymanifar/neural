@@ -456,6 +456,23 @@ class DataSchema:
         return assets
 
     @property
+    def n_columns(self) -> int:
+        """
+        Returns the number of columns in the dataset. Can be used to
+        compare against the number columns in the underlying data for 
+        sanity checks.
+
+        Returns:
+        --------
+            int:
+                The number of columns in the dataset.
+        """
+        n_columns = sum(
+            len(self.data_schema[data_type]['feature_schema'].values()[0])
+            for data_type in self.data_schema)
+        return n_columns
+    
+    @property
     def is_dataset(self) -> bool:
         """
         Returns if the data schema is for a dataset or a stream. If
@@ -788,12 +805,7 @@ class AbstractDataMetaData:
             int:
                 The number of columns in the dataset.
         """
-        n_columns = 0
-        for data_type in self.data_schema:
-            n_columns += len(
-                self.data_schema[data_type]['feature_schema'].values()[0])
-
-        return n_columns
+        return self.data_schema.n_columns
 
     @property
     def assets(self) -> List[AbstractAsset]:
@@ -813,20 +825,7 @@ class AbstractDataMetaData:
             to the number of assets in the data schema. This is enforced
             at time of creation of the data schema.
         """
-        assets = list()
-        schema = self.data_schema.schema
-        for data_type in schema:
-            asset_prices_mask = schema[data_type]['feature_schema'][
-                FeatureType.ASSET_CLOSE_PRICE]
-            assets.extend([
-                asset for asset, mask_value in zip(schema[data_type]['assets'],
-                                                   asset_prices_mask)
-                if mask_value
-            ])
-        if len(assets) != len(set(assets)):
-            raise ValueError('Duplicate tradable assets in data schema.')
-
-        return assets
+        return self.data_schema.assets
 
     @property
     def schedule(self) -> Callable[[datetime, datetime], pd.DataFrame]:
