@@ -62,9 +62,7 @@ from collections import OrderedDict
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from functools import reduce
-from typing import (TYPE_CHECKING, Dict, List, Callable, Tuple, Iterable,
-                    Optional)
+from typing import (TYPE_CHECKING, Dict, List, Callable, Iterable, Optional)
 
 import dill
 import h5py as h5
@@ -75,7 +73,6 @@ from neural.client.base import AbstractDataClient
 from neural.data.enums import FeatureType, AssetType, CalendarType
 
 if TYPE_CHECKING:
-    from neural.data.alpaca import AlpacaAsset
     from neural.utils.time import Resolution
 
 
