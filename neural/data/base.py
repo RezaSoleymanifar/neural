@@ -1338,12 +1338,21 @@ class StaticDataFeeder(AbstractDataFeeder):
         self.n_columns = self.dataset_metadata.n_columns
         self.n_chunks = n_chunks
 
-        self._cumulative_daily_rows = None
+        self._cumulative_daily_rows = self.get_cumulative_daily_rows()
+
+        if self.start not in self.
 
         return None
 
-    @property
-    def cumulative_daily_intervals(self) -> int:
+    def get_cumulative_daily_rows(self) -> int:
+        """
+        Returns a pandas Series object that contains the cumulative
+        number of rows per day. This is useful for mapping the index of
+        the dataset to the date of the episode and also adjusting the 
+        start and end times of the data feeders to match the start and
+        end of days, namely making sure that data feeders work with
+        integer number of days.
+        """
         if not self._cumulative_daily_rows:
             schedule = self.dataset_metadata.schedule
             resolution = self.dataset_metadata.resolution
