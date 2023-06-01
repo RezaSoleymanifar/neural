@@ -773,7 +773,7 @@ class AbstractDataMetaData:
         2022-01-10  2022-01-10 00:00:00+00:00   2022-01-11 00:00:00+00:00
         """
         return self.calendar_type.schedule
-    
+
     @property
     def asset_prices_mask(self) -> List[bool]:
         """
@@ -784,7 +784,6 @@ class AbstractDataMetaData:
         mask matches the order of assets in the data schema.
         """
         return self.get_features_mask(FeatureType.ASSET_CLOSE_PRICE)
-
 
     def get_features_mask(self, feature_type: FeatureType):
         """
@@ -1154,9 +1153,7 @@ class DatasetMetadata(AbstractDataMetaData):
                 f'Current end time: {self.end}, does not match joined '
                 'dataset end time {other.end}.')
 
-        joined_metadata = super().__or__(other,
-                                         start=self.start,
-                                         end=self.end)
+        joined_metadata = super().__or__(other, start=self.start, end=self.end)
         return joined_metadata
 
     def __add__(self, other: AbstractDataMetaData) -> AbstractDataMetaData:
@@ -1189,10 +1186,8 @@ class DatasetMetadata(AbstractDataMetaData):
             raise ValueError('Non-consecutive market days between end time '
                              f'{self.end} and {other.start}.')
 
-        return super().__add__(other,
-                               start=self.start,
-                               end=other.end)
-    
+        return super().__add__(other, start=self.start, end=other.end)
+
     def _check_dates(self, prev_end, cur_start):
         """
         Checks if two dates are consecutive market days. This is used to
@@ -1246,6 +1241,7 @@ class AbstractDataFeeder(ABC):
             Returns a generator object that can be used to iteratively
             provide data for market environment.
     """
+
     @abstractmethod
     def get_features_generator(self, *args, **kwargs):
         """
@@ -1340,7 +1336,12 @@ class StaticDataFeeder(AbstractDataFeeder):
 
         self._cumulative_daily_rows = self.get_cumulative_daily_rows()
 
-        if self.start not in self.
+        if (self.start_index not in self._cumulative_daily_rows
+                or self.end_index not in self._cumulative_daily_rows):
+            raise ValueError(
+                f'Start index {self.start_index} or end index {self.end_index} '
+                'does not match a row index corresponding to the start/end of a day.'
+            )
 
         return None
 
@@ -1357,11 +1358,10 @@ class StaticDataFeeder(AbstractDataFeeder):
             schedule = self.dataset_metadata.schedule
             resolution = self.dataset_metadata.resolution
             daily_durations = schedule['end'] - schedule['start']
-            rows_per_day = (
-                daily_durations / resolution.pandas_timedelta).astype(int)
+            rows_per_day = (daily_durations /
+                            resolution.pandas_timedelta).astype(int)
             self._cumulative_daily_rows = rows_per_day.cumsum()
         return self._cumulative_daily_rows
-
 
     def get_date(self, index: int) -> datetime:
         """
@@ -1441,20 +1441,20 @@ class StaticDataFeeder(AbstractDataFeeder):
                 self.start_index,
                 int(self.start_index + n *
                     (self.end_index - self.start_index)), self.end_index
-            ], dtype=int)
+            ],
+                                    dtype=int)
 
-        start, end, middle = edge_indices[0], edge_indices[1], edge_indices[1:-1]
+        start, end, middle = edge_indices[0], edge_indices[1], edge_indices[
+            1:-1]
         cumulative_closest_indices = np.searchsorted(
             self.cumulative_daily_intervals, middle, side='right') - 1
-        edge_indices = np.concatenate(
-            (start, cumulative_closest_indices, end))
+        edge_indices = np.concatenate((start, cumulative_closest_indices, end))
 
         if len(edge_indices) != len(np.unique(edge_indices)):
             raise ValueError(
                 f'Value of n is too large for n_rows: {self.n_rows} '
                 f'and cannot be split dataset into {n} non-overlapping '
-                'contiguous sub-feeders.'
-                )
+                'contiguous sub-feeders.')
 
         static_data_feeders = list()
 
