@@ -1336,11 +1336,6 @@ class StaticDataFeeder(AbstractDataFeeder):
         self.n_columns = self.dataset_metadata.n_columns
         self.n_chunks = n_chunks
 
-        if not dataset_metadata.valid:
-            raise ValueError(
-                f'{dataset_metadata} has mismatching number of assets'
-                'and asset price mask values.')
-
         return None
 
     def get_features_generator(self) -> Iterable[np.ndarray]:
@@ -1353,7 +1348,6 @@ class StaticDataFeeder(AbstractDataFeeder):
             Iterable[np.ndarray]: a generator object returning features
             corresponding to each time interval as a numpy array.
         """
-
         chunk_edge_indices = np.linspace(start=self.start_index,
                                          stop=self.end_index,
                                          num=self.n_chunks + 1,
