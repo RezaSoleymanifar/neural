@@ -1330,7 +1330,7 @@ class StaticDataFeeder(AbstractDataFeeder):
         self.n_columns = self.dataset_metadata.n_columns
         self.n_chunks = n_chunks
 
-        self._cumulative_daily_rows = self.get_cumulative_daily_rows()
+        self._cumulative_daily_rows = self._get_cumulative_daily_rows()
 
         return None
 
@@ -1345,9 +1345,12 @@ class StaticDataFeeder(AbstractDataFeeder):
     
     @property
     def end_date(self):
+        """
+        Returns the date corresponding to the end index. 
+        """
         return self.get_date(self.end_index)
     
-    def get_cumulative_daily_rows(self) -> int:
+    def _get_cumulative_daily_rows(self) -> int:
         """
         Returns a pandas Series object that contains the cumulative
         number of rows per day. This is useful for mapping the index of
@@ -1365,7 +1368,7 @@ class StaticDataFeeder(AbstractDataFeeder):
             self._cumulative_daily_rows = rows_per_day.cumsum().values
         return self._cumulative_daily_rows
 
-    def validate_indices(self):
+    def _validate_indices(self):
         """
         Validates the start and end indices to make sure that they
         correspond to the start and end of days. This is useful for

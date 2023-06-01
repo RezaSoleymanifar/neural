@@ -383,42 +383,9 @@ class AbstractMarketEnvMetadataWrapper(Wrapper, ABC):
         return self.market_env.index
 
     @property
-    def day(self) -> int:
-        """
-        The current day of the episode, updated based on the market
-        environment's index and resolution. Day count starts at 1.
-        Computes the number of intervals per day and the cumulative
-        number of intervals per day. The day corresponding to the
-        current index is the first day whose cumulative number of
-
-        Returns:
-        ----------
-            day (int):
-                The current day index of the episode.
-        """
-        resolution = self.data_metadata.resolution
-        resolution_offset = pd.to_timedelta(resolution)
-        market_durations = (self.schedule['end'] - self.schedule['start'])
-        intervals_per_day = (market_durations / resolution_offset).astype(int)
-        cumulative_intervals = intervals_per_day.cumsum()
-
-        day = (self.index < cumulative_intervals).argmax() + 1
-        return day
-
-    @property
     def date(self) -> pd.Timestamp:
-        """
-        The current trading date of the episode, corresponding to the current
-        day. Uses the 'day' property to calculate the current date.
-
-        Returns:
-        ----------
-            date (pd.Timestamp):
-                The current trading date of the episode.
-        """
-        day_index = self.day - 1
-        return self.schedule.index[day_index]
-
+        date = self.market_env.data_feed.get_date(self.index)
+        return date
 
     @property
     def cash(self) -> float:
