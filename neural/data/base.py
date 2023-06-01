@@ -421,11 +421,12 @@ class DataSchema:
         self.schema[data_type]['feature_schema'] = feature_schema
 
     @property
-    def data_type(
+    def dataset_or_stream(
         self) -> AbstractDataSource.DatasetType | AbstractDataSource.StreamType:
         """
-        Returns the data type of the data schema. This is useful to 
-        check if data schema is a dataset or a stream.
+        Returns if the data schema is for a dataset or a stream. If
+        dataset then AbstractDataSource.DatasetType is returned, if
+        stream then AbstractDataSource.StreamType is returned.
         """
         data_type = self.schema.keys()[0]
         if issubclass(data_type, AbstractDataSource.DatasetType):
@@ -437,11 +438,14 @@ class DataSchema:
 
     def __add__(self, other) -> DataSchema:
         """
-        Adds 
+        Adds two data schemas together. This is useful for joining
+        datasets or streams. If assets in a common data type overlap
+        then an error is raised. 
         """
-        if other.data_type != self.data_type:
-            raise ValueError(f'Data types {self.data_type} and '
-                             f'{other.data_type} are not compatible.')
+        if other.dataset_or_stream != self.dataset_or_stream:
+            raise ValueError(f'Data types {self.dataset_or_stream} and '
+                             f'{other.data_type} are not compatible. '
+                             'Either all stream or all datasets are accepted.')
 
         for data_type in other.schema.keys():
             if data_type in self.schema:
