@@ -1336,15 +1336,18 @@ class StaticDataFeeder(AbstractDataFeeder):
 
         self._cumulative_daily_rows = self.get_cumulative_daily_rows()
 
-        if (self.start_index not in self._cumulative_daily_rows
-                or self.end_index not in self._cumulative_daily_rows):
-            raise ValueError(
-                f'Start index {self.start_index} or end index {self.end_index} '
-                'does not match a row index corresponding to the start/end of a day.'
-            )
 
         return None
 
+    def validate_indices(self):
+        valid_indices = np.concatenate([0], self._cumulative_daily_intervals)
+
+        if (self.start_index not in self._cumulative_daily_rows 
+        or self.end_index not in self._cumulative_daily_rows):
+        raise ValueError(
+            f'Start index {self.start_index} or end index {self.end_index} '
+            'does not match a row index corresponding to the start/end of a day.'
+            )
     def get_cumulative_daily_rows(self) -> int:
         """
         Returns a pandas Series object that contains the cumulative
@@ -1360,7 +1363,7 @@ class StaticDataFeeder(AbstractDataFeeder):
             daily_durations = schedule['end'] - schedule['start']
             rows_per_day = (daily_durations /
                             resolution.pandas_timedelta).astype(int)
-            self._cumulative_daily_rows = rows_per_day.cumsum()
+            self._cumulative_daily_rows = rows_per_day.cumsum().values
         return self._cumulative_daily_rows
 
     def get_date(self, index: int) -> datetime:
