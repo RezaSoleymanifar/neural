@@ -1448,12 +1448,10 @@ class StaticDataFeeder(AbstractDataFeeder):
         start, end, middle = edge_indices[0], edge_indices[1], edge_indices[1:-1]
         cumulative_closest_indices = np.searchsorted(
             self.cumulative_intervals, middle, side='right') - 1
-        cumulative_closest_indices = np.concatenate(
+        edge_indices = np.concatenate(
             (start, cumulative_closest_indices, end))
 
-
-        if len(cumulative_closest_indices) != len(
-                np.unique(cumulative_closest_indices)):
+        if len(edge_indices) != len(np.unique(edge_indices)):
             raise ValueError(
                 f'Value of n is too large for n_rows: {self.n_rows} '
                 f'and cannot be split dataset into {n} non-overlapping '
@@ -1463,14 +1461,12 @@ class StaticDataFeeder(AbstractDataFeeder):
         static_data_feeders = list()
 
         for start, end in zip(edge_indices[:-1], edge_indices[1:]):
-
             static_data_feeder = StaticDataFeeder(
                 dataset_metadata=self.dataset_metadata,
                 datasets=self.datasets,
                 start_index=start,
                 end_index=end,
                 n_chunks=self.n_chunks)
-
             static_data_feeders.append(static_data_feeder)
 
         return static_data_feeders
