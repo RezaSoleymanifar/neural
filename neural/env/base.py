@@ -381,6 +381,10 @@ class TrainMarketEnv(AbstractMarketEnv):
         return None
 
     @property
+    def done(self) -> bool:
+        return self.data_feeder.done
+    
+    @property
     def cash(self) -> float:
         """
         The current amount of cash in the environment.
@@ -570,10 +574,7 @@ class TrainMarketEnv(AbstractMarketEnv):
         reward = None
         observation = self.construct_observation()
 
-        # report terminal state
-        done = self.index == self.n_steps - 1
-
-        return observation, reward, done, self.info
+        return observation, reward, self.done, self.info
 
 
 class TradeMarketEnv(TrainMarketEnv):

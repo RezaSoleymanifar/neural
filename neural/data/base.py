@@ -1260,7 +1260,7 @@ class AbstractDataFeeder(ABC):
     @abstractmethod
     def done(self):
         raise NotImplementedError
-    
+
 
 class StaticDataFeeder(AbstractDataFeeder):
     """
