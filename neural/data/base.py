@@ -1244,21 +1244,19 @@ class AbstractDataFeeder(ABC):
     Methods:
     --------
         get_row_generator(self, *args, **kwargs) -> Iterable[np.ndarray]
-            Returns a generator object that can be used to for iterative
-            providing data for market simulation.
+            Returns a generator object that can be used to iteratively
+            provide data for market environment.
     """
-
     @abstractmethod
     def get_features_generator(self, *args, **kwargs):
         """
-        Returns a generator object that can be used to for iterative
-        providing data for market simulation.
+        Returns a generator object that can be used to iteratively
+        provide data for market environment.
         
         Raises:
-            NotImplementedError: This method must be implemented by a
-            subclass.
+            NotImplementedError: 
+                This method must be implemented by a subclass.
         """
-
         raise NotImplementedError
 
 
