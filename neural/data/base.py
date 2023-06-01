@@ -1445,11 +1445,11 @@ class StaticDataFeeder(AbstractDataFeeder):
                     (self.end_index - self.start_index)), self.end_index
             ], dtype=int)
 
-        start, end, middle = edge_indices
+        start, end, middle = edge_indices[0], edge_indices[1], edge_indices[1:-1]
         cumulative_closest_indices = np.searchsorted(
-            self.cumulative_intervals, edge_indices[1:-1], side='right') - 1
+            self.cumulative_intervals, middle, side='right') - 1
         cumulative_closest_indices = np.concatenate(
-            ([self.start_index], cumulative_closest_indices, [self.end_index]))
+            (start, cumulative_closest_indices, end))
 
 
         if len(cumulative_closest_indices) != len(
