@@ -408,7 +408,26 @@ class DataSchema:
     def __init__(self, data_type: AbstractDataSource.DatasetType
                  | AbstractDataSource.StreamType, assets: List[AbstractAsset],
                  feature_schema: FeatureSchema) -> None:
+        """
+        Initializes the data schema using a data type, assets and a feature
+        schema. The data type can be a dataset type or a stream type. The
+        assets are a list of assets that are associated with the data schema.
+        The feature schema is a dictionary that maps feature types to boolean
+        masks. The boolean masks indicate where the columns of the
+        corresponding feature types are located in the data. Lenght of boolean
+        mask is equal to the number columns in the data.
 
+        Args:
+        ------
+            data_type (AbstractDataSource.DatasetType |
+            AbstractDataSource.StreamType): 
+                The data type of the data schema. This can be a dataset type or
+                a stream type.
+            assets (List[AbstractAsset]):
+                A list of assets that are associated with the data schema.
+            feature_schema (FeatureSchema):
+                A dictionary that maps feature types to boolean masks.
+        """
         self.schema = OrderedDict()
         self.schema[data_type]['assets'] = assets
         self.schema[data_type]['feature_schema'] = feature_schema
@@ -417,8 +436,19 @@ class DataSchema:
     def is_dataset(self) -> bool:
         """
         Returns if the data schema is for a dataset or a stream. If
-        dataset then AbstractDataSource.DatasetType is returned, if
-        stream then AbstractDataSource.StreamType is returned.
+        the data schema is for a dataset then the data type is a
+        dataset type, otherwise it is a stream type.
+
+        Returns:
+        --------    
+            bool:
+                True if the data schema is for a dataset, False if the
+                data schema is for a stream.
+        
+        Notes:
+        ------
+            Useful to ensure that all data types are either datasets or
+            streams.
         """
         data_type = self.schema.keys()[0]
         if issubclass(data_type, AbstractDataSource.DatasetType):
