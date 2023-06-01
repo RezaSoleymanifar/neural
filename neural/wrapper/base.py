@@ -403,9 +403,7 @@ class AbstractMarketEnvMetadataWrapper(Wrapper, ABC):
         intervals_per_day = (market_durations / resolution_offset).astype(int)
         cumulative_intervals = intervals_per_day.cumsum()
 
-        # Find the day corresponding to the current index
         day = (self.index < cumulative_intervals).argmax() + 1
-
         return day
 
     @property
