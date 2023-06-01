@@ -2,6 +2,7 @@ from typing import List, Optional, Tuple
 import os
 from functools import reduce
 import tarfile
+from collections import defaultdict
 
 import numpy as np
 import dill
@@ -158,15 +159,14 @@ def from_hdf5(
 
     joined_metadata = reduce(lambda x, y: x | y, dataset_metadata_list)
 
-    ordered_dataset_types = joined_metadata.data_schema.schema.keys()
-    ordered_dataset_list = list()
+    dataset_dict = defaultdict(list)
+    for dataset, dataset_metadata in zip(dataset_list, dataset_metadata_list):
+        dataset_type = dataset_metadata.data_schema.schema.popitem()[0]
+        dataset_dict[dataset_type].append(dataset)
 
-    for dataset_type in ordered_dataset_types:
-        for dataset, dataset_metadata in zip(dataset_list,
-                                             dataset_metadata_list):
-            type = dataset_metadata.data_schema.schema.popitem()[0]
-            if type == dataset_type:
-                ordered_dataset_list.append(dataset)
+    ordered_dataset_types = joined_metadata.data_schema.schema.keys()
+    ordered_dataset_list = [dataset_dict[dataset_type] for dataset_type in ordered_dataset_types]
+
     return joined_metadata, ordered_dataset_list
 
 
