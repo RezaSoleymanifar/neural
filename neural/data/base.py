@@ -438,20 +438,20 @@ class DataSchema:
                 'Only joining all streams or all datasets are accepted.')
 
         new_data_schema = deepcopy(self)
+        schema = new_data_schema.schema
         for data_type in other.schema.keys():
-            if data_type in new_data_schema.schema:
-                assets = new_data_schema.schema[data_type]['assets']
+            if data_type in schema:
+                assets = schema[data_type]['assets']
                 other_assets = other.schema[data_type]['assets']
                 if set(assets).intersection(set(other_assets)):
                     raise ValueError(f'Overlap between {assets} and '
                                      f'{other_assets} in data type {data_type}')
-                self.schema[data_type]['assets'] += other.schema[data_type][
-                    'assets']
-                self.schema[data_type]['feature_schema'] += other.schema[
-                    data_type]['feature_schema']
+                schema[data_type]['assets'] += other.schema[data_type]['assets']
+                schema[data_type]['feature_schema'] += other.schema[data_type][
+                    'feature_schema']
             else:
-                self.schema[data_type] = other.schema[data_type]
-        return self
+                schema[data_type] = other.schema[data_type]
+        return new_data_schema
 
 
 class FeatureSchema:
@@ -482,6 +482,7 @@ class FeatureSchema:
     [True, False, True, False, True, False]
     This mask now can be applied to a row to return the close prices.
     """
+
     def __init__(self, dataframe: pd.DataFrame) -> None:
         """
         Initializes the feature schema using a pandas DataFrame. The
@@ -541,7 +542,8 @@ class FeatureSchema:
 
         new_feature_schema = deepcopy(self)
         for feature_type in new_feature_schema.schema:
-            new_feature_schema.schema[feature_type] += other.schema[feature_type]
+            new_feature_schema.schema[feature_type] += other.schema[
+                feature_type]
 
         return new_feature_schema
 
