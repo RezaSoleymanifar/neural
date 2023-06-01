@@ -1343,7 +1343,7 @@ class StaticDataFeeder(AbstractDataFeeder):
 
         return None
 
-    def get_day(self, index: int) -> int:
+    def get_day_index(self, index: int) -> int:
         """
         The current day of the episode, updated based on the market
         environment's index and resolution. Day count starts at 1.
@@ -1357,16 +1357,15 @@ class StaticDataFeeder(AbstractDataFeeder):
                 The current day index of the episode.
         """
         if not self._cumulative_intervals:
+            resolution = self.dataset_metadata.resolution
+            daily_durations = (self.schedule['end'] - self.schedule['start'])
 
-        resolution = self.dataset_metadata.resolution
-        daily_durations = (self.schedule['end'] - self.schedule['start'])
+            intervals_per_day = (
+                daily_durations / resolution.pandas_timedelta).astype(int)
+            self._cumulative_intervals = intervals_per_day.cumsum()
 
-        intervals_per_day = (
-            daily_durations / resolution.pandas_timedelta).astype(int)
-        cumulative_intervals = intervals_per_day.cumsum()
-
-        day = (self.index < cumulative_intervals).argmax() + 1
-        return day
+        day_index = (self.index < self._cumulative_intervals).argmax()
+        return day_index
 
 
     def get_features_generator(self) -> Iterable[np.ndarray]:
