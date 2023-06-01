@@ -1343,6 +1343,17 @@ class StaticDataFeeder(AbstractDataFeeder):
 
         return None
 
+    def get_cumulative_intervals(self, index: int) -> int:
+
+        schedule = self.dataset_metadata.schedule
+        if not self._cumulative_intervals:
+            resolution = self.dataset_metadata.resolution
+            daily_durations = (self.schedule['end'] - self.schedule['start'])
+
+            intervals_per_day = (
+                daily_durations / resolution.pandas_timedelta).astype(int)
+            self._cumulative_intervals = intervals_per_day.cumsum()
+            
     def get_day_index(self, index: int) -> int:
         """
         The current day of the episode, updated based on the market
@@ -1356,18 +1367,11 @@ class StaticDataFeeder(AbstractDataFeeder):
             day (int):
                 The current day index of the episode.
         """
-        if not self._cumulative_intervals:
-            resolution = self.dataset_metadata.resolution
-            daily_durations = (self.schedule['end'] - self.schedule['start'])
 
-            intervals_per_day = (
-                daily_durations / resolution.pandas_timedelta).astype(int)
-            self._cumulative_intervals = intervals_per_day.cumsum()
-
-        day_index = (self.index < self._cumulative_intervals).argmax()
+        day_index = (index < self._cumulative_intervals).argmax()
         return day_index
     
-    def get_date_index(self, index: int) -> datetime:
+    def get_date(self, index: int) -> datetime:
         """
         Returns the date corresponding to the current index. This is
         useful for mapping the index of the dataset to the date of the
@@ -1379,7 +1383,7 @@ class StaticDataFeeder(AbstractDataFeeder):
             date (datetime):
                 The date corresponding to the current index.
         """
-        date = self.schedule['start'][self.get_day_index(index)]
+        date = self.dataset_metadata.schedule.loc[index, 'start']
         return date
 
 
