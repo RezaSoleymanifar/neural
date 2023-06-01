@@ -1157,14 +1157,9 @@ class DatasetMetadata(AbstractDataMetaData):
                 f'Current end time: {self.end}, does not match joined '
                 'dataset end time {other.end}.')
 
-        if self.n_rows != other.n_rows:
-            raise ValueError('Datasets must have the same number of rows.')
-
         joined_metadata = super().__or__(other,
                                          start=self.start,
-                                         end=self.end,
-                                         n_rows=self.n_rows)
-
+                                         end=self.end)
         return joined_metadata
 
     def __add__(self, other: AbstractDataMetaData) -> AbstractDataMetaData:
@@ -1199,9 +1194,8 @@ class DatasetMetadata(AbstractDataMetaData):
 
         return super().__add__(other,
                                start=self.start,
-                               end=other.end,
-                               n_rows=self.n_rows)
-
+                               end=other.end)
+    
     def _check_dates(self, prev_end, cur_start):
         """
         Checks if two dates are consecutive market days. This is used to
@@ -1230,17 +1224,13 @@ class DatasetMetadata(AbstractDataMetaData):
             process of appending datasets to ensure temporal continuity
             of the data.
         """
-
+        if not prev_end < cur_start:
+            raise ValueError(f'Start date{cur_start} must be after '
+                             'previous end date {prev_end}.')
         start_date = prev_end.date()
         end_date = cur_start.date()
-
-        if not self.prev_end < cur_start:
-            raise ValueError(f'Start date{cur_start} must be greater than '
-                             'previous end date {prev_end}.')
-
         schedule = self.calendar_type.schedule(start_date=start_date,
                                                end_date=end_date)
-
         conscutive = True if len(schedule) == 2 else False
         return conscutive
 
