@@ -59,6 +59,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections import OrderedDict
+from copy import deepcopy
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
@@ -436,12 +437,13 @@ class DataSchema:
             raise ValueError(
                 'Only joining all streams or all datasets are accepted.')
 
+        new_data_schema = deepcopy(self)
         for data_type in other.schema.keys():
-            if data_type in self.schema:
-                self_assets = self.schema[data_type]['assets']
+            if data_type in new_data_schema.schema:
+                assets = new_data_schema.schema[data_type]['assets']
                 other_assets = other.schema[data_type]['assets']
-                if set(self_assets).intersection(set(other_assets)):
-                    raise ValueError(f'Overlap between {self_assets} and '
+                if set(assets).intersection(set(other_assets)):
+                    raise ValueError(f'Overlap between {assets} and '
                                      f'{other_assets} in data type {data_type}')
                 self.schema[data_type]['assets'] += other.schema[data_type][
                     'assets']
@@ -537,10 +539,11 @@ class FeatureSchema:
         if set(self.schema.keys()) != set(other.schema.keys()):
             raise ValueError('Feature schemas do not have same feature types.')
 
-        for feature_type in self.schema:
-            self.schema[feature_type] += other.schema[feature_type]
+        new_feature_schema = deepcopy(self)
+        for feature_type in new_feature_schema.schema:
+            new_feature_schema.schema[feature_type] += other.schema[feature_type]
 
-        return self
+        return new_feature_schema
 
     def create_feature_schema(
             self, dataframe: pd.DataFrame) -> Dict[FeatureType, List[bool]]:
