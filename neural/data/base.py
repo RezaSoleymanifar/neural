@@ -427,15 +427,17 @@ class DataSchema:
                 A list of assets that are associated with the data schema.
             feature_schema (FeatureSchema):
                 A dictionary that maps feature types to boolean masks.
+
+        Notes:
+        ------
+            If closing data 
         """
         n_price_mask_assets = schema[data_type]['feature_schema'][
             FeatureType.ASSET_CLOSE_PRICE].count(True)
         if n_price_mask_assets != len(assets):
             raise ValueError(
-                f'Number of assets with price mask ({n_price_mask_assets}) '
-                f'is not equal to the number of assets ({len(assets)}) in '
-                'the data schema. If asset has price mask it should exist '
-                'for all assets.')
+                f'Number of assets {len(assets)} does not match number of '
+                f'assets that have price data: {n_price_mask_assets}.')
 
         self.schema = OrderedDict()
         self.schema[data_type]['assets'] = assets
