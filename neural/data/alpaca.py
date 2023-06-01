@@ -21,6 +21,7 @@ from neural.utils.io import to_hdf5
 from neural.utils.base import (
     progress_bar, validate_path, RunningStatistics)
 from neural.utils.misc import resolution_to_timeframe
+from neural.utils.time import Resolution
 
 class AlpacaDataSource(AbstractDataSource):
     """
@@ -394,7 +395,7 @@ class AlpacaDataDownloader():
         return None
 
 
-    def _validate_resolution(self, resolution, schdule):
+    def _validate_resolution(self, resolution: Resolution, schedule: pd.DataFrame):
         
         """
         Validates the resolution of the dataset. Resolutions not
@@ -417,8 +418,10 @@ class AlpacaDataDownloader():
 
         daily_durations = schedule['end'] - schedule['start']
         rows_per_day = (daily_durations /
-                        resolution.pandas_timedelta).astype(int)
-        self._cumulative_daily_rows = rows_per_day.cumsum().values
+                        resolution.pandas_timedelta).values
+        if not all(value.is_integer() for value in rows_per_day):
+            raise ValueError('Incompatible resolution for given date range. '
+                             'Daily durations is not divisible by resolution.')
         
         if resolution not in ALPACA_ACCEPTED_DOWNLOAD_RESOLUTIONS:
             raise ValueError(
