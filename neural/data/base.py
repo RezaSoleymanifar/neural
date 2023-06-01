@@ -521,7 +521,7 @@ class FeatureSchema:
         if set(self.schema.keys()) != set(other.schema.keys()):
             raise ValueError('Feature schemas do not have same feature types.')
 
-        for feature_type in self.schema.keys():
+        for feature_type in self.schema:
             self.schema[feature_type] += other.schema[feature_type]
 
         return self
@@ -705,8 +705,9 @@ class AbstractDataMetaData:
     @property
     def n_columns(self) -> int:
         """
-        Returns the number of columns in the dataset. This is useful for
-        checking if the dataset has been downloaded correctly. 
+        Returns the number of columns in the dataset. Can be used to
+        compare against the number columns in the underlying data for 
+        sanity checks.
 
         Returns:
         --------
@@ -808,9 +809,8 @@ class AbstractDataMetaData:
     def get_features_mask(self, feature_type: FeatureType):
         mask = list()
         for data_type in self.data_schema:
-            if feature_type in self.data_schema[data_type]['feature_schema']:
-                mask += self.data_schema[data_type]['feature_schema'][
-                    feature_type]
+            mask += self.data_schema[data_type]['feature_schema'][
+                feature_type]
         return mask
 
     def __or__(self, other: AbstractDataMetaData,
