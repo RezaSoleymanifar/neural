@@ -1366,6 +1366,21 @@ class StaticDataFeeder(AbstractDataFeeder):
 
         day_index = (self.index < self._cumulative_intervals).argmax()
         return day_index
+    
+    def get_date_index(self, index: int) -> datetime:
+        """
+        Returns the date corresponding to the current index. This is
+        useful for mapping the index of the dataset to the date of the
+        episode. This is used by the market environment to check for
+        market open and close times.
+
+        Returns:
+        --------
+            date (datetime):
+                The date corresponding to the current index.
+        """
+        date = self.schedule['start'][self.get_day_index(index)]
+        return date
 
 
     def get_features_generator(self) -> Iterable[np.ndarray]:
