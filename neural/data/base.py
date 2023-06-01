@@ -444,22 +444,25 @@ class DataSchema:
     @property
     def assets(self) -> List[AbstractAsset]:
         """
-        Returns a
+        Returns a list of assets that have a price mask associated with
+        them. This is useful to filter out tradable assets from the
+        assets that exist to provide feature information for the
+        tradable assets.
         """
         assets = list()
-        schema = self.data_schema.schema
-        for data_type in schema:
-            asset_prices_mask = schema[data_type]['feature_schema'][
+        for data_type in self.schema:
+            asset_prices_mask = self.schema[data_type]['feature_schema'][
                 FeatureType.ASSET_CLOSE_PRICE]
+            data_type_assets = self.schema[data_type]['assets']
             assets.extend([
-                asset for asset, mask_value in zip(schema[data_type]['assets'],
-                                                asset_prices_mask) if mask_value
+                asset for asset, mask_value in zip(
+                    data_type_assets, asset_prices_mask) if mask_value
             ])
         if len(assets) != len(set(assets)):
             raise ValueError('Duplicate tradable assets in data schema.')
 
         return assets
-    
+
     @property
     def is_dataset(self) -> bool:
         """
@@ -825,7 +828,8 @@ class AbstractDataMetaData:
                 FeatureType.ASSET_CLOSE_PRICE]
             assets.extend([
                 asset for asset, mask_value in zip(schema[data_type]['assets'],
-                                                asset_prices_mask) if mask_value
+                                                   asset_prices_mask)
+                if mask_value
             ])
         if len(assets) != len(set(assets)):
             raise ValueError('Duplicate tradable assets in data schema.')
