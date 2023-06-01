@@ -1247,16 +1247,19 @@ class AbstractDataFeeder(ABC):
         raise NotImplementedError
 
     @property
+    @abstractmethod
     def n_features(self):
         raise NotImplementedError
 
     @property
+    @abstractmethod
     def index(self):
         raise NotImplementedError
 
     @property
+    @abstractmethod
     def done(self):
-        return True if self.index == self.end_index - 1 else False
+        raise NotImplementedError
     
 
 class StaticDataFeeder(AbstractDataFeeder):
@@ -1326,7 +1329,7 @@ class StaticDataFeeder(AbstractDataFeeder):
             training process. Default is 1.
         """
         self.dataset_metadata = dataset_metadata
-        self._datasets = datasets
+        self.datasets = datasets
         self.start_index = start_index
         self.end_index = end_index if end_index is not None else \
             self.dataset_metadata.n_rows
@@ -1371,8 +1374,7 @@ class StaticDataFeeder(AbstractDataFeeder):
     @property
     def days(self):
         """
-        Returns the number of days in the dataset. This is useful for
-        checking if the dataset has been downloaded correctly.
+        Returns the number of days in the dataset.
         """
         days = (self.end_date - self.start_date).days
         return days
