@@ -1320,10 +1320,6 @@ class StaticDataFeeder(AbstractDataFeeder):
             for loading. Loads one chunk at a time. Useful if datasets
             do not fit in memory or to allocate more memory for the
             training process. Default is 1.
-
-        TODO: Breaks datasets into chunks that match start and end of 
-        days. Right now metadata that depends on calculating date won't 
-        work with this type of breaking up datasets.
         """
         self.dataset_metadata = dataset_metadata
         self.datasets = datasets
@@ -1336,18 +1332,8 @@ class StaticDataFeeder(AbstractDataFeeder):
 
         self._cumulative_daily_rows = self.get_cumulative_daily_rows()
 
-
         return None
 
-    def validate_indices(self):
-        valid_indices = np.concatenate([0], self._cumulative_daily_intervals)
-
-        if (self.start_index not in self._cumulative_daily_rows 
-        or self.end_index not in self._cumulative_daily_rows):
-        raise ValueError(
-            f'Start index {self.start_index} or end index {self.end_index} '
-            'does not match a row index corresponding to the start/end of a day.'
-            )
     def get_cumulative_daily_rows(self) -> int:
         """
         Returns a pandas Series object that contains the cumulative
@@ -1366,6 +1352,20 @@ class StaticDataFeeder(AbstractDataFeeder):
             self._cumulative_daily_rows = rows_per_day.cumsum().values
         return self._cumulative_daily_rows
 
+    def validate_indices(self):
+        """
+        Validates the start and end indices to make sure that they
+        correspond to the start and end of days. This is useful for
+        making sure that data feeders work with integer number of days.
+        """
+        valid_indices = np.concatenate([0], self._cumulative_daily_rows)
+        if (self.start_index not in valid_indices
+                or self.end_index not in valid_indices):
+            raise ValueError(
+                f'Start index {self.start_index} or end index {self.end_index} '
+                'does not match a row index corresponding to the start/end of a day.'
+            )
+
     def get_date(self, index: int) -> datetime:
         """
         Returns the date corresponding to the current index. This is
@@ -1378,7 +1378,7 @@ class StaticDataFeeder(AbstractDataFeeder):
             date (datetime):
                 The date corresponding to the current index.
         """
-        day_index = (index < self.cumulative_daily_intervals).argmax()
+        day_index = (index < self._cumulative_daily_rows).argmax()
         date = self.dataset_metadata.schedule.loc[day_index, 'start']
         return date
 
