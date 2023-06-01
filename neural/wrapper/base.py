@@ -399,7 +399,6 @@ class AbstractMarketEnvMetadataWrapper(Wrapper, ABC):
         resolution = self.data_metadata.resolution
         resolution_offset = pd.to_timedelta(resolution)
         market_durations = (self.schedule['end'] - self.schedule['start'])
-
         intervals_per_day = (market_durations / resolution_offset).astype(int)
         cumulative_intervals = intervals_per_day.cumsum()
 
