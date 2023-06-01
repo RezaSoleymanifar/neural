@@ -436,18 +436,20 @@ class DataSchema:
             raise ValueError(f'{data_type} is not a valid data type.')
 
     def __add__(self, other) -> DataSchema:
+        """
+        Adds 
+        """
         if other.data_type != self.data_type:
             raise ValueError(f'Data types {self.data_type} and '
                              f'{other.data_type} are not compatible.')
-        
+
         for data_type in other.schema.keys():
             if data_type in self.schema:
                 self_assets = self.schema[data_type]['assets']
                 other_assets = other.schema[data_type]['assets']
                 if set(self_assets).intersection(set(other_assets)):
-                    raise ValueError(f'Assets of data type {data_type} overlap '
-                                     f'between {self_assets} '
-                                     f'and {other_assets}.')
+                    raise ValueError(f'Overlap between {self_assets} and '
+                                     f'{other_assets} in data type {data_type}')
                 self.schema[data_type]['assets'] += other.schema[data_type][
                     'assets']
                 self.schema[data_type]['feature_schema'] += other.schema[
