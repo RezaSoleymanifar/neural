@@ -408,11 +408,6 @@ class DataSchema:
                  | AbstractDataSource.StreamType, assets: List[AbstractAsset],
                  feature_schema: FeatureSchema) -> None:
 
-        for mask in feature_schema.schema.values():
-            if len(mask.count(True)) != len(assets):
-                raise ValueError(f'Mask {mask} has different length than '
-                                 f'number of assets: {len(assets)}.')
-
         self.schema = OrderedDict()
         self.schema[data_type]['assets'] = assets
         self.schema[data_type]['feature_schema'] = feature_schema
@@ -439,7 +434,7 @@ class DataSchema:
         """
         if other.is_dataset != self.is_dataset:
             raise ValueError(
-                'Joining either all streams or all datasets are accepted.')
+                'Only joining all streams or all datasets are accepted.')
 
         for data_type in other.schema.keys():
             if data_type in self.schema:
@@ -485,8 +480,9 @@ class FeatureSchema:
     [True, False, True, False, True, False]
     This mask now can be applied to a row to return the close prices.
     """
-
-    def __init__(self, dataframe: pd.DataFrame) -> None:
+    def __init__(self, data_type: AbstractDataSource.DatasetType
+                 | AbstractDataSource.StreamType,
+                 dataframe: pd.DataFrame) -> None:
         self.schema = self.create_feature_schema(dataframe)
         return None
 
@@ -952,7 +948,6 @@ class StreamMetaData(AbstractDataMetaData):
             it will raise a not implemented error.
     """
 
-
     def __add__(self, other: AbstractDataMetaData,
                 **kwargs) -> AbstractDataMetaData:
         """
@@ -1359,19 +1354,19 @@ class StaticDataFeeder(AbstractDataFeeder):
     @property
     def n_rows(self):
         return self.end_index - self.start_index
-    
+
     @property
     def n_features(self):
         return self.dataset_metadata.n_columns
-    
+
     @property
     def index(self):
         return self._index
-    
+
     @property
     def done(self):
         return True if self.index == self.end_index - 1 else False
-    
+
     @property
     def start_date(self):
         """
@@ -1394,7 +1389,7 @@ class StaticDataFeeder(AbstractDataFeeder):
         Returns the current date of the episode.
         """
         return self.get_date(self.index)
-    
+
     @property
     def days(self):
         """
@@ -1563,15 +1558,15 @@ class AsyncDataFeeder(AbstractDataFeeder):
     @property
     def n_rows(self):
         return np.inf
-    
+
     @property
     def n_features(self):
-        return self.stream_metadata.n_columns   
-    
+        return self.stream_metadata.n_columns
+
     @property
-    def index(self):    
+    def index(self):
         return None
-    
+
     @property
     def done(self):
         return False
