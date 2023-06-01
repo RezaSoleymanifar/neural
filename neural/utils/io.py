@@ -158,8 +158,13 @@ def from_hdf5(
 
     
     joined_metadata = reduce(lambda x, y: x | y, dataset_metadata_list)
-    # use joined dataset_metadata.data_schema.
-    
+    # use joined dataset_metadata.data_schema.schema.keys() to reorder
+    # dataest_list based on their order in dataset_metadata_list
+
+    dataset_types = joined_dataset_metadata.data_schema.schema.keys()
+    for dataset, metadata in zip(dataset_list, dataset_metadata_list):
+        joined_metadata[metadata.data] = dataset_types[metadata.name
+
     return joined_metadata, dataset_list
 
 
