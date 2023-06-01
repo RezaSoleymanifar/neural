@@ -427,17 +427,7 @@ class DataSchema:
                 A list of assets that are associated with the data schema.
             feature_schema (FeatureSchema):
                 A dictionary that maps feature types to boolean masks.
-
-        Notes:
-        ------
-            If closing data 
         """
-        n_price_mask_assets = schema[data_type]['feature_schema'][
-            FeatureType.ASSET_CLOSE_PRICE].count(True)
-        if n_price_mask_assets != len(assets):
-            raise ValueError(
-                f'Number of assets {len(assets)} does not match number of '
-                f'assets that have price data: {n_price_mask_assets}.')
 
         self.schema = OrderedDict()
         self.schema[data_type]['assets'] = assets
@@ -604,8 +594,9 @@ class FeatureSchema:
             raise ValueError('Feature schemas do not have same feature types.')
 
         new_feature_schema = deepcopy(self)
-        for feature_type in new_feature_schema.schema:
-            new_feature_schema.schema[feature_type] += other.schema[
+        schema = new_feature_schema.schema
+        for feature_type in schema:
+            schema[feature_type] += other.schema[
                 feature_type]
 
         return new_feature_schema
