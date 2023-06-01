@@ -1105,10 +1105,10 @@ class DatasetMetadata(AbstractDataMetaData):
     @property
     def n_rows(self):
         
-        resolution_offset = self.resolution
+        time_delta = self.resolution.pandas_timedelta
         market_durations = (self.schedule['end'] - self.schedule['start'])
 
-        intervals_per_day = (market_durations / resolution_offset).astype(int)
+        intervals_per_day = (market_durations / time_delta).astype(int)
         n_rows = sum(intervals_per_day)
         return n_rows
 
