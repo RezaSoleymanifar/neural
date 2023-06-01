@@ -1334,6 +1334,19 @@ class StaticDataFeeder(AbstractDataFeeder):
 
         return None
 
+    @property
+    def start_date(self):
+        """
+        Returns the date corresponding to the start index. This is
+        useful for mapping the index of the dataset to the date of the
+        episode.
+        """
+        return self.get_date(self.start_index)
+    
+    @property
+    def end_date(self):
+        return self.get_date(self.end_index)
+    
     def get_cumulative_daily_rows(self) -> int:
         """
         Returns a pandas Series object that contains the cumulative
@@ -1455,7 +1468,7 @@ class StaticDataFeeder(AbstractDataFeeder):
         start, end, middle = edge_indices[0], edge_indices[1], edge_indices[
             1:-1]
         cumulative_closest_indices = np.searchsorted(
-            self.cumulative_daily_intervals, middle, side='right') - 1
+            self._cumulative_daily_rows, middle, side='right') - 1
         edge_indices = np.concatenate((start, cumulative_closest_indices, end))
 
         if len(edge_indices) != len(np.unique(edge_indices)):
