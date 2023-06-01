@@ -1018,7 +1018,7 @@ class ConsoleTearsheetRenderWrapper(Wrapper):
         resolution = self.market_env.data_metadata.resolution
         start_date = self.market_env.data_metadata.start.date()
         end_date = self.market_env.data_metadata.end.date()
-        days = (end_date - start_date).days
+        days = self.market_env.data_feed.days
 
         logger.info('Episode:'
                     f'\n\t start = {start_date}'

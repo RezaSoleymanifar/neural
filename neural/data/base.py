@@ -1326,8 +1326,6 @@ class StaticDataFeeder(AbstractDataFeeder):
         self.start_index = start_index
         self.end_index = end_index if end_index is not None else \
             self.dataset_metadata.n_rows
-        self.n_rows = self.end_index - self.start_index
-        self.n_columns = self.dataset_metadata.n_columns
         self.n_chunks = n_chunks
 
         self._cumulative_daily_rows = self._get_cumulative_daily_rows()
@@ -1359,6 +1357,13 @@ class StaticDataFeeder(AbstractDataFeeder):
         days = (self.end_date - self.start_date).days
         return days
 
+    @property
+    def n_rows(self):
+        return self.end_index - self.start_index
+    
+    @property
+    def n_features(self):
+        self.n_columns = self.dataset_metadata.n_columns
     def _get_cumulative_daily_rows(self) -> int:
         """
         Returns a pandas Series object that contains the cumulative
