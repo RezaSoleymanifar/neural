@@ -797,8 +797,7 @@ class AbstractDataMetaData:
         """
         mask = list()
         for data_type in self.data_schema:
-            mask += self.data_schema[data_type]['feature_schema'][
-                feature_type]
+            mask += self.data_schema[data_type]['feature_schema'][feature_type]
         return mask
 
     def __or__(self, other: AbstractDataMetaData,
@@ -915,6 +914,7 @@ class AbstractDataMetaData:
 
         return appended_metadata
 
+
 @dataclass
 class StreamMetaData(AbstractDataMetaData):
     """
@@ -954,6 +954,7 @@ class StreamMetaData(AbstractDataMetaData):
             metadata would not make sense. If used with stream metadata
             it will raise a not implemented error.
     """
+
     @property
     def n_rows(self) -> int:
         """
@@ -1072,19 +1073,23 @@ class DatasetMetadata(AbstractDataMetaData):
         dataset metadata. This is useful for mapping the dataset
         metadata to a stream metadata for live streaming when traders
         want to deploy their trained agents in a live trading
-        environment.
+        environment. Simply changes the dataset type to stream type for
+        each data type in the data schema.
         """
-
         data_schema = {
-            dataset_type.stream: data_schema[dataset_type]
-            for dataset_type in self.data_schema
+            dataset_type.stream: self.data_schema.schema[dataset_type]
+            for dataset_type in self.data_schema.schema
         }
-        stream = StreamMetaData(data_schema=self.data_schema,
-                                feature_schema=self.feature_schema,
+        stream = StreamMetaData(data_schema=data_schema,
                                 resolution=self.resolution,
                                 calendar_type=self.calendar_type)
 
         return stream
+
+    @property
+    def schedule(self):
+        schedule = super().schedule(start_date=self.start.date(),
+                                    end_date=self.end.date())
 
     @property
     def days(self):
