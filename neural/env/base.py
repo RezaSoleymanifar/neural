@@ -42,7 +42,6 @@ Notes:
     real-world market. This module defines the minimum interface
     required for an environment to be used for high frequency trading.
 """
-
 from __future__ import annotations
 
 from typing import Tuple, Dict, TYPE_CHECKING, Optional
@@ -104,7 +103,6 @@ class AbstractMarketEnv(Env, ABC):
         the environment internal variables such as features, asset
         prices, holds, and equity.
         """
-
         raise NotImplementedError
 
     @abstractmethod
@@ -117,7 +115,6 @@ class AbstractMarketEnv(Env, ABC):
         quantities, holds (time steps an asset has been held), and
         features of the current time step.
         """
-
         raise NotImplementedError
 
     @abstractmethod
@@ -140,7 +137,6 @@ class AbstractMarketEnv(Env, ABC):
         Sell 100 shares of AAPL at $100 per share:
             action = -100 * 100 = -10000
         """
-
         raise NotImplementedError
 
 

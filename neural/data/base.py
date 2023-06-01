@@ -1325,6 +1325,10 @@ class StaticDataFeeder(AbstractDataFeeder):
             for loading. Loads one chunk at a time. Useful if datasets
             do not fit in memory or to allocate more memory for the
             training process. Default is 1.
+
+        TODO: Breaks datasets into chunks that match start and end of 
+        days. Right now metadata that depends on calculating date won't 
+        work with this type of breaking up datasets.
         """
 
         self.dataset_metadata = dataset_metadata
