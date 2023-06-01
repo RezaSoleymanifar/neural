@@ -1449,13 +1449,8 @@ class StaticDataFeeder(AbstractDataFeeder):
                                        num=self.n + 1,
                                        dtype=int,
                                        endpoint=True)
-
-        cumulative_closest_indices = np.searchsorted(
-            self.cumulative_intervals, edge_indices[1:-1], side='right') - 1
-        cumulative_closest_indices = np.concatenate(
-            ([0], cumulative_closest_indices, [self.n_rows - 1]))
         
-        elif isinstance(n, float):
+        if isinstance(n, float):
 
             if not 0 < n <= 1:
                 raise ValueError("n must be a float in (0, 1]")
@@ -1464,9 +1459,13 @@ class StaticDataFeeder(AbstractDataFeeder):
                 self.start_index,
                 int(self.start_index + n *
                     (self.end_index - self.start_index)), self.end_index
-            ],
-                                    dtype=int)
+            ], dtype=int)
 
+        cumulative_closest_indices = np.searchsorted(
+            self.cumulative_intervals, edge_indices[1:-1], side='right') - 1
+        cumulative_closest_indices = np.concatenate(
+            ([self.start_index], cumulative_closest_indices, [self.end_index]))
+        
         static_data_feeders = list()
 
         for start, end in zip(edge_indices[:-1], edge_indices[1:]):
