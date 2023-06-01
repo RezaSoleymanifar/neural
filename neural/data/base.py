@@ -506,7 +506,7 @@ class DataSchema:
         mask matches the order of assets in the data schema.
         """
         return self.get_features_mask(FeatureType.ASSET_CLOSE_PRICE)
-    
+
     def get_features_mask(self, feature_type: FeatureType):
         """
         Retrievs the boolean mask for a given feature type. This is
