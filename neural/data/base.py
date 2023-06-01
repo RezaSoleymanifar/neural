@@ -434,7 +434,8 @@ class DataSchema:
         """
         Adds two data schemas together. This is useful for joining
         datasets or streams. If assets in a common data type overlap
-        then an error is raised. 
+        then an error is raised. This is due to the fact that same
+        assets for the same data type gives redundant information.
         """
         if other.is_dataset != self.is_dataset:
             raise ValueError(
@@ -831,7 +832,6 @@ class AbstractDataMetaData:
                 if the calendar types of the two metadata objects are not the
                 same.
         """
-
         if self.resolution != other.resolution:
             raise ValueError('Datasets must have the same resolution.')
 
