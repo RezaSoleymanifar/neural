@@ -334,7 +334,7 @@ class TrainMarketEnv(AbstractMarketEnv):
         self.index = None
         self.holds = None
         self.features = None
-
+    
         self._cash = None
         self._asset_quantities = None
         self._asset_prices = None
@@ -382,6 +382,17 @@ class TrainMarketEnv(AbstractMarketEnv):
 
     @property
     def done(self) -> bool:
+        """
+        Returns a boolean value indicating whether the current episode
+        is finished.
+
+        Returns:
+        --------
+            done: bool
+                A boolean value indicating whether the current episode
+                is finished. DataFeeder.done is used to determine
+                whether the episode is finished.
+        """
         return self.data_feeder.done
     
     @property
