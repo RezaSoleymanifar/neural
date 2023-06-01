@@ -1423,7 +1423,8 @@ class StaticDataFeeder(AbstractDataFeeder):
         sub-feeders that span the dataset. Common use case is it use in
         stable baselines vector env to parallelize running multiple
         trading environments, leading to significant speedup of training
-        process. 
+        process. Ensures that the sub-feeders are non-overlapping,
+        contiguous and match the start and end of days.
 
         Args:
         ------
@@ -1450,9 +1451,9 @@ class StaticDataFeeder(AbstractDataFeeder):
                                        endpoint=True)
 
         cumulative_closest_indices = np.searchsorted(
-            self.cumulative_intervals, chunk_edge_indices[1:-1], side='right')
+            self.cumulative_intervals, edge_indices[1:-1], side='right') - 1
         cumulative_closest_indices = np.concatenate(
-            ([0], cumulative_closest_indices, [len(self.cumulative_intervals)-1]))
+            ([0], cumulative_closest_indices, [self.n_rows - 1]))
         
         elif isinstance(n, float):
 
