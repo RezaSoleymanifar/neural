@@ -421,8 +421,7 @@ class DataSchema:
         self.schema[data_type]['feature_schema'] = feature_schema
 
     @property
-    def dataset_or_stream(
-        self) -> AbstractDataSource.DatasetType | AbstractDataSource.StreamType:
+    def is_dataset(self) -> bool:
         """
         Returns if the data schema is for a dataset or a stream. If
         dataset then AbstractDataSource.DatasetType is returned, if
@@ -430,11 +429,9 @@ class DataSchema:
         """
         data_type = self.schema.keys()[0]
         if issubclass(data_type, AbstractDataSource.DatasetType):
-            return AbstractDataSource.DatasetType
+            return True
         elif issubclass(data_type, AbstractDataSource.StreamType):
-            return AbstractDataSource.StreamType
-        else:
-            raise ValueError(f'{data_type} is not a valid data type.')
+            return False
 
     def __add__(self, other) -> DataSchema:
         """
@@ -442,10 +439,9 @@ class DataSchema:
         datasets or streams. If assets in a common data type overlap
         then an error is raised. 
         """
-        if other.dataset_or_stream != self.dataset_or_stream:
-            raise ValueError(f'Data types {self.dataset_or_stream} and '
-                             f'{other.data_type} are not compatible. '
-                             'Either all stream or all datasets are accepted.')
+        if other.is_dataset != self.is_dataset:
+            raise ValueError(
+                'Joining either all streams or all datasets are accepted.')
 
         for data_type in other.schema.keys():
             if data_type in self.schema:
@@ -461,6 +457,7 @@ class DataSchema:
             else:
                 self.schema[data_type] = other.schema[data_type]
         return self
+
 
 class FeatureSchema:
     """
@@ -721,7 +718,7 @@ class AbstractDataMetaData:
             if schema[data_type]['feature_schema'][
                     FeatureType.ASSET_CLOSE_PRICE].count(True):
                 assets += schema[data_type]['assets']
-            
+
         return assets
 
     @property
