@@ -1104,10 +1104,14 @@ class DatasetMetadata(AbstractDataMetaData):
 
     @property
     def n_rows(self):
-        
+        """
+        Returns the number of rows in the dataset. Uses the schedule
+        and resolution to calculate the number of rows in the dataset.
+        When downloading datasets this process is used to
+        create rows in the dataset.
+        """
         time_delta = self.resolution.pandas_timedelta
         market_durations = (self.schedule['end'] - self.schedule['start'])
-
         intervals_per_day = (market_durations / time_delta).astype(int)
         n_rows = sum(intervals_per_day)
         return n_rows
