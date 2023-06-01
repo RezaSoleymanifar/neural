@@ -1361,23 +1361,6 @@ class StaticDataFeeder(AbstractDataFeeder):
         cumulative_intervals = intervals_per_day.cumsum()
         return cumulative_intervals
 
-    def get_day_index(self, index: int) -> int:
-        """
-        The current day of the episode, updated based on the market
-        environment's index and resolution. Day count starts at 1.
-        Computes the number of intervals per day and the cumulative
-        number of intervals per day. The day corresponding to the
-        current index is the first day whose cumulative number of
-
-        Returns:
-        ----------
-            day (int):
-                The current day index of the episode.
-        """
-
-        day_index = (index < self.cumulative_intervals).argmax()
-        return day_index
-    
     def get_date(self, index: int) -> datetime:
         """
         Returns the date corresponding to the current index. This is
@@ -1390,7 +1373,8 @@ class StaticDataFeeder(AbstractDataFeeder):
             date (datetime):
                 The date corresponding to the current index.
         """
-        date = self.dataset_metadata.schedule.loc[index, 'start']
+        day_index = (index < self.cumulative_intervals).argmax()
+        date = self.dataset_metadata.schedule.loc[day_index, 'start']
         return date
 
     def get_features_generator(self) -> Iterable[np.ndarray]:
@@ -1470,11 +1454,10 @@ class StaticDataFeeder(AbstractDataFeeder):
         if len(cumulative_closest_indices) != len(
                 np.unique(cumulative_closest_indices)):
             raise ValueError(
-                f"Value of n is too large for 
-                 
-                  and cannot be split into {n} "
-                "non-overlapping contiguous sub-feeders
-                ")
+                f'Value of n is too large for n_rows: {self.n_rows} '
+                f'and cannot be split dataset into {n} non-overlapping '
+                'contiguous sub-feeders.'
+                )
 
         static_data_feeders = list()
 
