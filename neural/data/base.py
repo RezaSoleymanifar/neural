@@ -1090,6 +1090,7 @@ class DatasetMetadata(AbstractDataMetaData):
     def schedule(self):
         schedule = super().schedule(start_date=self.start.date(),
                                     end_date=self.end.date())
+        return schedule
 
     @property
     def days(self):
