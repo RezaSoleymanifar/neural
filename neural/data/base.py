@@ -1342,14 +1342,23 @@ class StaticDataFeeder(AbstractDataFeeder):
         episode.
         """
         return self.get_date(self.start_index)
-    
+
     @property
     def end_date(self):
         """
         Returns the date corresponding to the end index. 
         """
         return self.get_date(self.end_index)
-    
+
+    @property
+    def days(self):
+        """
+        Returns the number of days in the dataset. This is useful for
+        checking if the dataset has been downloaded correctly.
+        """
+        days = (self.end_date - self.start_date).days
+        return days
+
     def _get_cumulative_daily_rows(self) -> int:
         """
         Returns a pandas Series object that contains the cumulative

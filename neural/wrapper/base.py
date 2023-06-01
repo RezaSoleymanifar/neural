@@ -355,20 +355,6 @@ class AbstractMarketEnvMetadataWrapper(Wrapper, ABC):
         self.n_assets = self.market_env.n_assets
 
         self.history = defaultdict(list)
-
-    @property
-    def schedule(self) -> pd.DataFrame:
-        """
-        The schedule of the market environment.
-
-        Returns:
-        ----------
-            schedule (pd.DataFrame):
-                The schedule of the market environment.
-        """
-        schedule = self.data_metadata.schedule
-
-        return schedule
     
     @property
     def index(self) -> int:
@@ -384,6 +370,9 @@ class AbstractMarketEnvMetadataWrapper(Wrapper, ABC):
 
     @property
     def date(self) -> pd.Timestamp:
+        """
+        Returns the current date of the episode.
+        """
         date = self.market_env.data_feed.get_date(self.index)
         return date
 
