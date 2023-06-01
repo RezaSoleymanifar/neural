@@ -467,6 +467,25 @@ class FeatureSchema:
     types are located in the data. Lenght of boolean mask is equal to
     the number columns in the data. Length of True values in the
     boolean mask is equal to the number of assets in the data schema.
+    A mask is created for every feature type in FeatureType enum.
+
+    Feature schema is instantiated using a pandas DataFrame. The columns
+    of the dataframe are matched against the string values of the
+    feature types in FeatureType enum. If a column name matches the
+    string value of a feature type, the corresponding boolean mask is
+    set to True. this process is case insensitive.
+
+    Attributes:
+    -----------
+        schema (Dict[FeatureType, List[bool]]):
+            A dictionary that maps feature types to boolean masks.
+
+    Example:
+    --------
+    >>> feature_schema = FeatureSchema(dataframe)   
+    >>> feature_schema.schema[FeatureType.ASSET_CLOSE_PRICE]
+    [True, False, True, False, True, False]
+    This mask now can be applied to a row to return the close prices.
     """
 
     def __init__(self, dataframe: pd.DataFrame) -> None:
@@ -480,7 +499,7 @@ class FeatureSchema:
         """
         joins feature schemas of two datasets or streams. The boolean
         masks are simply concatenated to indicate the feature type
-        locations in the joind dataset/stream.
+        locations in the joined dataset/stream.
 
         Args:
         ------
