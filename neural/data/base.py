@@ -1268,9 +1268,10 @@ class StaticDataFeeder(AbstractDataFeeder):
     provides a consistent interface for loading data from different
     sources. It also provides methods for splitting the dataset into
     multiple non-overlapping contiguous sub-feeders that span the
-    dataset. Common use case is it use in stable baselines vector env to
-    parallelize running multiple trading environments, leading to
-    significant speedup of training process.
+    dataset. Common use case is to pair with gym AsyncVectorEnv, and
+    SyncVectorEnv to parallelize running multiple trading environments,
+    leading to significant speedup of training process and improvement
+    in generalization.
 
     Attributes:
     -----------
