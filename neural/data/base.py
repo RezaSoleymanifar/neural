@@ -434,6 +434,30 @@ class DataSchema:
         self.schema[data_type]['feature_schema'] = feature_schema
 
     @property
+    def is_dataset(self) -> bool:
+        """
+        Returns if the data schema is for a dataset or a stream. If
+        the data schema is for a dataset then the data type is a
+        dataset type, otherwise it is a stream type.
+
+        Returns:
+        --------    
+            bool:
+                True if the data schema is for a dataset, False if the
+                data schema is for a stream.
+        
+        Notes:
+        ------
+            Useful to ensure that all data types are either datasets or
+            streams.
+        """
+        data_type = self.schema.keys()[0]
+        if issubclass(data_type, AbstractDataSource.DatasetType):
+            return True
+        elif issubclass(data_type, AbstractDataSource.StreamType):
+            return False
+        
+    @property
     def assets(self) -> List[AbstractAsset]:
         """
         Returns a list of assets that have a price mask associated with
@@ -471,31 +495,33 @@ class DataSchema:
             len(self.data_schema[data_type]['feature_schema'].values()[0])
             for data_type in self.data_schema)
         return n_columns
-    
+
     @property
-    def is_dataset(self) -> bool:
+    def asset_prices_mask(self) -> List[bool]:
         """
-        Returns if the data schema is for a dataset or a stream. If
-        the data schema is for a dataset then the data type is a
-        dataset type, otherwise it is a stream type.
-
-        Returns:
-        --------    
-            bool:
-                True if the data schema is for a dataset, False if the
-                data schema is for a stream.
-        
-        Notes:
-        ------
-            Useful to ensure that all data types are either datasets or
-            streams.
+        Returns a mask for the asset close price feature type. This price is
+        used by market environments as the point of reference for placing
+        orders. when a time interval is over and features are observed the
+        closing price of interval is used to place orders. The order of price
+        mask matches the order of assets in the data schema.
         """
-        data_type = self.schema.keys()[0]
-        if issubclass(data_type, AbstractDataSource.DatasetType):
-            return True
-        elif issubclass(data_type, AbstractDataSource.StreamType):
-            return False
+        return self.get_features_mask(FeatureType.ASSET_CLOSE_PRICE)
+    
+    def get_features_mask(self, feature_type: FeatureType):
+        """
+        Retrievs the boolean mask for a given feature type. This is
+        useful for filtering out features of a particular type from the
+        data. For example if the user wants to filter out all features
+        that are text based, they can use this method to get the mask
+        for text features FeatureType.TEXT and filter out the columns
+        """
+        mask = [
+            mask_value for data_type in self.schema
+            for mask_value in self.schema[data_type]['feature_schema'][feature_type]
+        ]
+        return mask
 
+    
     def __add__(self, other) -> DataSchema:
         """
         Adds two data schemas together. This is useful for joining
@@ -855,30 +881,6 @@ class AbstractDataMetaData:
         2022-01-10  2022-01-10 00:00:00+00:00   2022-01-11 00:00:00+00:00
         """
         return self.calendar_type.schedule
-
-    @property
-    def asset_prices_mask(self) -> List[bool]:
-        """
-        Returns a mask for the asset close price feature type. This price is
-        used by market environments as the point of reference for placing
-        orders. when a time interval is over and features are observed the
-        closing price of interval is used to place orders. The order of price
-        mask matches the order of assets in the data schema.
-        """
-        return self.get_features_mask(FeatureType.ASSET_CLOSE_PRICE)
-
-    def get_features_mask(self, feature_type: FeatureType):
-        """
-        Retrievs the boolean mask for a given feature type. This is
-        useful for filtering out features of a particular type from the
-        data. For example if the user wants to filter out all features
-        that are text based, they can use this method to get the mask
-        for text features FeatureType.TEXT and filter out the columns
-        """
-        mask = list()
-        for data_type in self.data_schema:
-            mask += self.data_schema[data_type]['feature_schema'][feature_type]
-        return mask
 
     def __or__(self, other: AbstractDataMetaData,
                **kwargs) -> AbstractDataMetaData:
