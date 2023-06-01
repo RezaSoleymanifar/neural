@@ -1430,7 +1430,7 @@ class StaticDataFeeder(AbstractDataFeeder):
 
             edge_indices = np.linspace(start=self.start_index,
                                        stop=self.end_index,
-                                       num=self.n + 1,
+                                       num=n + 1,
                                        dtype=int,
                                        endpoint=True)
         
@@ -1445,6 +1445,7 @@ class StaticDataFeeder(AbstractDataFeeder):
                     (self.end_index - self.start_index)), self.end_index
             ], dtype=int)
 
+        start, end, middle = edge_indices
         cumulative_closest_indices = np.searchsorted(
             self.cumulative_intervals, edge_indices[1:-1], side='right') - 1
         cumulative_closest_indices = np.concatenate(
