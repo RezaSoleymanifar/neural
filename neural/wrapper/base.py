@@ -1014,11 +1014,10 @@ class ConsoleTearsheetRenderWrapper(Wrapper):
                 The initial observation from the environment.
         """
         observation = self.env.reset()
-
         resolution = self.market_env.data_metadata.resolution
-        start_date = self.market_env.data_metadata.start.date()
-        end_date = self.market_env.data_metadata.end.date()
-        days = self.market_env.data_feed.days
+        start_date = self.market_env.data_feeder.start_date
+        end_date = self.market_env.data_feeder.end_date
+        days = self.market_env.data_feeder.days
 
         logger.info('Episode:'
                     f'\n\t start = {start_date}'

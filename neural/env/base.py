@@ -325,7 +325,6 @@ class TrainMarketEnv(AbstractMarketEnv):
         self.initial_asset_quantities = initial_asset_quantities
 
         self.data_metadata = self.data_feeder.dataset_metadata
-        self.feature_schema = self.data_metadata.feature_schema
         self.assets = self.data_metadata.assets
 
         self.n_steps = self.data_feeder.n_rows
