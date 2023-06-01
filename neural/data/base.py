@@ -596,8 +596,7 @@ class FeatureSchema:
         new_feature_schema = deepcopy(self)
         schema = new_feature_schema.schema
         for feature_type in schema:
-            schema[feature_type] += other.schema[
-                feature_type]
+            schema[feature_type] += other.schema[feature_type]
 
         return new_feature_schema
 
