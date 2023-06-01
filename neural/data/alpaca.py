@@ -396,7 +396,6 @@ class AlpacaDataDownloader():
 
 
     def _validate_resolution(self, resolution: Resolution, schedule: pd.DataFrame):
-        
         """
         Validates the resolution of the dataset. Resolutions not
         accepted can potentially lead to incoherencies in the end to end
