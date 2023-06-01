@@ -1339,6 +1339,8 @@ class StaticDataFeeder(AbstractDataFeeder):
         self.n_columns = self.dataset_metadata.n_columns
         self.n_chunks = n_chunks
 
+        self._cumulative_intervals = None
+
         return None
 
     def get_day(self, index: int) -> int:
@@ -1354,11 +1356,13 @@ class StaticDataFeeder(AbstractDataFeeder):
             day (int):
                 The current day index of the episode.
         """
-        resolution = self.data_metadata.resolution
-        resolution_offset = pd.to_timedelta(resolution)
-        market_durations = (self.schedule['end'] - self.schedule['start'])
+        if not self._cumulative_intervals:
 
-        intervals_per_day = (market_durations / resolution_offset).astype(int)
+        resolution = self.dataset_metadata.resolution
+        daily_durations = (self.schedule['end'] - self.schedule['start'])
+
+        intervals_per_day = (
+            daily_durations / resolution.pandas_timedelta).astype(int)
         cumulative_intervals = intervals_per_day.cumsum()
 
         day = (self.index < cumulative_intervals).argmax() + 1
