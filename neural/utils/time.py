@@ -239,7 +239,7 @@ class Resolution:
         unit_str = pandas_unit[self.unit]
         timedelta_str = f"{self.quantity}{unit_str}"
         return pd.Timedelta(timedelta_str)
-    
+
     def validate_resolution(self, quantity: int, unit: Unit):
         """
         Validates the resolution.
@@ -356,4 +356,3 @@ class Resolution:
         MINUTE = 'MINUTE'
         HOUR = 'HOUR'
         DAY = 'DAY'
-        

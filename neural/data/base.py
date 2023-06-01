@@ -748,17 +748,6 @@ class AbstractDataMetaData:
         return assets
 
     @property
-    def asset_prices_mask(self) -> List[bool]:
-        """
-        Returns a mask for the asset close price feature type. This price is
-        used by market environments as the point of reference for placing
-        orders. when a time interval is over and features are observed the
-        closing price of interval is used to place orders. The order of price
-        mask matches the order of assets in the data schema.
-        """
-        return self.get_features_mask(FeatureType.ASSET_CLOSE_PRICE)
-
-    @property
     def schedule(self) -> Callable[[datetime, datetime], pd.DataFrame]:
         """
         Returns a function that returns a DataFrame representing the
@@ -786,6 +775,18 @@ class AbstractDataMetaData:
         2022-01-10  2022-01-10 00:00:00+00:00   2022-01-11 00:00:00+00:00
         """
         return self.calendar_type.schedule
+    
+    @property
+    def asset_prices_mask(self) -> List[bool]:
+        """
+        Returns a mask for the asset close price feature type. This price is
+        used by market environments as the point of reference for placing
+        orders. when a time interval is over and features are observed the
+        closing price of interval is used to place orders. The order of price
+        mask matches the order of assets in the data schema.
+        """
+        return self.get_features_mask(FeatureType.ASSET_CLOSE_PRICE)
+
 
     def get_features_mask(self, feature_type: FeatureType):
         """
