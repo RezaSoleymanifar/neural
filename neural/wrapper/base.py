@@ -354,27 +354,11 @@ class AbstractMarketEnvMetadataWrapper(Wrapper, ABC):
         self.n_assets = self.market_env.n_assets
         self.n_steps = self.market_env.n_steps
         self.n_features = self.market_env.n_features
+        self.start_date = self.data_feeder.start_date
+        self.end_date = self.data_feeder.end_date
 
         self.history = defaultdict(list)
 
-    @property
-    def start_date(self) -> datetime:
-        """
-        The start date of the episode.
-
-        Returns:
-        ----------
-            start_date (pd.Timestamp):
-                The start date of the episode.
-        """
-        start_date = self.data_feeder.start_date
-        return start_date
-    
-    @property
-    def end_date(self) -> datetime
-        """
-        The end date of the episode.
-        
     @property
     def date(self) -> pd.Timestamp:
         """
@@ -1022,9 +1006,11 @@ class ConsoleTearsheetRenderWrapper(Wrapper):
         """
         observation = self.env.reset()
 
-        resolution = self.market_env.data_metadata.resolution
-        start_date = self.market_env.data_feeder.start_date
-        end_date = self.market_env.data_feeder.end_date
+        market_metadata_wrapper = self.market_metadata_wrapper
+        resolution = market_metadata_wrapper.data_metadata.resolution
+        n_assets = market_metadata_wrapper.n_assets
+        start_date = market_metadata_wrapper.start_date
+        end_date = market_metadata_wrapper.end_date
         days = self.market_env.data_feeder.days
 
         if isinstance(self.market_env, TradeMarketEnv):
