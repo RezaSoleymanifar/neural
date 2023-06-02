@@ -397,10 +397,35 @@ class DataSchema:
             Returns if the data schema is for a dataset or a stream. If the
             data schema is for a dataset then the data type is a dataset type,
             otherwise it is a stream type.
+        n_features: int
+            Returns the number of columns in the dataset. Can be used to
+            compare against the number columns in the underlying data for
+            sanity checks.
         assets: List[AbstractAsset] 
             Returns a list of assets that have a True price mask associated
             with them. This is useful to filter out tradable assets from the
-            
+            assets that exist to provide feature information for the tradable
+            assets.
+        asset_prices_mask: List[bool]
+            Returns a mask for the asset close price feature type. This price
+            is used by market environments as the point of reference for    
+            placing orders. when a time interval is over and features are
+            observed the closing price of interval is used to place orders.
+        
+    Methods:
+    --------
+        get_features_mask(feature_type: FeatureType) -> List[bool]:
+            Retrievs the boolean mask for a given feature type. This is useful
+            for filtering out features of a particular type from the data. For
+            example if the user wants to filter out all features that are text
+            based, they can use this method to get the mask for text features
+            FeatureType.TEXT and filter out the columns that have True values
+            in the mask.
+        __add__(self, other) -> DataSchema:
+            Adds two data schemas together. This is useful for joining datasets
+            or streams. If assets in a common data type overlap then an error
+            is raised. This is due to the fact that same assets for the same
+            data type gives redundant information.
 
     Notes:
     ------
@@ -450,6 +475,8 @@ class DataSchema:
         self.schema[data_type]['assets'] = assets
         self.schema[data_type]['feature_schema'] = feature_schema
 
+        return None
+
     @property
     def is_dataset(self) -> bool:
         """
@@ -475,6 +502,23 @@ class DataSchema:
             return False
 
     @property
+    def n_features(self) -> int:
+        """
+        Returns the number of columns in the dataset. Can be used to
+        compare against the number columns in the underlying data for 
+        sanity checks.
+
+        Returns:
+        --------
+            int:
+                The number of columns in the dataset.
+        """
+        n_features = sum(
+            len(self.schema[data_type]['feature_schema'].values()[0])
+            for data_type in self.schema)
+        return n_features
+    
+    @property
     def assets(self) -> List[AbstractAsset]:
         """
         Returns a list of assets that have a True price mask associated with
@@ -496,23 +540,6 @@ class DataSchema:
         return assets
 
     @property
-    def n_features(self) -> int:
-        """
-        Returns the number of columns in the dataset. Can be used to
-        compare against the number columns in the underlying data for 
-        sanity checks.
-
-        Returns:
-        --------
-            int:
-                The number of columns in the dataset.
-        """
-        n_features = sum(
-            len(self.schema[data_type]['feature_schema'].values()[0])
-            for data_type in self.schema)
-        return n_features
-
-    @property
     def asset_prices_mask(self) -> List[bool]:
         """
         Returns a mask for the asset close price feature type. This price is
@@ -523,7 +550,7 @@ class DataSchema:
         """
         return self.get_features_mask(FeatureType.ASSET_CLOSE_PRICE)
 
-    def get_features_mask(self, feature_type: FeatureType):
+    def get_features_mask(self, feature_type: FeatureType) -> List[bool]:
         """
         Retrievs the boolean mask for a given feature type. This is
         useful for filtering out features of a particular type from the
@@ -558,12 +585,24 @@ class DataSchema:
         ]
         return mask
 
-    def __add__(self, other) -> DataSchema:
+    def __add__(self, other: DataSchema) -> DataSchema:
         """
         Adds two data schemas together. This is useful for joining
         datasets or streams. If assets in a common data type overlap
         then an error is raised. This is due to the fact that same
         assets for the same data type gives redundant information.
+
+        Args:
+        ------
+            other (DataSchema):
+                The data schema to be joined with the current data
+                schema.
+            
+        Returns:
+        --------
+            DataSchema:
+                A new data schema that is the result of joining the
+                current data schema with the other data schema.
         """
         if other.is_dataset != self.is_dataset:
             raise ValueError(
