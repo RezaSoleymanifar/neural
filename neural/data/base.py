@@ -1699,34 +1699,55 @@ class StaticDataFeeder(AbstractDataFeeder):
         return self.end_index - self.start_index
 
     @property
-    def index(self):
+    def index(self) -> int:
         """
         Current row index of the data feeder. This is useful to have a
         reference to the current row index being fed to the market
         environment.
+
+        Returns:
+        --------
+            int:
+                Current row index of the data feeder.
         """
         return self._index
 
     @property
-    def done(self):
+    def done(self) -> bool:
         """
         Whether the data feeder has been exhausted or not.
+
+        Returns:
+        --------
+            bool:
+                True if the data feeder has been exhausted, False
+                otherwise.
         """
         return True if self.index == self.end_index - 1 else False
 
     @property
-    def start_date(self):
+    def start_date(self) -> datetime:
         """
         Returns the date corresponding to the start index. This is
         useful for mapping the index of the dataset to the date of the
         episode.
+
+        Returns:
+        --------
+            datetime:
+                The date corresponding to the start index.
         """
         return self.metadata.index_to_date(self.start_index)
 
     @property
-    def end_date(self):
+    def end_date(self) -> datetime:
         """
         Returns the date corresponding to the end index. 
+
+        Returns:
+        --------
+            datetime:
+                The date corresponding to the end index.
         """
         return self.metadata.index_to_date(self.end_index)
 
@@ -1734,22 +1755,38 @@ class StaticDataFeeder(AbstractDataFeeder):
     def date(self):
         """
         Returns the current date of the episode.
+
+        Returns:
+        --------
+            datetime:
+                The current date of the episode.
         """
         return self.metadata.index_to_date(self.index)
 
     @property
     def days(self):
         """
-        Returns the number of days in the dataset.
+        Returns the number of days in the part of dataset being read.
+
+        Returns:
+        --------
+            int:
+                The number of days in the part of dataset being read.
         """
         days = (self.end_date - self.start_date).days + 1
         return days
 
-    def _validate_indices(self):
+    def _validate_indices(self) -> None:
         """
         Validates the start and end indices to make sure that they
         correspond to the start and end of days. This is useful for
         making sure that data feeders work with integer number of days.
+
+        Raises:
+        -------
+            ValueError:
+                if the start index or end index does not correspond to
+                the start or end of a day.
         """
         valid_indices = np.concatenate([0], self._cumulative_daily_rows)
         if (self.start_index not in valid_indices
@@ -1758,6 +1795,7 @@ class StaticDataFeeder(AbstractDataFeeder):
                 f'Start index {self.start_index} or end index '
                 f'{self.end_index} does not match a row index corresponding '
                 'to the start/end of a day.')
+        return None
 
     def get_features_generator(self) -> Iterable[np.ndarray]:
         """
@@ -1788,7 +1826,7 @@ class StaticDataFeeder(AbstractDataFeeder):
                 self._index += 1
                 yield row
 
-    def split(self, n: int = 1 | float):
+    def split(self, n: int = 1 | float) -> List[StaticDataFeeder]:
         """
         Splits the dataset into multiple non-overlapping contiguous
         sub-feeders that span the dataset. Common use case is it use in
@@ -1799,15 +1837,18 @@ class StaticDataFeeder(AbstractDataFeeder):
 
         Args:
         ------
-            n (int | float): if int, number of sub-feeders to split the
-            dataset into. if float (0, 1) yields two sub-feeders
-            performing n, 1-n train test split
+            n (int | float): 
+                if int, number of sub-feeders to split the dataset into.
+                if float (0, 1) yields two sub-feeders performing n, 1-n
+                train test split
         Returns:
         --------
-            List[StaticDataFeeder]: A list of StaticDataFeeder objects.
+            List[StaticDataFeeder]: 
+                A list of StaticDataFeeder objects.
         Raises:
         -------
-            ValueError: if n is not an int or float in (0, 1]
+            ValueError: 
+                if n is not an int or float in (0, 1]
         """
 
         if isinstance(n, int):
