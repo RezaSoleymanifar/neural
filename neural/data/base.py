@@ -1658,9 +1658,5 @@ class AsyncDataFeeder(AbstractDataFeeder):
         return None
 
     @property
-    def n_rows(self):
-        return np.inf
-
-    @property
     def done(self):
         return False

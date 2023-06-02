@@ -358,6 +358,24 @@ class AbstractMarketEnvMetadataWrapper(Wrapper, ABC):
         self.history = defaultdict(list)
 
     @property
+    def start_date(self) -> datetime:
+        """
+        The start date of the episode.
+
+        Returns:
+        ----------
+            start_date (pd.Timestamp):
+                The start date of the episode.
+        """
+        start_date = self.data_feeder.start_date
+        return start_date
+    
+    @property
+    def end_date(self) -> datetime
+        """
+        The end date of the episode.
+        
+    @property
     def date(self) -> pd.Timestamp:
         """
         Returns the current date of the episode.
@@ -1003,27 +1021,26 @@ class ConsoleTearsheetRenderWrapper(Wrapper):
                 The initial observation from the environment.
         """
         observation = self.env.reset()
+
         resolution = self.market_env.data_metadata.resolution
         start_date = self.market_env.data_feeder.start_date
         end_date = self.market_env.data_feeder.end_date
         days = self.market_env.data_feeder.days
 
         if isinstance(self.market_env, TradeMarketEnv):
-
-            logger.info('Be:'
+            logger.info('Beginning live trading:'
+                        f'\n\t resolution = {resolution}'
+                        f'\n\t n_assets = {self.market_env.n_assets}'
+                        f'\n\t n_features = {self.market_env.n_features:,}')
+        else:
+            logger.info('Episode:'
+                        f'\n\t start = {start_date}'
+                        f'\n\t end = {end_date}'
+                        f'\n\t days = {days}'
                         f'\n\t resolution = {resolution}'
                         f'\n\t n_assets = {self.market_env.n_assets}'
                         f'\n\t n_steps = {self.market_env.n_steps:,}'
                         f'\n\t n_features = {self.market_env.n_features:,}')
-         
-        logger.info('Episode:'
-                    f'\n\t start = {start_date}'
-                    f'\n\t end = {end_date}'
-                    f'\n\t days = {days}'
-                    f'\n\t resolution = {resolution}'
-                    f'\n\t n_assets = {self.market_env.n_assets}'
-                    f'\n\t n_steps = {self.market_env.n_steps:,}'
-                    f'\n\t n_features = {self.market_env.n_features:,}')
 
         self.render()
         return observation
