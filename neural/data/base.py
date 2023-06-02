@@ -1471,6 +1471,8 @@ class StaticDataFeeder(AbstractDataFeeder):
         self.n_chunks = n_chunks
 
         self._index = None
+        self._cumulative_daily_rows = (
+            self.dataset_metadata.cumulative_daily_rows)
         return None
 
     @property
@@ -1533,8 +1535,7 @@ class StaticDataFeeder(AbstractDataFeeder):
         correspond to the start and end of days. This is useful for
         making sure that data feeders work with integer number of days.
         """
-        cumulative_daily_rows = self.dataset_metadata.cumulative_daily_rows
-        valid_indices = np.concatenate([0], cumulative_daily_rows)
+        valid_indices = np.concatenate([0], self._cumulative_daily_rows)
         if (self.start_index not in valid_indices
                 or self.end_index not in valid_indices):
             raise ValueError(
@@ -1614,9 +1615,8 @@ class StaticDataFeeder(AbstractDataFeeder):
 
         start, end, middle = edge_indices[0], edge_indices[1], edge_indices[
             1:-1]
-        cumulative_daily_rows = self.dataset_metadata.cumulative_daily_rows
         cumulative_closest_indices = np.searchsorted(
-            cumulative_daily_rows, middle, side='right') - 1
+            self._cumulative_daily_rows, middle, side='right') - 1
         edge_indices = np.concatenate((start, cumulative_closest_indices, end))
 
         if len(edge_indices) != len(np.unique(edge_indices)):
