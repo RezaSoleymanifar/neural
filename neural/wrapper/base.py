@@ -352,10 +352,12 @@ class AbstractMarketEnvMetadataWrapper(Wrapper, ABC):
         self.assets = self.market_env.assets
 
         self.n_assets = self.market_env.n_assets
-        self.n_steps = self.market_env.n_steps
         self.n_features = self.market_env.n_features
+
+        self.n_steps = self.data_feed.n_rows
         self.start_date = self.data_feeder.start_date
         self.end_date = self.data_feeder.end_date
+        self.days = self.data_feeder.days
 
         self.history = defaultdict(list)
 
@@ -1006,26 +1008,27 @@ class ConsoleTearsheetRenderWrapper(Wrapper):
         """
         observation = self.env.reset()
 
-        market_metadata_wrapper = self.market_metadata_wrapper
-        resolution = market_metadata_wrapper.data_metadata.resolution
-        n_assets = market_metadata_wrapper.n_assets
-        start_date = market_metadata_wrapper.start_date
-        end_date = market_metadata_wrapper.end_date
-        days = self.market_env.data_feeder.days
+        resolution = self.market_metadata_wrapper.data_metadata.resolution
+        n_assets = self.market_metadata_wrapper.n_assets
+        n_features = self.market_metadata_wrapper.n_features
 
         if isinstance(self.market_env, TradeMarketEnv):
             logger.info('Beginning live trading:'
                         f'\n\t resolution = {resolution}'
-                        f'\n\t n_assets = {self.market_env.n_assets}'
-                        f'\n\t n_features = {self.market_env.n_features:,}')
+                        f'\n\t n_assets = {n_assets}'
+                        f'\n\t n_features = {n_features:,}')
         else:
+            start_date = self.market_metadata_wrapper.start_date
+            end_date = self.market_metadata_wrapper.end_date
+            days = self.market_metadata_wrapper.days
+            n_steps = self.market_metadata_wrapper.n_steps
             logger.info('Episode:'
                         f'\n\t start = {start_date}'
                         f'\n\t end = {end_date}'
                         f'\n\t days = {days}'
                         f'\n\t resolution = {resolution}'
-                        f'\n\t n_assets = {self.market_env.n_assets}'
-                        f'\n\t n_steps = {self.market_env.n_steps:,}'
+                        f'\n\t n_assets = {n_assets}'
+                        f'\n\t n_steps = {n_steps:,}'
                         f'\n\t n_features = {self.market_env.n_features:,}')
 
         self.render()
