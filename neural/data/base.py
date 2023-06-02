@@ -421,6 +421,8 @@ class DataSchema:
             based, they can use this method to get the mask for text features
             FeatureType.TEXT and filter out the columns that have True values
             in the mask.
+        __repr__() -> str:
+            Returns a string representation of the data schema.
         __add__(self, other) -> DataSchema:
             Adds two data schemas together. This is useful for joining datasets
             or streams. If assets in a common data type overlap then an error
@@ -585,6 +587,20 @@ class DataSchema:
         ]
         return mask
 
+    def __repr__(self) -> str:
+        """
+        Returns a string representation of the data schema.
+
+        Returns:
+        --------
+            str:
+                A string representation of the data schema.
+                example: {DatasetType.BAR: {'assets': [AAPL, MSFT],
+                'feature_schema': {FeatureType.ASSET_CLOSE_PRICE: [True,
+                False, True, False]}}}
+        """
+        return str(self.schema)
+    
     def __add__(self, other: DataSchema) -> DataSchema:
         """
         Adds two data schemas together. This is useful for joining
@@ -644,6 +660,16 @@ class FeatureSchema:
         schema (Dict[FeatureType, List[bool]]):
             A dictionary that maps feature types to boolean masks.
 
+    Methods:
+    --------
+        create_feature_schema(dataframe: pd.DataFrame) -> Dict[FeatureType,
+        List[bool]]:
+            Creates a feature schema dictionary for a given DataFrame, with
+            DataType as keys and boolean masks as values. The boolean masks
+            indicate where the columns of the corresponding feature types are
+            located in the data. By default downloaders provide downloaded data
+            in a pandas Dataframe format.
+
     Example:
     --------
     >>> dataframe = pd.DataFrame(
@@ -651,6 +677,8 @@ class FeatureSchema:
     >>> feature_schema = FeatureSchema(dataframe)   
     >>> feature_schema.schema[FeatureType.ASSET_CLOSE_PRICE]
     [True, False, False]
+    >>> feature_schema.schema[FeatureType.ASSET_OPEN_PRICE]
+    [False, True, False]
     This mask now can be applied to a row to return the close prices.
     """
 
@@ -683,7 +711,7 @@ class FeatureSchema:
         """
         return str(self.schema)
 
-    def __add__(self, other):
+    def __add__(self, other: FeatureSchema) -> FeatureSchema:
         """
         joins feature schemas of two datasets or streams. The boolean
         masks are simply concatenated to indicate the feature type
@@ -691,14 +719,15 @@ class FeatureSchema:
 
         Args:
         ------
-            other (AbstractDataMetaData):
-                The metadata object to be joined with the current
-                metadata object.
+            other (FeatureSchema):
+                The feature schema to be joined with the current
+                feature schema.
+
         Returns:
         --------
-            Dict[FeatureType, List[bool]]:
-                A dictionary with FeatureType as keys and boolean masks
-                as values.
+            FeatureSchema:
+                A new feature schema that is the result of joining the
+                current feature schema with the other feature schema.
         
         Raises:
         -------
