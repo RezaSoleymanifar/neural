@@ -327,7 +327,7 @@ class TrainMarketEnv(AbstractMarketEnv):
         self.metadata = self.data_feeder.metadata
         self.assets = self.metadata.assets
         self.n_assets = len(self.assets)
-        
+
         self.n_steps = self.data_feeder.n_rows
         self.n_features = self.metadata.n_features
 
@@ -393,13 +393,6 @@ class TrainMarketEnv(AbstractMarketEnv):
                 whether the episode is finished.
         """
         return self.data_feeder.done
-    
-    @property
-    def index(self) -> int:
-        """
-        Returns the current row index of the environment.
-        """
-        return self.data_feeder.index
     
     @property
     def cash(self) -> float:
