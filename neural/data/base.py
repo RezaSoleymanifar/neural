@@ -398,12 +398,15 @@ class DataSchema:
             feature types to boolean masks.
     Example:
     --------
-    >>> data_schema = DataSchema(
-    ...     DatasetType.BAR, [AAPL, MSFT, GOOG], feature_schema)
-    >>> data_schema.schema[DatasetType.BAR]['assets']
-    (AAPL, MSFT, GOOG)
-    >>> data_schema.schema[DatasetType.BAR]['feature_schema']
-    {FeatureType.ASSET_CLOSE_PRICE: [True, False, True, False, True, False]}
+        Assuming AAPL, MSFT, GOOG are AbstractAsset objects and feature_schema
+        is a FeatureSchema object:
+        
+        >>> data_schema = DataSchema(
+        ...     DatasetType.BAR, [AAPL, MSFT, GOOG], feature_schema)
+        >>> data_schema.schema[DatasetType.BAR]['assets']
+        (AAPL, MSFT, GOOG)
+        >>> data_schema.schema[DatasetType.BAR]['feature_schema']
+        {FeatureType.ASSET_CLOSE_PRICE: [True, False, True, False, True, False]}
     """
 
     def __init__(self, data_type: AbstractDataSource.DatasetType
@@ -449,13 +452,13 @@ class DataSchema:
         
         Notes:
         ------
-            Useful to ensure that all data types are either datasets or
+            Useful to ensure all data types are either datasets or
             streams.
         """
         data_type = self.schema.keys()[0]
-        if issubclass(data_type, AbstractDataSource.DatasetType):
+        if isinstance(data_type, AbstractDataSource.DatasetType):
             return True
-        elif issubclass(data_type, AbstractDataSource.StreamType):
+        elif isinstance(data_type, AbstractDataSource.StreamType):
             return False
 
     @property
