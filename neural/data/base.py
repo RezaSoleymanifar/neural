@@ -1134,9 +1134,8 @@ class DatasetMetadata(AbstractDataMetaData):
     end: datetime
 
     def __post_init__(self):
-        self._cumulative_daily_rows = None
         self._validate_times()
-        self._get_cumulative_daily_rows()
+        self._cumulative_daily_rows = self._get_cumulative_daily_rows()
 
     @property
     def stream(self):
@@ -1179,10 +1178,7 @@ class DatasetMetadata(AbstractDataMetaData):
         When downloading datasets this process is used to
         create rows in the dataset.
         """
-        time_delta = self.resolution.pandas_timedelta
-        market_durations = (self.schedule['end'] - self.schedule['start'])
-        intervals_per_day = (market_durations / time_delta).astype(int)
-        n_rows = sum(intervals_per_day)
+        n_rows = self._cumulative_daily_rows[-1]
         return n_rows
 
     def _validate_times(self):
@@ -1207,13 +1203,10 @@ class DatasetMetadata(AbstractDataMetaData):
         end of days, namely making sure that data feeders work with
         integer number of days.
         """
-        if not self._cumulative_daily_rows:
-            schedule = self.dataset_metadata.schedule
-            resolution = self.dataset_metadata.resolution
-            daily_durations = schedule['end'] - schedule['start']
-            rows_per_day = (daily_durations /
-                            resolution.pandas_timedelta).astype(int)
-            cumulative_daily_rows = rows_per_day.cumsum().values
+        daily_durations = self.schedule['end'] - self.schedule['start']
+        timedelta = self.resolution.pandas_timedelta
+        rows_per_day = (daily_durations / timedelta).astype(int)
+        cumulative_daily_rows = rows_per_day.cumsum().values
         return cumulative_daily_rows
 
     def row_index_to_date(self, index) -> datetime:
