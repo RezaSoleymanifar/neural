@@ -163,9 +163,9 @@ class AbstractDataSource(ABC):
             Returns the stream type corresponding to the specified dataset
             type. By default maps to corresponding stream type using the value
             of the dataset type enum. This means a dataset type with value
-            'BAR' will be mapped to a stream type with value 'BAR'. This
-            behavior can be overriden to provide custom mapping between dataset
-            and stream types.
+            DatasetType.BAR will be mapped to a stream type with value
+            StreamType.BAR. This behavior can be overriden to provide custom
+            mapping between dataset and stream types.
 
     Example:
     -----------
