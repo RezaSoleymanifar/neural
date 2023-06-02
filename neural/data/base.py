@@ -470,11 +470,12 @@ class DataSchema:
         """
         assets = list()
         for data_type in self.schema:
+            asset_prices_mask = self.schema[data_type]['feature_schema'][
+                FeatureType.ASSET_CLOSE_PRICE]
             data_type_assets = self.schema[data_type]['assets']
             assets.extend([
-                asset for asset, mask_value in zip(data_type_assets,
-                                                   self.asset_prices_mask)
-                if mask_value is True
+                asset for asset, mask_value in zip(
+                    data_type_assets, asset_prices_mask) if mask_value is True
             ])
         if len(assets) != len(set(assets)):
             raise ValueError('Duplicate tradable assets in data schema.')
@@ -498,6 +499,17 @@ class DataSchema:
             for data_type in self.schema)
         return n_features
 
+    @property
+    def asset_prices_mask(self) -> List[bool]:
+        """
+        Returns a mask for the asset close price feature type. This price is
+        used by market environments as the point of reference for placing
+        orders. when a time interval is over and features are observed the
+        closing price of interval is used to place orders. The order of price
+        mask matches the order of assets in the data schema.
+        """
+        return self.get_features_mask(FeatureType.ASSET_CLOSE_PRICE)
+
     def get_features_mask(self, feature_type: FeatureType):
         """
         Retrievs the boolean mask for a given feature type. This is
@@ -505,6 +517,27 @@ class DataSchema:
         data. For example if the user wants to filter out all features
         that are text based, they can use this method to get the mask
         for text features FeatureType.TEXT and filter out the columns
+        that have True values in the mask. 
+
+        Args:
+        ------
+            feature_type (FeatureType):
+                The feature type for which the mask is to be retrieved.
+
+        Returns:
+        --------
+            List[bool]:
+                A boolean mask for the given feature type.
+            
+        Raises:
+        -------
+            ValueError:
+                If the feature type is not in the data schema.
+
+        Notes:
+        ------
+            Assuming features is a row of data, features(mask) will
+            return the features of the given feature type.
         """
         mask = [
             mask_value for data_type in self.schema for mask_value in
