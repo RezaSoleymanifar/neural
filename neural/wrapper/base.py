@@ -1008,6 +1008,14 @@ class ConsoleTearsheetRenderWrapper(Wrapper):
         end_date = self.market_env.data_feeder.end_date
         days = self.market_env.data_feeder.days
 
+        if isinstance(self.market_env, TradeMarketEnv):
+
+            logger.info('Be:'
+                        f'\n\t resolution = {resolution}'
+                        f'\n\t n_assets = {self.market_env.n_assets}'
+                        f'\n\t n_steps = {self.market_env.n_steps:,}'
+                        f'\n\t n_features = {self.market_env.n_features:,}')
+         
         logger.info('Episode:'
                     f'\n\t start = {start_date}'
                     f'\n\t end = {end_date}'
