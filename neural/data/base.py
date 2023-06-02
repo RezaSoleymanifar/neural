@@ -1135,7 +1135,7 @@ class DatasetMetadata(AbstractDataMetaData):
 
     def __post_init__(self) -> None:
         self._validate_times()
-        self._cumulative_daily_rows = self._get_cumulative_daily_rows()
+        self.cumulative_daily_rows = self._get_cumulative_daily_rows()
         return None
 
     @property
@@ -1179,7 +1179,7 @@ class DatasetMetadata(AbstractDataMetaData):
         When downloading datasets this process is used to
         create rows in the dataset.
         """
-        n_rows = self._cumulative_daily_rows[-1]
+        n_rows = self.cumulative_daily_rows[-1]
         return n_rows
 
     def _validate_times(self) -> None:
@@ -1261,7 +1261,7 @@ class DatasetMetadata(AbstractDataMetaData):
             date (datetime):
                 The date corresponding to the current index.
         """
-        day_index = (index < self._cumulative_daily_rows).argmax()
+        day_index = (index < self.cumulative_daily_rows).argmax()
         date = self.schedule.loc[day_index, 'start']
         return date
 
@@ -1480,17 +1480,12 @@ class StaticDataFeeder(AbstractDataFeeder):
             self.dataset_metadata.n_rows
         self.n_chunks = n_chunks
 
-        self._cumulative_daily_rows = self._get_cumulative_daily_rows()
         self._index = None
         return None
 
     @property
     def n_rows(self):
         return self.end_index - self.start_index
-
-    @property
-    def n_features(self):
-        return self.dataset_metadata.n_columns
 
     @property
     def index(self):
@@ -1507,28 +1502,28 @@ class StaticDataFeeder(AbstractDataFeeder):
         useful for mapping the index of the dataset to the date of the
         episode.
         """
-        return self.get_date(self.start_index)
+        return self.dataset_metadata.index_to_date(self.start_index)
 
     @property
     def end_date(self):
         """
         Returns the date corresponding to the end index. 
         """
-        return self.get_date(self.end_index)
+        return self.dataset_metadata.index_to_date(self.end_index)
 
     @property
     def date(self):
         """
         Returns the current date of the episode.
         """
-        return self.get_date(self.index)
+        return self.dataset_metadata.index_to_date(self.index)
 
     @property
     def days(self):
         """
         Returns the number of days in the dataset.
         """
-        days = (self.end_date - self.start_date).days
+        days = (self.end_date - self.start_date).days + 1
         return days
 
     def _validate_indices(self):
@@ -1537,7 +1532,8 @@ class StaticDataFeeder(AbstractDataFeeder):
         correspond to the start and end of days. This is useful for
         making sure that data feeders work with integer number of days.
         """
-        valid_indices = np.concatenate([0], self._cumulative_daily_rows)
+        cumulative_daily_rows = self.dataset_metadata.cumulative_daily_rows
+        valid_indices = np.concatenate([0], cumulative_daily_rows)
         if (self.start_index not in valid_indices
                 or self.end_index not in valid_indices):
             raise ValueError(
