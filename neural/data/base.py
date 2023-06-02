@@ -1182,18 +1182,7 @@ class DatasetMetadata(AbstractDataMetaData):
         n_rows = self._cumulative_daily_rows[-1]
         return n_rows
 
-    @property
-    def n_features(self) -> int:
-        """
-        Returns the number of features in the dataset.
 
-        Returns:
-        --------
-            int:
-                The number of features in the dataset.
-        """
-        return self.data_schema.n_features
-    
     def _validate_times(self):
         """
         Validates that the start and end times of the dataset are in the
@@ -1203,7 +1192,7 @@ class DatasetMetadata(AbstractDataMetaData):
         if not self.schedule['start'].isin([self.start]).any():
             raise ValueError(
                 f'Start time {self.start} is not in the schedule.')
-        
+
         if not self.schedule['end'].isin([self.end]).any():
             raise ValueError(f'End time {self.end} is not in the schedule.')
 
@@ -1259,7 +1248,7 @@ class DatasetMetadata(AbstractDataMetaData):
                                                end_date=end_date)
         conscutive = True if len(schedule) == 2 else False
         return conscutive
-    
+
     def index_to_date(self, index) -> datetime:
         """
         Returns the date corresponding to the current index. This is useful for
@@ -1274,7 +1263,7 @@ class DatasetMetadata(AbstractDataMetaData):
         day_index = (index < self._cumulative_daily_rows).argmax()
         date = self.schedule.loc[day_index, 'start']
         return date
-    
+
     def __or__(self, other: AbstractDataMetaData) -> AbstractDataMetaData:
         """
         This is useful for joining datasets that are large to download
