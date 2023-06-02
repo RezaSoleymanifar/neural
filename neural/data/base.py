@@ -662,13 +662,19 @@ class FeatureSchema:
 
     Methods:
     --------
-        create_feature_schema(dataframe: pd.DataFrame) -> Dict[FeatureType,
+        _create_feature_schema(dataframe: pd.DataFrame) -> Dict[FeatureType,
         List[bool]]:
             Creates a feature schema dictionary for a given DataFrame, with
             DataType as keys and boolean masks as values. The boolean masks
             indicate where the columns of the corresponding feature types are
             located in the data. By default downloaders provide downloaded data
             in a pandas Dataframe format.
+        __repr__() -> str:
+            Returns a string representation of the feature schema.
+        __add__(self, other) -> FeatureSchema:
+            joins feature schemas of two datasets or streams. The boolean masks
+            are simply concatenated to indicate the feature type locations in
+            the joined dataset/stream.
 
     Example:
     --------
@@ -696,7 +702,7 @@ class FeatureSchema:
                 are enumerated and their value is matched against the
                 column names of the input DataFrame.
         """
-        self.schema = self.create_feature_schema(dataframe)
+        self.schema = self._create_feature_schema(dataframe)
         return None
 
     def __repr__(self) -> str:
@@ -744,7 +750,7 @@ class FeatureSchema:
             schema[feature_type] += other.schema[feature_type]
         return new_feature_schema
 
-    def create_feature_schema(
+    def _create_feature_schema(
             self, dataframe: pd.DataFrame) -> Dict[FeatureType, List[bool]]:
         """
         Creates a feature schema dictionary for a given DataFrame, with
@@ -800,79 +806,67 @@ class FeatureSchema:
 @dataclass
 class AbstractDataMetaData:
     """
-    Data has a universal representation of a two dimensional array of
-    objects throughout the framework. Each row corresponds to a time
-    interval with a fixed time span called resolution. Each column
-    corresponds to a feature of the data for that interval. The boolean
-    masks in feature schema indicates where the columns of the
-    corresponding feature types are located in the data. Lenght of
-    boolean mask is equal to the number columns in the data. Difference
-    between dataset and stream is that dataset is static and can be
-    loaded in memory, while stream is dynamic and can only be accessed
-    in an iterator like fashion, where each iteration returns a new row
-    of data and takes time equal to the resolution of the data. The
-    metadata allows fusion of data from multiple data sources into a
-    coehsive representation. This is useful for market simulations and
-    trading abstracting away the construction of data from the
-    representation of data. Metadata also offers automatic validation
-    and updating of joined or appended data making joining multiple
-    sources of data a self-contained process. For trading purposes any
-    asset that has FeatureType.ASSET_CLOSE_PRICE will be treated as a 
-    tradable asset. However it is possible to provide other non close 
-    price data for other assets, in the same metadata object.
+    Data has a universal representation of a two dimensional array of objects
+    throughout the framework. Each row corresponds to a time interval with a
+    fixed time span called resolution. Each column corresponds to a feature of
+    the data for that interval. The boolean masks in feature schema indicates
+    where the columns of the corresponding feature types are located in the
+    data. Lenght of boolean mask is equal to the number columns in the data.
+    Difference between dataset and stream is that dataset is static and can be
+    loaded in memory, while stream is dynamic and can only be accessed in an
+    iterator like fashion, where each iteration returns a new row of data and
+    takes time equal to the resolution of the data. The metadata allows fusion
+    of data from multiple data sources into a coehsive representation. This is
+    useful for market simulations and trading abstracting away the construction
+    of data from the representation of data. Metadata also offers automatic
+    validation and updating of joined or appended data making joining multiple
+    sources of data a self-contained process. For trading purposes any asset
+    that has FeatureType.ASSET_CLOSE_PRICE set to True in its mask will be
+    treated as a tradable asset.
 
     Attributes:
     -----------
     data_schema (DataSchema):
-        An instance of the `DataSchema` class that represents the data
-        schema of the data. The data schema is internally a dictionary
-        that maps data types (dataset type or stream type) to the
-        corresponding assets and feature schema. The feature schema is a
-        dictionary that maps feature types to boolean masks. The boolean
-        masks indicate where the columns of the corresponding feature
-        types are located in the data. When loading multiple datasets
-        from HDF5 file they are loaded basedon creation order and
-        reorded based on data types in the data schema. This way all
-        common data types have the same order of appearance in the final
-        feature engineering.
+        An instance of the `DataSchema` class that represents the data schema
+        of the data. The data schema is internally a dictionary that maps data
+        types (dataset type or stream type) to the corresponding assets and
+        feature schema. The feature schema is a dictionary that maps feature
+        types to boolean masks. The boolean masks indicate where the columns of
+        the corresponding feature types are located in the data.
     resolution (Resolution):
-        An instance of the `Resolution` enum class that represents the
-        resolution of the data. The resolution is the time span of each
-        row in the data. examples: resolution = Resolution(5,
-        Resolution.Unit.MINUTE) shows a resolution of 5 minutes.
+        An instance of the `Resolution` class that represents the resolution of
+        the data. The resolution is the time span of each row in the data.
+        examples: resolution = Resolution(5, Resolution.Unit.MINUTE) shows a
+        resolution of 5 minutes.
     calendar_type (CalendarType):
-        An instance of the `CalendarType` enum class that represents the
-        type of calendar used to organize the data. The calendar type
-        can affect how data is grouped and sorted in the dataset or
-        stream.
+        An instance of the `CalendarType` enum class that represents the type
+        of calendar used to organize the data. The calendar type can affect how
+        data is grouped and sorted in the dataset or stream.
 
     Properties:
     -----------
     n_columns: int
         Returns the number of columns in the dataset.
     assets: List[Asset]
-        Returns a list of unique assets in the data schema. Order is
-        preserved and determined by the order of appearance of assets in
-        the data schema.
+        Returns a list of unique assets in the data schema. Order is preserved
+        and determined by the order of appearance of assets in the data schema.
     asset_prices_mask:
-        Returns a mask for the asset close price feature type. This
-        price is used by market environments as the point of reference
-        for placing orders. When a time interval is over and features
-        are observed, the closing price of the interval is used to place
-        orders.
+        Returns a mask for the asset close price feature type. This price is
+        used by market environments as the point of reference for placing
+        orders. When a time interval is over and features are observed, the
+        closing price of the interval is used to place orders.
     valid: bool
-        Ensures that all symbols have a price mask associated with them.
-        This property can be violated during merging, since some feature
-        types may not have a price mask associated with them, due to not
-        being a price-related feature type. However, post-merging, the
-        metadata can validate itself using this property. This is used
-        by data feeders to validate input before feeding data to the
-        market environments.
+        Ensures that all symbols have a price mask associated with them. This
+        property can be violated during merging, since some feature types may
+        not have a price mask associated with them, due to not being a
+        price-related feature type. However, post-merging, the metadata can
+        validate itself using this property. This is used by data feeders to
+        validate input before feeding data to the market environments.
     schedule:
-        Returns a function that returns a DataFrame representing the
-        schedule of the dataset according to its calendar type. This is
-        used in training to map dataset rows to corresponding dates. In
-        trading this is used to check for market open and close times.
+        Returns a function that returns a DataFrame representing the schedule
+        of the dataset according to its calendar type. This is used in training
+        to map dataset rows to corresponding dates. In trading this is used to
+        check for market open and close times.
 
     Methods:
     --------
@@ -880,37 +874,33 @@ class AbstractDataMetaData:
     List[bool]]
         Creates a feature schema dictionary for a given DataFrame, with
         DataType as keys and boolean masks as values. The boolean masks
-        indicate where the columns of the corresponding feature types
-        are located in the data. By default, downloaders provide
-        downloaded data in a pandas DataFrame format. The created
-        feature schema can be used to pass to the feature_schema
-        attribute.
+        indicate where the columns of the corresponding feature types are
+        located in the data. By default, downloaders provide downloaded data in
+        a pandas DataFrame format. The created feature schema can be used to
+        pass to the feature_schema attribute.
     _validate_data_schema(self, data_schema) -> bool
-        Checks if all stream or all datasets. This is useful for
-        validating the data schema of the metadata object before joining
-        or appending. This is used by the __or__ and __add__ methods to
-        validate the data schema of the metadata object before joining
-        or appending.
+        Checks if all stream or all datasets. This is useful for validating the
+        data schema of the metadata object before joining or appending. This is
+        used by the __or__ and __add__ methods to validate the data schema of
+        the metadata object before joining or appending.
     _join_feature_schemas(self, other) -> Dict[FeatureType, List[bool]]
-        Joins feature schemas of two datasets or streams. The boolean
-        masks are simply concatenated to indicate the features type
-        locations in the joined dataset/stream.
-    __or__(self, other: AbstractDataMetaData, **kwargs) ->
-    AbstractDataMetaData
-        Merges two metadata objects. This is useful for joining datasets
-        that are large to download in one go. Each sub-dataset is
-        downloaded for a fixed time interval and each can correspond to
-        different data sources, feature types, and assets. Joining
-        datasets and validating the process is done automatically using
-        this method.
+        Joins feature schemas of two datasets or streams. The boolean masks are
+        simply concatenated to indicate the features type locations in the
+        joined dataset/stream.
+    __or__(self, other: AbstractDataMetaData, **kwargs) -> AbstractDataMetaData
+        Merges two metadata objects. This is useful for joining datasets that
+        are large to download in one go. Each sub-dataset is downloaded for a
+        fixed time interval and each can correspond to different data sources,
+        feature types, and assets. Joining datasets and validating the process
+        is done automatically using this method.
     __add__(self, other: AbstractDataMetaData, **kwargs) ->
     AbstractDataMetaData
-        Appends two metadata objects. This is useful for appending
-        datasets that are large to download in one go. Each datasets
-        can be downloaded for a span of for example two years and later
-        appended using this method. StreamMetadata subclass cannot use
-        this method. Appending stream metadata would not make sense. If
-        used with stream metadata it will raise a not implemented error.
+        Appends two metadata objects. This is useful for appending datasets
+        that are large to download in one go. Each datasets can be downloaded
+        for a span of for example two years and later appended using this
+        method. StreamMetadata subclass cannot use this method. Appending
+        stream metadata would not make sense. If used with stream metadata it
+        will raise a not implemented error.
     
     Notes:
     ------
