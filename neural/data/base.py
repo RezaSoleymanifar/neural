@@ -1133,12 +1133,13 @@ class DatasetMetadata(AbstractDataMetaData):
     start: datetime
     end: datetime
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self._validate_times()
         self._cumulative_daily_rows = self._get_cumulative_daily_rows()
+        return None
 
     @property
-    def stream(self):
+    def stream(self) -> StreamMetaData:
         """
         Returns a StreamMetaData object that corresponds to the current
         dataset metadata. This is useful for mapping the dataset
@@ -1157,13 +1158,13 @@ class DatasetMetadata(AbstractDataMetaData):
         return stream
 
     @property
-    def schedule(self):
+    def schedule(self) -> pd.DataFrame:
         schedule = super().schedule(start_date=self.start.date(),
                                     end_date=self.end.date())
         return schedule
 
     @property
-    def days(self):
+    def days(self) -> int:
         """
         Returns the number of days in the dataset.
         """
@@ -1171,7 +1172,7 @@ class DatasetMetadata(AbstractDataMetaData):
         return days
 
     @property
-    def n_rows(self):
+    def n_rows(self) -> int:
         """
         Returns the number of rows in the dataset. Uses the schedule
         and resolution to calculate the number of rows in the dataset.
@@ -1181,6 +1182,18 @@ class DatasetMetadata(AbstractDataMetaData):
         n_rows = self._cumulative_daily_rows[-1]
         return n_rows
 
+    @property
+    def n_features(self) -> int:
+        """
+        Returns the number of features in the dataset.
+
+        Returns:
+        --------
+            int:
+                The number of features in the dataset.
+        """
+        return self.data_schema.n_features
+    
     def _validate_times(self):
         """
         Validates that the start and end times of the dataset are in the
@@ -1193,7 +1206,7 @@ class DatasetMetadata(AbstractDataMetaData):
         
         if not self.schedule['end'].isin([self.end]).any():
             raise ValueError(f'End time {self.end} is not in the schedule.')
-        
+
     def _get_cumulative_daily_rows(self) -> int:
         """
         Returns a pandas Series object that contains the cumulative
@@ -1209,10 +1222,48 @@ class DatasetMetadata(AbstractDataMetaData):
         cumulative_daily_rows = rows_per_day.cumsum().values
         return cumulative_daily_rows
 
-    def row_index_to_date(self, index) -> datetime:
+    def _check_dates(self, prev_end, cur_start):
         """
-        Returns the date corresponding to the current index. This is
-        useful for mapping the index of the dataset to the date of the
+        Checks if two dates are consecutive market days. This is used to
+        validate the process of appending datasets to ensure temporal
+        continuity of the data.
+
+        Args:
+        ------
+            prev_end (datetime):
+                The end date of the previous dataset.
+            cur_start (datetime):
+                The start date of the current dataset.
+        Returns:
+        --------
+            bool:
+                True if the two dates are consecutive market days, False
+                otherwise.
+        Raises:
+        -------
+            ValueError:
+                if the start date of the current dataset is not greater
+                than the end date of the previous dataset.
+        Notes:
+        ------
+            This method is used by the __add__ method to validate the
+            process of appending datasets to ensure temporal continuity
+            of the data.
+        """
+        if not prev_end < cur_start:
+            raise ValueError(f'Start date{cur_start} must be after '
+                             'previous end date {prev_end}.')
+        start_date = prev_end.date()
+        end_date = cur_start.date()
+        schedule = self.calendar_type.schedule(start_date=start_date,
+                                               end_date=end_date)
+        conscutive = True if len(schedule) == 2 else False
+        return conscutive
+    
+    def index_to_date(self, index) -> datetime:
+        """
+        Returns the date corresponding to the current index. This is useful for
+        mapping the current row index of the dataset to the date of the
         episode.
 
         Returns:
@@ -1221,7 +1272,7 @@ class DatasetMetadata(AbstractDataMetaData):
                 The date corresponding to the current index.
         """
         day_index = (index < self._cumulative_daily_rows).argmax()
-        date = self.dataset_metadata.schedule.loc[day_index, 'start']
+        date = self.schedule.loc[day_index, 'start']
         return date
     
     def __or__(self, other: AbstractDataMetaData) -> AbstractDataMetaData:
@@ -1299,44 +1350,6 @@ class DatasetMetadata(AbstractDataMetaData):
                              f'{self.end} and {other.start}.')
 
         return super().__add__(other, start=self.start, end=other.end)
-
-    def _check_dates(self, prev_end, cur_start):
-        """
-        Checks if two dates are consecutive market days. This is used to
-        validate the process of appending datasets to ensure temporal
-        continuity of the data.
-
-        Args:
-        ------
-            prev_end (datetime):
-                The end date of the previous dataset.
-            cur_start (datetime):
-                The start date of the current dataset.
-        Returns:
-        --------
-            bool:
-                True if the two dates are consecutive market days, False
-                otherwise.
-        Raises:
-        -------
-            ValueError:
-                if the start date of the current dataset is not greater
-                than the end date of the previous dataset.
-        Notes:
-        ------
-            This method is used by the __add__ method to validate the
-            process of appending datasets to ensure temporal continuity
-            of the data.
-        """
-        if not prev_end < cur_start:
-            raise ValueError(f'Start date{cur_start} must be after '
-                             'previous end date {prev_end}.')
-        start_date = prev_end.date()
-        end_date = cur_start.date()
-        schedule = self.calendar_type.schedule(start_date=start_date,
-                                               end_date=end_date)
-        conscutive = True if len(schedule) == 2 else False
-        return conscutive
 
 
 class AbstractDataFeeder(ABC):
