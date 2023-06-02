@@ -1492,12 +1492,12 @@ class StaticDataFeeder(AbstractDataFeeder):
         self.datasets = datasets
         self.start_index = start_index
         self.end_index = end_index if end_index is not None else \
-            self.dataset_metadata.n_rows
+            self.metadata.n_rows
         self.n_chunks = n_chunks
 
         self._index = None
         self._cumulative_daily_rows = (
-            self.dataset_metadata.cumulative_daily_rows)
+            self.metadata.cumulative_daily_rows)
         return None
 
     @property
@@ -1530,21 +1530,21 @@ class StaticDataFeeder(AbstractDataFeeder):
         useful for mapping the index of the dataset to the date of the
         episode.
         """
-        return self.dataset_metadata.index_to_date(self.start_index)
+        return self.metadata.index_to_date(self.start_index)
 
     @property
     def end_date(self):
         """
         Returns the date corresponding to the end index. 
         """
-        return self.dataset_metadata.index_to_date(self.end_index)
+        return self.metadata.index_to_date(self.end_index)
 
     @property
     def date(self):
         """
         Returns the current date of the episode.
         """
-        return self.dataset_metadata.index_to_date(self.index)
+        return self.metadata.index_to_date(self.index)
 
     @property
     def days(self):
