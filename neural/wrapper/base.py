@@ -1023,8 +1023,8 @@ class ConsoleTearsheetRenderWrapper(Wrapper):
             days = self.market_metadata_wrapper.days
             n_steps = self.market_metadata_wrapper.n_steps
             logger.info('Episode:'
-                        f'\n\t start = {start_date}'
-                        f'\n\t end = {end_date}'
+                        f'\n\t start date= {start_date}'
+                        f'\n\t end date= {end_date}'
                         f'\n\t days = {days}'
                         f'\n\t resolution = {resolution}'
                         f'\n\t n_assets = {n_assets}'
