@@ -381,12 +381,6 @@ class DataSchema:
     feature types are located in the data. Lenght of boolean mask is equal to
     the number columns in the data.
 
-    Notes:
-    ------
-        Data schemas can be added together to represent a monolithic data
-        schema that consists of smaller data schemas. This is useful for have a
-        unified interface for joined datasets or streams that abstracts away
-        the construction of data from final representation of data.
     
     Attributes:
     -----------
@@ -396,6 +390,25 @@ class DataSchema:
             A dictionary that maps data types to the corresponding assets and
             feature schema. The feature schema is a dictionary that maps
             feature types to boolean masks.
+    
+    Properties:
+    -----------
+        is_dataset: bool
+            Returns if the data schema is for a dataset or a stream. If the
+            data schema is for a dataset then the data type is a dataset type,
+            otherwise it is a stream type.
+        assets: List[AbstractAsset] 
+            Returns a list of assets that have a True price mask associated
+            with them. This is useful to filter out tradable assets from the
+            
+
+    Notes:
+    ------
+        Data schemas can be added together to represent a monolithic data
+        schema that consists of smaller data schemas. This is useful for have a
+        unified interface for joined datasets or streams that abstracts away
+        the construction of data from final representation of data.
+
     Example:
     --------
         Assuming AAPL, MSFT, GOOG are AbstractAsset objects and feature_schema
