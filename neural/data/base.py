@@ -627,19 +627,17 @@ class DataSchema:
 
 class FeatureSchema:
     """
-    A class that represents a feature schema. A feature schema is a
-    an object that maps feature types to boolean masks. The boolean
-    masks indicate where the columns of the corresponding feature
-    types are located in the data. Lenght of boolean mask is equal to
-    the number columns in the data. Length of True values in the
-    boolean mask is equal to the number of assets in the data schema.
-    A mask is created for every feature type in FeatureType enum.
+    A class that represents a feature schema. A feature schema is a an object
+    that maps feature types to boolean masks. The boolean masks indicate where
+    the columns of the corresponding feature types are located in the data.
+    Lenght of boolean mask is equal to the number columns in the data. Length
+    of True values in the boolean mask is equal to the number of assets in the
+    data schema. A mask is created for every feature type in FeatureType enum.
 
-    Feature schema is instantiated using a pandas DataFrame. The columns
-    of the dataframe are matched against the string values of the
-    feature types in FeatureType enum. If a column name matches the
-    string value of a feature type, the corresponding boolean mask is
-    set to True. this process is case insensitive.
+    Feature schema is instantiated using a pandas DataFrame. The columns of the
+    dataframe are matched against the string values of the feature types in
+    FeatureType enum. If a column name contains case insensitive string value
+    of a feature type, the corresponding boolean mask is set to True.
 
     Attributes:
     -----------
@@ -648,9 +646,11 @@ class FeatureSchema:
 
     Example:
     --------
+    >>> dataframe = pd.DataFrame(
+    ...     columns=['AAPL_close_price', 'AAPL_open_price', 'AAPL_volume'])
     >>> feature_schema = FeatureSchema(dataframe)   
     >>> feature_schema.schema[FeatureType.ASSET_CLOSE_PRICE]
-    [True, False, True, False, True, False]
+    [True, False, False]
     This mask now can be applied to a row to return the close prices.
     """
 
@@ -658,9 +658,7 @@ class FeatureSchema:
         """
         Initializes the feature schema using a pandas DataFrame. The
         columns of the dataframe are matched against the string values
-        of the feature types in FeatureType enum. If a column name
-        matches the string value of a feature type, the corresponding
-        boolean mask is set to True. this process is case insensitive.
+        of the feature types in FeatureType enum.
 
         Args:
         ------
