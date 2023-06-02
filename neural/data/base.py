@@ -1,6 +1,8 @@
 """
 base.py
 
+Description:
+------------
 Base data module for defining data sources, data feeders and data
 metadata. Data sources are responsible for providing access to data from
 different sources. Data feeders are responsible for feeding data to
@@ -13,8 +15,15 @@ datasets and streams. This is useful for downloading large datasets in
 chunks and validating the process. Data metadata is also responsible for
 providing a universal representation of data throughout the framework.
 This is useful for abstracting away the construction of data from the
-representation of data. Data metadata also provides a consistent
-interface for accessing data from different sources.
+representation of data.
+
+License:
+--------
+    MIT License. See LICENSE.md file.
+
+Author(s):
+-------
+    Reza Soleymanifar, Email: Reza@Soleymanifar.com
 
 Classes:
 --------
@@ -42,22 +51,19 @@ Classes:
         an object that maps feature types to boolean masks. The boolean
         masks indicate where the columns of the corresponding feature
         types are located in the data. Lenght of boolean mask is equal
-        to
+        to the number columns in the data.
     AbstractDataMetaData: abstract base class for data metadata that
         provides a universal representation of data throughout the
         framework. This is useful for abstracting away the construction
         of data from the representation of data. Data metadata also
         provides a consistent interface for accessing data from
         different sources.
-    
     StreamMetaData:
         Subclass of AbstractDataMetaData that provides metadata for
         streaming data.
-    
     DatasetMetadata:
         Subclass of AbstractDataMetaData that provides metadata for
         static data.
-    
     AbstractDataFeeder:
         Abstract base class for defining a data feeder that is
         responsible for feeding data to a market environment,
@@ -66,14 +72,12 @@ Classes:
         feeding data from a static source, such as a HDF5 file, while an
         asynchronous data feeder is responsible for feeding data from a
         live stream.
-    
     StaticDataFeeder:
         Subclass of AbstractStaticDataFeeder that iteratively returns
         data required for the environment from a static source.
-    
-    AbstractAsyncDataFeeder: abstract base class for defining an
-        asynchronous data feeder that is responsible for feeding data
-        from a live stream to a market environment.
+    AsyncDataFeeder:
+        Subclass of AbstractDataFeeder that iteratively returns data
+        required for the environment from a live stream.
 """
 from __future__ import annotations
 
