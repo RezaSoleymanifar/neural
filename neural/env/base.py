@@ -331,7 +331,6 @@ class TrainMarketEnv(AbstractMarketEnv):
         self.n_features = self.data_feeder.n_features
         self.n_assets = len(self.assets)
 
-        self.index = None
         self.holds = None
         self.features = None
     
@@ -535,7 +534,6 @@ class TrainMarketEnv(AbstractMarketEnv):
             This is consistent with gym.Env.reset()
         """
         self.features_generator = self.data_feeder.get_features_generator()
-        self.index = -1
         self.holds = np.zeros((self.n_assets, ), dtype=GLOBAL_DATA_TYPE)
 
         self._cash = np.array([self.initial_cash], dtype=GLOBAL_DATA_TYPE)

@@ -1133,6 +1133,9 @@ class DatasetMetadata(AbstractDataMetaData):
     start: datetime
     end: datetime
 
+    def __post_init__(self):
+        self._cumulative_daily_rows = self._get_cumulative_daily_rows()
+        
     @property
     def stream(self):
         """
