@@ -72,7 +72,7 @@ def to_hdf5(file_path: str | os.PathLike, numpy_array: np.ndarray,
 
             new_dataset_metadata = dataset_metadata_ + dataset_metadata
             dataset.resize(
-                (new_dataset_metadata.n_rows, new_dataset_metadata.n_columns))
+                (new_dataset_metadata.n_rows, new_dataset_metadata.n_features))
 
             dataset[dataset_metadata_.n_rows:new_dataset_metadata.
                     n_rows, :] = numpy_array

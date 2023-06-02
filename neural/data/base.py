@@ -819,7 +819,7 @@ class AbstractDataMetaData:
     calendar_type: CalendarType
 
     @property
-    def n_columns(self) -> int:
+    def n_features(self) -> int:
         """
         Returns the number of columns in the dataset. Can be used to
         compare against the number columns in the underlying data for 
@@ -1181,6 +1181,15 @@ class DatasetMetadata(AbstractDataMetaData):
         n_rows = self.cumulative_daily_rows[-1]
         return n_rows
 
+    @property
+    def n_features(self) -> int:
+        """
+        Returns the number of features in the dataset. Uses the feature
+        schema to calculate the number of features in the dataset.
+        """
+        n_features = self.data_schema.n_features
+        return n_features
+    
     def _validate_times(self) -> None:
         """
         Validates that the start and end times of the dataset are in the
@@ -1658,7 +1667,7 @@ class AsyncDataFeeder(AbstractDataFeeder):
 
     @property
     def n_features(self):
-        return self.stream_metadata.n_columns
+        return self.stream_metadata.n_features
 
     @property
     def index(self):

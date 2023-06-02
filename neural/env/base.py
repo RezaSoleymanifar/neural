@@ -328,7 +328,7 @@ class TrainMarketEnv(AbstractMarketEnv):
         self.assets = self.data_metadata.assets
 
         self.n_steps = self.data_feeder.n_rows
-        self.n_features = self.data_feeder.n_features
+        self.n_features = self.data_metadata.n_features
         self.n_assets = len(self.assets)
 
         self.holds = None
