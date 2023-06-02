@@ -464,19 +464,17 @@ class DataSchema:
     @property
     def assets(self) -> List[AbstractAsset]:
         """
-        Returns a list of assets that have a price mask associated with
-        them. This is useful to filter out tradable assets from the
-        assets that exist to provide feature information for the
-        tradable assets.
+        Returns a list of assets that have a True price mask associated with
+        them. This is useful to filter out tradable assets from the assets that
+        exist to provide feature information for the tradable assets.
         """
         assets = list()
         for data_type in self.schema:
-            asset_prices_mask = self.schema[data_type]['feature_schema'][
-                FeatureType.ASSET_CLOSE_PRICE]
             data_type_assets = self.schema[data_type]['assets']
             assets.extend([
-                asset for asset, mask_value in zip(
-                    data_type_assets, asset_prices_mask) if mask_value
+                asset for asset, mask_value in zip(data_type_assets,
+                                                   self.asset_prices_mask)
+                if mask_value is True
             ])
         if len(assets) != len(set(assets)):
             raise ValueError('Duplicate tradable assets in data schema.')
@@ -499,17 +497,6 @@ class DataSchema:
             len(self.schema[data_type]['feature_schema'].values()[0])
             for data_type in self.schema)
         return n_features
-
-    @property
-    def asset_prices_mask(self) -> List[bool]:
-        """
-        Returns a mask for the asset close price feature type. This price is
-        used by market environments as the point of reference for placing
-        orders. when a time interval is over and features are observed the
-        closing price of interval is used to place orders. The order of price
-        mask matches the order of assets in the data schema.
-        """
-        return self.get_features_mask(FeatureType.ASSET_CLOSE_PRICE)
 
     def get_features_mask(self, feature_type: FeatureType):
         """
@@ -868,7 +855,7 @@ class AbstractDataMetaData:
                 reference for placing orders.
         """
         return self.data_schema.asset_prices_mask
-    
+
     @property
     def schedule(self) -> Callable[[datetime, datetime], pd.DataFrame]:
         """
@@ -1197,7 +1184,7 @@ class DatasetMetadata(AbstractDataMetaData):
         """
         n_rows = self.cumulative_daily_rows[-1]
         return n_rows
-    
+
     def _validate_times(self) -> None:
         """
         Validates that the start and end times of the dataset are in the
@@ -1369,6 +1356,7 @@ class AbstractDataFeeder(ABC):
             Returns a generator object that can be used to iteratively
             provide data for market environment.
     """
+
     def __init__(self, metadata: AbstractDataMetaData) -> None:
         """
         Initializes an AbstractDataFeeder object.
@@ -1391,7 +1379,7 @@ class AbstractDataFeeder(ABC):
         Asynchronous data feeders always return False.
         """
         raise NotImplementedError
-    
+
     @abstractmethod
     def get_features_generator(self, *args, **kwargs):
         """
@@ -1479,8 +1467,7 @@ class StaticDataFeeder(AbstractDataFeeder):
         self.n_chunks = n_chunks
 
         self._index = None
-        self._cumulative_daily_rows = (
-            self.metadata.cumulative_daily_rows)
+        self._cumulative_daily_rows = (self.metadata.cumulative_daily_rows)
         return None
 
     @property
@@ -1549,8 +1536,7 @@ class StaticDataFeeder(AbstractDataFeeder):
             raise ValueError(
                 f'Start index {self.start_index} or end index '
                 f'{self.end_index} does not match a row index corresponding '
-                'to the start/end of a day.'
-            )
+                'to the start/end of a day.')
 
     def get_features_generator(self) -> Iterable[np.ndarray]:
         """
@@ -1636,12 +1622,11 @@ class StaticDataFeeder(AbstractDataFeeder):
         static_data_feeders = list()
 
         for start, end in zip(edge_indices[:-1], edge_indices[1:]):
-            static_data_feeder = StaticDataFeeder(
-                metadata=self.metadata,
-                datasets=self.datasets,
-                start_index=start,
-                end_index=end,
-                n_chunks=self.n_chunks)
+            static_data_feeder = StaticDataFeeder(metadata=self.metadata,
+                                                  datasets=self.datasets,
+                                                  start_index=start,
+                                                  end_index=end,
+                                                  n_chunks=self.n_chunks)
             static_data_feeders.append(static_data_feeder)
 
         return static_data_feeders
