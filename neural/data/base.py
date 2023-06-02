@@ -1564,8 +1564,9 @@ class StaticDataFeeder(AbstractDataFeeder):
         if (self.start_index not in valid_indices
                 or self.end_index not in valid_indices):
             raise ValueError(
-                f'Start index {self.start_index} or end index {self.end_index} '
-                'does not match a row index corresponding to the start/end of a day.'
+                f'Start index {self.start_index} or end index '
+                f'{self.end_index} does not match a row index corresponding '
+                'to the start/end of a day.'
             )
 
     def get_features_generator(self) -> Iterable[np.ndarray]:
@@ -1653,7 +1654,7 @@ class StaticDataFeeder(AbstractDataFeeder):
 
         for start, end in zip(edge_indices[:-1], edge_indices[1:]):
             static_data_feeder = StaticDataFeeder(
-                metadata=self.dataset_metadata,
+                metadata=self.metadata,
                 datasets=self.datasets,
                 start_index=start,
                 end_index=end,
