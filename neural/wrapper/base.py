@@ -343,37 +343,26 @@ class AbstractMarketEnvMetadataWrapper(Wrapper, ABC):
     def __init__(self, env: Env) -> None:
         super().__init__(env)
 
+        self.data_feed = self.market_env.data_feed
         self.initial_cash = self.market_env.initial_cash
         self.initial_asset_quantities =\
               self.market_env.initial_asset_quantities
 
-        self.data_metadata = self.market_env.data_metadata
-        self.feature_schema = self.market_env.feature_schema
+        self.metadata = self.market_env.metadata
         self.assets = self.market_env.assets
 
-        self.n_steps = self.market_env.n_steps
         self.n_assets = self.market_env.n_assets
+        self.n_steps = self.market_env.n_steps
+        self.n_features = self.market_env.n_features
 
         self.history = defaultdict(list)
-    
-    @property
-    def index(self) -> int:
-        """
-        The current index of the episode.
-
-        Returns:
-        ----------
-            index (int):
-                The current index of the episode.
-        """
-        return self.market_env.index
 
     @property
     def date(self) -> pd.Timestamp:
         """
         Returns the current date of the episode.
         """
-        date = self.market_env.data_feed.get_date(self.index)
+        date = self.data_feeder.date
         return date
 
     @property
