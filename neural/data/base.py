@@ -1182,8 +1182,7 @@ class DatasetMetadata(AbstractDataMetaData):
         n_rows = self._cumulative_daily_rows[-1]
         return n_rows
 
-
-    def _validate_times(self):
+    def _validate_times(self) -> None:
         """
         Validates that the start and end times of the dataset are in the
         schedule. This ensures start and end times are valid market open
@@ -1195,6 +1194,8 @@ class DatasetMetadata(AbstractDataMetaData):
 
         if not self.schedule['end'].isin([self.end]).any():
             raise ValueError(f'End time {self.end} is not in the schedule.')
+
+        return None
 
     def _get_cumulative_daily_rows(self) -> int:
         """
@@ -1211,7 +1212,7 @@ class DatasetMetadata(AbstractDataMetaData):
         cumulative_daily_rows = rows_per_day.cumsum().values
         return cumulative_daily_rows
 
-    def _check_dates(self, prev_end, cur_start):
+    def _check_dates(self, prev_end: datetime, cur_start: datetime):
         """
         Checks if two dates are consecutive market days. This is used to
         validate the process of appending datasets to ensure temporal
@@ -1244,7 +1245,7 @@ class DatasetMetadata(AbstractDataMetaData):
                              'previous end date {prev_end}.')
         start_date = prev_end.date()
         end_date = cur_start.date()
-        schedule = self.calendar_type.schedule(start_date=start_date,
+        schedule = super().schedule(start_date=start_date,
                                                end_date=end_date)
         conscutive = True if len(schedule) == 2 else False
         return conscutive
