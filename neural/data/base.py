@@ -840,8 +840,11 @@ class AbstractDataMetaData:
         resolution of 5 minutes.
     calendar_type (CalendarType):
         An instance of the `CalendarType` enum class that represents the type
-        of calendar used to organize the data. The calendar type can affect how
-        data is grouped and sorted in the dataset or stream.
+        of calendar used to generate the data. Calendar types indicates the
+        core trading hours of an exchange. For example NYSE has a calendar type
+        of CalendarType.NEW_YORK_STOCK_EXCHANGE. A calendar type has a schedule
+        associated with it that is used to generate rows of the data to between
+        market open and close times.
 
     Properties:
     -----------
@@ -904,7 +907,12 @@ class AbstractDataMetaData:
     
     Notes:
     ------
-        When joining metadata the data schema updates based on 
+        The underlying assets need to have the same core trading hours, but not
+        necessarily the same exchanges (calendar types). For example AAPL and
+        MSFT have the same core trading hours, but they are traded on different
+        exchanges. Ensure that CalendarType.NEW_YORK_STOCK_EXCHANGE or
+        CalendarType.NATIONAL_ASSOCIATION_OF_SECURITIES_DEALERS_AUTOMATED_QUOTATIONS
+        
     """
     data_schema: DataSchema
     resolution: Resolution
