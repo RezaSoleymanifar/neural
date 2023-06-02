@@ -1299,6 +1299,12 @@ class DatasetMetadata(AbstractDataMetadata):
     def schedule(self) -> pd.DataFrame:
         """
         Schedule of the dataset according to its calendar type.
+
+        Returns:
+        --------
+            pd.DataFrame:
+                A DataFrame representing the schedule of the dataset
+                according to its calendar type.
         """
         schedule = super().schedule(start_date=self.start.date(),
                                     end_date=self.end.date())
@@ -1308,6 +1314,11 @@ class DatasetMetadata(AbstractDataMetadata):
     def days(self) -> int:
         """
         Returns the number of days in the dataset.
+
+        Returns:
+        --------    
+            int:
+                The number of days in the dataset.
         """
         days = (self.start.date() - self.end.date()).days + 1
         return days
@@ -1319,6 +1330,11 @@ class DatasetMetadata(AbstractDataMetadata):
         and resolution to calculate the number of rows in the dataset.
         When downloading datasets this process is used to
         create rows in the dataset.
+
+        Returns:
+        --------
+            int:
+                The number of rows in the dataset.
         """
         n_rows = self.cumulative_daily_rows[-1]
         return n_rows
@@ -1328,6 +1344,13 @@ class DatasetMetadata(AbstractDataMetadata):
         Validates that the start and end times of the dataset are in the
         schedule. This ensures start and end times are valid market open
         / close times.
+
+        Raises:
+        -------
+            ValueError:
+                if the start time of the dataset is not in the schedule.
+            ValueError:
+                if the end time of the dataset is not in the schedule.
         """
         if not self.schedule['start'].isin([self.start]).any():
             raise ValueError(f'Start time {self.start} is not in the schedule.')
@@ -1337,13 +1360,19 @@ class DatasetMetadata(AbstractDataMetadata):
 
         return None
 
-    def _get_cumulative_daily_rows(self) -> int:
+    def _get_cumulative_daily_rows(self) -> List[int]:
         """
         Returns a list that contains the cumulative number of rows per day.
         This is useful for mapping the index of the dataset to the date of the
         episode and also adjusting the start and end times of the data feeders
         to match the start and end of days, namely making sure that data
         feeders work with integer number of days.
+
+        Returns:
+        --------
+            List[int]:
+                A list that contains the cumulative number of rows per
+                day. 
         """
         daily_durations = self.schedule['end'] - self.schedule['start']
         timedelta = self.resolution.pandas_timedelta
@@ -1351,7 +1380,7 @@ class DatasetMetadata(AbstractDataMetadata):
         cumulative_daily_rows = rows_per_day.cumsum().values
         return cumulative_daily_rows
 
-    def _check_dates(self, prev_end: datetime, cur_start: datetime):
+    def _check_dates(self, prev_end: datetime, cur_start: datetime) -> bool:
         """
         Checks if two dates are consecutive market days. This is used to
         validate the process of appending datasets to ensure temporal
@@ -1487,6 +1516,19 @@ class AbstractDataFeeder(ABC):
     can feed data in a static or asynchronous manner. A static data
     feeder is responsible for feeding data from a static source, such as
     a HDF5 file, while an asynchronous data feeder is responsible
+
+    Attributes:
+    -----------
+        metadata (AbstractDataMetaData):
+            An instance of the `AbstractDataMetaData` class that
+            contains metadata for the data being used. Could be dataset
+            or stream metadata.
+
+    Properties:
+    -----------
+        done: bool
+            Returns True if the data feeder has been exhausted, False
+            otherwise. Asynchronous data feeders always return False.
     
     Methods:
     --------
