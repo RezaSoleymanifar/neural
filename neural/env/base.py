@@ -95,7 +95,7 @@ class AbstractMarketEnv(Env, ABC):
     """
 
     @abstractmethod
-    def update_env(self):
+    def update(self):
         """
         Abstract method for updating the market environment. Should be
         implemented by subclasses. This method should update the
@@ -106,7 +106,7 @@ class AbstractMarketEnv(Env, ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def construct_observation(self):
+    def get_observation(self):
         """
         Abstract method for constructing the market observation. Should
         be implemented by subclasses. This method should construct the
@@ -396,6 +396,13 @@ class TrainMarketEnv(AbstractMarketEnv):
         return self.data_feeder.done
     
     @property
+    def index(self) -> int:
+        """
+        Returns the current row index of the environment.
+        """
+        return self.data_feeder.index
+    
+    @property
     def cash(self) -> float:
         """
         The current amount of cash in the environment.
@@ -442,7 +449,7 @@ class TrainMarketEnv(AbstractMarketEnv):
         return self._asset_prices
 
 
-    def update_env(self) -> None:
+    def update(self) -> None:
         """
         Updates the environment state by moving to the next time step
         and updating the environment variables such as features, holds,
@@ -453,13 +460,11 @@ class TrainMarketEnv(AbstractMarketEnv):
         """
 
         self.features = next(self.features_generator)
-
-        self.index += 1
         self.holds[self.asset_quantities != 0] += 1
 
         return None
 
-    def construct_observation(self) -> Dict[str, np.ndarray[float]]:
+    def get_observation(self) -> Dict[str, np.ndarray[float]]:
         """
         Constructs the current observation from the environment's state
         variables. The observation includes the current cash balance,
@@ -539,8 +544,8 @@ class TrainMarketEnv(AbstractMarketEnv):
                                  if self.initial_asset_quantities is None
                                  else self.initial_asset_quantities)
 
-        self.update_env()
-        observation = self.construct_observation()
+        self.update()
+        observation = self.get_observation()
 
         return observation
 
@@ -580,10 +585,10 @@ class TrainMarketEnv(AbstractMarketEnv):
 
         self.place_orders(actions)
 
-        self.update_env()
+        self.update()
 
         reward = None
-        observation = self.construct_observation()
+        observation = self.get_observation()
 
         return observation, reward, self.done, self.info
 
@@ -633,7 +638,7 @@ class TradeMarketEnv(TrainMarketEnv):
 
         return None
 
-    def update_env(self) -> None:
+    def update(self) -> None:
         """
         This is identical to the TrainMarketEnv.update_env() method
         except that it also updates the cash and asset quantities. In 
@@ -644,7 +649,7 @@ class TradeMarketEnv(TrainMarketEnv):
         other market conditions that may affect the trader's cash and
         asset quantities beyond what is simulated in the environment.
         """
-        super().update_env()
+        super().update()
         self._cash = self.trader.cash
         self._asset_quantities = self.trader.asset_quantities(self.assets)
 

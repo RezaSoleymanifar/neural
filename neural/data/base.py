@@ -1182,6 +1182,39 @@ class DatasetMetadata(AbstractDataMetaData):
         n_rows = sum(intervals_per_day)
         return n_rows
 
+    def _get_cumulative_daily_rows(self) -> int:
+        """
+        Returns a pandas Series object that contains the cumulative
+        number of rows per day. This is useful for mapping the index of
+        the dataset to the date of the episode and also adjusting the 
+        start and end times of the data feeders to match the start and
+        end of days, namely making sure that data feeders work with
+        integer number of days.
+        """
+        if not self._cumulative_daily_rows:
+            schedule = self.dataset_metadata.schedule
+            resolution = self.dataset_metadata.resolution
+            daily_durations = schedule['end'] - schedule['start']
+            rows_per_day = (daily_durations /
+                            resolution.pandas_timedelta).astype(int)
+            self._cumulative_daily_rows = rows_per_day.cumsum().values
+        return self._cumulative_daily_rows
+
+    def row_index_to_date(self, index) -> datetime:
+        """
+        Returns the date corresponding to the current index. This is
+        useful for mapping the index of the dataset to the date of the
+        episode.
+
+        Returns:
+        --------
+            date (datetime):
+                The date corresponding to the current index.
+        """
+        day_index = (index < self._cumulative_daily_rows).argmax()
+        date = self.dataset_metadata.schedule.loc[day_index, 'start']
+        return date
+    
     def __or__(self, other: AbstractDataMetaData) -> AbstractDataMetaData:
         """
         This is useful for joining datasets that are large to download
@@ -1486,24 +1519,6 @@ class StaticDataFeeder(AbstractDataFeeder):
         days = (self.end_date - self.start_date).days
         return days
 
-    def _get_cumulative_daily_rows(self) -> int:
-        """
-        Returns a pandas Series object that contains the cumulative
-        number of rows per day. This is useful for mapping the index of
-        the dataset to the date of the episode and also adjusting the 
-        start and end times of the data feeders to match the start and
-        end of days, namely making sure that data feeders work with
-        integer number of days.
-        """
-        if not self._cumulative_daily_rows:
-            schedule = self.dataset_metadata.schedule
-            resolution = self.dataset_metadata.resolution
-            daily_durations = schedule['end'] - schedule['start']
-            rows_per_day = (daily_durations /
-                            resolution.pandas_timedelta).astype(int)
-            self._cumulative_daily_rows = rows_per_day.cumsum().values
-        return self._cumulative_daily_rows
-
     def _validate_indices(self):
         """
         Validates the start and end indices to make sure that they
@@ -1517,21 +1532,6 @@ class StaticDataFeeder(AbstractDataFeeder):
                 f'Start index {self.start_index} or end index {self.end_index} '
                 'does not match a row index corresponding to the start/end of a day.'
             )
-
-    def get_date(self, index) -> datetime:
-        """
-        Returns the date corresponding to the current index. This is
-        useful for mapping the index of the dataset to the date of the
-        episode.
-
-        Returns:
-        --------
-            date (datetime):
-                The date corresponding to the current index.
-        """
-        day_index = (index < self._cumulative_daily_rows).argmax()
-        date = self.dataset_metadata.schedule.loc[day_index, 'start']
-        return date
 
     def get_features_generator(self) -> Iterable[np.ndarray]:
         """
