@@ -367,38 +367,39 @@ class AbstractDataSource(ABC):
 
 class DataSchema:
     """
-    A class that represents a data schema. A data schema is internally a
-    dictionary that maps data types (dataset type or stream type) to the
-    corresponding assets and feature schema. It serves as a nexus to
-    bundle data type, feature schema and assets together.
+    A class that represents a data schema. A data schema has an internal
+    representation of a dictionary that maps data types (dataset type or stream
+    type) to the corresponding assets and feature schema. It serves as a nexus
+    to bundle data type, feature schema and assets together. Bundling data
+    types with assets also makes streaming data for the matching stream type
+    easier, since all the corresponding assets are already associated with the
+    stream type. This allows downloading data for different asset groups and
+    streaming them in a unified manner.
     
-    The feature schema is a
-    dictionary that maps feature types to boolean masks. The boolean
-    masks indicate where the columns of the corresponding feature types
-    are located in the data. Lenght of boolean mask is equal to the
-    number columns in the data. Lenght of True values in the boolean
-    mask is equal to the number of assets in the data schema.
+    The feature schema is a dictionary that maps feature types to boolean
+    masks. The boolean masks indicate where the columns of the corresponding
+    feature types are located in the data. Lenght of boolean mask is equal to
+    the number columns in the data.
 
     Notes:
     ------
-        Data schemas can be added together to represent a monolithic
-        data schema that consists of smaller data schemas. This is
-        useful for have a unified interface for joined datasets or
-        streams that abstracts away the construction of data.
+        Data schemas can be added together to represent a monolithic data
+        schema that consists of smaller data schemas. This is useful for have a
+        unified interface for joined datasets or streams that abstracts away
+        the construction of data from final representation of data.
     
     Attributes:
     -----------
-        schema (Dict[AbstractDataSource.DatasetType:Dict[str,
-        List[bool] | List[AbstractAssets]]] |
-        Dict[AbstractDataSource.StreamType:Dict[str,
+        schema (Dict[AbstractDataSource.DatasetType:Dict[str, List[bool] |
+        List[AbstractAssets]]] | Dict[AbstractDataSource.StreamType:Dict[str,
         List[bool] | List[AbstractAssets]]]):
-            A dictionary that maps data types to the corresponding
-            assets and feature schema. The feature schema is a
-            dictionary that maps feature types to boolean masks.
+            A dictionary that maps data types to the corresponding assets and
+            feature schema. The feature schema is a dictionary that maps
+            feature types to boolean masks.
     Example:
     --------
     >>> data_schema = DataSchema(
-    ...     DatasetType.BAR, (AAPL, MSFT, GOOG), feature_schema)
+    ...     DatasetType.BAR, [AAPL, MSFT, GOOG], feature_schema)
     >>> data_schema.schema[DatasetType.BAR]['assets']
     (AAPL, MSFT, GOOG)
     >>> data_schema.schema[DatasetType.BAR]['feature_schema']
