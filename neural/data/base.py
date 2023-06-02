@@ -1134,6 +1134,7 @@ class DatasetMetadata(AbstractDataMetaData):
     end: datetime
 
     def __post_init__(self):
+        self._validate_times()
         self._cumulative_daily_rows = self._get_cumulative_daily_rows()
         
     @property
@@ -1164,11 +1165,9 @@ class DatasetMetadata(AbstractDataMetaData):
     @property
     def days(self):
         """
-        Returns the number of days in the dataset. This is useful for
-        checking if the dataset has been downloaded correctly.
+        Returns the number of days in the dataset.
         """
-
-        days = len(self.schedule)
+        days = (self.start.date() - self.end.date()).days + 1
         return days
 
     @property
@@ -1185,6 +1184,19 @@ class DatasetMetadata(AbstractDataMetaData):
         n_rows = sum(intervals_per_day)
         return n_rows
 
+    def _validate_times(self):
+        """
+        Validates that the start and end times of the dataset are in the
+        schedule. This ensures start and end times are valid market open
+        / close times.
+        """
+        if not self.schedule['start'].isin([self.start]).any():
+            raise ValueError(
+                f'Start time {self.start} is not in the schedule.')
+        
+        if not self.schedule['end'].isin([self.end]).any():
+            raise ValueError(f'End time {self.end} is not in the schedule.')
+        
     def _get_cumulative_daily_rows(self) -> int:
         """
         Returns a pandas Series object that contains the cumulative
