@@ -1849,6 +1849,11 @@ class StaticDataFeeder(AbstractDataFeeder):
         -------
             ValueError: 
                 if n is not an int or float in (0, 1]
+
+        Notes:
+        ------
+            The subfeeders are non-overlapping, contiguous and match
+            integer number of days in length.
         """
 
         if isinstance(n, int):
