@@ -1365,7 +1365,20 @@ class AbstractDataFeeder(ABC):
             Returns a generator object that can be used to iteratively
             provide data for market environment.
     """
+    def __init__(self, metadata: AbstractDataMetaData) -> None:
+        """
+        Initializes an AbstractDataFeeder object.
 
+        Args:
+        ------
+            metadata (AbstractDataMetaData):
+                An instance of the `AbstractDataMetaData` class that
+                contains metadata for the data being used. Could be
+                dataset or stream metadata.
+        """
+        self.metadata = metadata
+        return None
+    
     @abstractmethod
     def get_features_generator(self, *args, **kwargs):
         """
@@ -1667,10 +1680,6 @@ class AsyncDataFeeder(AbstractDataFeeder):
     @property
     def n_rows(self):
         return np.inf
-
-    @property
-    def n_features(self):
-        return self.stream_metadata.n_features
 
     @property
     def index(self):
