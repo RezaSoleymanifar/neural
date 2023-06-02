@@ -1205,11 +1205,12 @@ class DatasetMetadata(AbstractDataMetadata):
     end: datetime
         A datetime object representing the end time of the dataset. Note
         start and end times are inclusive.
-    n_rows: int
-        An integer representing the number of rows in the dataset. This
-        is useful for checking if the dataset has been downloaded
-        correctly and reporting end of dataset to the market
-        environment.
+    cumulative_daily_rows: List[int]
+        A list that contains the cumulative number of rows per day.
+        This is useful for mapping the index of the dataset to the date
+        of the episode and also adjusting the start and end times of
+        the data feeders to match the start and end of days, namely
+        making sure that data feeders work with integer number of days.
 
     Properties:
     -----------
@@ -1219,21 +1220,45 @@ class DatasetMetadata(AbstractDataMetadata):
         metadata to a stream metadata for live streaming when traders
         want to deploy their trained agents in a live trading
         environment.
+    schedule:
+        Returns a DataFrame representing the schedule of the dataset
+        according to its calendar type.
+    days: int
+        Returns the number of days in the dataset.
+    n_rows: int
+        Returns the number of rows in the dataset. Uses the schedule
+        and resolution to calculate the number of rows in the dataset.
+
     
     Methods:
     --------
+    _validate_times(self) -> None
+        Validates that the start and end times of the dataset are in the
+        schedule. This ensures start and end times are valid market open    
+        / close times.
+    _get_cumulative_daily_rows(self) -> int
+        Returns a list that contains the cumulative number of rows per
+        day.
+    _check_dates(self, prev_end: datetime, cur_start: datetime) -> bool
+        Checks if two dates are consecutive market days. This is used to
+        validate the process of appending datasets to ensure temporal
+        continuity of the data.
+    index_to_date(self, index: int) -> datetime
+        Returns the date of the episode corresponding to the given
+        index. This is useful for mapping the index of the dataset to
+        the date of the episode.
     __or__(self, other: AbstractDataMetaData, **kwargs) ->
     AbstractDataMetaData
         Merges two metadata objects. This is useful for joining datasets
         that are large to download in one go. Each sub-dataset is
-        downloaded for a fixed time interval and each can correponds to
+        downloaded for a fixed time span and each can correponds to
         differnt data sources, feature types and symbols. Joining
         datasets and validating the process is done automatically using
         this method.
     __add__(self, other: AbstractDataMetaData, **kwargs) ->
     AbstractDataMetaData
         Appends two metadata objects. Downloading large datasets can be
-        split across nonoverlapping time intervals and appended to each
+        split across nonoverlapping time spans and appended to each
         other. This method facilitates updating the metadata object
         automatically and validating the process.
     """
@@ -1254,6 +1279,12 @@ class DatasetMetadata(AbstractDataMetadata):
         want to deploy their trained agents in a live trading
         environment. Simply changes the dataset type to stream type for
         each data type in the data schema.
+
+        Returns:
+        --------    
+            StreamMetaData:
+                A StreamMetaData object that corresponds to the current
+                dataset metadata.
         """
         data_schema = {
             dataset_type.stream: self.data_schema.schema[dataset_type]
@@ -1266,6 +1297,9 @@ class DatasetMetadata(AbstractDataMetadata):
 
     @property
     def schedule(self) -> pd.DataFrame:
+        """
+        Schedule of the dataset according to its calendar type.
+        """
         schedule = super().schedule(start_date=self.start.date(),
                                     end_date=self.end.date())
         return schedule
