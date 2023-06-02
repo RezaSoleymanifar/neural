@@ -804,7 +804,7 @@ class FeatureSchema:
 
 
 @dataclass
-class AbstractDataMetaData:
+class AbstractDataMetadata:
     """
     Data has a universal representation of a two dimensional array of objects
     throughout the framework. Each row corresponds to a time interval with a
@@ -843,8 +843,8 @@ class AbstractDataMetaData:
         of calendar used to generate the data. Calendar types indicates the
         core trading hours of an exchange. For example NYSE has a calendar type
         of CalendarType.NEW_YORK_STOCK_EXCHANGE. A calendar type has a schedule
-        associated with it that is used to generate rows of the data to between
-        market open and close times.
+        associated with it that is used to generate rows of the data between
+        market open and close times for each day.
 
     Properties:
     -----------
@@ -912,7 +912,9 @@ class AbstractDataMetaData:
         MSFT have the same core trading hours, but they are traded on different
         exchanges. Ensure that CalendarType.NEW_YORK_STOCK_EXCHANGE or
         CalendarType.NATIONAL_ASSOCIATION_OF_SECURITIES_DEALERS_AUTOMATED_QUOTATIONS
-        
+        is used for both assets to indicate that they have the same core
+        trading hours. Note that NYSE and NASDAQ are different exchanges, but
+        they have the same core trading hours.
     """
     data_schema: DataSchema
     resolution: Resolution
@@ -921,14 +923,12 @@ class AbstractDataMetaData:
     @property
     def n_features(self) -> int:
         """
-        Returns the number of columns in the dataset. Can be used to
-        compare against the number columns in the underlying data for 
-        sanity checks.
+        Returns the number of columns in the data.
 
         Returns:
         --------
             int:
-                The number of columns in the dataset.
+                The number of columns in the data.
         """
         return self.data_schema.n_features
 
@@ -943,12 +943,6 @@ class AbstractDataMetaData:
         --------
             List[AbsractAsset]: 
                 a list of unique assets in the data schema.
-
-        Notes:
-        ------
-            By default number of True values in the price mask is equal
-            to the number of assets in the data schema. This is enforced
-            at time of creation of the data schema.
         """
         return self.data_schema.assets
 
@@ -995,8 +989,8 @@ class AbstractDataMetaData:
         """
         return self.calendar_type.schedule
 
-    def __or__(self, other: AbstractDataMetaData,
-               **kwargs) -> AbstractDataMetaData:
+    def __or__(self, other: AbstractDataMetadata,
+               **kwargs) -> AbstractDataMetadata:
         """
         This is useful for joining datasets that are large to download in one
         go. Each sub-dataset is downloaded for a fixed span of time and each
@@ -1045,8 +1039,8 @@ class AbstractDataMetaData:
 
         return joined_metadata
 
-    def __add__(self, other: AbstractDataMetaData,
-                **kwargs) -> AbstractDataMetaData:
+    def __add__(self, other: AbstractDataMetadata,
+                **kwargs) -> AbstractDataMetadata:
         """
         appends two metadata objects. This is useful for appending
         datasets that are large to downolad in one go. At each iteration
@@ -1110,7 +1104,7 @@ class AbstractDataMetaData:
 
 
 @dataclass
-class StreamMetaData(AbstractDataMetaData):
+class StreamMetaData(AbstractDataMetadata):
     """
     Subclass of AbstractDataMetaData that provides metadata for
     streaming data.
@@ -1149,8 +1143,8 @@ class StreamMetaData(AbstractDataMetaData):
             it will raise a not implemented error.
     """
 
-    def __add__(self, other: AbstractDataMetaData,
-                **kwargs) -> AbstractDataMetaData:
+    def __add__(self, other: AbstractDataMetadata,
+                **kwargs) -> AbstractDataMetadata:
         """
         Not implemented for stream metadata. Appending stream metadata
         would not make sense. If used with stream metadata it will raise
@@ -1175,7 +1169,7 @@ class StreamMetaData(AbstractDataMetaData):
 
 
 @dataclass
-class DatasetMetadata(AbstractDataMetaData):
+class DatasetMetadata(AbstractDataMetadata):
     """
     Subclass of AbstractDataMetaData that provides metadata for static
     datasets. This class is used to represent datasets that are
@@ -1375,7 +1369,7 @@ class DatasetMetadata(AbstractDataMetaData):
         date = self.schedule.loc[day_index, 'start']
         return date
 
-    def __or__(self, other: AbstractDataMetaData) -> AbstractDataMetaData:
+    def __or__(self, other: AbstractDataMetadata) -> AbstractDataMetadata:
         """
         This is useful for joining datasets that are large to download
         in one go. Each sub-dataset is downloaded for a fixed time
@@ -1419,7 +1413,7 @@ class DatasetMetadata(AbstractDataMetaData):
         joined_metadata = super().__or__(other, start=self.start, end=self.end)
         return joined_metadata
 
-    def __add__(self, other: AbstractDataMetaData) -> AbstractDataMetaData:
+    def __add__(self, other: AbstractDataMetadata) -> AbstractDataMetadata:
         """
         Appends two metadata objects. Downloading large datasets can be
         split across nonoverlapping time intervals and appended to each
@@ -1467,7 +1461,7 @@ class AbstractDataFeeder(ABC):
             provide data for market environment.
     """
 
-    def __init__(self, metadata: AbstractDataMetaData) -> None:
+    def __init__(self, metadata: AbstractDataMetadata) -> None:
         """
         Initializes an AbstractDataFeeder object.
 
