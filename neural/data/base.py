@@ -639,7 +639,6 @@ class FeatureSchema:
         schema = new_feature_schema.schema
         for feature_type in schema:
             schema[feature_type] += other.schema[feature_type]
-
         return new_feature_schema
 
     def create_feature_schema(
@@ -852,6 +851,20 @@ class AbstractDataMetaData:
         """
         return self.data_schema.assets
 
+    @property
+    def asset_prices_mask(self) -> List[bool]:
+        """
+        Returns a mask for the asset close price feature type.
+
+        Returns:
+        --------
+            List[bool]:
+                A mask for the asset close price feature type. This
+                price is used by market environments as the point of
+                reference for placing orders.
+        """
+        return self.data_schema.asset_prices_mask
+    
     @property
     def schedule(self) -> Callable[[datetime, datetime], pd.DataFrame]:
         """
@@ -1180,15 +1193,6 @@ class DatasetMetadata(AbstractDataMetaData):
         """
         n_rows = self.cumulative_daily_rows[-1]
         return n_rows
-
-    @property
-    def n_features(self) -> int:
-        """
-        Returns the number of features in the dataset. Uses the feature
-        schema to calculate the number of features in the dataset.
-        """
-        n_features = self.data_schema.n_features
-        return n_features
     
     def _validate_times(self) -> None:
         """
@@ -1206,12 +1210,11 @@ class DatasetMetadata(AbstractDataMetaData):
 
     def _get_cumulative_daily_rows(self) -> int:
         """
-        Returns a pandas Series object that contains the cumulative
-        number of rows per day. This is useful for mapping the index of
-        the dataset to the date of the episode and also adjusting the 
-        start and end times of the data feeders to match the start and
-        end of days, namely making sure that data feeders work with
-        integer number of days.
+        Returns a list that contains the cumulative number of rows per day.
+        This is useful for mapping the index of the dataset to the date of the
+        episode and also adjusting the start and end times of the data feeders
+        to match the start and end of days, namely making sure that data
+        feeders work with integer number of days.
         """
         daily_durations = self.schedule['end'] - self.schedule['start']
         timedelta = self.resolution.pandas_timedelta
