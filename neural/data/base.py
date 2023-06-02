@@ -966,7 +966,8 @@ class AbstractDataMetadata:
         Returns a function that returns a DataFrame representing the
         schedule of the dataset according to its calendar type. This is
         used in training to map dataset rows to corresponding dates. In 
-        trading this is used to check for market open and close times.
+        trading this is used to check for market open and close times
+        to initiate the trading session.
 
         Returns:
         --------
@@ -1173,13 +1174,12 @@ class DatasetMetadata(AbstractDataMetadata):
     """
     Subclass of AbstractDataMetaData that provides metadata for static
     datasets. This class is used to represent datasets that are
-    downloaded and stored in memory. It provides a consistent interface
-    for accessing the data and metadata. It also provides methods for
-    joining and appending datasets. This is useful for joining datasets
-    that are large to download in one go. Each sub-dataset is downloaded
-    for a fixed time interval and each can correponds to differnt data
-    sources, feature types and symbols. Joining datasets and validating
-    the process is done automatically using this method. This is also
+    downloaded and stored on disk. It provides methods for joining and
+    appending datasets. This is useful for joining datasets that are
+    large to download in one go. Each sub-dataset is downloaded for a
+    fixed time span and each can correponds to differnt data sources,
+    feature types and assets. Joining datasets and validating the
+    process is done automatically using these methods. This is also
     useful for appending datasets that are large to downolad in one go.
     At each iteration the user can download the data in chunks
     corresponding to a fixed time interval shared between all other
