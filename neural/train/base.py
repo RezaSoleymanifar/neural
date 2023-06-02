@@ -201,7 +201,7 @@ class AbstractTrainer(ABC):
         dataset_metadata, datasets = from_hdf5(self.file_path,
                                                self.dataset_name)
         data_feeders = StaticDataFeeder(
-            dataset_metadata=dataset_metadata,
+            metadata=dataset_metadata,
             datasets=datasets,
             n_chunks=self.n_chunks).split(n=self.train_ratio)
 

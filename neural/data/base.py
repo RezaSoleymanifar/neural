@@ -1378,18 +1378,6 @@ class AbstractDataFeeder(ABC):
         """
         self.metadata = metadata
         return None
-    
-    @abstractmethod
-    def get_features_generator(self, *args, **kwargs):
-        """
-        Returns a generator object that can be used to iteratively
-        provide data for market environment.
-        
-        Raises:
-            NotImplementedError: 
-                This method must be implemented by a subclass.
-        """
-        raise NotImplementedError
 
     @property
     @abstractmethod
@@ -1418,6 +1406,18 @@ class AbstractDataFeeder(ABC):
         """
         Returns True if the data feeder has been exhausted, False otherwise.
         Asynchronous data feeders always return False.
+        """
+        raise NotImplementedError
+    
+    @abstractmethod
+    def get_features_generator(self, *args, **kwargs):
+        """
+        Returns a generator object that can be used to iteratively
+        provide data for market environment.
+        
+        Raises:
+            NotImplementedError: 
+                This method must be implemented by a subclass.
         """
         raise NotImplementedError
 
@@ -1463,7 +1463,7 @@ class StaticDataFeeder(AbstractDataFeeder):
     """
 
     def __init__(self,
-                 dataset_metadata: DatasetMetadata,
+                 metadata: DatasetMetadata,
                  datasets: List[h5.Dataset | np.ndarray],
                  start_index: int = 0,
                  end_index: Optional[int] = None,
@@ -1488,7 +1488,7 @@ class StaticDataFeeder(AbstractDataFeeder):
             do not fit in memory or to allocate more memory for the
             training process. Default is 1.
         """
-        self.dataset_metadata = dataset_metadata
+        super().__init__(metadata=metadata)
         self.datasets = datasets
         self.start_index = start_index
         self.end_index = end_index if end_index is not None else \
@@ -1653,7 +1653,7 @@ class StaticDataFeeder(AbstractDataFeeder):
 
         for start, end in zip(edge_indices[:-1], edge_indices[1:]):
             static_data_feeder = StaticDataFeeder(
-                dataset_metadata=self.dataset_metadata,
+                metadata=self.dataset_metadata,
                 datasets=self.datasets,
                 start_index=start,
                 end_index=end,

@@ -165,7 +165,7 @@ class TrainMarketEnv(AbstractMarketEnv):
         initial_asset_quantities: np.ndarray, optional
             The initial quantity of assets to allocate to the
             environment. Default is None.
-        data_metadata: DatasetMetadata
+        metadata: DatasetMetadata
             Metadata about the dataset used. This includes the feature
             schema, asset names, and asset price mask.
         feature_schema: Dict[FeatureType, List[bool]] 
@@ -324,11 +324,11 @@ class TrainMarketEnv(AbstractMarketEnv):
         self.initial_cash = initial_cash
         self.initial_asset_quantities = initial_asset_quantities
 
-        self.data_metadata = self.data_feeder.dataset_metadata
-        self.assets = self.data_metadata.assets
+        self.metadata = self.data_feeder.metadata
+        self.assets = self.metadata.assets
 
         self.n_steps = self.data_feeder.n_rows
-        self.n_features = self.data_metadata.n_features
+        self.n_features = self.metadata.n_features
         self.n_assets = len(self.assets)
 
         self.holds = None
@@ -442,7 +442,7 @@ class TrainMarketEnv(AbstractMarketEnv):
                 An array representing the current asset prices of the
                 assets.
         """
-        asset_prices_mask = self.data_metadata.asset_prices_mask
+        asset_prices_mask = self.metadata.asset_prices_mask
         self._asset_prices = self.features[asset_prices_mask]
 
         return self._asset_prices
