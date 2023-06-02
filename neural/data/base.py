@@ -1134,9 +1134,10 @@ class DatasetMetadata(AbstractDataMetaData):
     end: datetime
 
     def __post_init__(self):
+        self._cumulative_daily_rows = None
         self._validate_times()
-        self._cumulative_daily_rows = self._get_cumulative_daily_rows()
-        
+        self._get_cumulative_daily_rows()
+
     @property
     def stream(self):
         """
@@ -1212,8 +1213,8 @@ class DatasetMetadata(AbstractDataMetaData):
             daily_durations = schedule['end'] - schedule['start']
             rows_per_day = (daily_durations /
                             resolution.pandas_timedelta).astype(int)
-            self._cumulative_daily_rows = rows_per_day.cumsum().values
-        return self._cumulative_daily_rows
+            cumulative_daily_rows = rows_per_day.cumsum().values
+        return cumulative_daily_rows
 
     def row_index_to_date(self, index) -> datetime:
         """
