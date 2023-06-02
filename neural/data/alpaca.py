@@ -13,16 +13,15 @@ import pandas as pd
 import numpy as np
 
 from neural.client.alpaca import AlpacaDataClient
-from neural.common import logger
 from neural.common.constants import (
     ALPACA_ACCEPTED_DOWNLOAD_RESOLUTIONS, GLOBAL_DATA_TYPE)
+from neural.common.log import logger
 from neural.data.base import (
     DatasetMetadata, CalendarType, AbstractDataSource, AbstractAsset)
-from neural.data.alpaca import AlpacaDataClient, AlpacaAsset
 from neural.data.enums import AssetType
-from neural.utils.io import to_hdf5
 from neural.utils.base import (
     progress_bar, validate_path, RunningStatistics)
+from neural.utils.io import to_hdf5
 from neural.utils.misc import resolution_to_timeframe
 from neural.utils.time import Resolution
 
