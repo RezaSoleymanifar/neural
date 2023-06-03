@@ -227,9 +227,9 @@ class AlpacaAsset(AbstractAsset):
             A boolean indicating whether the asset can be borrowed
             easily. Alpaca API has restrictive rules for hard to borrow
             assets and in general HTB assets cannot be shorted.
-        maintenance_margin: float | None
+        maintenance_margin (float | None):
             A float representing the maintenance margin of the asset.
-            This means that maintenace_margin * position_value should be
+            This means that maintenace_margin * position value should be
             available in marginable equity at all times. In practice the
             gross maintenance margin for entire portfolio is used to
             measure maintenance margin requirement. If maintenance
