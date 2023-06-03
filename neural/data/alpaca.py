@@ -301,8 +301,7 @@ class AlpacaAsset(AbstractAsset):
         """
         A boolean indicating whether the asset can be borrowed easily.
         Alpaca API has restrictive rules for hard to borrow assets and
-        in general HTB assets cannot be shorted. This library only
-        allows easy to borrow assets to be shorted.
+        in general HTB assets cannot be shorted.
 
         Returns:
         --------
@@ -323,7 +322,7 @@ class AlpacaAsset(AbstractAsset):
         namely entire value of trade needs to be available in cash.
         Since nonmarginable assets cannot be margined this is an abuse
         of terminalogy to provide a convenient interface for working
-        with marginable and onnmarginable assets in a consistent way.
+        with marginable and nonmarginable assets in a consistent way.
 
         Args:
         -----
