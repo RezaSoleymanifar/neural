@@ -2,6 +2,14 @@
 alpaca.py
 
 Description:
+
+License:
+--------
+    MIT License. See LICENSE.md file.
+
+Author(s):
+-------
+    Reza Soleymanifar, Email: Reza@Soleymanifar.com
 ------------
 """
 from dataclasses import dataclass
