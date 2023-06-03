@@ -47,10 +47,29 @@ class AlpacaDataSource(AbstractDataSource):
 
         Attributes
         ----------
-        BAR : str
-            Bar dataset, including open, high, low, close, and volume.
+        BAR (str)
+            Represents one bar/candlestick of aggregated trade data over
+            a specified interval. Includes following fields:
+            - symbol (str):
+                the symbol of the asset.
+            - timestamp (datetime):
+                the closing time stamp of the bar.
+            - open (float):
+                the opening price of the bar.
+            - high (float):
+                the highest price of the bar.
+            - low (float):
+                the lowest price of the bar.
+            - close (float):
+                the closing price of the bar.
+            - volume (int):
+                the trade volume of the bar.
+            - trade_count (int):
+                the number of trades in the bar.
+            - vwap (float):
+                the volume weighted average price of the bar.
         TRADE : str
-            The type of dataset for aggregated trade stream data.
+            This is a 
         QUOTE : str
             The type of dataset for aggregated quote stream.
         ORDER_BOOK : str
