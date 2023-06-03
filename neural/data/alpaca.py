@@ -356,7 +356,7 @@ class AlpacaAsset(AbstractAsset):
                                short: bool = False) -> float | None:
         """
         A float representing the maintenance margin of the asset. This
-        means that maintenace_margin * position_value should be
+        means that maintenace_margin * position value should be
         available in marginable equity. Maintenance margin is cumulative
         for all assets and needs to be satisfied at all times. Alpaca
         API in reality enforces this at the end of day or when it is
@@ -369,14 +369,14 @@ class AlpacaAsset(AbstractAsset):
         Default maintenance marigin is the maintenance margin that
         Alpaca API reports by default. maintenance margin attribute is
         the value received from Alpaca API, however it is subject to
-        change given price change and position change. Thus taking max
-        of default maintenace margin and maintenance margin attribute
-        ensures that the most conservative value is used for calculating
-        the maintenance margin. Because Alpaca API checks both initial
-        and maintenance margin at the end of day, we set the maintenance
-        margin to be the maximum of the two. This is not a common
-        behavior since typically initial margin is used for opening
-        positions and maintenance margin is used for maintaining
+        change given price change and position change. Thus taking
+        highest of default maintenace margin and maintenance margin
+        attribute ensures that the most conservative value is used for
+        calculating the maintenance margin. Because Alpaca API checks
+        both initial and maintenance margin at the end of day, we set
+        the maintenance margin to be the maximum of the two. This is not
+        a common behavior since typically initial margin is used for
+        opening positions and maintenance margin is used for maintaining
         positions. However Alpaca API enforces both at end of day. In
         the end maximum of default margin, initial margin, and
         maintenance margin is used for final calculation of the
@@ -429,31 +429,26 @@ class AlpacaAsset(AbstractAsset):
                     A boolean indicating whether the maintenance margin
                     is for a short position. By default False.
             """
-
             if not self.marginable:
                 return 0
-
             elif not short:
                 if price >= 2.50:
                     return 0.3
                 else:
                     return 1.0
-
             elif short:
                 if price < 5.00:
                     return max(2.5 / price, 1.0)
                 elif price >= 5.00:
                     return max(5.0 / price, 0.3)
-                
+
         required_margin = max(self.maintenance_margin,
                               default_maintenance_margin(price, short),
                               self.get_initial_margin(short))
         return required_margin
 
 
-
 class AlpacaDataDownloader():
-
     """
     A class to download and process financial data using the Alpaca API.
     This includes bar, quote, and trade data. The data is downloaded and
