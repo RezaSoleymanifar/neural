@@ -603,9 +603,10 @@ class AlpacaDataDownloader():
                     end=end))
         try:
             dataset = data.df
-        except KeyError:
-            raise KeyError(f'No data in requested range {start}-{end}')
-        
+        except KeyError as key_error:
+            raise KeyError(
+                f'No data in requested range {start}-{end}') from key_error
+
         return dataset
 
     def download_to_hdf5(
@@ -613,10 +614,10 @@ class AlpacaDataDownloader():
         file_path: str | os.PathLike,
         dataset_name: str,
         dataset_type: AlpacaDataSource.DatasetType,
-        symbols: List[str],
+        assets: List[AbstractAsset],
         start_date: str | datetime,
         end_date: str | datetime,
-        resolution: Optional[str],
+        resolution: Resolution,
     ) -> None:
         """
         Downloads financial features data for the given symbols and
@@ -683,15 +684,15 @@ class AlpacaDataDownloader():
 
         validate_path(file_path=file_path)
 
-        if not symbols:
+        if not assets:
             raise ValueError('symbols argument cannot be an empty sequence.')
         duplicate_symbols = [
-            symbol for symbol in set(symbols) if symbols.count(symbol) > 1
+            symbol for symbol in set(assets) if assets.count(symbol) > 1
         ]
         if duplicate_symbols:
             raise ValueError(f'Duplicate symbols found: {duplicate_symbols}.')
 
-        assets = self.data_client.symbols_to_assets(symbols)
+        assets = self.data_client.symbols_to_assets(assets)
         asset_types = set(asset.asset_type for asset in assets)
         marginability_types = set(asset.marginable for asset in assets)
 
@@ -729,21 +730,21 @@ class AlpacaDataDownloader():
         for start, end in schedule.values:
             dataset = self.download_dataset(dataset_type=dataset_type,
                                             asset_type=asset_type,
-                                            symbols=symbols,
+                                            symbols=assets,
                                             resolution=resolution,
                                             start=start,
                                             end=end)
 
             symbols_in_dataset = dataset.index.get_level_values(
                 'symbol').unique().tolist()
-            missing_symbols = set(symbols_in_dataset) ^ set(symbols)
+            missing_symbols = set(symbols_in_dataset) ^ set(assets)
 
             if missing_symbols:
                 raise ValueError(f'No data for symbols {missing_symbols} in '
                                  f'{start}, {end} time range.')
 
             dataset = dataset.reindex(index=pd.MultiIndex.from_product(
-                [symbols, dataset.index.levels[1]]))
+                [assets, dataset.index.levels[1]]))
             dataset = dataset.reset_index(level=0, names='symbol')
 
             data_processor = AlpacaDataProcessor()
