@@ -48,8 +48,7 @@ class AlpacaDataSource(AbstractDataSource):
         Attributes
         ----------
         BAR : str
-            The type of dataset for aggregated trade stream data. Also
-            known as bars data.
+            Bar dataset, including open, high, low, close, and volume.
         TRADE : str
             The type of dataset for aggregated trade stream data.
         QUOTE : str
