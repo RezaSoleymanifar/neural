@@ -718,7 +718,7 @@ class AlpacaDataDownloader():
             raise ValueError(
                 f'No market hours in date range {start_date}-{end_date}.'
         self._validate_resolution(resolution=resolution, schedule=schedule)
-        
+
         days = len(schedule)
         n_assets = len(symbols)
         logger.info('Downloading dataset:'
@@ -736,7 +736,6 @@ class AlpacaDataDownloader():
                                             resolution=resolution,
                                             start=start,
                                             end=end)
-
             symbols_in_dataset = dataset.index.get_level_values(
                 'symbol').unique().tolist()
             missing_symbols = set(symbols_in_dataset) ^ set(symbols)
