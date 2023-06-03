@@ -33,6 +33,7 @@ from neural.utils.io import to_hdf5
 from neural.utils.misc import resolution_to_timeframe
 from neural.utils.time import Resolution
 
+
 class AlpacaDataSource(AbstractDataSource):
     """
     Represents Alpaca API as a data source. Provides standardized enums
@@ -165,7 +166,6 @@ class AlpacaAsset(AbstractAsset):
         portoflio is not supporeted either due to the same level of
         irregularities.
     """
-
     marginable: bool
     maintenance_margin: Optional[float] = None
     shortable: Optional[bool] = None
@@ -448,7 +448,6 @@ class AlpacaDataDownloader():
         start: datetime,
         end: datetime,
         ) -> None:
-
         """
         Downloads raw dataset from the Alpaca API. This is a dataframe
         downloaded from the API. Typically daily data is downloaded in
