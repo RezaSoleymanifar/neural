@@ -21,14 +21,13 @@ import numpy as np
 import pandas as pd
 
 from neural.client.alpaca import AlpacaDataClient
-from neural.common.constants import (
-    ALPACA_ACCEPTED_DOWNLOAD_RESOLUTIONS, GLOBAL_DATA_TYPE)
+from neural.common.constants import (ALPACA_ACCEPTED_DOWNLOAD_RESOLUTIONS,
+                                     GLOBAL_DATA_TYPE)
 from neural.common.log import logger
-from neural.data.base import (
-    AbstractDataSource, AbstractAsset, CalendarType, DatasetMetadata)
+from neural.data.base import (AbstractDataSource, AbstractAsset, CalendarType,
+                              DatasetMetadata)
 from neural.data.enums import AssetType
-from neural.utils.base import (
-    progress_bar, validate_path, RunningStatistics)
+from neural.utils.base import (progress_bar, validate_path, RunningStatistics)
 from neural.utils.io import to_hdf5
 from neural.utils.misc import resolution_to_timeframe
 from neural.utils.time import Resolution
@@ -485,7 +484,6 @@ class AlpacaDataDownloader():
     """
 
     def __init__(self, data_client: AlpacaDataClient) -> None:
-
         """
         Initializes the AlpacaDataFetcher class.
 
@@ -496,13 +494,12 @@ class AlpacaDataDownloader():
                 responsible for communicating with the Alpaca API and
                 providing the basic facilities to download data.
         """
-
         self.data_client = data_client
 
         return None
 
-
-    def _validate_resolution(self, resolution: Resolution, schedule: pd.DataFrame):
+    def _validate_resolution(self, resolution: Resolution,
+                             schedule: pd.DataFrame):
         """
         Validates the resolution of the dataset. Resolutions not
         accepted can potentially lead to incoherencies in the end to end
@@ -524,30 +521,28 @@ class AlpacaDataDownloader():
         ValueError:
             If the daily durations is not divisible by resolution.
         """
-
         if resolution not in ALPACA_ACCEPTED_DOWNLOAD_RESOLUTIONS:
             raise ValueError(
-                f'Accepted resolutions: {ALPACA_ACCEPTED_DOWNLOAD_RESOLUTIONS}.')
-        
+                f'Accepted resolutions: {ALPACA_ACCEPTED_DOWNLOAD_RESOLUTIONS}.'
+            )
+
         daily_durations = schedule['end'] - schedule['start']
-        rows_per_day = (daily_durations /
-                        resolution.pandas_timedelta).values
+        rows_per_day = (daily_durations / resolution.pandas_timedelta).values
         if not all(value.is_integer() for value in rows_per_day):
             raise ValueError('Incompatible resolution for given date range. '
                              'Daily durations is not divisible by resolution.')
 
         return None
 
-
     def download_dataset(
         self,
         dataset_type: AlpacaDataSource.DatasetType,
         asset_type: AssetType,
         symbols: List[AlpacaAsset],
-        timeframe: str,
+        resolution: Resolution,
         start: datetime,
         end: datetime,
-        ) -> None:
+    ) -> None:
         """
         Downloads raw dataset from the Alpaca API. This is a dataframe
         downloaded from the API. Typically daily data is downloaded in
@@ -590,17 +585,16 @@ class AlpacaDataDownloader():
                 The raw dataset downloaded from the Alpaca API.
         """
 
-        timeframe = resolution_to_timeframe(timeframe)
-
+        timeframe = resolution_to_timeframe(resolution)
+        
         downloader, request = self.data_client.get_downloader_and_request(
-            dataset_type=dataset_type,
-            asset_type=asset_type)
+            dataset_type=dataset_type, asset_type=asset_type)
 
-        data = downloader(request(
-            symbol_or_symbols=symbols,
-            timeframe=timeframe,
-            start=start,
-            end=end))
+        data = downloader(
+            request(symbol_or_symbols=symbols,
+                    timeframe=timeframe,
+                    start=start,
+                    end=end))
 
         try:
             dataset = data.df
@@ -609,7 +603,6 @@ class AlpacaDataDownloader():
             raise KeyError(f'No data in requested range {start}-{end}')
 
         return dataset
-
 
     def download_to_hdf5(
         self,
@@ -620,8 +613,7 @@ class AlpacaDataDownloader():
         start_date: str | datetime,
         end_date: str | datetime,
         resolution: Optional[str],
-        ) -> None:
-
+    ) -> None:
         """
         Downloads financial features data for the given symbols and
         saves it in an HDF5 file format. A mix of stocks and
@@ -688,13 +680,13 @@ class AlpacaDataDownloader():
         validate_path(file_path=file_path)
 
         if not symbols:
-            raise ValueError(
-                'symbols argument cannot be an empty sequence.')
+            raise ValueError('symbols argument cannot be an empty sequence.')
         duplicate_symbols = [
-            symbol for symbol in set(symbols) if symbols.count(symbol) > 1]
+            symbol for symbol in set(symbols) if symbols.count(symbol) > 1
+        ]
         if duplicate_symbols:
             raise ValueError(f'Duplicate symbols found: {duplicate_symbols}.')
-        
+
         assets = self.data_client.symbols_to_assets(symbols)
         asset_types = set(asset.asset_type for asset in assets)
         marginability_types = set(asset.marginable for asset in assets)
@@ -704,19 +696,21 @@ class AlpacaDataDownloader():
         if len(marginability_types) != 1:
             raise ValueError(
                 f'Non-homogenous marginability types: {marginability_types}.')
-        
-        calendar_type_map = {AssetType.STOCK: CalendarType.NEW_YORK_STOCK_EXCHANGE,
-                        AssetType.CRYPTOCURRENCY: CalendarType.TWENTY_FOUR_SEVEN}
+
+        calendar_type_map = {
+            AssetType.STOCK: CalendarType.NEW_YORK_STOCK_EXCHANGE,
+            AssetType.CRYPTOCURRENCY: CalendarType.TWENTY_FOUR_SEVEN
+        }
         asset_type = asset_types.pop()
         calendar_type = calendar_type_map[asset_type]
-        schedule = calendar_type.schedule(
-            start_date=start_date, end_date=end_date)
-        
+        schedule = calendar_type.schedule(start_date=start_date,
+                                          end_date=end_date)
+
         if len(schedule) == 0:
             raise ValueError(
                 f'No market hours in date range {start_date}-{end_date}.')
-        
-        self._validate_resolution(resolution=resolution, schedule = schedule)
+
+        self._validate_resolution(resolution=resolution, schedule=schedule)
         days = len(schedule)
         n_assets = len(assets)
         logger.info('Downloading dataset:'
@@ -725,30 +719,27 @@ class AlpacaDataDownloader():
                     f'\n\t days = {days}'
                     f'\n\t resolution = {resolution}'
                     f'\n\t n_assets = {n_assets}')
-        
+
         progress_bar_ = progress_bar(len(schedule))
 
         for start, end in schedule.values:
-            dataset = self.download_dataset(
-                dataset_type=dataset_type,
-                asset_type=asset_type,
-                symbols=symbols,
-                timeframe=resolution,
-                start=start,
-                end=end)
+            dataset = self.download_dataset(dataset_type=dataset_type,
+                                            asset_type=asset_type,
+                                            symbols=symbols,
+                                            resolution=resolution,
+                                            start=start,
+                                            end=end)
 
             symbols_in_dataset = dataset.index.get_level_values(
                 'symbol').unique().tolist()
             missing_symbols = set(symbols_in_dataset) ^ set(symbols)
 
             if missing_symbols:
-                raise ValueError(
-                    f'No data for symbols {missing_symbols} in '
-                    f'{start}, {end} time range.')
+                raise ValueError(f'No data for symbols {missing_symbols} in '
+                                 f'{start}, {end} time range.')
 
-            dataset = dataset.reindex(
-                index=pd.MultiIndex.from_product([
-                    symbols, dataset.index.levels[1]]))
+            dataset = dataset.reindex(index=pd.MultiIndex.from_product(
+                [symbols, dataset.index.levels[1]]))
             dataset = dataset.reset_index(level=0, names='symbol')
 
             data_processor = AlpacaDataProcessor()
@@ -757,14 +748,12 @@ class AlpacaDataDownloader():
 
             for symbol, group in dataset.groupby('symbol'):
                 processed_group = data_processor.reindex_and_forward_fill(
-                    dataset=group, open=start,
-                    close=end, resolution=resolution)
+                    dataset=group, open=start, close=end, resolution=resolution)
 
                 symbol_groups.append(processed_group)
 
             features_df = pd.concat(symbol_groups, axis=1)
             features_df = features_df.select_dtypes(include=np.number)
-
 
             feature_schema = DatasetMetadata.create_feature_schema(
                 data=features_df)
@@ -775,16 +764,15 @@ class AlpacaDataDownloader():
                 data_schema=data_schema,
                 feature_schema=feature_schema,
                 resolution=resolution,
-                calendar_type = calendar_type,
-                start = start,
-                end = end,
+                calendar_type=calendar_type,
+                start=start,
+                end=end,
             )
 
-            to_hdf5(
-                file_path=file_path,
-                numpy_array=features_array,
-                dataset_metadata=dataset_metadata,
-                dataset_name=dataset_name)
+            to_hdf5(file_path=file_path,
+                    numpy_array=features_array,
+                    dataset_metadata=dataset_metadata,
+                    dataset_name=dataset_name)
 
             progress_bar_.set_description(
                 f'low:{processing_statistics.minimum:.0%}/'
@@ -811,6 +799,7 @@ class AlpacaDataStreamer:
     consistent way, the model will not be able to make predictions on
     the streamed data.
     """
+
     def __init__(self, data_client: AlpacaDataClient) -> None:
         """
         Initializes the AlpacaDataStreamer class. 
@@ -844,16 +833,13 @@ class AlpacaDataProcessor:
     entire dataset is empty, namely there is no data for the given time
     range.
     """
+
     def __init__(self):
 
         self.processing_statistics = RunningStatistics()
 
-    def reindex_and_forward_fill(
-            self,
-            dataset: pd.DataFrame,
-            open: datetime,
-            close: datetime,
-            resolution: str):
+    def reindex_and_forward_fill(self, dataset: pd.DataFrame, open: datetime,
+                                 close: datetime, resolution: str):
         """
         Reindexes and forward fills missing rows in [open, close)
         range, i.e. time_index = open means any time with open <= time <
@@ -878,14 +864,16 @@ class AlpacaDataProcessor:
                 The reindexed and forward filled data.
         """
 
-        index = pd.date_range(
-            start=open, end=close, freq=resolution, inclusive='left')
+        index = pd.date_range(start=open,
+                              end=close,
+                              freq=resolution,
+                              inclusive='left')
 
         processed = dataset.reindex(index)
 
         non_nan_count = processed.notna().sum().sum()
         total_count = processed.size
-        density = non_nan_count/total_count
+        density = non_nan_count / total_count
         self.processing_statistics.update(density)
 
         if processed.isna().any().any():
