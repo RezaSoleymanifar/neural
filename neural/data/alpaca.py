@@ -739,7 +739,7 @@ class AlpacaDataDownloader():
             symbols_in_dataset = dataset.index.get_level_values(
                 'symbol').unique().tolist()
             missing_symbols = set(symbols_in_dataset) ^ set(symbols)
-
+            
             if missing_symbols:
                 raise ValueError(f'No data for symbols {missing_symbols} in '
                                  f'{start}, {end} time range.')
