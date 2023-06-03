@@ -308,7 +308,6 @@ class AssetType(str, Enum):
             can fluctuate based on various factors such as supply and
             demand, geopolitical events, and market sentiment.
     """
-
     STOCK = 'STOCK'
     CURRENCY = 'CURRENCY'
     CRYPTOCURRENCY = 'CRYPTOCURRENCY'
