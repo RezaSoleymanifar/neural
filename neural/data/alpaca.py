@@ -25,7 +25,7 @@ from neural.common.constants import (
     ALPACA_ACCEPTED_DOWNLOAD_RESOLUTIONS, GLOBAL_DATA_TYPE)
 from neural.common.log import logger
 from neural.data.base import (
-    DatasetMetadata, CalendarType, AbstractDataSource, AbstractAsset)
+    AbstractDataSource, AbstractAsset, CalendarType, DatasetMetadata)
 from neural.data.enums import AssetType
 from neural.utils.base import (
     progress_bar, validate_path, RunningStatistics)
