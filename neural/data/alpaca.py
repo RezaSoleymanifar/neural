@@ -215,7 +215,7 @@ class AlpacaAsset(AbstractAsset):
             brokerage lends money to the trader to buy more assets than
             the trader can afford. More info here:
             https://www.investopedia.com/terms/m/margin.asp.
-        shortable: bool
+        shortable (bool):
             A boolean indicating whether the asset can be sold short.
             When asset is sold short you sell the asset when you do not
             own it. This way an asset debt is recorded in your account.
@@ -223,7 +223,7 @@ class AlpacaAsset(AbstractAsset):
             the brokerage. This form of trading allows making profit in
             a bear market. More info here:
             https://www.investopedia.com/terms/s/shortselling.asp.
-        easy_to_borrow: bool
+        easy_to_borrow (bool):
             A boolean indicating whether the asset can be borrowed
             easily. Alpaca API has restrictive rules for hard to borrow
             assets and in general HTB assets cannot be shorted.
