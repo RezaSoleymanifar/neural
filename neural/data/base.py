@@ -466,7 +466,7 @@ class DataSchema:
         is a FeatureSchema object:
         
         >>> data_schema = DataSchema(
-        ...     DatasetType.BAR, [AAPL, MSFT, GOOG], feature_schema)
+        ...     DatasetType.BAR, [AAPL, ,MSFT GOOG], feature_schema)
         >>> data_schema.schema[DatasetType.BAR]['assets']
         (AAPL, MSFT, GOOG)
         >>> data_schema.schema[DatasetType.BAR]['feature_schema']
