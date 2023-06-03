@@ -615,9 +615,9 @@ class AlpacaDataDownloader():
         dataset_name: str,
         dataset_type: AlpacaDataSource.DatasetType,
         assets: List[AbstractAsset],
+        resolution: Resolution,
         start_date: str | datetime,
         end_date: str | datetime,
-        resolution: Resolution,
     ) -> None:
         """
         Downloads financial features data for the given symbols and
@@ -630,11 +630,10 @@ class AlpacaDataDownloader():
         different trading hours and calendar types due to being listed
         on different exchanges. In Alpaca API however all stock tickers
         are traded in New York Stock Exchange, so this is not an issue. 
-
         A mix of marginable and non-marginable assets cannot be written
         to the same HDF5 file, since they have different marginability
-        types. Handling marginable and non-marginable assets is not
-        supported in the library.
+        types. Handling mix of marginable and non-marginable assets is
+        not supported in the library.
 
         Args:
         ----------
