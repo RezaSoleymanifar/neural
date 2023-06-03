@@ -47,7 +47,7 @@ class AlpacaDataSource(AbstractDataSource):
 
         Attributes
         ----------
-        BAR (str)
+        BAR (str):
             Represents one bar/candlestick of aggregated trade data over
             a specified interval. Includes following fields:
             - symbol (str):
@@ -68,7 +68,45 @@ class AlpacaDataSource(AbstractDataSource):
                 the number of trades in the bar.
             - vwap (float):
                 the volume weighted average price of the bar.
-        TRADE : str
+        TRADE (str):
+            Represents one trade of the asset. Includes following
+            fields:
+            - symbol (str):
+                the symbol of the asset.
+            - timestamp (datetime):
+                the time stamp of the trade.
+            - exchange (str):
+                the exchange where the trade occurred.
+            - price (float):    
+                the price of the trade.
+            - size (int):
+                the quantity of shares in trade.
+            - conditions (List[str]):
+                the conditions of the trade.
+            - tape (str):
+                the tape where the trade occurred.  
+        QUOTE (str):
+            Represents one quote of the asset. Includes following
+            fields:
+            - symbol (str): 
+                the symbol of the asset.
+            - timestamp (datetime):
+                the time stamp of the quote.
+            - ask_price (float):
+                the ask price of the quote.
+            - ask_size (int):
+                the ask size of the quote.
+            - bid_exchange (str):
+                the exchange where the bid occurred.
+            - bid_price (float):
+                the bid price of the quote.
+            - bid_size (int):
+                the bid size of the quote.
+            - conditions (List[str]):
+                the conditions of the quote.
+            - tape (str):
+            
+
             This is a 
         QUOTE : str
             The type of dataset for aggregated quote stream.
