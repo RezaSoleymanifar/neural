@@ -32,7 +32,9 @@ Classes:
         related tasks, in addition to the functionalities provided by
         the AlpacaClient class.
 """
-from typing import Optional, Dict, List, Callable, Tuple
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Optional, Dict, List, Callable, Tuple
 
 import numpy as np
 import pandas as pd
@@ -53,10 +55,11 @@ from neural.client.base import (AbstractClient, AbstractTradeClient,
                                 AbstractDataClient)
 from neural.common.constants import API_KEY, API_SECRET
 from neural.common.log import logger
-from neural.data.alpaca import AlpacaAsset
 from neural.data.enums import AssetType
 from neural.utils.misc import objects_list_to_dataframe
 
+if TYPE_CHECKING:
+    from neural.data.alpaca import AlpacaAsset
 
 class AlpacaClient(AbstractClient):
     """

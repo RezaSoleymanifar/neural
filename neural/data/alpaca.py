@@ -14,11 +14,11 @@ Author(s):
 """
 from dataclasses import dataclass
 from datetime import datetime
-from typing import List, Optional
 import os
+from typing import List, Optional
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 
 from neural.client.alpaca import AlpacaDataClient
 from neural.common.constants import (
