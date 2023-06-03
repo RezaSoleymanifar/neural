@@ -711,7 +711,6 @@ class FeatureSchema:
     [False, True, False]
     This mask now can be applied to a row to return the close prices.
     """
-
     def __init__(self, dataframe: pd.DataFrame) -> None:
         """
         Initializes the feature schema using a pandas DataFrame. The
