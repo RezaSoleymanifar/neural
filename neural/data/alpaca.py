@@ -615,7 +615,7 @@ class AlpacaDataDownloader():
         dataset_name: str,
         dataset_type: AlpacaDataSource.DatasetType,
         symbols: List[str],
-        resolution: Resolution,
+        resolution: Optional[Resolution],
         start_date: str | datetime,
         end_date: str | datetime,
     ) -> None:
@@ -652,7 +652,8 @@ class AlpacaDataDownloader():
             resolution (str):
                 The frequency at which to sample the data. Example:
                 resolution = Resolution(1, Resolution.Unit.MINUTE) for 1
-                minute resolution.
+                minute resolution. This is valid only for BAR dataset
+                type. For other dataset types this is ignored.
             start_date (str | datetime):
                 The start date to download data for, inclusive. example:
                 '2020-01-01', or datetime(2020, 1, 1), or '05/01/2020'.
@@ -663,7 +664,7 @@ class AlpacaDataDownloader():
                 The end date to download data for, inclusive. example:
                 '2020-01-01', or datetime(2020, 1, 1), or '05/01/2020'.
                 This should be a format accepted by pandas to_datetime
-        
+    
         Raises:
         ----------
             ValueError:
