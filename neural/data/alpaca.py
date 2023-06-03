@@ -458,15 +458,15 @@ class AlpacaDataDownloader():
 
     Attributes:
     ----------
-        data_client (AlpacaDataClient): An instance of the
-        AlpacaDataClient class. This is responsible for communicating
-        with the Alpaca API and providing the basic facility to download
-        data.
+        data_client (AlpacaDataClient): 
+            An instance of the AlpacaDataClient class. This is
+            responsible for communicating with the Alpaca API and
+            providing the basic facility to download data.
 
     Methods:
     -------
         __init__:
-            Initializes the AlpacaDataFetcher class.
+            Initializes the AlpacaDataDownloader class.
         _validate_resolution:
             Validates the resolution of the dataset. Resolutions not
             accepted can potentially lead to incoherencies in the end to
