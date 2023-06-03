@@ -241,20 +241,21 @@ class AlpacaAsset(AbstractAsset):
 
     Properties:
     -----------
-        shortable: bool | None
-            A boolean indicating whether the asset can be sold short
-            (i.e., sold before buying to profit from a price decrease).
-        easy_to_borrow: bool | None
+        shortable (bool | None):
+            A boolean indicating whether the asset can be sold short.
+        easy_to_borrow (bool | None):
             A boolean indicating whether the asset can be borrowed
             easily.
 
     Methods:
     --------
-        get_initial_margin(self, short: bool = False) -> float | None
+        get_initial_margin(self, short: bool = False) -> float | None:
             A float representing the initial margin of the asset.
         get_maintenance_margin(self, price: float, short: bool = False)
-            -> float | None A float representing the maintenance margin
+            -> (float | None)
+            A float representing the maintenance margin
             of the asset.
+
     Notes:
     ------
         The easy_to_borrow, intial_margin, and maintenance_margin
