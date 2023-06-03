@@ -451,11 +451,10 @@ class AlpacaAsset(AbstractAsset):
 class AlpacaDataDownloader():
     """
     A class to download and process financial data using the Alpaca API.
-    This includes bar, quote, and trade data. The data is downloaded and
-    processed from the Alpaca API on a daily basis and saved to disk in
-    an HDF5. The download later can be resume for consecutive market 
-    days. The data is downloaded in chunks to avoid exceeding the
-    memory limit and saving progress.
+    The data is downloaded and processed from the Alpaca API on a daily
+    basis and saved to disk in an HDF5 file. The download later can be
+    resumed for consecutive market days. The data is downloaded in daily
+    chunks to avoid exceeding the memory limit and saving progress.
 
     Attributes:
     ----------
@@ -481,10 +480,10 @@ class AlpacaDataDownloader():
             downloaded in chunks using this method and saved to disk day
             by day. This is to avoid memory issues and to save progress.
         download_to_hdf5: 
-            Downloads financial features data for the
-            given symbols and saves it in an HDF5 file format. Ensures
-            the data is downloaded in a consistent way and that the data
-            is saved in a consistent format, supported by the library.
+            Downloads financial features data for the given symbols and
+            saves it in an HDF5 file format. Ensures the data is
+            downloaded in a consistent way and that the data is saved in
+            a consistent format, supported by the library.
     """
 
     def __init__(self, data_client: AlpacaDataClient) -> None:
