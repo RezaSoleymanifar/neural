@@ -545,48 +545,53 @@ class AlpacaDataDownloader():
     ) -> None:
         """
         Downloads raw dataset from the Alpaca API. This is a dataframe
-        downloaded from the API. Typically daily data is downloaded in
-        chunks using this method and saved to disk day by day. This is
-        because the Alpaca API has a limit on the number of rows that
-        can be downloaded at once and also to save progress. Note that
-        in Alpaca API the download clients are asset type specific. This
-        means that the data for stocks and cryptocurrencies are
-        downloaded separately. A mix of stocks and cryptocurrencies
-        cannot be written to the same HDF5 file, since they have
-        different calendar types and trading hours. The dataset requires
+        downloaded from the API. Note that in Alpaca API the download
+        REST clients are asset type specific. This means that the data
+        for stocks and cryptocurrencies are downloaded using separate
+        REST clients. A mix of stocks and cryptocurrencies cannot be
+        written to the same HDF5 file, since they have different
+        calendar types and trading hours. The dataset requires
         underlying data to have identical trading hours and calendar
-        types. This also can restricts the assets that can be traded 
-        concurrently even for stocks, since some stocks have different
-        trading hours and calendar types due to being listed on
-        different exchanges. In Alpaca API however all stock tickers are
-        traded in New York Stock Exchange, so this is not an issue. 
+        types. This also can restrict the assets that can be traded
+        concurrently even within stocks, since some stocks have
+        different trading hours and calendar types due to being listed
+        on different exchanges. In Alpaca API however all stock tickers
+        are traded in New York Stock Exchange, so this is not a valid
+        concern. 
 
         Args:
         ----------
             dataset_type (DatasetType):
-                The type of dataset to download. Either 'BAR', 'TRADE',
-                or 'QUOTE'.
+                The type of dataset to download. Accpted values are:
+                    - AlpacaDataSource.DatasetType.BAR
+                    - AlpacaDataSource.DatasetType.TRADE
+                    - AlpacaDataSource.DatasetType.QUOTE
             asset_type (AssetType):
-                The type of asset to download data for. Either 'STOCK'
-                or 'CRYPTOCURRENCY'.
+                The type of asset to download data for. Accepted values:
+                    - AssetType.STOCK
+                    - AssetType.CRYPTOCURRENCY
             symbols (List[str]):
                 The list of symbol names to download features data for.
             resolution (str):
-                The frequency at which to sample the data. One of
-                '1Min', '5Min', '15Min', or '30Min'.
+                The frequency at which to sample the data. Example:
+                resolution = Resolution(1, Resolution.Unit.MINUTE) for 1
+                minute resolution.
             start (datetime):
-                The start date to download data for, inclusive.
+                The start date to download data for, inclusive. Example:
+                datetime(2020, 1, 1).
             end (datetime):
-                The end date to download data for, inclusive.
+                The end date to download data for, inclusive. Example:
+                datetime(2020, 1, 1).
 
         Returns:
         ----------
             dataset (pd.DataFrame):
                 The raw dataset downloaded from the Alpaca API.
-        """
 
-        timeframe = resolution_to_timeframe(resolution)
+        Raises:
         
+        """
+        timeframe = resolution_to_timeframe(resolution)
         downloader, request = self.data_client.get_downloader_and_request(
             dataset_type=dataset_type, asset_type=asset_type)
 
