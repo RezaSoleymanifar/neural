@@ -1,5 +1,5 @@
 {
-  "entryFilePath": "/neural",
+  "entryFilePath": "/extension.ts",
   "alias": false,
   "resolveExtensions": [
     ".js",
