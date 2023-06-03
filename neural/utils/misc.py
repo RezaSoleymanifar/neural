@@ -20,7 +20,6 @@ Methods:
 """
 from typing import List
 from enum import Enum
-import re
 
 import pandas as pd
 
