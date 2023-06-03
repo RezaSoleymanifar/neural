@@ -121,12 +121,65 @@ class AlpacaDataSource(AbstractDataSource):
 
         Attributes
         ----------
-        QUOTE : str
-            The type of data stream for quotes.
-        TRADE : str
-            The type of data stream for trades.
-        ORDER_BOOK : str
-            The type of data stream for order book data.
+        BAR (str):
+            Represents one bar/candlestick of aggregated trade data over
+            a specified interval. Includes following fields:
+            - symbol (str):
+                the symbol of the asset.
+            - timestamp (datetime):
+                the closing time stamp of the bar.
+            - open (float):
+                the opening price of the bar.
+            - high (float):
+                the highest price of the bar.
+            - low (float):
+                the lowest price of the bar.
+            - close (float):
+                the closing price of the bar.
+            - volume (int):
+                the trade volume of the bar.
+            - trade_count (int):
+                the number of trades in the bar.
+            - vwap (float):
+                the volume weighted average price of the bar.
+        TRADE (str):
+            Represents one trade of the asset. Includes following
+            fields:
+            - symbol (str):
+                the symbol of the asset.
+            - timestamp (datetime):
+                the time stamp of the trade.
+            - exchange (str):
+                the exchange where the trade occurred.
+            - price (float):    
+                the price of the trade.
+            - size (int):
+                the quantity of shares in trade.
+            - conditions (List[str]):
+                the conditions of the trade.
+            - tape (str):
+                the tape where the trade occurred.  
+        QUOTE (str):
+            Represents one quote of the asset. Includes following
+            fields:
+            - symbol (str): 
+                the symbol of the asset.
+            - timestamp (datetime):
+                the time stamp of the quote.
+            - ask_price (float):
+                the ask price of the quote.
+            - ask_size (int):
+                the ask size of the quote.
+            - bid_exchange (str):
+                the exchange where the bid occurred.
+            - bid_price (float):
+                the bid price of the quote.
+            - bid_size (int):
+                the bid size of the quote.
+            - conditions (List[str]):
+                the conditions of the quote.
+            - tape (str):
+                the tape where the quote occurred.
         """
         BAR = 'BAR'
         TRADE = 'TRADE'
@@ -145,17 +198,17 @@ class AlpacaAsset(AbstractAsset):
 
     Attributes:
     ----------
-        symbol: str
+        symbol (str):
             A string representing the symbol or ticker of the asset.
-        asset_type: AssetType
+        asset_type (AssetType):
             An instance of the `AssetType` enum class representing the
             type of asset.
-        fractionable: bool
+        fractionable (bool):
             A boolean indicating whether the asset can be traded in
             fractional shares. This is useful for trading for example
             cryptocurrencies or stocks that are expensive to buy as a
             whole share.
-        marginable: bool
+        marginable (bool):
             A boolean indicating whether the asset is a marginable
             asset. Marginable assets can be used as collateral for
             margin trading. Margin trading is a process where the
