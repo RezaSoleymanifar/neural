@@ -589,24 +589,23 @@ class AlpacaDataDownloader():
                 The raw dataset downloaded from the Alpaca API.
 
         Raises:
-        
+        ----------
+            KeyError:
+                If there is no data in the requested date range.
         """
         timeframe = resolution_to_timeframe(resolution)
         downloader, request = self.data_client.get_downloader_and_request(
             dataset_type=dataset_type, asset_type=asset_type)
-
         data = downloader(
             request(symbol_or_symbols=symbols,
                     timeframe=timeframe,
                     start=start,
                     end=end))
-
         try:
             dataset = data.df
-
         except KeyError:
             raise KeyError(f'No data in requested range {start}-{end}')
-
+        
         return dataset
 
     def download_to_hdf5(
@@ -625,7 +624,7 @@ class AlpacaDataDownloader():
         cryptocurrencies cannot be written to the same HDF5 file, since
         they have different calendar types and trading hours. The
         dataset requires underlying data to have identical trading hours
-        and calendar types. This also can restricts the assets that can
+        and calendar types. This also can restrict the assets that can
         be traded concurrently even for stocks, since some stocks have
         different trading hours and calendar types due to being listed
         on different exchanges. In Alpaca API however all stock tickers
