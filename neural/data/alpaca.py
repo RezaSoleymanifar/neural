@@ -471,9 +471,7 @@ class AlpacaDataDownloader():
             Validates the resolution of the dataset. Resolutions not
             accepted can potentially lead to incoherencies in the end to
             end process, due to irregular aggregation output from the
-            Alpaca API. For example resoluion = 43Min can shift the
-            start and end times of the trading day in a way that is
-            unpredictable and inconsistent with other resoluions.
+            Alpaca API.
         download_dataset: 
             Downloads raw dataset from the Alpaca API. This is a
             dataframe downloaded from the API. Typically daily data is
@@ -493,10 +491,10 @@ class AlpacaDataDownloader():
 
         Args:
         ----------
-            data_client (AlpacaDataClient): An instance of the
-            AlpacaDataClient class. This is responsible for
-            communicating with the Alpaca API and providing the basic
-            facility to download data.
+            data_client (AlpacaDataClient): 
+                An instance of the AlpacaDataClient class. This is
+                responsible for communicating with the Alpaca API and
+                providing the basic facilities to download data.
         """
 
         self.data_client = data_client
@@ -510,8 +508,9 @@ class AlpacaDataDownloader():
         accepted can potentially lead to incoherencies in the end to end
         process, due to irregular aggregation output from the Alpaca
         API. For example resoluion = 43Min can shift the start and end
-        times of the trading day in a way that is unpredictable and
-        inconsistent with other resoluions.
+        times of the trading day in a way that start is no longer 9:30
+        AM for NYSE stocks. This can lead to inconsistencies in the
+        end to end process.
 
         Args: 
         ----------
@@ -521,19 +520,21 @@ class AlpacaDataDownloader():
         Raises:
         ----------
         ValueError:
-            If the resolution is not accepted.
+            If the resolution is not accepted by the Alpaca API. 
+        ValueError:
+            If the daily durations is not divisible by resolution.
         """
 
+        if resolution not in ALPACA_ACCEPTED_DOWNLOAD_RESOLUTIONS:
+            raise ValueError(
+                f'Accepted resolutions: {ALPACA_ACCEPTED_DOWNLOAD_RESOLUTIONS}.')
+        
         daily_durations = schedule['end'] - schedule['start']
         rows_per_day = (daily_durations /
                         resolution.pandas_timedelta).values
         if not all(value.is_integer() for value in rows_per_day):
             raise ValueError('Incompatible resolution for given date range. '
                              'Daily durations is not divisible by resolution.')
-        
-        if resolution not in ALPACA_ACCEPTED_DOWNLOAD_RESOLUTIONS:
-            raise ValueError(
-                f'Accepted resolutions: {ALPACA_ACCEPTED_DOWNLOAD_RESOLUTIONS}.')
 
         return None
 
