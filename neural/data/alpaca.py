@@ -105,11 +105,7 @@ class AlpacaDataSource(AbstractDataSource):
             - conditions (List[str]):
                 the conditions of the quote.
             - tape (str):
-            
-
-            This is a 
-        QUOTE : str
-            The type of dataset for aggregated quote stream.
+                the tape where the quote occurred.
         ORDER_BOOK : str
             The type of dataset for aggregated order book data.
         """
