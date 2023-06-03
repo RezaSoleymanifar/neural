@@ -716,9 +716,9 @@ class AlpacaDataDownloader():
 
         if len(schedule) == 0:
             raise ValueError(
-                f'No market hours in date range {start_date}-{end_date}.')
-
+                f'No market hours in date range {start_date}-{end_date}.'
         self._validate_resolution(resolution=resolution, schedule=schedule)
+        
         days = len(schedule)
         n_assets = len(symbols)
         logger.info('Downloading dataset:'
@@ -727,7 +727,6 @@ class AlpacaDataDownloader():
                     f'\n\t days = {days}'
                     f'\n\t resolution = {resolution}'
                     f'\n\t n_assets = {n_assets}')
-
         progress_bar_ = progress_bar(len(schedule))
 
         for start, end in schedule.values:
