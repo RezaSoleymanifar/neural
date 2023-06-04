@@ -156,7 +156,7 @@ class AbstractTrainer(ABC):
         train_ratio: float = 1,
         n_envs: int = 1,
         async_envs: bool = True,
-        exclusive_envs: True = False,
+        exclusive_envs: bool = False,
         initial_cash_range: Optional[Tuple[float, float]] = None,
         initial_assets_range: Optional[Tuple[float, float]] = None,
     ) -> None:
