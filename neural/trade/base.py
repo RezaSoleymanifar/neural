@@ -129,7 +129,7 @@ class AbstractTrader(ABC):
             asset_quantities (np.ndarray[float]):
                 The current quantity of each asset held by the trader.
         """
-        return self.trade_client.get_asset_quantities
+        return self.trade_client.get_asset_quantities()
 
     @property
     def equity(self) -> float:
