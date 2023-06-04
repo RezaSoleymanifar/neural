@@ -64,14 +64,24 @@ Classes:
             - Action mapping    
             - Action clipping
     RenderPipe:
-    
-
+        A pipe to render the environment. This usually is the last pipe
+        in the stack of pipes. It is responsible for rendering the
+        environment to the console, GUI or a file.
+    BasePipe:
+        A basic pipe to provide fundamental trading and training
+        functionalities to the environment. It is a stack of pipes that
+        can be applied to an environment. The order of the pipes is as
+        follows:
+            - reward pipe
+            - observation pipe
+            - action pipe
+            - head action pipe
+            - render pipe
 """
 from abc import abstractmethod, ABC
 from typing import Callable
 
 from gym import Env
-
 
 from neural.wrapper.action import (
     MinTradeSizeActionWrapper, IntegerAssetQuantityActionWrapper,
