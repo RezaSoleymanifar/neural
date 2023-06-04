@@ -14,7 +14,7 @@ License:
 Author(s):
 -------
     Reza Soleymanifar, Email: Reza@Soleymanifar.com
-    
+
 Classes:
 --------
     AbstractMarketEnv:
@@ -459,14 +459,13 @@ class TrainMarketEnv(AbstractMarketEnv):
             containing the current cash balance, asset quantities,
             holds, and features.
         """
-
         observation = {
             "cash": self.cash,
             "asset_quantities": self.asset_quantities,
             "holds": self.holds,
             "features": self.features,
         }
-
+        
         return observation
 
     def place_orders(self, actions: np.ndarray[float]) -> None:
