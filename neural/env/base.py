@@ -30,9 +30,8 @@ Classes:
 
 Notes:
 ------
-    Market environments should be designed to interact with trading
-    algorithms or other agents in order to simulate the behavior of a
-    real-world market.
+    Market environments should be designed to interact with agents in
+    order to simulate the behavior of a real-world market.
 """
 from __future__ import annotations
 
