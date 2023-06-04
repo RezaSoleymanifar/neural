@@ -49,6 +49,22 @@ class AlpacaTrader(AbstractTrader):
                          data_client=data_client,
                          agent=agent)
 
+    @property
+    def equity(self) -> float:
+        """
+        The current equity of the trader, read from the API. Equity is
+        the sum of cash and the value of all assets owned by the trader.
+        Equity = L + C - S where L is the value of long positions, C is
+        the cash and S is the value of short positions. Cash can be
+        positive or negative.
+
+        Returns:
+        --------
+            equity (float):
+                The current equity of the trader.
+        """
+        return self.trade_client.equity
+    
     def check_constraints(self, delta=0.2):
         """
         Checks trading constraints. The constraints are:

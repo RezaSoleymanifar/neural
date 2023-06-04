@@ -92,7 +92,6 @@ class AbstractTrader(ABC):
             agent (Agent):
                 An instance of the agent to perform decision making.
         """
-
         self.trade_client = trade_client
         self.data_client = data_client
         self.agent = agent
@@ -103,6 +102,36 @@ class AbstractTrader(ABC):
 
         return None
 
+    @property
+    def trade_market_env(self) -> TradeMarketEnv:
+        """
+        The trading environment used to execute orders.
+        """
+        if self._trade_market_env is None:
+            env = TradeMarketEnv(trader=self)
+            piped_env = self.agent.pipe(self._trade_market_env)
+            self._trade_market_env = piped_env
+        return self._trade_market_env
+
+    @property
+    def market_metadata_wrapper(self) -> AbstractMarketEnvMetadataWrapper:
+        """
+        The metadata wrapper used by the trading environment.
+        """
+        pipe = self.agent.pipe
+        market_metadata_wrapper = pipe.get_market_metadata_wrapper(
+            self.trade_market_env)
+        return market_metadata_wrapper
+    
+        @property
+    def model(self) -> nn.Module:
+        """
+        Returns the model used by the agent to generate actions.
+        """
+        if self._model is None:
+            self._model = self.agent.model
+        return self._model
+    
     @property
     def cash(self) -> float:
         """
@@ -130,23 +159,7 @@ class AbstractTrader(ABC):
             asset_quantities (np.ndarray[float]):
                 The current quantity of each asset held by the trader.
         """
-        return self.trade_client.get_asset_quantities()
-
-    @property
-    def equity(self) -> float:
-        """
-        The current equity of the trader, read from the API. Equity is
-        the sum of cash and the value of all assets owned by the trader.
-        Equity = L + C - S where L is the value of long positions, C is
-        the cash and S is the value of short positions. Cash can be
-        positive or negative.
-
-        Returns:
-        --------
-            equity (float):
-                The current equity of the trader.
-        """
-        return self.trade_client.equity
+        return self.trade_client.get_asset_quantities(assets=self.assets)
 
     @property
     def asset_prices(self) -> np.ndarray[float]:
@@ -188,41 +201,6 @@ class AbstractTrader(ABC):
             self._data_feeder = AsyncDataFeeder(stream_metadata,
                                                 self.data_client)
         return self._data_feeder
-
-    @property
-    def trade_market_env(self) -> TradeMarketEnv:
-        """
-        The trading environment used to execute orders.
-        """
-        if self._trade_market_env is None:
-            env = TradeMarketEnv(trader=self)
-            piped_env = self.agent.pipe(self._trade_market_env)
-            self._trade_market_env = piped_env
-        return self._trade_market_env
-
-    @property
-    def market_metadata_wrapper(self) -> AbstractMarketEnvMetadataWrapper:
-        """
-        The metadata wrapper used by the trading environment.
-        """
-        env = self.trade_market_env
-        while not isinstance(env, AbstractMarketEnvMetadataWrapper):
-            if hasattr(env, 'env'):
-                env = env.env
-            else:
-                raise ValueError(
-                    'The pipe does not have a wrapper of type '
-                    f'{AbstractMarketEnvMetadataWrapper.__name__}.')
-        return env
-
-    @property
-    def model(self) -> nn.Module:
-        """
-        Returns the model used by the agent to generate actions.
-        """
-        if self._model is None:
-            self._model = self.agent.model
-        return self._model
 
     def place_orders(self, actions: np.ndarray, *args, **kwargs):
         """
