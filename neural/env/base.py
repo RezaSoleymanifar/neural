@@ -169,7 +169,7 @@ class TrainMarketEnv(AbstractMarketEnv):
             A list of assets in the dataset.
         n_assets (int):
             The number of assets in the dataset.
-        n_features: int
+        n_features (int):
             The number of features in the dataset.
         holds (np.ndarray):
             An integer array representing the number of steps each asset
@@ -233,24 +233,24 @@ class TrainMarketEnv(AbstractMarketEnv):
 
     Properties:
     -----------
-        done: bool
+        done (bool):
             A boolean value indicating whether the current episode is
             finished.
-        cash: float
+        cash (float):
             The current amount of cash in the environment.
-        asset_quantities: np.ndarray
+        asset_quantities (np.ndarray):
             An array representing the quantities of each asset held by
             the environment. A positive value means the asset is held
             long, while a negative value means the asset is held short.
             Asset quantities can be fractional, allowing for partial
             shares, or integer, allowing for only whole shares.
-        asset_prices: np.ndarray
+        asset_prices (np.ndarray):
             An array representing the current asset prices of the
             environment.
 
     Methods:
     --------
-    update():
+    update() -> None:
         Uses features_generator to update the environment state by
         moving to the next time step.
     construct_observation():
@@ -260,29 +260,29 @@ class TrainMarketEnv(AbstractMarketEnv):
             - asset_quantities
             - holds
             - features
-    place_orders(actions):
+    place_orders(actions) -> None:
         Places orders on the assets based on the given actions. Performs
         the book keeping internally by updating variables such as cash,
         asset quantities, and holds.
-    reset():
+    reset() -> Dict[str, np.ndarray]:
         Resets the market environment to its initial state. Sets initial
         values for cash, asset quantities, and holds. Returns the
         initial observation. This is consistent with gym.Env.reset()
-        from gym API.
+        from OpenAI gym API.
     step(actions):
-        Executes a step in the trading environment. Updates the market
-        environment state by moving to the next time step and updating
-        the environment variables such as features, asset prices, holds,
-        and net worth. This is consistent with gym.Env.step() interface.
+        Executes a step in the trading environment. It places orders
+        based on the given actions, updates the environment state, and
+        constructs the observation. Returns the observation, reward,
+        done, and info. This is consistent with gym.Env.step() from
+        OpenAI gym API.
 
     Examples:
     ---------
     >>> from neural.data.base import StaticDataFeeder
     >>> from neural.env.base import TrainMarketEnv
-    >>> data_feeder = StaticDataFeeder(path='data.h5')
+    >>> data_feeder = StaticDataFeeder(path=...)
     >>> env = TrainMarketEnv(data_feeder=data_feeder)
     """
-
     def __init__(
         self,
         data_feeder: StaticDataFeeder,
