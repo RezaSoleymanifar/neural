@@ -370,10 +370,9 @@ class TrainMarketEnv(AbstractMarketEnv):
 
         Returns:
         --------
-            done: bool
+            done (bool):
                 A boolean value indicating whether the current episode
-                is finished. DataFeeder.done is used to determine
-                whether the episode is finished.
+                is finished.
         """
         return self.data_feeder.done
     
@@ -384,7 +383,7 @@ class TrainMarketEnv(AbstractMarketEnv):
 
         Returns:
         --------
-            cash: float
+            cash (float)
                 The current amount of cash in the environment.
         """
         return self._cash
@@ -400,12 +399,12 @@ class TrainMarketEnv(AbstractMarketEnv):
 
         Returns:
         --------
-            asset_quantities: 
+            asset_quantities (np.ndarray):
                 np.ndarray An array representing the quantities of each
                 asset held by the environment.
         """
         return self._asset_quantities
-    
+
     @property
     def asset_prices(self) -> np.ndarray:
         """
