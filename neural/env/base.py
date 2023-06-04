@@ -482,7 +482,6 @@ class TrainMarketEnv(AbstractMarketEnv):
                 continue
 
             quantity = action / self.asset_prices[asset]
-
             self._asset_quantities[asset] += quantity
             self._cash -= action
             self.holds[asset] = 0
@@ -497,13 +496,9 @@ class TrainMarketEnv(AbstractMarketEnv):
 
         Returns:
         --------
-        observation: Dict[str, np.ndarray[float]]
+        observation (Dict[str, np.ndarray[float]]):
             The initial observation dictionary containing the current
             cash balance, asset quantities, holds, and features.
-
-        Notes:
-        ------
-            This is consistent with gym.Env.reset()
         """
         self.features_generator = self.data_feeder.get_features_generator()
         self.holds = np.zeros((self.n_assets, ), dtype=GLOBAL_DATA_TYPE)
@@ -539,26 +534,23 @@ class TrainMarketEnv(AbstractMarketEnv):
         Returns
         -------
         Tuple[Dict, float, bool, Dict]
-            observation : dict
+            observation (Dict):
                 A dictionary containing the current observation.
-            reward : float
-                The reward achieved in the current step. Reward is not 
-                generated in env. Instead enclosing wrappers impolemnt
-                the logic of reward generation. The output reward thus
-                is None, which later will be modified by wrappers.
-            done : bool
+            reward (float):
+                The reward achieved in the current step. Reward is not
+                generated here. Instead enclosing wrappers implement the
+                logic of reward generation. The output reward thus is
+                None, which later will be modified by wrappers.
+            done (bool)
                 A boolean value indicating whether the current episode
                 is finished.
-            info : dict
+            info (Dict):
                 Additional information related to the current step.
         """
-
         self.place_orders(actions)
-
         self.update()
-
-        reward = None
         observation = self.get_observation()
+        reward = None
 
         return observation, reward, self.done, self.info
 
