@@ -413,7 +413,7 @@ class TrainMarketEnv(AbstractMarketEnv):
         
         Returns:
         --------
-            asset_prices: np.ndarray
+            asset_prices (np.ndarray):
                 An array representing the current asset prices of the
                 assets.
         """
@@ -426,13 +426,9 @@ class TrainMarketEnv(AbstractMarketEnv):
     def update(self) -> None:
         """
         Updates the environment state by moving to the next time step
-        and updating the environment variables such as features, holds,
-        and index.
-
-        Returns:
-            None
+        and updating the environment variables such as features and
+        holds.
         """
-
         self.features = next(self.features_generator)
         self.holds[self.asset_quantities != 0] += 1
 
