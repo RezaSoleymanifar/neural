@@ -268,6 +268,7 @@ class TrainMarketEnv(AbstractMarketEnv):
         Resets the market environment to its initial state. Sets initial
         values for cash, asset quantities, and holds. Returns the
         initial observation. This is consistent with gym.Env.reset()
+        from gym API.
     step(actions):
         Executes a step in the trading environment. Updates the market
         environment state by moving to the next time step and updating
