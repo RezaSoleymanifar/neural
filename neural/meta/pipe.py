@@ -119,6 +119,11 @@ class AbstractPipe(ABC):
 
     Methods:
     --------
+        get_market_metadata_wrapper(env):
+            This method returns the metadata wrapper of the environment.
+            The metadata wrapper is responsible for providing metadata
+            of the environment to other wrapper and contains fundamental
+            information about the market environment.
         pipe(env):
             Applies a stack of market wrappers successively to an
             environment.
@@ -130,7 +135,8 @@ class AbstractPipe(ABC):
         etc. You can then combine these pipes to create a more complex
         pipe.
     """
-    def get_metadata_wrapper(env: Env) -> Env:
+    @staticmethod
+    def get_market_metadata_wrapper(env: Env) -> Env:
         """
         This method returns the metadata wrapper of the environment. The
         metadata wrapper is responsible for providing metadata of the
