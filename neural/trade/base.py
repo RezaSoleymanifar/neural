@@ -2,6 +2,7 @@
 base.py
 """
 from abc import ABC
+from datetime import datetime
 from typing import List
 
 import numpy as np
@@ -212,7 +213,7 @@ class AbstractTrader(ABC):
         while True:
             current_time = datetime.utcnow()
             current_day = current_time.date()
-            
+
             action = model(observation)
             observation, reward, done, info = self.trade_market_env.step(action)
 
