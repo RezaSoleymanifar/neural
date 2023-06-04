@@ -812,33 +812,30 @@ class AlpacaDataStreamer:
 
 class AlpacaDataProcessor:
     """
-    A class to process financial data downloaded from the Alpaca API.
-    This includes reindexing and forward filling missing rows in the
-    data. This is important, since even with a perfect data collection
-    process there can be missing rows in the data, due to trading halts
-    or other market anomalies. In this case forward filling is used to
-    indicate features has not changed over time when no trade occurs.
+    A class to preprocess financial data downloaded from the Alpaca API.
 
-    Example:
-    ----------
-    for NYSE stocks, the market opens at 9:30 AM and closes at 4:00 PM.
-    If resolution = 1Min, then the data is sampled every minute. This
-    means that the data is sampled at 9:30 AM, 9:31 AM, 9:32 AM, ...,
-    3:59 PM. Dataset is then reindexed such that rows corresponding to
-    each interval are matched. If for example there is no trade at 9:31
-    AM, then the data will be missing for that interval. In this case
-    forward filling is used to indicate that the features has not
-    changed over time when no trade occurs. If data at first interval is
-    missing, then forward filling won't work, since there is no data to
-    forward fill from. In this case backward filling is used to fill the
-    missing value with closes non-missing value row. If after
-    forward/backward filling there is still missing data, then the
-    entire dataset is empty, namely there is no data for the given time
-    range.
+    Attributes:
+    ----------  
+        processing_statistics (RunningStatistics):
+            A RunningStatistics instance that keeps track of the
+            processing statistics of the data. This is useful for   
+            reporting density of the data after processing.
+
+    Methods:
+    --------
+        __init__:
+            Initializes the AlpacaDataProcessor class.
+        reindex_and_forward_fill:
+            Reindexes and forward fills missing rows in [open, close)
+            range, i.e. time_index = open means any time with open <=   
+            time < open + resolution will be included in the time_index
+            interval. The final interval will have time_index = close -
+            resolution.
     """
-
     def __init__(self):
-
+        """
+        Initializes the AlpacaDataProcessor class.
+        """
         self.processing_statistics = RunningStatistics()
 
     def reindex_and_forward_fill(self, dataset: pd.DataFrame, open: datetime,
@@ -865,6 +862,23 @@ class AlpacaDataProcessor:
         ----------
             processed (pd.DataFrame):
                 The reindexed and forward filled data.
+
+        Example:
+        ----------
+        for NYSE stocks, the market opens at 9:30 AM and closes at 4:00 PM.
+        If resolution = 1Min, then the data is sampled every minute. This
+        means that the data is sampled at 9:30 AM, 9:31 AM, 9:32 AM, ...,
+        3:59 PM. Dataset is then reindexed such that rows corresponding to
+        each interval are matched. If for example there is no trade at 9:31
+        AM, then the data will be missing for that interval. In this case
+        forward filling is used to indicate that the features has not
+        changed over time when no trade occurs. If data at first interval is
+        missing, then forward filling won't work, since there is no data to
+        forward fill from. In this case backward filling is used to fill the
+        missing value with closes non-missing value row. If after
+        forward/backward filling there is still missing data, then the
+        entire dataset is empty, namely there is no data for the given time
+        range.
         """
 
         index = pd.date_range(start=open,
