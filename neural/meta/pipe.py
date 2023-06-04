@@ -130,48 +130,26 @@ class AbstractPipe(ABC):
         etc. You can then combine these pipes to create a more complex
         pipe.
     """
-    def metadata(self, pipe: Callable):
+    def get_metadata_wrapper(env: Env) -> Env:
         """
-        A decorator for modifying the pipe method to add metadata as a
-        property of the returned piped environment. This is useful for
-        getting a pointer to the metadata wrapper of the wrapper stack.
+        This method returns the metadata wrapper of the environment. The
+        metadata wrapper is responsible for providing metadata of the
+        environment to other wrapper and contains fundamental
+        information about the market environment.
 
         Args:
         -----
-            pipe (Callable):
-                The pipe method to decorate.
-    
-        Returns:
-        --------
-            decorated_pipe (Callable):
-                The decorated pipe method.
+            env (Env):
+                gym environment to be wrapped.
         """
-        def decorated_pipe(env: Env) -> Env:
-            """
-            The decorated pipe method.
-
-            Args:
-            -----
-                env (Env):
-                    The environment to be wrapped.
-            
-            Returns:
-            --------
-                env (Env):
-                    The wrapped environment.
-            """
-            env = pipe(env)
-            piped_env = env.deepcopy()
-            while not isinstance(env, AbstractMarketEnvMetadataWrapper):
-                if hasattr(env, 'env'):
-                    env = env.env
-                else:
-                    raise ValueError(
-                        'The pipe does not have a wrapper of type '
-                        f'{AbstractMarketEnvMetadataWrapper.__name__}.')
-            piped_env.market_metadata_wrapper = env
-            return env
-        return decorated_pipe
+        while not isinstance(env, AbstractMarketEnvMetadataWrapper):
+            if hasattr(env, 'env'):
+                env = env.env
+            else:
+                raise ValueError(
+                    'The pipe does not have a wrapper of type '
+                    f'{AbstractMarketEnvMetadataWrapper.__name__}.')
+        return env
 
     @abstractmethod
     def pipe(self, env: Env) -> Env:
@@ -1186,7 +1164,6 @@ class MarginAccountPipe(BasePipe):
 
         return None
 
-    @AbstractPipe.metadata
     def pipe(self, env):
         """
         Applies a stack of market wrappers successively to an
