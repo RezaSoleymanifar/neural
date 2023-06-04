@@ -25,7 +25,7 @@ from neural.common.constants import (ALPACA_ACCEPTED_DOWNLOAD_RESOLUTIONS,
                                      GLOBAL_DATA_TYPE)
 from neural.common.log import logger
 from neural.data.base import (AbstractDataSource, AbstractAsset, CalendarType,
-                              DatasetMetadata)
+                              DatasetMetadata, FeatureSchema)
 from neural.data.enums import AssetType
 from neural.utils.base import (progress_bar, validate_path, RunningStatistics)
 from neural.utils.io import to_hdf5
@@ -716,7 +716,7 @@ class AlpacaDataDownloader():
 
         if len(schedule) == 0:
             raise ValueError(
-                f'No market hours in date range {start_date}-{end_date}.'
+                f'No market hours in date range {start_date}-{end_date}.')
         self._validate_resolution(resolution=resolution, schedule=schedule)
 
         days = len(schedule)
@@ -736,10 +736,10 @@ class AlpacaDataDownloader():
                                             resolution=resolution,
                                             start=start,
                                             end=end)
+            
             symbols_in_dataset = dataset.index.get_level_values(
                 'symbol').unique().tolist()
             missing_symbols = set(symbols_in_dataset) ^ set(symbols)
-            
             if missing_symbols:
                 raise ValueError(f'No data for symbols {missing_symbols} in '
                                  f'{start}, {end} time range.')
@@ -755,14 +755,12 @@ class AlpacaDataDownloader():
             for symbol, group in dataset.groupby('symbol'):
                 processed_group = data_processor.reindex_and_forward_fill(
                     dataset=group, open=start, close=end, resolution=resolution)
-
                 symbol_groups.append(processed_group)
 
             features_df = pd.concat(symbol_groups, axis=1)
             features_df = features_df.select_dtypes(include=np.number)
 
-            feature_schema = DatasetMetadata.create_feature_schema(
-                data=features_df)
+            feature_schema = FeatureSchema(features_df)
             data_schema = {dataset_type: tuple(symbols)}
             features_array = features_df.to_numpy(dtype=GLOBAL_DATA_TYPE)
 
