@@ -79,6 +79,7 @@ Classes:
             - render pipe
 """
 from abc import abstractmethod, ABC
+from copy import deepcopy
 from typing import Callable
 
 from gym import Env
@@ -158,6 +159,7 @@ class AbstractPipe(ABC):
                     The wrapped environment.
             """
             env = pipe(env)
+            piped_env = env.deepcopy()
             while not isinstance(env, AbstractMarketEnvMetadataWrapper):
                 if hasattr(env, 'env'):
                     env = env.env

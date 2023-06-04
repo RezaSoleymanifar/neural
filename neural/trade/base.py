@@ -8,7 +8,8 @@ import numpy as np
 from torch import nn
 
 from neural.client.alpaca import AbstractTradeClient, AbstractDataClient
-from neural.data.base import AsyncDataFeeder, AlpacaAsset
+from neural.data.alpaca import AlpacaAsset
+from neural.data.base import AsyncDataFeeder
 from neural.env.base import TradeMarketEnv
 from neural.meta.agent import Agent
 from neural.wrapper.base import AbstractMarketEnvMetadataWrapper
