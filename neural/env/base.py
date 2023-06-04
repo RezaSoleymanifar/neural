@@ -58,7 +58,7 @@ class AbstractMarketEnv(Env, ABC):
 
     Methods:
     --------
-    update_env(self):
+    update(self):
         Abstract method for updating the market environment. Thismethod
         uses the generator returned by the data feeder to update the 
         environment state.
@@ -78,7 +78,7 @@ class AbstractMarketEnv(Env, ABC):
     Market environments should be designed to interact with agents in
     order to simulate the behavior of a real-world market for training.
     This base class defines the minimum interface required for an
-    environment to be used for algorithmic trading.
+    environment to be used for high frequency trading.
 
     There are typically two types of market environments:
         - Training environments
@@ -98,8 +98,7 @@ class AbstractMarketEnv(Env, ABC):
         Abstract method for updating the market environment. Should be
         implemented by subclasses. This method should update the
         environment state by moving to the next time step and updating
-        the environment internal variables such as features, asset
-        prices, holds, and equity.
+        the environment internal variables such as features, and holds.
         """
         raise NotImplementedError
 
@@ -140,16 +139,15 @@ class AbstractMarketEnv(Env, ABC):
 
 class TrainMarketEnv(AbstractMarketEnv):
     """
-    A bare metal market environment with no market logic. Natively
-    allowes cash and asset quantities to be negative, accommodating
-    short/margin trading by default. Use action wrappers to impose
-    market logic such as margin account initial and maintenance margins.
-    Inherits from AbstractMarketEnv. This class is intended to be used
-    for training agents. For trading, use TradeMarketEnv. This class is
-    not intended to be used directly. Instead, use the pipes in
-    neural.meta.env.pipe to augment the environment with additional
-    features. This enables the environment to respect real market
-    constraints (e.g. short selling and margin trading constraints).
+    A bare metal market environment with no market logic for training
+    agents. Natively allowes cash and asset quantities to be negative,
+    accommodating short/margin trading by default. Use action wrappers
+    to impose market logic such as margin logic (e.g. account initial
+    and maintenance margins). For trading, use TradeMarketEnv. Use the
+    pipes in neural.meta.env.pipe to augment the environment with
+    additional features. This enables the environment to respect real
+    market constraints (e.g. short selling and margin trading
+    constraints).
 
     Attributes:
     -----------
