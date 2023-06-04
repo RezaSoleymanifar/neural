@@ -144,44 +144,32 @@ class TrainMarketEnv(AbstractMarketEnv):
     accommodating short/margin trading by default. Use action wrappers
     to impose market logic such as margin logic (e.g. account initial
     and maintenance margins). For trading, use TradeMarketEnv. Use the
-    pipes in neural.meta.env.pipe to augment the environment with
+    pipes in `neural.meta.env.pipe` to augment the environment with
     additional features. This enables the environment to respect real
     market constraints (e.g. short selling and margin trading
     constraints).
 
     Attributes:
     -----------
-        data_feeder: StaticDataFeeder
+        data_feeder (StaticDataFeeder):
             The StaticDataFeeder instance providing the data to the
             environment. This is used to update the environment state
             and construct the observation.
-        initial_cash: float, optional
+        initial_cash (float, optional):
             The initial amount of cash to allocate to the environment.
             Default is 1e6.
-        initial_asset_quantities: np.ndarray, optional
+        initial_asset_quantities (np.ndarray, optional):
             The initial quantity of assets to allocate to the
             environment. Default is None.
-        metadata: DatasetMetadata
+        metadata (DatasetMetadata):
             Metadata about the dataset used. This includes the feature
             schema, asset names, and asset price mask.
-        feature_schema: Dict[FeatureType, List[bool]] 
-            A dictionary mapping feature types to their respective
-            boolean masks. Used to extract targeet features from the
-            dataset.
-        assets: List[str]
-            A list of asset names in the dataset. features in the
-            dataset.
-        n_steps: int
-            The number of steps in the environment. Corresponds to the
-            the total number of intervals in the market days of the
-            dataset calendar.
-        n_features: int
-            The number of features in the dataset. For n_assets as
-            number of assets in the dataset, n_features is always
-            greater than or equal to n_assets, namely a price feature
-            for each asset plus additional features.
+        assets (List[AbstractAsset]):
+            A list of assets in the dataset.
         n_assets: int
             The number of assets in the dataset.
+        n_features: int
+            The number of features in the dataset.
         index: int
             The current index of the environment. Shows the current time
             step of the environment.
