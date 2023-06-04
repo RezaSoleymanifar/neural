@@ -1,35 +1,89 @@
 """
 pipes.py
 
-This module defines pipes for market environments. Pipes are a stack of
-gym wrappers (Link: https://www.gymlibrary.dev/api/wrappers/) that can
-be applied to an environment to:
-    - modify actions from agent to environment
-    - modify observations from environment to agent
-    - modify rewards from environment to agent
-    - provide metadata of the environment to the agent
+Description:
+------------
+    This module defines pipes for market environments. Pipes are a stack
+    of gym wrappers (Link: https://www.gymlibrary.dev/api/wrappers/)
+    that can be applied to an environment to:
+        - modify actions from agent to environment
+        - modify observations from environment to agent
+        - modify rewards from environment to agent
+        - provide metadata of the environment to the agent
 
+    The sucessive application of wrapppers allow for the creation of
+    complex environments with extended functionality. For example, you
+    can create a pipe that simulates a margin account, by applying a
+    stack of relevant wrappers to the base environment.
+
+License:
+--------
+    MIT License. See LICENSE.md file.
+
+Author(s):
+-------
+    Reza Soleymanifar, Email: Reza@Soleymanifar.com
+
+Classes:
+--------
+    AbstractPipe:
+        Abstract class for environment pipes, which add extended
+        functionality to an existing environment by applying wrappers
+        successively. A pipe is a stack of wrappers applied in a
+        non-conflicting way. Use wrappers to customize the base market
+        env, manipulate actions and observations, impose trading logic,
+        etc. according to your specific needs.
+    RewardPipe:
+        This pipe handles the specifics of reward generation,
+        modification for the base environment. The pipe adds the
+        following functionality to the base environment:
+            - Reward generation
+            - Interest on debt
+            - Reward normalization
+    ObservationPipe:
+        Observation pipe for market environments. Provides basic
+        functionality for manipulating observations. The pipe adds the
+        following functionality to the base environment:
+            - Observation flattening
+            - Observation buffering
+            - Observation stacking
+            - Observation normalization
+    ActionPipe:
+        Action pipe for market environments. The pipe adds the following
+        functionality to the base environment:
+            - Minimum trade size
+            - Integer asset quantity
+            - Position close
+            - Shorting
+    HeadActionPipe:
+        This pipe is responsible for parsing the immediate actions of
+        the model, hence the name head. It is the last pipe applied in
+        the action pipe stack (first pipe to receive actions). The pipe
+        adds the following functionality to the base environment:
+            - Action parsing
+            - Action mapping    
+            - Action clipping
+    RenderPipe:
+    
 
 """
 from abc import abstractmethod, ABC
 from typing import Callable
 
 from gym import Env
-from neural.wrapper.base import (MarginAccountMetaDataWrapper,
-                                 ConsoleTearsheetRenderWrapper,
-                                 AbstractMarketEnvMetadataWrapper)
+
 
 from neural.wrapper.action import (
     MinTradeSizeActionWrapper, IntegerAssetQuantityActionWrapper,
     PositionCloseActionWrapper, InitialMarginActionWrapper,
     ExcessMarginActionWrapper, ShortingActionWrapper,
     EquityBasedFixedUniformActionParser, ActionClipperWrapper)
-
+from neural.wrapper.base import (MarginAccountMetaDataWrapper,
+                                 ConsoleTearsheetRenderWrapper)
 from neural.wrapper.observation import (ObservationStackerWrapper,
                                         ObservationBufferWrapper,
                                         FlattenToNUmpyObservationWrapper,
                                         ObservationNormalizerWrapper)
-
 from neural.wrapper.reward import (RewardNormalizerWrapper,
                                    RewardGeneratorWrapper,
                                    LiabilityInterstRewardWrapper)

@@ -1,10 +1,20 @@
 """
 base.py
 
+Description:
+------------
 This module defines the base classes for the market environment needed
 for training and trading with deep reinforcement learning algorithms.
 The base classes are designed to be used with the OpenAI Gym interface.
 
+License:
+--------
+    MIT License. See LICENSE.md file.
+
+Author(s):
+-------
+    Reza Soleymanifar, Email: Reza@Soleymanifar.com
+    
 Classes:
 --------
     AbstractMarketEnv:
