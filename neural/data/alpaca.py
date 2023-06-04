@@ -839,7 +839,7 @@ class AlpacaDataProcessor:
         self.processing_statistics = RunningStatistics()
 
     def reindex_and_forward_fill(self, dataset: pd.DataFrame, open: datetime,
-                                 close: datetime, resolution: str):
+                                 close: datetime, resolution: Resolution):
         """
         Reindexes and forward fills missing rows in [open, close)
         range, i.e. time_index = open means any time with open <= time <
@@ -854,9 +854,8 @@ class AlpacaDataProcessor:
                 The open time of the time index.
             close (datetime):
                 The close time of the time index.
-            resolution (str):
-                The frequency at which to sample the data. One of
-                '1Min', '5Min', '15Min', or '30Min'.
+            resolution (Resolution):
+                The resolution of the time index.
 
         Returns:
         ----------
