@@ -736,7 +736,7 @@ class AlpacaDataDownloader():
                                             resolution=resolution,
                                             start=start,
                                             end=end)
-            
+
             symbols_in_dataset = dataset.index.get_level_values(
                 'symbol').unique().tolist()
             missing_symbols = set(symbols_in_dataset) ^ set(symbols)
@@ -758,21 +758,21 @@ class AlpacaDataDownloader():
                 symbol_groups.append(processed_group)
 
             features_dataframe = pd.concat(symbol_groups, axis=1)
-            features_dataframe = features_dataframe.select_dtypes(include=np.number)
+            features_dataframe = features_dataframe.select_dtypes(
+                include=np.number)
 
             feature_schema = FeatureSchema(dataframe=features_dataframe)
-            data_schema = DataSchema(assets=assets, )
-            features_array = features_dataframe.to_numpy(dtype=GLOBAL_DATA_TYPE)
-
+            data_schema = DataSchema(data_type=dataset_type,
+                                     assets=assets,
+                                     feature_schema=feature_schema)
             dataset_metadata = DatasetMetadata(
                 data_schema=data_schema,
-                feature_schema=feature_schema,
                 resolution=resolution,
                 calendar_type=calendar_type,
                 start=start,
                 end=end,
             )
-
+            features_array = features_dataframe.to_numpy(dtype=GLOBAL_DATA_TYPE)
             to_hdf5(file_path=file_path,
                     numpy_array=features_array,
                     dataset_metadata=dataset_metadata,
