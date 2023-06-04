@@ -128,7 +128,6 @@ class AbstractPipe(ABC):
         etc. You can then combine these pipes to create a more complex
         pipe.
     """
-
     def metadata(self, pipe: Callable):
         """
         A decorator for modifying the pipe method to return the metadata
@@ -144,6 +143,31 @@ class AbstractPipe(ABC):
             decorated_pipe (Callable):
                 The decorated pipe method.
         """
+        def decorated_pipe(env: Env) -> Env:
+            """
+            The decorated pipe method.
+
+            Args:
+            -----
+                env (Env):
+                    The environment to be wrapped.
+            
+            Returns:
+            --------
+                env (Env):
+                    The wrapped environment.
+            """
+            env = pipe(env)
+            while not isinstance(env, AbstractMarketEnvMetadataWrapper):
+                if hasattr(env, 'env'):
+                    env = env.env
+                else:
+                    raise ValueError(
+                        'The pipe does not have a wrapper of type '
+                        f'{AbstractMarketEnvMetadataWrapper.__name__}.')
+            return env
+        return decorated_pipe
+    
 
     @abstractmethod
     def pipe(self, env: Env) -> Env:
