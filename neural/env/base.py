@@ -56,15 +56,22 @@ class AbstractMarketEnv(Env, ABC):
     on resolution of the dataset and placing orders based on actions
     received from the agent.
 
-
     Methods:
     --------
-    update_env():
-        Abstract method for updating the market environment.
-    construct_observation():
+    update_env(self):
+        Abstract method for updating the market environment. Thismethod
+        uses the generator returned by the data feeder to update the 
+        environment state.
+    construct_observation(self):
         Abstract method for constructing the market observation.
     place_orders(actions):
         Abstract method for placing orders in the market environment.
+        Actions are notional values of assets to buy/sell. The sign of
+        the action determines whether to buy or sell. Example:
+            Buy 100 shares of AAPL at $100 per share:
+                action = 100 * 100 = 10000
+            Sell 100 shares of AAPL at $100 per share:
+                action = -100 * 100 = -10000
 
     Notes:
     ------
@@ -649,7 +656,6 @@ class TradeMarketEnv(TrainMarketEnv):
                 the asset, while action = -200 means sell 200 dollars
                 worth of the asset, given currncy is USD.
         """
-
         self.trader.place_orders(actions)
 
         return None
