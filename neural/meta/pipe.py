@@ -101,28 +101,32 @@ from neural.wrapper.reward import (RewardNormalizerWrapper,
 
 class AbstractPipe(ABC):
     """
-    Abstract class for environment pipes, which add extended functionality to
-    an existing environment by applying wrappers successively. A pipe is a
-    stack of wrappers applied in a non-conflicting way. Use wrappers to
-    customize the base market env, manipulate actions and observations, impose
-    trading logic, etc. according to your specific needs. Wrappers are
-    intantiated every time the pipe method is called. If you need to restore
-    state of some wrappers, you can make that state a constructor argument of
-    both wrapper class and and the pipe and set the argument passed to wrapper
-    equal to state of wrapper. If both states are immutable, the values will be
-    synchronized pointing at the same memory space. This way When saving the
-    pipe, the state of the wrappers will be saved as well.
+    Abstract class for environment pipes, which add extended
+    functionality to an existing environment by applying wrappers
+    successively. A pipe is a stack of wrappers applied in a
+    non-conflicting way. Use wrappers to customize the base market env,
+    manipulate actions and observations, impose trading logic, etc.
+    according to your specific needs. Wrappers are intantiated every
+    time the pipe method is called. If you need to restore state of some
+    wrappers (e.g. normalizer parameters), you can make that state a
+    constructor argument of both wrapper class and the pipe and set
+    the argument passed to wrapper equal to state of wrapper. If both
+    states are immutable, the values will be synchronized pointing at
+    the same memory space. This way When saving the pipe, the state of
+    the wrappers will be saved as well.
 
     Methods:
     --------
         pipe(env):
-            Applies a stack of market wrappers successively to an environment.
+            Applies a stack of market wrappers successively to an
+            environment.
     Notes:
     -----
-        Pipes can be combined to create more complex pipes. For example, you
-        can have separate pipes for wrappers that are commonly used together
-        like a set of action wrappers, observation wrappers, etc. You can then
-        combine these pipes to create a more complex pipe.
+        Pipes can be combined to create more complex pipes. For example,
+        you can have separate pipes for wrappers that are commonly used
+        together like a set of action wrappers, observation wrappers,
+        etc. You can then combine these pipes to create a more complex
+        pipe.
     """
 
     def metadata(self, pipe: Callable):
