@@ -3,44 +3,36 @@ base.py
 
 This module defines the base classes for the market environment needed
 for training and trading with deep reinforcement learning algorithms.
-The base classes are designed to be used with the OpenAI Gym
-interface.
+The base classes are designed to be used with the OpenAI Gym interface.
 
 Classes:
 --------
     AbstractMarketEnv:
         Abstract base class for market environments. In case a custom
-        market environment is needed, it should inherit from this
-        class. It preserves the logic of sequentially updating the
-        environment based on resolution of the dataset and placing
-        orders based on actions received from the agent.
+        market environment is needed, it should inherit from this class.
+        It preserves the logic of sequentially updating the environment
+        and placing orders based on actions received from the agent.
     TrainMarketEnv:
         A bare metal market environment with no market logic. Natively
         allowes cash and asset quantities to be negative, accommodating
         short/margin trading by default. Use action wrappers to impose
-        market logic such as margin account initial and maintenance
-        margins. Note that by default high frequency trading is only
-        feasible with a margin account. Cash accounts incur delays in
-        depositing cash and settling trades that makes high frequency
-        trading infeasible.
+        market logic.
     TradeMarketEnv:
         This is a subclass of TrainMarketEnv. It is intended to be used
-        for trading. It is identical to TrainMarketEnv except that it
-        is connected to a trader instance. This allows the environment
-        to interact with the trader and place orders in the market.
-        This class is not intended to be used directly. Instead, use
-        the pipes in neural.meta.env.pipe to augment the environment
-        with additional features. Typically the same pipe used for
-        training is used for trading. Pipe is saved as an attribute of
-        the agent that was used for training. The agent can then be
-        loaded and used for trading using this environment.
+        for trading. It is identical to TrainMarketEnv except that it is
+        connected to a trader instance. This allows the environment to
+        interact with the trader and place orders in the market. Use the
+        pipes in `neural.meta.env.pipe` to augment the environment with
+        additional features. Typically the same pipe used for training
+        is used for trading. Pipe is saved as an attribute of the agent
+        that was used for training. The agent can then be loaded and
+        used for trading using this environment.
 
 Notes:
 ------
     Market environments should be designed to interact with trading
     algorithms or other agents in order to simulate the behavior of a
-    real-world market. This module defines the minimum interface
-    required for an environment to be used for high frequency trading.
+    real-world market.
 """
 from __future__ import annotations
 
