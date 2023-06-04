@@ -141,13 +141,14 @@ class TrainMarketEnv(AbstractMarketEnv):
     """
     A bare metal market environment with no market logic for training
     agents. Natively allowes cash and asset quantities to be negative,
-    accommodating short/margin trading by default. Use action wrappers
-    to impose market logic such as margin logic (e.g. account initial
-    and maintenance margins). For trading, use TradeMarketEnv. Use the
-    pipes in `neural.meta.env.pipe` to augment the environment with
-    additional features. This enables the environment to respect real
-    market constraints (e.g. short selling and margin trading
-    constraints).
+    accommodating short/margin trading by default. The default
+    environment allows cash and asset quantities to grow indefinitely in
+    any direction (positive or negative). Use action wrappers to impose
+    market logic such as margin logic (e.g. account initial and
+    maintenance margins). For trading, use TradeMarketEnv. Use the pipes
+    in `neural.meta.env.pipe` to augment the environment with additional
+    features. This enables the environment to respect real market
+    constraints (e.g. short selling and margin trading constraints).
 
     Attributes:
     -----------
@@ -206,15 +207,15 @@ class TrainMarketEnv(AbstractMarketEnv):
             A dictionary for storing additional information (unused for
             now)
         action_space (gym.spaces.Box):
-            Number of actions is equal to the number of
-            assets in the dataset. Each action is the notional value of
-            the asset to buy or sell. A zero value means no action is
-            taken (hold). Buys are represented as positive values, while
-            sells are represented as negative values. Notional value
-            means the face value of the asset (e.g. 100 means buy 100
-            dollars worth of the asset, while -100 means sell 100
-            dollars worth of the asset, given currency is USD).
-        observation_space: gym.spaces.Dict. 
+            Number of actions is equal to the number of assets in the
+            dataset. Each action is the notional value of the asset to
+            buy or sell. A zero value means no action is taken (hold).
+            Buys are represented as positive values, while sells are
+            represented as negative values. Notional value means the
+            face value of the asset (e.g. 100 means buy 100 dollars
+            worth of the asset, while -100 means sell 100 dollars worth
+            of the asset, given currency is USD).
+        observation_space (gym.spaces.Dict): 
             The observation space is a dictionary containing the
             following keys:
                 - 'cash' (numpy.ndarray): 
@@ -228,13 +229,13 @@ class TrainMarketEnv(AbstractMarketEnv):
                     steps an asset has been held. 
                 - 'features' (numpy.ndarray): 
                     A numpy array representing the current features of
-                    the environment. This can including market data such
-                    as open, high, low, close, volume, and other
-                    features such as sentiment scores, text embeddings,
-                    or raw text.
+                    the environment.
 
     Properties:
     -----------
+        done: bool
+            A boolean value indicating whether the current episode is
+            finished.
         cash: float
             The current amount of cash in the environment.
         asset_quantities: np.ndarray
@@ -249,15 +250,16 @@ class TrainMarketEnv(AbstractMarketEnv):
 
     Methods:
     --------
-    update_env():
-        Updates the environment state by moving to the next time step
-        and updating the environment variables such as features, asset
-        prices, holds, and net worth.
+    update():
+        Uses features_generator to update the environment state by
+        moving to the next time step.
     construct_observation():
         Constructs the current observation from the environment's state
-        variables. The observation includes the current cash balance,
-        asset quantities, holds (time steps an asset has been held), and
-        features of the current time step.
+        variables. The observation includes:
+            - cash
+            - asset_quantities
+            - holds
+            - features
     place_orders(actions):
         Places orders on the assets based on the given actions. Performs
         the book keeping internally by updating variables such as cash,
