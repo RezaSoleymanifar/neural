@@ -25,7 +25,7 @@ from neural.common.constants import (ALPACA_ACCEPTED_DOWNLOAD_RESOLUTIONS,
                                      GLOBAL_DATA_TYPE)
 from neural.common.log import logger
 from neural.data.base import (AbstractDataSource, AbstractAsset, CalendarType,
-                              DatasetMetadata, FeatureSchema)
+                              DatasetMetadata, DataSchema, FeatureSchema)
 from neural.data.enums import AssetType
 from neural.utils.base import (progress_bar, validate_path, RunningStatistics)
 from neural.utils.io import to_hdf5
@@ -695,7 +695,7 @@ class AlpacaDataDownloader():
         if duplicate_symbols:
             raise ValueError(f'Duplicate symbols found: {duplicate_symbols}.')
 
-        symbols = self.data_client.symbols_to_assets(symbols)
+        assets = self.data_client.symbols_to_assets(symbols)
         asset_types = set(asset.asset_type for asset in symbols)
         marginability_types = set(asset.marginable for asset in symbols)
 
@@ -720,7 +720,7 @@ class AlpacaDataDownloader():
         self._validate_resolution(resolution=resolution, schedule=schedule)
 
         days = len(schedule)
-        n_assets = len(symbols)
+        n_assets = len(assets)
         logger.info('Downloading dataset:'
                     f'\n\t start = {start_date}'
                     f'\n\t end = {end_date}'
@@ -757,12 +757,12 @@ class AlpacaDataDownloader():
                     dataset=group, open=start, close=end, resolution=resolution)
                 symbol_groups.append(processed_group)
 
-            features_df = pd.concat(symbol_groups, axis=1)
-            features_df = features_df.select_dtypes(include=np.number)
+            features_dataframe = pd.concat(symbol_groups, axis=1)
+            features_dataframe = features_dataframe.select_dtypes(include=np.number)
 
-            feature_schema = FeatureSchema(features_df)
-            data_schema = {dataset_type: tuple(symbols)}
-            features_array = features_df.to_numpy(dtype=GLOBAL_DATA_TYPE)
+            feature_schema = FeatureSchema(dataframe=features_dataframe)
+            data_schema = DataSchema(assets=assets, )
+            features_array = features_dataframe.to_numpy(dtype=GLOBAL_DATA_TYPE)
 
             dataset_metadata = DatasetMetadata(
                 data_schema=data_schema,
