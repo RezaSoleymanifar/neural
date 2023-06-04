@@ -1,7 +1,15 @@
 """
 pipes.py
 
-This module defines pipes for market environments.
+This module defines pipes for market environments. Pipes are a stack of
+gym wrappers (Link: https://www.gymlibrary.dev/api/wrappers/) that can
+be applied to an environment to:
+    - modify actions from agent to environment
+    - modify observations from environment to agent
+    - modify rewards from environment to agent
+    - provide metadata of the environment to the agent
+
+
 """
 from abc import abstractmethod, ABC
 from typing import Callable

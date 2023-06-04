@@ -13,9 +13,10 @@ Classes:
         the inputs of the model through a stack of wrappers, and
         metadata about the dataset used to train the agent. This later
         is used to map the training dataset to a matching trading stream
-        that matches the dataset used to train the agent. Trainer and
-        Trader objects interact with this model to update the parameters
-        of the model and to make trading decisions, respectively.
+        to reconstruct the data that agent was trained on. Trainer
+        object interacts with this model to update the parameters
+        (training) of the model and Trader object interacts with this
+        model to make trading decisions (inference).
 """
 from dataclasses import dataclass
 from torch import nn
@@ -26,7 +27,6 @@ from neural.meta.pipe import AbstractPipe
 
 @dataclass
 class Agent:
-
     """
     A reinforcement learning agent. This is a self-contained entity that
     can be used with any other training or trading object. It bundles
