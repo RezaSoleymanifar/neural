@@ -422,7 +422,6 @@ class TrainMarketEnv(AbstractMarketEnv):
 
         return self._asset_prices
 
-
     def update(self) -> None:
         """
         Updates the environment state by moving to the next time step
@@ -437,9 +436,11 @@ class TrainMarketEnv(AbstractMarketEnv):
     def get_observation(self) -> Dict[str, np.ndarray[float]]:
         """
         Constructs the current observation from the environment's state
-        variables. The observation includes the current cash balance,
-        asset quantities, holds (time steps an asset has been held), and
-        features of the current time step.
+        variables. The observation includes:
+            - cash
+            - asset_quantities
+            - holds
+            - features
 
         Returns:
         -------
