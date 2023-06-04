@@ -784,7 +784,6 @@ class AlpacaDataDownloader():
                 f'mean:{processing_statistics.mean:.0%}')
 
             progress_bar_.update(1)
-
         progress_bar_.close()
 
         return None
