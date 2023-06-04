@@ -253,7 +253,7 @@ class TrainMarketEnv(AbstractMarketEnv):
     update(self) -> None:
         Uses features_generator to update the environment state by
         moving to the next time step.
-    construct_observation(self) -> Dict[str, np.ndarray[float]):
+    get_observation(self) -> Dict[str, np.ndarray[float]):
         Constructs the current observation from the environment's state
         variables. The observation includes:
             - cash
@@ -670,7 +670,7 @@ class TradeMarketEnv(TrainMarketEnv):
     update(self) -> None:
         Uses features_generator to update the environment state by
         moving to the next time step.
-    construct_observation(self) -> Dict[str, np.ndarray[float]):
+    get_observation(self) -> Dict[str, np.ndarray[float]):
         Constructs the current observation from the environment's state
         variables. The observation includes:
             - cash
@@ -709,11 +709,10 @@ class TradeMarketEnv(TrainMarketEnv):
                 The trader instance to connect to the environment.
         """
         self.trader = trader
-
+        
         data_feeder = self.trader.data_feeder
         initial_cash = self.trader.cash
         initial_asset_quantities = self.trader.asset_quantities
-
         super().__init__(
             data_feeder=data_feeder,
             initial_cash=initial_cash,
