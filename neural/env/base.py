@@ -35,11 +35,11 @@ Notes:
 """
 from __future__ import annotations
 
-from typing import Tuple, Dict, TYPE_CHECKING, Optional
 from abc import ABC, abstractmethod
+from typing import Tuple, Dict, TYPE_CHECKING, Optional
 
-import numpy as np
 from gym import spaces, Env
+import numpy as np
 
 from neural.common.constants import GLOBAL_DATA_TYPE
 from neural.data.base import StaticDataFeeder
