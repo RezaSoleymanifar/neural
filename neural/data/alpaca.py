@@ -2,6 +2,13 @@
 alpaca.py
 
 Description:
+-----------
+    This module provides classes and functions to download and process
+    financial data from the Alpaca API: https://alpaca.markets/. The
+    data is downloaded and processed from the Alpaca API on a daily
+    basis and saved to disk in an HDF5 file. The download later can be
+    resumed for consecutive market days. The data is downloaded in daily
+    chunks to avoid exceeding the memory limit and saving progress.
 
 License:
 --------
@@ -10,6 +17,29 @@ License:
 Author(s):
 -------
     Reza Soleymanifar, Email: Reza@Soleymanifar.com
+
+Classes:
+--------
+    AlpacaDataSource:
+        Represents Alpaca API as a data source. Provides standardized
+        enums for historical and live data from Alpaca API.
+    AlpacaAsset:
+        A dataclass representing a financial asset in Alpaca API:
+        https://alpaca.markets/. This can be a stock, or    
+        cryptocurrency. This class standardizes the representation of
+        assets in Alpaca API. Natively encodes the mechanics for opening
+        and closing positions. When creating nonmarginable assets,
+        maintenance_margin, shortable, and easy_to_borrow attributes are
+        set to None by default.
+    AlpacaDataDownloader:
+        A class to download and process financial data using the Alpaca
+        API. The data is downloaded and processed from the Alpaca API on
+        a daily basis and saved to disk in an HDF5 file. The download
+        later can be resumed for consecutive market days. The data is
+        downloaded in daily chunks to avoid exceeding the memory limit
+        and saving progress.
+    AlpacaDataProcessor:
+        A class to process financial data from the Alpaca API.
 ------------
 """
 from dataclasses import dataclass
@@ -684,7 +714,6 @@ class AlpacaDataDownloader():
                 If there is no data for some symbols in the given date
                 range.
         """
-
         validate_path(file_path=file_path)
 
         if not symbols:
@@ -879,14 +908,12 @@ class AlpacaDataProcessor:
         entire dataset is empty, namely there is no data for the given time
         range.
         """
-
         index = pd.date_range(start=open,
                               end=close,
                               freq=resolution,
                               inclusive='left')
 
         processed = dataset.reindex(index)
-
         non_nan_count = processed.notna().sum().sum()
         total_count = processed.size
         density = non_nan_count / total_count
@@ -894,7 +921,6 @@ class AlpacaDataProcessor:
 
         if processed.isna().any().any():
             processed = processed.ffill()
-
         if processed.isna().any().any():
             processed = processed.bfill()
 
