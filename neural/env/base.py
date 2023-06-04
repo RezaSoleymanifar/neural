@@ -250,10 +250,10 @@ class TrainMarketEnv(AbstractMarketEnv):
 
     Methods:
     --------
-    update() -> None:
+    update(self) -> None:
         Uses features_generator to update the environment state by
         moving to the next time step.
-    construct_observation():
+    construct_observation(self) -> Dict[str, np.ndarray[float]):
         Constructs the current observation from the environment's state
         variables. The observation includes:
             - cash
@@ -264,12 +264,13 @@ class TrainMarketEnv(AbstractMarketEnv):
         Places orders on the assets based on the given actions. Performs
         the book keeping internally by updating variables such as cash,
         asset quantities, and holds.
-    reset() -> Dict[str, np.ndarray]:
+    reset(self) -> Dict[str, np.ndarray]:
         Resets the market environment to its initial state. Sets initial
         values for cash, asset quantities, and holds. Returns the
         initial observation. This is consistent with gym.Env.reset()
         from OpenAI gym API.
-    step(actions):
+    step(actions: np.ndarray[float]) -> Tuple[Dict[str, np.ndarray],
+    float, bool, Dict]:
         Executes a step in the trading environment. It places orders
         based on the given actions, updates the environment state, and
         constructs the observation. Returns the observation, reward,
@@ -294,17 +295,16 @@ class TrainMarketEnv(AbstractMarketEnv):
 
         Args:
         -----------
-        data_feeder: StaticDataFeeder
+        data_feeder (StaticDataFeeder):
             The StaticDataFeeder instance providing the data to the
             environment
-        initial_cash: float, optional
+        initial_cash (float, optional):
             The initial amount of cash to allocate to the environment.
             Default is 1e6.
-        initial_asset_quantities: np.ndarray, optional
+        initial_asset_quantities (np.ndarray, optional):
             The initial quantity of assets to allocate to the
             environment. Default is None.
         """
-
         self.data_feeder = data_feeder
         self.initial_cash = initial_cash
         self.initial_asset_quantities = initial_asset_quantities
