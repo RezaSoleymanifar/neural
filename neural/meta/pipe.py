@@ -90,7 +90,8 @@ from neural.wrapper.action import (
     ExcessMarginActionWrapper, ShortingActionWrapper,
     EquityBasedFixedUniformActionParser, ActionClipperWrapper)
 from neural.wrapper.base import (MarginAccountMetaDataWrapper,
-                                 ConsoleTearsheetRenderWrapper)
+                                 ConsoleTearsheetRenderWrapper,
+                                 AbstractMarketEnvMetadataWrapper)
 from neural.wrapper.observation import (ObservationStackerWrapper,
                                         ObservationBufferWrapper,
                                         FlattenToNUmpyObservationWrapper,
@@ -131,14 +132,15 @@ class AbstractPipe(ABC):
     """
     def metadata(self, pipe: Callable):
         """
-        A decorator for modifying the pipe method to return the metadata
-        wrapper of the environment.
+        A decorator for modifying the pipe method to add metadata as a
+        property of the returned piped environment. This is useful for
+        getting a pointer to the metadata wrapper of the wrapper stack.
 
         Args:
         -----
             pipe (Callable):
                 The pipe method to decorate.
-            
+    
         Returns:
         --------
             decorated_pipe (Callable):
@@ -167,9 +169,9 @@ class AbstractPipe(ABC):
                     raise ValueError(
                         'The pipe does not have a wrapper of type '
                         f'{AbstractMarketEnvMetadataWrapper.__name__}.')
+            piped_env.market_metadata_wrapper = env
             return env
         return decorated_pipe
-    
 
     @abstractmethod
     def pipe(self, env: Env) -> Env:
