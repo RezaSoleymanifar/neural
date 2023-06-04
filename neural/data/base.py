@@ -1939,3 +1939,10 @@ class AsyncDataFeeder(AbstractDataFeeder):
     @property
     def done(self):
         return False
+    
+    def get_features_generator(self):
+        """
+        Returns a generator object that can be used to iteratively
+        provide data for market environment.
+        """
+        raise NotImplementedError

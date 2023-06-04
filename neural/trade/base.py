@@ -103,6 +103,22 @@ class AbstractTrader(ABC):
         return None
 
     @property
+    def data_feeder(self) -> AsyncDataFeeder:
+        """
+        The data feeder used to stream data from the data client.
+
+        Returns:
+        --------
+            data_feeder (AsyncDataFeeder):
+                An instance of the data feeder to stream data.
+        """
+        if self._data_feeder is None:
+            stream_metadata = self.agent.dataset_metadata.stream
+            self._data_feeder = AsyncDataFeeder(stream_metadata,
+                                                self.data_client)
+        return self._data_feeder
+    
+    @property
     def trade_market_env(self) -> TradeMarketEnv:
         """
         The trading environment used to execute orders.
@@ -123,7 +139,7 @@ class AbstractTrader(ABC):
             self.trade_market_env)
         return market_metadata_wrapper
     
-        @property
+    @property
     def model(self) -> nn.Module:
         """
         Returns the model used by the agent to generate actions.
@@ -132,6 +148,17 @@ class AbstractTrader(ABC):
             self._model = self.agent.model
         return self._model
     
+    @property
+    def assets(self) -> List[AlpacaAsset]:
+        """
+        A numpy array of assets held by the trader.
+
+        Returns:
+        --------
+            assets (np.ndarray[str]):
+                The assets held by the trader.
+        """
+        return self.trade_market_env.assets
     @property
     def cash(self) -> float:
         """
@@ -173,34 +200,6 @@ class AbstractTrader(ABC):
                 The current price of each asset held by the trader.
         """
         return self.trade_market_env.asset_prices
-
-    @property
-    def assets(self) -> List[AlpacaAsset]:
-        """
-        A numpy array of assets held by the trader.
-
-        Returns:
-        --------
-            assets (np.ndarray[str]):
-                The assets held by the trader.
-        """
-        return self.trade_market_env.assets
-
-    @property
-    def data_feeder(self) -> AsyncDataFeeder:
-        """
-        The data feeder used to stream data from the data client.
-
-        Returns:
-        --------
-            data_feeder (AsyncDataFeeder):
-                An instance of the data feeder to stream data.
-        """
-        if self._data_feeder is None:
-            stream_metadata = self.agent.dataset_metadata.stream
-            self._data_feeder = AsyncDataFeeder(stream_metadata,
-                                                self.data_client)
-        return self._data_feeder
 
     def place_orders(self, actions: np.ndarray, *args, **kwargs):
         """
