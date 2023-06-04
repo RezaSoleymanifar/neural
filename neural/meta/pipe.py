@@ -1186,6 +1186,7 @@ class MarginAccountPipe(BasePipe):
 
         return None
 
+    @AbstractPipe.metadata
     def pipe(self, env):
         """
         Applies a stack of market wrappers successively to an
