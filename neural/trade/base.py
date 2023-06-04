@@ -118,7 +118,7 @@ class AbstractTrader(ABC):
             self._data_feeder = AsyncDataFeeder(stream_metadata,
                                                 self.data_client)
         return self._data_feeder
-    
+
     @property
     def trade_market_env(self) -> TradeMarketEnv:
         """
