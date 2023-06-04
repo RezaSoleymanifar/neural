@@ -23,7 +23,7 @@ class AbstractTrader(ABC):
     data client to stream the live data and an agent to perform the
     decision making. The agent has a model to generate actions, a data
     pipe to modify base environment, and metadata for the dataset used
-    to train the agent.  Metadata will be used to create aggregated data
+    to train the agent. Metadata will be used to create aggregated data
     stream matching the training data. 
     
     TODO: support or multiple data clients for streaming from multiple
@@ -147,7 +147,7 @@ class AbstractTrader(ABC):
                 The current equity of the trader.
         """
         return self.trade_client.equity
-    
+
     @property
     def asset_prices(self) -> np.ndarray[float]:
         """
@@ -185,8 +185,8 @@ class AbstractTrader(ABC):
         """
         if self._data_feeder is None:
             stream_metadata = self.agent.dataset_metadata.stream
-            self._data_feeder = AsyncDataFeeder(
-                stream_metadata, self.data_client)
+            self._data_feeder = AsyncDataFeeder(stream_metadata,
+                                                self.data_client)
         return self._data_feeder
 
     @property
@@ -199,7 +199,7 @@ class AbstractTrader(ABC):
             piped_env = self.agent.pipe(self._trade_market_env)
             self._trade_market_env = piped_env
         return self._trade_market_env
-    
+
     @property
     def market_metadata_wrapper(self) -> AbstractMarketEnvMetadataWrapper:
         """
@@ -214,7 +214,7 @@ class AbstractTrader(ABC):
                     'The pipe does not have a wrapper of type '
                     f'{AbstractMarketEnvMetadataWrapper.__name__}.')
         return env
-    
+
     @property
     def model(self) -> nn.Module:
         """
