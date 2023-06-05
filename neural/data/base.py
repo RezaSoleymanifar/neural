@@ -825,7 +825,12 @@ class FeatureSchema:
             feature_schema[feature_type] = feature_type_mask
         return feature_schema
 
-
+    def __eq__(self, other) -> bool:
+        """
+        
+        """
+        return self.shcema == other.schema
+    
 @dataclass
 class AbstractDataMetadata:
     """
