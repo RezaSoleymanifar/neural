@@ -101,6 +101,7 @@ class AbstractTrader(ABC):
         self._data_feeder = None
         self._trade_market_env = None
         self._model = None
+        self.cancel_flag = False
 
         return None
 
@@ -225,8 +226,11 @@ class AbstractTrader(ABC):
         start, end = self.schedule[current_date].values()
 
         if current_time < start and current_time > end:
-            self.trad()
+            if not self.cancel_flag:
+                self.trade_client.cancel_all_orders()
+                self.cancel_flag = True
             return False
+        self.cancel_flag = False
         return True
 
     def trade(self):
