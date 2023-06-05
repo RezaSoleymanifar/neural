@@ -6,6 +6,7 @@ from datetime import datetime
 from typing import List
 
 import numpy as np
+import pandas as pd
 from torch import nn
 
 from neural.client.alpaca import AbstractTradeClient, AbstractDataClient
@@ -147,6 +148,20 @@ class AbstractTrader(ABC):
         return self.agent.model
     
     @property
+    def schedule(self) -> pd.DataFrame:
+        """
+        The schedule of the trading environment. The schedule is a list
+        of datetime objects representing the times at which the
+        environment is reset.
+
+        Returns:
+        --------
+            schedule (List[datetime]):
+                The schedule of the trading environment.
+        """
+        return self.market_metadata_wrapper.schedule
+    
+    @property
     def assets(self) -> List[AlpacaAsset]:
         """
         A numpy array of assets held by the trader.
@@ -213,6 +228,7 @@ class AbstractTrader(ABC):
         while True:
             current_time = datetime.utcnow()
             current_day = current_time.date()
+            start, end = self.schedule[current_day].values()
 
             action = model(observation)
             observation, reward, done, info = self.trade_market_env.step(action)
