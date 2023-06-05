@@ -124,6 +124,11 @@ class AbstractAsset(ABC):
     asset_type: AssetType
     fractionable: bool
 
+    def __eq__(self, other: AbstractAsset) -> bool:
+        if not isinstance(other, AbstractAsset):
+            return False
+        return self.symbol == other.symbol
+
 
 class AbstractDataSource(ABC):
     """
