@@ -10,6 +10,7 @@ import pandas as pd
 from torch import nn
 
 from neural.client.alpaca import AbstractTradeClient, AbstractDataClient
+from neural.common.log import logger
 from neural.data.alpaca import AlpacaAsset
 from neural.data.base import AsyncDataFeeder
 from neural.env.base import TradeMarketEnv
@@ -231,9 +232,18 @@ class AbstractTrader(ABC):
         current_date = current_time.date()
         start, end = self.schedule[current_date].values()
 
-        if current_time < start or current_time > end:
+        if not start <= current_time <= end:
             if not self.cancel_occurred:
                 self.trade_client.cancel_all_orders()
+
+                if current_time < start:
+                    logger.info(f"Waiting for market to open at {start}")
+                elif current_time > end:
+                        next_day = current_date + timedelta(days=1)
+                        next_start = self.schedule[next_day]['start']
+                    logger.info(f"Waiting for market to close at {end}")
+
+
                 self.cancel_occurred = True
             return False
         self.cancel_occurred = False
