@@ -217,18 +217,7 @@ class AbstractTrader(ABC):
         """
         return self.market_metadata_wrapper.asset_prices
 
-    def _handle_non_trading_time(self):
-        if self.handle_non_trade:
-            self.trade_client.cancel_all_orders()
-            if current_time < start:
-                logger.log(f'Waiting for market to open at {start}')
-            elif current_time > end:
-                next_day = current_day + timedelta(days=1)
-                next_start = self.schedule[next_day]['start']
-                logger.log(f'Waiting for market to open at {next_start}')
-            self.handle_non_trade = True
-
-    def _check_time(self):
+    def _check_time(self) -> bool:
         """
         A method to check if the current time is within the trading
         schedule. If the current time is not within the trading
@@ -241,12 +230,20 @@ class AbstractTrader(ABC):
         """
         current_time = datetime.utcnow().date()
         current_day = current_time.date()
-        start, end = self.schedule[current_day].values()
+        start, end = self.schedule.loc[current_day].values()
 
         if not start <= current_time <= end:
-            self._handle_non_trading_time()
+            if not self.handle_non_trade:
+                self.trade_client.cancel_all_orders()
+                if current_time < start:
+                    logger.log(f'Waiting for market to open at {start}')
+                elif current_time > end:
+                    next_day = current_day + timedelta(days=1)
+                    next_start = self.schedule[next_day]['start']
+                    logger.log(f'Waiting for market to open at {next_start}')
+                self.handle_non_trade = True
             return False
-        self.handle_non_trade = True
+        self.handle_non_trade = False
         return True
 
     def trade(self):
