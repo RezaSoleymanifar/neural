@@ -1,5 +1,8 @@
 """
 base.py
+
+Description:
+------------
 """
 from abc import ABC, abstractmethod
 import copy
@@ -199,6 +202,11 @@ class AbstractTrainer(ABC):
         """
         dataset_metadata, datasets = from_hdf5(self.file_path,
                                                self.dataset_name)
+        
+        if self.agent.dataset_metadata is None:
+            self.agent.dataset_metadata = dataset_metadata
+        
+
         data_feeders = StaticDataFeeder(
             metadata=dataset_metadata,
             datasets=datasets,
