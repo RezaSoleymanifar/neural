@@ -230,6 +230,8 @@ class AbstractTrader(ABC):
             current_day = current_time.date()
             start, end = self.schedule[current_day].values()
 
+            if current_time < start and current_time > end:
+                continue
             action = model(observation)
             observation, reward, done, info = self.trade_market_env.step(action)
 
