@@ -18,6 +18,7 @@ from torch import nn
 from neural.data.base import StaticDataFeeder
 from neural.env.base import TrainMarketEnv
 from neural.meta.agent import Agent
+from neural.meta.pipe import AbstractPipe
 from neural.utils.io import from_hdf5
 
 
@@ -178,21 +179,19 @@ class AbstractTrainer(ABC):
 
         self.train_market_env = None
         self.test_market_env = None
-        self.train_data_feeder = None
-        self.test_data_feeder = None
-
-        self._data_feeder = None
-        self.env_pipes = None
+        self.async_env_pipes = None
 
         if not 0 < train_ratio <= 1:
             raise ValueError("train_ratio must be in (0, 1]")
-        if not isinstance(n_envs, int) or n_envs < 1:
-            raise ValueError('n_envs must be an integer greater than 0.')
 
         self.train_data_feeder, self.test_data_feeder = (
             self._get_train_test_data_feeders())
 
         return None
+
+    @property
+    def pipe(self) -> AbstractPipe:
+        return self.agent.pipe
 
     def _get_train_test_data_feeders(self) -> None:
         """
@@ -275,12 +274,12 @@ class AbstractTrainer(ABC):
                            initial_assets=initial_assets())
             for data_feeder in data_feeders
         ]
-        self.env_pipes = [
+        self.async_env_pipes = [
             copy.deepcopy(self.agent.pipe) for _ in range(self.n_envs)
-        ] if self.env_pipes is None else self.env_pipes
+        ] if self.async_env_pipes is None else self.async_env_pipes
         env_callables = [
             lambda pipe=pipe, env=env: pipe.pipe(env)
-            for pipe, env in zip(self.env_pipes, envs)
+            for pipe, env in zip(self.async_env_pipes, envs)
         ]
 
         if self.async_envs:
