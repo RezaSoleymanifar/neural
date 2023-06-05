@@ -686,6 +686,15 @@ class FeatureSchema:
 
     Methods:
     --------
+        __repr__() -> str:
+            Returns a string representation of the feature schema.
+        __eq__(self, other) -> bool:
+            Checks if two feature schemas are equal. This is useful for
+            validating feature schemas before joining or appending.
+        __add__(self, other) -> FeatureSchema:
+            joins feature schemas of two datasets or streams. The boolean masks
+            are simply concatenated to indicate the feature type locations in
+            the joined dataset/stream.
         _create_feature_schema(dataframe: pd.DataFrame) -> Dict[FeatureType,
         List[bool]]:
             Creates a feature schema dictionary for a given DataFrame, with
@@ -693,13 +702,6 @@ class FeatureSchema:
             indicate where the columns of the corresponding feature types are
             located in the data. By default downloaders provide downloaded data
             in a pandas Dataframe format.
-        __repr__() -> str:
-            Returns a string representation of the feature schema.
-        __add__(self, other) -> FeatureSchema:
-            joins feature schemas of two datasets or streams. The boolean masks
-            are simply concatenated to indicate the feature type locations in
-            the joined dataset/stream.
-
     Example:
     --------
     >>> dataframe = pd.DataFrame(
@@ -740,6 +742,24 @@ class FeatureSchema:
         """
         return str(self.schema)
 
+    def __eq__(self, other: FeatureSchema) -> bool:
+        """
+        Checks if two feature schemas are equal. This is useful for
+        validating feature schemas before joining or appending.
+
+        Args:
+        ------
+            other (FeatureSchema):
+                The feature schema to be compared with the current
+                feature schema.
+            
+        Returns:
+        --------
+            bool:
+                True if the two feature schemas are equal, False
+        """
+        return self.shcema == other.schema
+    
     def __add__(self, other: FeatureSchema) -> FeatureSchema:
         """
         joins feature schemas of two datasets or streams. The boolean
@@ -772,7 +792,7 @@ class FeatureSchema:
         for feature_type in schema:
             schema[feature_type] += other.schema[feature_type]
         return new_feature_schema
-
+    
     def _create_feature_schema(
             self, dataframe: pd.DataFrame) -> Dict[FeatureType, List[bool]]:
         """
@@ -824,13 +844,8 @@ class FeatureSchema:
                 '.*' + feature_type.value.lower() + '.*').to_list()
             feature_schema[feature_type] = feature_type_mask
         return feature_schema
-
-    def __eq__(self, other) -> bool:
-        """
-        
-        """
-        return self.shcema == other.schema
     
+
 @dataclass
 class AbstractDataMetadata:
     """
