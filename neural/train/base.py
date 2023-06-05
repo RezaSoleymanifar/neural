@@ -206,6 +206,9 @@ class AbstractTrainer(ABC):
             self.agent.dataset_metadata = dataset_metadata
         elif not self.agent.dataset_metadata == dataset_metadata:
             raise ValueError(
+                'Agent dataset metadata does not dataset in '
+                f'path {self.file_path}.')
+            raise ValueError(
                 'Agent dataset metadata does not match dataset metadata.')
 
         data_feeders = StaticDataFeeder(

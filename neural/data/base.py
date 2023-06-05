@@ -402,7 +402,11 @@ class AbstractAsset(ABC):
         ------
             object (AbstractAsset):
                 The asset to be compared with the current asset.
-
+        
+        Returns:
+        --------
+            bool:
+                True if the two assets are equal, False otherwise.  
         """
         if not isinstance(object, AbstractAsset):
             return False
@@ -505,7 +509,7 @@ class FeatureSchema:
         """
         if not isinstance(other, FeatureSchema):
             return False
-        return self.shcema == other.schema
+        return self.schema == other.schema
 
     def __add__(self, other: FeatureSchema) -> FeatureSchema:
         """
@@ -591,7 +595,7 @@ class FeatureSchema:
                 '.*' + feature_type.value.lower() + '.*').to_list()
             feature_schema[feature_type] = feature_type_mask
         return feature_schema
-    
+
 
 class DataSchema:
     """
@@ -649,8 +653,11 @@ class DataSchema:
             based, they can use this method to get the mask for text features
             FeatureType.TEXT and filter out the columns that have True values
             in the mask.
-        __repr__() -> str:
+        __repr__(self) -> str:
             Returns a string representation of the data schema.
+        __eq__(self, other) -> bool:
+            Returns if two data schemas are equal. This is useful for
+            validating data schemas before joining or appending.
         __add__(self, other) -> DataSchema:
             Adds two data schemas together. This is useful for joining datasets
             or streams. If assets in a common data type overlap then an error
