@@ -255,13 +255,15 @@ class AbstractTrader(ABC):
         self.trade_client.check_connection()
         model = self.model
 
-        if self._check_time():
-            observation = self.trade_market_env.reset()
-            while True:
-                if self._check_time():
+        while True:
+            if self._check_time():
+                observation = self.trade_market_env.reset()
+                while True:
                     action = model(observation)
                     observation, reward, done, info = (
                         self.trade_market_env.step(action))
+                    if not self._check_time():
+                        break
 
     def place_orders(self, actions: np.ndarray, *args, **kwargs):
         """
