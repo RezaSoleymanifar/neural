@@ -181,10 +181,10 @@ class AbstractTrainer(ABC):
 
         self.env_pipes = None
 
-        if not 0 <= train_ratio <= 1:
-            raise ValueError("train_ratio must be in [0, 1]")
+        if not 0 < train_ratio <= 1:
+            raise ValueError("train_ratio must be in (0, 1]")
 
-        if not isinstance(n_envs, int) or not n_envs >= 1:
+        if not isinstance(n_envs, int) or n_envs < 1:
             raise ValueError('n_envs must be an integer greater than 0.')
 
         self._get_data_feeders()
