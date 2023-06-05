@@ -236,17 +236,17 @@ class AbstractTrader(ABC):
             if self.handle_non_trade_time:
                 self.trade_client.cancel_all_orders()
                 if current_time < start:
-                    logger.log(f'Waiting for market to open at {start}')
+                    logger.log(f'Waiting for market to open at {start}.')
                 elif current_time > end:
                     next_day = current_day + timedelta(days=1)
                     next_start = self.schedule[next_day]['start']
-                    logger.log(f'Waiting for market to open at {next_start}')
+                    logger.log(f'Waiting for market to open at {next_start}.')
                 self.handle_non_trade_time = False
             return False
         self.handle_non_trade_time = True
         return True
 
-    def trade(self):
+    def trade(self) -> None:
         """
         Starts the trading process by creating a trading environment and
         executing actions from the model.
@@ -257,13 +257,16 @@ class AbstractTrader(ABC):
 
         while True:
             if self._check_time():
-                observation = self.trade_market_env.reset()
-                while True:
-                    action = model(observation)
-                    observation, reward, done, info = (
-                        self.trade_market_env.step(action))
-                    if not self._check_time():
-                        break
+                break
+
+        observation = self.trade_market_env.reset()
+        while True:
+            if self._check_time():
+                action = model(observation)
+                observation, reward, done, info = (
+                    self.trade_market_env.step(action))
+
+        return None
 
     def place_orders(self, actions: np.ndarray, *args, **kwargs):
         """
