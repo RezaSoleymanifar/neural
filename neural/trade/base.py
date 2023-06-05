@@ -216,7 +216,7 @@ class AbstractTrader(ABC):
         Returns the model used by the agent to generate actions.
         """
         return self.agent.model
-    
+
     def _check_time(self) -> bool:
         """
         A method to check if the current time is within the trading
