@@ -64,8 +64,8 @@ class AbstractTrader(ABC):
             The metadata wrapper used by the trading environment.
         schedule (pd.DataFrame):
             The schedule of the trading environment. The schedule is a
-            pandas DataFrame with two columns, start and end and date
-            as the index.
+            pandas DataFrame with two columns, start and end and date as
+            the index.
         assets (List[AlpacaAsset]):
             A numpy array of assets held by the trader.
         cash (float):
@@ -75,8 +75,8 @@ class AbstractTrader(ABC):
         asset_quantities (np.ndarray[float]):
             A numpy array of current quantity of each asset held by the
             trader. Asset quantities can be positive or negative.
-            Negative quantities indicate that the trader has shorted    
-            the asset, namely the trader owes the asset to the broker.
+            Negative quantities indicate that the trader has shorted the
+            asset, namely the trader owes the asset to the broker.
         asset_prices (np.ndarray[float]):
             A numpy array of current price of each asset held by the
             trader.
@@ -90,9 +90,10 @@ class AbstractTrader(ABC):
             schedule. If the current time is not within the trading
             schedule, then all open orders are cancelled.
         trade (self) -> None:
-            Starts the trading process by creating a trading
-            environment and executing actions from the model.
-        place_orders(self, actions: np.ndarray, *args, **kwargs) -> None:
+            Starts the trading process by creating a trading environment
+            and executing actions from the model.
+        place_orders(self, actions: np.ndarray, *args, **kwargs) ->
+        None:
             Abstract method for placing an order for a single asset. The
             restrictions of the API should be enforced in this method.
     """
