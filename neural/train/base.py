@@ -179,6 +179,7 @@ class AbstractTrainer(ABC):
         self.train_data_feeder = None
         self.test_data_feeder = None
 
+        self._data_feeder = None    
         self.env_pipes = None
 
         if not 0 < train_ratio <= 1:
@@ -190,6 +191,24 @@ class AbstractTrainer(ABC):
         self._get_data_feeders()
 
         return None
+
+    @property
+    def data_feeder(self) -> StaticDataFeeder:
+        if not self._data_feeder:
+            dataset_metadata, datasets = from_hdf5(self.file_path,
+                                                self.dataset_name)
+            if self.agent.dataset_metadata is None:
+                self.agent.dataset_metadata = dataset_metadata
+            elif not self.agent.dataset_metadata == dataset_metadata:
+                raise ValueError(
+                    'Agent dataset metadata does not match metadata '
+                    f'in path {self.file_path}.')
+
+            data_feeder = StaticDataFeeder(
+                    metadata=dataset_metadata,
+                    datasets=datasets,
+                    n_chunks=self.n_chunks)
+            
 
     def _get_data_feeders(self) -> None:
         """
@@ -213,11 +232,11 @@ class AbstractTrainer(ABC):
                 metadata=dataset_metadata,
                 datasets=datasets,
                 n_chunks=self.n_chunks)
+        
         if self.train_ratio == 1:
             self.train_data_feeder  = data_feeder
             self.test_data_feeder = None
             return None
-
         self.train_data_feeder, self.test_data_feeder = (
             data_feeder.split(n=self.train_ratio))
 
