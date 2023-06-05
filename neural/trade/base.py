@@ -151,7 +151,7 @@ class AbstractTrader(ABC):
         """
         if self._trade_market_env is None:
             env = TradeMarketEnv(trader=self)
-            self._trade_market_env = self.agent.pipe(env)
+            self._trade_market_env = self.agent.pipe.pipe(env)
         return self._trade_market_env
 
     @property
