@@ -1314,7 +1314,7 @@ class AlpacaTradeClient(AbstractTradeClient, AlpacaClient):
         """
         self.clients['trade'].cancel_orders()
         return None
-    
+
     def place_order(
         self,
         asset: AlpacaAsset,
