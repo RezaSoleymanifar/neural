@@ -217,19 +217,9 @@ class AbstractTrainer(ABC):
             self.train_data_feeder  = data_feeder
             self.test_data_feeder = None
             return None
-        
-        data_feeders = StaticDataFeeder(
-            metadata=dataset_metadata,
-            datasets=datasets,
-            n_chunks=self.n_chunks).split(n=self.train_ratio)
 
-        if len(data_feeders) == 2:
-
-            self.train_data_feeder, self.test_data_feeder = data_feeders
-
-        else:
-            self.train_data_feeder = data_feeders.pop()
-            self.test_data_feeder = None
+        self.train_data_feeder, self.test_data_feeder = (
+            data_feeder.split(n=self.train_ratio))
 
         return None
 
