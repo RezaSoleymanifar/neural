@@ -300,6 +300,7 @@ class AbstractTrainer(ABC):
 
         return market_env
 
+    def 
     def test(self, n_episode: int = 1) -> None:
         """
         This method is used to test the agent's performance on the
