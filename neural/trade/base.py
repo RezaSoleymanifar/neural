@@ -239,7 +239,7 @@ class AbstractTrader(ABC):
                     logger.log(f'Waiting for market to open at {start}.')
                 elif current_time > end:
                     next_day = current_day + timedelta(days=1)
-                    next_start = self.schedule[next_day]['start']
+                    next_start = self.schedule.loc[next_day]['start']
                     logger.log(f'Waiting for market to open at {next_start}.')
                 self.handle_non_trade_time = False
             return False
