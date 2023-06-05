@@ -89,7 +89,6 @@ from datetime import datetime
 from enum import Enum
 from typing import (TYPE_CHECKING, Dict, List, Callable, Iterable, Optional)
 
-import dill
 import h5py as h5
 import numpy as np
 import pandas as pd
@@ -124,10 +123,20 @@ class AbstractAsset(ABC):
     asset_type: AssetType
     fractionable: bool
 
-    def __eq__(self, other: AbstractAsset) -> bool:
-        if not isinstance(other, AbstractAsset):
+    def __eq__(self, other: object) -> bool:
+        """
+        Checks if two assets are equal. Two assets are equal if they
+        have the same symbol.
+
+        Args:
+        ------
+            object (AbstractAsset):
+                The asset to be compared with the current asset.
+
+        """
+        if not isinstance(object, AbstractAsset):
             return False
-        return self.symbol == other.symbol
+        return self.symbol.lower() == other.symbol.lower()
 
 
 class AbstractDataSource(ABC):
