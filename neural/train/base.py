@@ -300,7 +300,15 @@ class AbstractTrainer(ABC):
 
         return market_env
 
-    def 
+    def run_episode(env: TrainMarketEnv) -> None:
+        with torch.no_grad(), torch.set_grad_enabled(False):
+            done = False
+            while not done:
+                action = self.agent.model(observation)
+                observation, reward, done, info = test_market_env.step(
+                    action)
+        return None
+        
     def test(self, n_episode: int = 1) -> None:
         """
         This method is used to test the agent's performance on the
@@ -320,7 +328,7 @@ class AbstractTrainer(ABC):
             raise ValueError('Test data feeder is set to None. '
                              'Ensure train_ratio < 1. '
                              'train_ratio = {self.train_ratio}')
-
+        
         test_market_env = self._get_market_env()
         observation = test_market_env.reset()
         with torch.no_grad(), torch.set_grad_enabled(False):
