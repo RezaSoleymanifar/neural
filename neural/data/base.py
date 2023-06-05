@@ -1977,7 +1977,7 @@ class StaticDataFeeder(AbstractDataFeeder):
             ],
                                     dtype=int)
 
-        start, end, middle = edge_indices[0], edge_indices[1], edge_indices[
+        start, end, middle = edge_indices[0], edge_indices[-1], edge_indices[
             1:-1]
         cumulative_closest_indices = np.searchsorted(
             self._cumulative_daily_rows, middle, side='right') - 1
