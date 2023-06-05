@@ -79,11 +79,11 @@ Classes:
             - render pipe
 """
 from abc import abstractmethod, ABC
-from copy import deepcopy
 from typing import Callable
 
 from gym import Env
 
+from neural.env.base import AbstractMarketEnv
 from neural.wrapper.action import (
     MinTradeSizeActionWrapper, IntegerAssetQuantityActionWrapper,
     PositionCloseActionWrapper, InitialMarginActionWrapper,
@@ -136,7 +136,7 @@ class AbstractPipe(ABC):
         pipe.
     """
     @staticmethod
-    def get_market_metadata_wrapper(env: Env) -> Env:
+    def get_market_metadata_wrapper(env: AbstractMarketEnv) -> AbstractMarketEnv:
         """
         This method returns the metadata wrapper of the environment. The
         metadata wrapper is responsible for providing metadata of the
@@ -156,6 +156,13 @@ class AbstractPipe(ABC):
                     'The pipe does not have a wrapper of type '
                     f'{AbstractMarketEnvMetadataWrapper.__name__}.')
         return env
+
+    @abstractmethod
+    def warmup(self, env: AbstractMarketEnv) -> AbstractMarketEnv:
+        while True:
+            action = env.action_space.sample()
+            observation, reward, done, info = test_market_env.step(
+                action)
 
     @abstractmethod
     def pipe(self, env: Env) -> Env:
