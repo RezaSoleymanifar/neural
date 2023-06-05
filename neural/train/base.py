@@ -301,7 +301,9 @@ class AbstractTrainer(ABC):
 
         return market_env
 
-    def run_episode(self, env: TrainMarketEnv, random_actions=False) -> None:
+    def run_episode(self,
+                    env: TrainMarketEnv,
+                    random_actions: bool = False) -> None:
         """
         Runs a single episode on the given environment. If random
         actions are used then the agent's model is not used to generate
