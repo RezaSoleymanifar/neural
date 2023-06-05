@@ -161,7 +161,7 @@ class AbstractTrainer(ABC):
         train_ratio: float = 1,
         n_async_envs: int = 1,
         async_envs: bool = True,
-        exclusive_envs: bool = False,
+        exclusive_async_envs: bool = False,
         initial_cash_range: Optional[Tuple[float, float]] = None,
         initial_asset_quantities_range: Optional[Tuple[float, float]] = None,
     ) -> None:
@@ -173,7 +173,7 @@ class AbstractTrainer(ABC):
         self.train_ratio = train_ratio
         self.n_async_envs = n_async_envs
         self.async_envs = async_envs
-        self.exclusive_envs = exclusive_envs
+        self.exclusive_async_envs = exclusive_async_envs
         self.initial_cash_range = initial_cash_range
         self.initial_assets_range = initial_asset_quantities_range
 
@@ -248,13 +248,16 @@ class AbstractTrainer(ABC):
         n_assets = self.agent.dataset_metadata.n_assets
 
         def initial_cash() -> float:
-            return np.random.uniform(
+            cash = np.random.uniform(
                 *self.initial_cash_range
             ) if self.initial_cash_range is not None else None
+            return cash
+
         def initial_asset_quantities() -> np.ndarray:
-            return np.random.uniform(
+            asset_quantities = np.random.uniform(
                 *self.initial_assets_range, size=len(n_assets, )
             ) if self.initial_assets_range is not None else None
+            return asset_quantities
 
         if self.n_async_envs == 1:
             train_market_env = TrainMarketEnv(
@@ -262,11 +265,9 @@ class AbstractTrainer(ABC):
                 initial_cash=initial_cash(),
                 initial_asset_quantities=initial_asset_quantities())
             train_market_env = self.agent.pipe.pipe(train_market_env)
-
             return train_market_env
-        
-        elif self.:
-            if self.exclusive_envs:
+        elif self.async_envs:
+            if self.exclusive_async_envs:
                 data_feeders = data_feeder.split(n=self.n_async_envs)
             else:
                 data_feeders = [data_feeder] * self.n_async_envs

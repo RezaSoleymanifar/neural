@@ -39,7 +39,7 @@ class StableBaselinesTrainer(AbstractTrainer):
                          train_ratio=train_ratio,
                          n_async_envs=n_envs,
                          async_envs=async_envs,
-                         exclusive_envs=exclusive_envs,
+                         exclusive_async_envs=exclusive_envs,
                          initial_cash_range=initial_cash_range,
                          initial_asset_quantities_range=initial_assets_range,
                          *args,
