@@ -102,7 +102,7 @@ class AbstractTrader(ABC):
         self._data_feeder = None
         self._trade_market_env = None
         self._model = None
-        self.cancel_occurred = False
+        self.handle_non_trade = False
 
         return None
 
@@ -217,7 +217,18 @@ class AbstractTrader(ABC):
         """
         return self.market_metadata_wrapper.asset_prices
 
-    def check_time(self):
+    def _handle_non_trading_time(self):
+        if self.handle_non_trade:
+            self.trade_client.cancel_all_orders()
+            if current_time < start:
+                logger.log(f'Waiting for market to open at {start}')
+            elif current_time > end:
+                next_day = current_day + timedelta(days=1)
+                next_start = self.schedule[next_day]['start']
+                logger.log(f'Waiting for market to open at {next_start}')
+            self.handle_non_trade = True
+
+    def _check_time(self):
         """
         A method to check if the current time is within the trading
         schedule. If the current time is not within the trading
@@ -233,17 +244,9 @@ class AbstractTrader(ABC):
         start, end = self.schedule[current_day].values()
 
         if not start <= current_time <= end:
-            if not self.cancel_occurred:
-                self.trade_client.cancel_all_orders()
-                if current_time < start:
-                    logger.log(f'Waiting for market to open at {start}')
-                elif current_time > end:
-                    next_day = current_day + timedelta(days=1)
-                    next_start = self.schedule[next_day]['start']
-                    logger.log(f'Waiting for market to open at {next_start}')
-                self.cancel_occurred = True
+            self._handle_non_trading_time()
             return False
-        self.cancel_occurred = False
+        self.handle_non_trade = True
         return True
 
     def trade(self):
@@ -254,10 +257,10 @@ class AbstractTrader(ABC):
         self.trade_client.check_connection()
         model = self.model
 
-        if self.check_time():
+        if self._check_time():
             observation = self.trade_market_env.reset()
             while True:
-                if self.check_time():
+                if self._check_time():
                     action = model(observation)
                     observation, reward, done, info = (
                         self.trade_market_env.step(action))
