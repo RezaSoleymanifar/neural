@@ -23,7 +23,8 @@ class AlpacaTrader(AbstractTrader):
         - The trader must have a positive excess margin.
         - The trader must satisfy a certain return on equity (ROE) 
             threshold. This threshold is set by the agent.
-    
+
+        
     Methods:
     --------
         check_constraints:
