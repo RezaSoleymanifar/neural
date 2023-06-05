@@ -27,14 +27,20 @@ Author(s):
 
 Classes:
 --------
-    AbstractAsset:
-        A generic financial asset. This class standardizes the
-        representation of assets throughout the framework.
     AbstractDataSource:
         Abstract base class for a data source that standardizes the
         interface for accessing data from different sources. A data
         source is typically an API or a database that provides access to
         data. Data can be static (dataset) or live (stream).
+    AbstractAsset:
+        A generic financial asset. This class standardizes the
+        representation of assets throughout the framework.
+    FeatureSchema:
+        A class that represents a feature schema. A feature schema is a
+        an object that maps feature types to boolean masks. The boolean
+        masks indicate where the columns of the corresponding feature
+        types are located in the data. Lenght of boolean mask is equal
+        to the number columns in the data.
     DataSchema:
         A class that represents a data schema. A data schema has an
         internal representation of a dictionary that maps data types
@@ -46,12 +52,6 @@ Classes:
         associated with the stream type. This allows downloading data
         for different asset groups and streaming them in a unified
         manner.
-    FeatureSchema:
-        A class that represents a feature schema. A feature schema is a
-        an object that maps feature types to boolean masks. The boolean
-        masks indicate where the columns of the corresponding feature
-        types are located in the data. Lenght of boolean mask is equal
-        to the number columns in the data.
     AbstractDataMetaData: abstract base class for data metadata that
         provides a universal representation of data throughout the
         framework. This is useful for abstracting away the construction
@@ -98,45 +98,6 @@ from neural.data.enums import FeatureType, AssetType, CalendarType
 
 if TYPE_CHECKING:
     from neural.utils.time import Resolution
-
-
-@dataclass(frozen=True)
-class AbstractAsset(ABC):
-    """
-    A generic financial asset. This class standardizes the
-    representation of assets throughout the framework.
-
-    Attributes:
-    -----------
-        symbol: str
-            A string representing the symbol or ticker of the asset.
-        asset_type: AssetType
-            An instance of the `AssetType` enum class representing the
-            type of asset.
-        fractionable: bool
-            A boolean indicating whether the asset can be traded in
-            fractional shares. This is useful for trading for example
-            cryptocurrencies or stocks that are expensive to buy as a
-            whole share.
-    """
-    symbol: str
-    asset_type: AssetType
-    fractionable: bool
-
-    def __eq__(self, other: object) -> bool:
-        """
-        Checks if two assets are equal. Two assets are equal if they
-        have the same symbol.
-
-        Args:
-        ------
-            object (AbstractAsset):
-                The asset to be compared with the current asset.
-
-        """
-        if not isinstance(object, AbstractAsset):
-            return False
-        return self.symbol.lower() == other.symbol.lower()
 
 
 class AbstractDataSource(ABC):
@@ -403,6 +364,45 @@ class AbstractDataSource(ABC):
         return stream_type
 
 
+@dataclass(frozen=True)
+class AbstractAsset(ABC):
+    """
+    A generic financial asset. This class standardizes the
+    representation of assets throughout the framework.
+
+    Attributes:
+    -----------
+        symbol: str
+            A string representing the symbol or ticker of the asset.
+        asset_type: AssetType
+            An instance of the `AssetType` enum class representing the
+            type of asset.
+        fractionable: bool
+            A boolean indicating whether the asset can be traded in
+            fractional shares. This is useful for trading for example
+            cryptocurrencies or stocks that are expensive to buy as a
+            whole share.
+    """
+    symbol: str
+    asset_type: AssetType
+    fractionable: bool
+
+    def __eq__(self, other: object) -> bool:
+        """
+        Checks if two assets are equal. Two assets are equal if they
+        have the same symbol.
+
+        Args:
+        ------
+            object (AbstractAsset):
+                The asset to be compared with the current asset.
+
+        """
+        if not isinstance(object, AbstractAsset):
+            return False
+        return self.symbol.lower() == other.symbol.lower()
+
+
 class DataSchema:
     """
     A class that represents a data schema. A data schema has an internal
@@ -604,7 +604,24 @@ class DataSchema:
         """
         return str(self.schema)
 
-    def __eq__(self, other: DataSchema) -> bool:
+    def __eq__(self, other: object) -> bool:
+        """
+        Returns if two data schemas are equal. This is useful for
+        validating data schemas before joining or appending.
+
+        Args:
+        ------
+            other (object):
+                The data schema to be compared with the current data
+                schema.
+
+        Returns:
+        --------
+            bool:
+                True if the two data schemas are equal, False otherwise.
+        """
+        if not isinstance(other, DataSchema):
+            return False
         return self.schema == other.schema
 
     def __add__(self, other: DataSchema) -> DataSchema:
@@ -680,188 +697,6 @@ class DataSchema:
             self.schema[data_type]['feature_schema'][feature_type]
         ]
         return mask
-
-
-class FeatureSchema:
-    """
-    A class that represents a feature schema. A feature schema is a an object
-    that maps feature types to boolean masks. The boolean masks indicate where
-    the columns of the corresponding feature types are located in the data.
-    Lenght of boolean mask is equal to the number columns in the data. Length
-    of True values in the boolean mask is equal to the number of assets in the
-    data schema. A mask is created for every feature type in FeatureType enum.
-
-    Feature schema is instantiated using a pandas DataFrame. The columns of the
-    dataframe are matched against the string values of the feature types in
-    FeatureType enum. If a column name contains case insensitive string value
-    of a feature type, the corresponding boolean mask is set to True.
-
-    Attributes:
-    -----------
-        schema (Dict[FeatureType, List[bool]]):
-            A dictionary that maps feature types to boolean masks.
-
-    Methods:
-    --------
-        __repr__() -> str:
-            Returns a string representation of the feature schema.
-        __eq__(self, other) -> bool:
-            Checks if two feature schemas are equal. This is useful for
-            validating feature schemas before joining or appending.
-        __add__(self, other) -> FeatureSchema:
-            joins feature schemas of two datasets or streams. The boolean masks
-            are simply concatenated to indicate the feature type locations in
-            the joined dataset/stream.
-        _create_feature_schema(dataframe: pd.DataFrame) -> Dict[FeatureType,
-        List[bool]]:
-            Creates a feature schema dictionary for a given DataFrame, with
-            DataType as keys and boolean masks as values. The boolean masks
-            indicate where the columns of the corresponding feature types are
-            located in the data. By default downloaders provide downloaded data
-            in a pandas Dataframe format.
-    Example:
-    --------
-    >>> dataframe = pd.DataFrame(
-    ...     columns=['AAPL_close_price', 'AAPL_open_price', 'AAPL_volume'])
-    >>> feature_schema = FeatureSchema(dataframe)   
-    >>> feature_schema.schema[FeatureType.ASSET_CLOSE_PRICE]
-    [True, False, False]
-    >>> feature_schema.schema[FeatureType.ASSET_OPEN_PRICE]
-    [False, True, False]
-    This mask now can be applied to a row to return the close prices.
-    """
-
-    def __init__(self, dataframe: pd.DataFrame) -> None:
-        """
-        Initializes the feature schema using a pandas DataFrame. The
-        columns of the dataframe are matched against the string values
-        of the feature types in FeatureType enum.
-
-        Args:
-        ------
-            dataframe (pd.DataFrame):
-                The input DataFrame for which the feature schema is to
-                be created. By defaulat all feature types in FeatureType
-                are enumerated and their value is matched against the
-                column names of the input DataFrame.
-        """
-        self.schema = self._create_feature_schema(dataframe)
-        return None
-
-    def __repr__(self) -> str:
-        """
-        Returns a string representation of the feature schema.
-
-        Returns:
-        --------
-            str:
-                A string representation of the feature schema.
-                example: {FeatureType.ASSET_CLOSE_PRICE: [True, False]}
-        """
-        return str(self.schema)
-
-    def __eq__(self, other: FeatureSchema) -> bool:
-        """
-        Checks if two feature schemas are equal. This is useful for
-        validating feature schemas before joining or appending.
-
-        Args:
-        ------
-            other (FeatureSchema):
-                The feature schema to be compared with the current
-                feature schema.
-            
-        Returns:
-        --------
-            bool:
-                True if the two feature schemas are equal, False
-        """
-        return self.shcema == other.schema
-
-    def __add__(self, other: FeatureSchema) -> FeatureSchema:
-        """
-        joins feature schemas of two datasets or streams. The boolean
-        masks are simply concatenated to indicate the feature type
-        locations in the joined dataset/stream.
-
-        Args:
-        ------
-            other (FeatureSchema):
-                The feature schema to be joined with the current
-                feature schema.
-
-        Returns:
-        --------
-            FeatureSchema:
-                A new feature schema that is the result of joining the
-                current feature schema with the other feature schema.
-        
-        Raises:
-        -------
-            ValueError: 
-                if the feature schemas of the two metadata objects are
-                not compatible.
-        """
-        if set(self.schema.keys()) != set(other.schema.keys()):
-            raise ValueError('Feature schemas do not have same feature types.')
-
-        new_feature_schema = deepcopy(self)
-        schema = new_feature_schema.schema
-        for feature_type in schema:
-            schema[feature_type] += other.schema[feature_type]
-        return new_feature_schema
-
-    def _create_feature_schema(
-            self, dataframe: pd.DataFrame) -> Dict[FeatureType, List[bool]]:
-        """
-        Creates a feature schema dictionary for a given DataFrame, with
-        DataType as keys and boolean masks as values. The boolean masks
-        indicate where the columns of the corresponding feature types
-        are located in the data. By default downloaders provide
-        downloaded data in a pandas Dataframe format.
-
-        Args:
-        ------
-            dataframe (pd.DataFrame): 
-                The input DataFrame for which the feature schema is to
-                be created. By defaulat all feature types in FeatureType
-                are enumerated and their value is matched against the
-                column names of the input DataFrame. If a column name
-                matches the string value of a feature type, the
-                corresponding boolean mask is set to True. this process
-                is case insensitive. For example if dataframe has the
-                column name 'AAPL_close_price' the boolean mask for
-                FeatureType.ASSET_CLOSE_PRICE will be set to True at the
-                position of the column name since string value of
-                ASSET_CLOSE_PRICE is 'CLOSE' and it exists as a
-                substring in the column name 'AAPL_close_price'.
-                Downloaders and streamers should ensure that the column
-                names of the data they provide are consistent with this
-                procedure.
-
-        Returns:
-        --------
-            Dict[FeatureType, List[bool]]: 
-                A dictionary with FeatureType as keys and boolean masks
-                as values.
-
-        Example:
-        --------
-        Assume dataframe has column names 'AAPL_close_price',
-        'AAPL_OPEN_PRICE' then the feature schema will be:
-        {FeatureType.ASSET_CLOSE_PRICE: [True, False],
-        FeatureType.ASSET_OPEN_PRICE: [False, True]}. Columns are
-        matched due to having "close" and "OPEN" substrings in their
-        names matching the lower case values of
-        FeatureType.ASSET_CLOSE_PRICE and ASSET_OPEN_PRICE respectively.
-        This process is case insensitive.
-        """
-        feature_schema = dict()
-        for feature_type in FeatureType:
-            feature_type_mask = dataframe.columns.str.lower().str.match(
-                '.*' + feature_type.value.lower() + '.*').to_list()
-            feature_schema[feature_type] = feature_type_mask
-        return feature_schema
 
 
 @dataclass
