@@ -1,5 +1,30 @@
 """
 base.py
+
+Description:
+------------
+    Defines the base class for a trader that can execute orders using a
+    trading client and a model to produce actions. This trader requires
+    a trading client to connect to a trading environment, a data client
+    to stream the live data and an agent to perform the decision making.
+    The agent has a model to generate actions, a data pipe to modify
+    base environment, and metadata for the dataset used to train the
+    agent. Metadata will be used to create aggregated data stream
+    matching the training data.
+
+License:
+--------
+    MIT License. See LICENSE.md file.
+
+Author(s):
+-------
+    Reza Soleymanifar, Email: Reza@Soleymanifar.com
+
+Class(es):
+----------
+    AbstractTrader:
+        Abstract base class for defining a trader that can execute
+        orders using a trading client and a model to produce actions.
 """
 from abc import ABC
 from datetime import datetime, timedelta
@@ -241,6 +266,11 @@ class AbstractTrader(ABC):
     def model(self) -> nn.Module:
         """
         Returns the model used by the agent to generate actions.
+
+        Returns:
+        --------
+            model (nn.Module):
+                The model used by the agent to generate actions.
         """
         return self.agent.model
 
