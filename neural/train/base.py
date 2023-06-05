@@ -264,6 +264,7 @@ class AbstractTrainer(ABC):
                 *self.initial_cash_range
             ) if self.initial_cash_range is not None else None
             return cash
+
         def initial_asset_quantities() -> np.ndarray:
             asset_quantities = np.random.uniform(
                 *self.initial_assets_range, size=len(self.n_assets, )
@@ -300,16 +301,19 @@ class AbstractTrainer(ABC):
 
         return market_env
 
-    def run_episode(env: TrainMarketEnv) -> None:
+    def run_episode(self, env: TrainMarketEnv, random_actions=False) -> None:
         with torch.no_grad(), torch.set_grad_enabled(False):
-            done = False
-            while not done:
-                action = self.agent.model(observation)
-                observation, reward, done, info = test_market_env.step(
-                    action)
+            observation = test_market_env.reset()
+            while True:
+                action = self.agent.model(
+                    observation
+                ) if not random_actions else env.action_space.sample()
+                observation, reward, done, info = env.step(action)
+                if done:
+                    break
         return None
-        
-    def test(self, n_episode: int = 1) -> None:
+
+    def test(self, n_episode: int = 1, warump: bool = False) -> None:
         """
         This method is used to test the agent's performance on the
         testing dataset. If n_envs = 1 then test is performed on
@@ -328,10 +332,8 @@ class AbstractTrainer(ABC):
             raise ValueError('Test data feeder is set to None. '
                              'Ensure train_ratio < 1. '
                              'train_ratio = {self.train_ratio}')
-        
+
         test_market_env = self._get_market_env()
-        observation = test_market_env.reset()
-        with torch.no_grad(), torch.set_grad_enabled(False):
             for _ in range(n_episode):
                 done = False
                 while not done:

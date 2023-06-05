@@ -157,12 +157,6 @@ class AbstractPipe(ABC):
                     f'{AbstractMarketEnvMetadataWrapper.__name__}.')
         return env
 
-    @abstractmethod
-    def warmup(self, env: AbstractMarketEnv) -> AbstractMarketEnv:
-        while True:
-            action = env.action_space.sample()
-            observation, reward, done, info = test_market_env.step(
-                action)
 
     @abstractmethod
     def pipe(self, env: Env) -> Env:
