@@ -215,16 +215,24 @@ class AbstractTrader(ABC):
         """
         return self.market_metadata_wrapper.asset_prices
 
+    def cancel_all_orders(self):
+        """
+        Cancels all open orders.
+        """
+        self.trade_client.clients['trade'].canel_orders()
+        return None
+
     def check_time(self):
         """
         A method to check if the current time is within the trading
         schedule.
         """
-        current_time = datetime.utcnow()
-        current_day = current_time.date()
-        start, end = self.schedule[current_day].values()
+        current_time = datetime.utcnow().date()
+        current_date = current_time.date()
+        start, end = self.schedule[current_date].values()
 
         if current_time < start and current_time > end:
+            
             return False
         return True
 
