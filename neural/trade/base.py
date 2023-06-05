@@ -2,7 +2,7 @@
 base.py
 """
 from abc import ABC
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import List
 
 import numpy as np
@@ -229,20 +229,19 @@ class AbstractTrader(ABC):
                 True if the current time is within the trading schedule,
         """
         current_time = datetime.utcnow().date()
-        current_date = current_time.date()
-        start, end = self.schedule[current_date].values()
+        current_day = current_time.date()
+        start, end = self.schedule[current_day].values()
 
         if not start <= current_time <= end:
             if not self.cancel_occurred:
                 self.trade_client.cancel_all_orders()
 
                 if current_time < start:
-                    logger.info(f"Waiting for market to open at {start}")
+                    logger.log(f'Waiting for market to open at {start}')
                 elif current_time > end:
-                        next_day = current_date + timedelta(days=1)
+                        next_day = current_day + timedelta(days=1)
                         next_start = self.schedule[next_day]['start']
-                    logger.info(f"Waiting for market to close at {end}")
-
+                    logger.log(f'Waiting for market to close at {next_start}')
 
                 self.cancel_occurred = True
             return False
