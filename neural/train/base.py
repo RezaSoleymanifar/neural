@@ -302,8 +302,21 @@ class AbstractTrainer(ABC):
         return market_env
 
     def run_episode(self, env: TrainMarketEnv, random_actions=False) -> None:
+        """
+        Runs a single episode on the given environment. If random
+        actions are used then the agent's model is not used to generate
+        actions. This method is used to test the agent's performance on
+        the testing dataset.
+
+        Args:
+        -----
+            env (TrainMarketEnv):
+                Environment to run the episode on.
+            random_actions (bool, optional):
+                If True, random actions are used. Defaults to False.
+        """
         with torch.no_grad(), torch.set_grad_enabled(False):
-            observation = test_market_env.reset()
+            observation = env.reset()
             while True:
                 action = self.agent.model(
                     observation
@@ -334,12 +347,10 @@ class AbstractTrainer(ABC):
                              'train_ratio = {self.train_ratio}')
 
         test_market_env = self._get_market_env()
-            for _ in range(n_episode):
-                done = False
-                while not done:
-                    action = self.agent.model(observation)
-                    observation, reward, done, info = test_market_env.step(
-                        action)
+        if warump:
+            self.run_episode(test_market_env, random_actions=True)
+        for _ in range(n_episode):
+            self.run_episode(test_market_env, random_actions=False)
         return None
 
     @abstractmethod
