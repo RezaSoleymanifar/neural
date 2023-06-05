@@ -139,14 +139,14 @@ class AbstractTrader(ABC):
         market_metadata_wrapper = pipe.get_market_metadata_wrapper(
             self.trade_market_env)
         return market_metadata_wrapper
-    
+
     @property
     def model(self) -> nn.Module:
         """
         Returns the model used by the agent to generate actions.
         """
         return self.agent.model
-    
+
     @property
     def schedule(self) -> pd.DataFrame:
         """
@@ -160,7 +160,7 @@ class AbstractTrader(ABC):
                 The schedule of the trading environment.
         """
         return self.market_metadata_wrapper.schedule
-    
+
     @property
     def assets(self) -> List[AlpacaAsset]:
         """
@@ -172,7 +172,7 @@ class AbstractTrader(ABC):
                 The assets held by the trader.
         """
         return self.market_metadata_wrapper.assets
-    
+
     @property
     def cash(self) -> float:
         """
@@ -215,25 +215,34 @@ class AbstractTrader(ABC):
         """
         return self.market_metadata_wrapper.asset_prices
 
+    def check_time(self):
+        """
+        A method to check if the current time is within the trading
+        schedule.
+        """
+        current_time = datetime.utcnow()
+        current_day = current_time.date()
+        start, end = self.schedule[current_day].values()
+
+        if current_time < start and current_time > end:
+            return False
+        return True
+
     def trade(self):
         """
         Starts the trading process by creating a trading environment and
         executing actions from the model.
         """
-
         self.trade_client.check_connection()
         model = self.model
-        observation = self.trade_market_env.reset()
 
-        while True:
-            current_time = datetime.utcnow()
-            current_day = current_time.date()
-            start, end = self.schedule[current_day].values()
-
-            if current_time < start and current_time > end:
-                continue
-            action = model(observation)
-            observation, reward, done, info = self.trade_market_env.step(action)
+        if self.check_time():
+            observation = self.trade_market_env.reset()
+            while True:
+                if self.check_time():
+                    action = model(observation)
+                    observation, reward, done, info = (
+                        self.trade_market_env.step(action))
 
     def place_orders(self, actions: np.ndarray, *args, **kwargs):
         """
