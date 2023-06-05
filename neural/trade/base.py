@@ -42,44 +42,60 @@ class AbstractTrader(ABC):
         agent (Agent):
             An instance of the agent to perform decision making.
         _data_feeder (AsyncDataFeeder):
-            An instance of the data feeder to stream data.
+            An instance of the asynchronous data feeder to stream data.
         _trade_market_env (TradeMarketEnv):
             An instance of the trading environment.
         _model (nn.Module):
             The PyTorch neural network model used by the agent.
+        handle_non_trade_time (bool):
+            A flag to indicate if the trader should handle non-trade
+            time. Non-trade time is defined as the time outside of the
+            trading schedule. If the flag is set to True, then the
+            trader will cancel all open orders and wait for the market
+            to open.
     
     Properties:
     -----------
+        data_feeder (AsyncDataFeeder):
+            The data feeder used to stream data from the data client.
+        trade_market_env (TradeMarketEnv):
+            The trading environment used to execute orders.
+        market_metadata_wrapper (AbstractMarketEnvMetadataWrapper):
+            The metadata wrapper used by the trading environment.
+        schedule (pd.DataFrame):
+            The schedule of the trading environment. The schedule is a
+            pandas DataFrame with two columns, start and end and date
+            as the index.
+        assets (List[AlpacaAsset]):
+            A numpy array of assets held by the trader.
         cash (float):
             Cash available in the trading account. Cash can be positive
             or negative depending on the amount of cash borrowed from
             the broker.
         asset_quantities (np.ndarray[float]):
-            The current quantity of each asset held by the trader. Asset
-            quantities can be positive or negative. Negative quantities
-            indicate that the trader has shorted the asset, namely the
-            trader owes the asset to the broker.
+            A numpy array of current quantity of each asset held by the
+            trader. Asset quantities can be positive or negative.
+            Negative quantities indicate that the trader has shorted    
+            the asset, namely the trader owes the asset to the broker.
         asset_prices (np.ndarray[float]):
-            The current price of each asset held by the trader.
-        assets (np.ndarray[str]):
-            The assets held by the trader.
-        data_feeder (AsyncDataFeeder):
-            An instance of the data feeder to stream data.
-        trade_market_env (TradeMarketEnv):
-            An instance of the trading environment.
+            A numpy array of current price of each asset held by the
+            trader.
         model (nn.Module):
-            The PyTorch neural network model used by the agent.
+            Returns the model used by the agent to generate actions.
     
     Methods:
     --------
-        place_orders:
-            Abstract method for placing an order for a single asset. The  
-            restrictions of the API should be enforced in this method.
+        _check_time:
+            A method to check if the current time is within the trading
+            schedule. If the current time is not within the trading
+            schedule, then all open orders are cancelled.
         trade:
-            Execute the trading process. Checks the connection to the
-            trading platform, before starting the trading process.
+            Starts the trading process by creating a trading
+            environment and executing actions from the model.
+        place_orders:
+            Abstract method for placing an order for a single asset. The
+            restrictions of the API should be enforced in this method.
     """
-
     def __init__(self, trade_client: AbstractTradeClient,
                  data_client: AbstractDataClient, agent: Agent):
         """
