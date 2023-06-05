@@ -24,25 +24,90 @@ class AlpacaTrader(AbstractTrader):
         - The trader must satisfy a certain return on equity (ROE) 
             threshold. This threshold is set by the agent.
 
-        
+    Attributes:
+    ----------
+        trade_client (AbstractTradeClient):
+            An instance of the trading client to connect to the trading
+            platform.
+        data_client (AbstractDataClient):
+            An instance of the data client to stream data.
+        agent (Agent):
+            An instance of the agent to perform decision making.
+        _data_feeder (AsyncDataFeeder):
+            An instance of the asynchronous data feeder to stream data.
+        _trade_market_env (TradeMarketEnv):
+            An instance of the trading environment.
+        _model (nn.Module):
+            The PyTorch neural network model used by the agent.
+        handle_non_trade_time (bool):
+            A flag to indicate if the trader should handle non-trade
+            time. Non-trade time is defined as the time outside of the
+            trading schedule. If the flag is set to True, then the
+            trader will cancel all open orders and wait for the market
+            to open.
+    
+    Properties:
+    -----------
+        data_feeder (AsyncDataFeeder):
+            The data feeder used to stream data from the data client.
+        trade_market_env (TradeMarketEnv):
+            The trading environment used to execute orders.
+        market_metadata_wrapper (AbstractMarketEnvMetadataWrapper):
+            The metadata wrapper used by the trading environment.
+        schedule (pd.DataFrame):
+            The schedule of the trading environment. The schedule is a
+            pandas DataFrame with two columns, start and end and date as
+            the index.
+        assets (List[AlpacaAsset]):
+            A numpy array of assets held by the trader.
+        cash (float):
+            Cash available in the trading account. Cash can be positive
+            or negative depending on the amount of cash borrowed from
+            the broker.
+        asset_quantities (np.ndarray[float]):
+            A numpy array of current quantity of each asset held by the
+            trader. Asset quantities can be positive or negative.
+            Negative quantities indicate that the trader has shorted the
+            asset, namely the trader owes the asset to the broker.
+        asset_prices (np.ndarray[float]):
+            A numpy array of current price of each asset held by the
+            trader.
+        model (nn.Module):
+            Returns the model used by the agent to generate actions.
+        equity (float):
+            The current equity of the trader. Equity is the sum of cash 
+            and the value of all assets owned by the trader. Equity = L 
+            + C - S where L is the value of long positions, C is the
+            cash and S is the value of short positions. Cash can be
+            positive or negative.
+
     Methods:
     --------
-        check_constraints:
+        _check_time(self) -> bool:
+            A method to check if the current time is within the trading
+            schedule. If the current time is not within the trading
+            schedule, then all open orders are cancelled.
+        trade (self) -> None:
+            Starts the trading process by creating a trading environment
+            and executing actions from the model.
+        place_orders(self, actions: np.ndarray, *args, **kwargs) ->
+        None:
+            Abstract method for placing an order for a single asset. The
+            restrictions of the API should be enforced in this method.
+        check_constraints(self, *args, **kwargs) -> None:
             Check if the trader meets the constraints to trade.
-        place_orders:
-            Place orders using the Alpaca trading client.
+        place_orders(self, actions: np.ndarray[float], *args, **kwargs)
+        -> None:
+            Places orders based on the actions provided by the agent.
     
     Raises:
     -------
         TradeConstraintViolationError:
-            If the trader does not meet the constraints to trade.
-
-    Notes
-    -----
-    If manual liquidation of assets is not performed, the trader may
-    receive a margin call. If trader violates the pattern day trader
-    equity requirement, the trader will be restricted from day trading
-    for 90 days. Set delta high enough to avoid this.
+            If pattern day trader equity requirement is not met.
+        TradeConstraintViolationError:
+            If excess margin is negative.
+        TradeConstraintViolationError:
+            If return on equity is below threshold.
     """
 
     def __init__(self, trade_client: AlpacaTradeClient,
@@ -72,26 +137,37 @@ class AlpacaTrader(AbstractTrader):
         """
         Checks trading constraints. The constraints are:
             - The trader must have at least 120% of the pattern day
-                trader minimum equity if delta = 0.20. Pattern day
-                trader minimum equity is $25,000.
+                trader minimum equity if delta = 0.20. Pattern day trader
+                minimum equity is $25,000.
             - The trader must have a positive excess margin.
+            - The trader must satisfy a certain return on equity (ROE)
+                threshold. This threshold is set by the agent.
 
         Args:
         ------
             delta (float, optional):
-                A cushion around the pattern day trader minimum equity.
-                If delta = 0.20, the trader must have at least 120% of
-                the pattern day trader minimum equity. Defaults to 0.2.
+                A cushion around the pattern day trader minimum equity. If
+                delta = 0.20, the trader must have at least 120% of the pattern
+                day trader minimum equity. Defaults to 0.2.
+            return_threshold (float, optional):
+                The return on equity threshold. Defaults to -0.1.
             
         Raises:
         -------
-            TradeConstraintViolationError:
-                If the trader does not meet the constraints to trade.
-        
+        TradeConstraintViolationError:
+            If pattern day trader equity requirement is not met.
+        TradeConstraintViolationError:
+            If excess margin is negative.
+        TradeConstraintViolationError:
+            If return on equity is below threshold.
+
         Notes:
         ------
-        More info here:
-        https://www.finra.org/investors/investing/investment-products/stocks/day-trading
+            If manual liquidation of assets is not performed, the trader may
+            receive a margin call. If trader violates the pattern day trader
+            equity requirement, the trader will be restricted from day trading
+            for 90 days. Set delta high enough to avoid this. More info here:
+            https://www.finra.org/investors/investing/investment-products/stocks/day-trading
         """
         if self.equity < (1 + delta) * PATTERN_DAY_TRADER_MINIMUM_EQUITY:
             raise TradeConstraintViolationError(
