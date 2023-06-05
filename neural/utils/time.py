@@ -239,6 +239,33 @@ class Resolution:
         timedelta_str = f"{self.quantity}{unit_str}"
         return pd.Timedelta(timedelta_str)
 
+    def __str__(self):
+        """
+        String representation of the resolution. This is useful for
+        printing the resolution.
+
+        Returns:
+        --------
+            str:
+                A string representation of the resolution.
+        
+        Example:
+        --------
+            >>> resolution = Resolution(43, Resolution.Unit.NANO_SECOND)
+            >>> print(resolution)
+            43Unit.NANO_SECOND
+        """
+        return f"{self.quantity}{self.unit}"
+
+    def __eq__(self, other):
+        """
+        Checks if two resolutions are equal. Two resolutions are equal if
+        their quantities and units are equal.
+        """
+        if isinstance(other, Resolution):
+            return self.quantity == other.quantity and self.unit == other.unit
+        return False
+
     def validate_resolution(self, quantity: int, unit: Unit):
         """
         Validates the resolution.
@@ -295,34 +322,7 @@ class Resolution:
                 "Day units can only be used with quantities equal to 1.")
 
         return None
-
-    def __eq__(self, other):
-        """
-        Checks if two resolutions are equal. Two resolutions are equal if
-        their quantities and units are equal.
-        """
-        if isinstance(other, Resolution):
-            return self.quantity == other.quantity and self.unit == other.unit
-        return False
-
-    def __str__(self):
-        """
-        String representation of the resolution. This is useful for
-        printing the resolution.
-
-        Returns:
-        --------
-            str:
-                A string representation of the resolution.
-        
-        Example:
-        --------
-            >>> resolution = Resolution(43, Resolution.Unit.NANO_SECOND)
-            >>> print(resolution)
-            43Unit.NANO_SECOND
-        """
-        return f"{self.quantity}{self.unit}"
-
+    
     class Unit(Enum):
         """
         Enumeration class that defines the available units of time for

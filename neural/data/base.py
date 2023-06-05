@@ -543,7 +543,7 @@ class DataSchema:
             len(self.schema[data_type]['feature_schema'].values()[0])
             for data_type in self.schema)
         return n_features
-    
+
     @property
     def assets(self) -> List[AbstractAsset]:
         """
@@ -592,7 +592,7 @@ class DataSchema:
 
     def __eq__(self, other: DataSchema) -> bool:
         return self.schema == other.schema
-    
+
     def __add__(self, other: DataSchema) -> DataSchema:
         """
         Adds two data schemas together. This is useful for joining
@@ -666,7 +666,7 @@ class DataSchema:
             self.schema[data_type]['feature_schema'][feature_type]
         ]
         return mask
-    
+
 
 class FeatureSchema:
     """
@@ -716,6 +716,7 @@ class FeatureSchema:
     [False, True, False]
     This mask now can be applied to a row to return the close prices.
     """
+
     def __init__(self, dataframe: pd.DataFrame) -> None:
         """
         Initializes the feature schema using a pandas DataFrame. The
@@ -762,7 +763,7 @@ class FeatureSchema:
                 True if the two feature schemas are equal, False
         """
         return self.shcema == other.schema
-    
+
     def __add__(self, other: FeatureSchema) -> FeatureSchema:
         """
         joins feature schemas of two datasets or streams. The boolean
@@ -795,7 +796,7 @@ class FeatureSchema:
         for feature_type in schema:
             schema[feature_type] += other.schema[feature_type]
         return new_feature_schema
-    
+
     def _create_feature_schema(
             self, dataframe: pd.DataFrame) -> Dict[FeatureType, List[bool]]:
         """
@@ -847,7 +848,7 @@ class FeatureSchema:
                 '.*' + feature_type.value.lower() + '.*').to_list()
             feature_schema[feature_type] = feature_type_mask
         return feature_schema
-    
+
 
 @dataclass
 class AbstractDataMetadata:
@@ -936,6 +937,9 @@ class AbstractDataMetadata:
         Joins feature schemas of two datasets or streams. The boolean masks are
         simply concatenated to indicate the features type locations in the
         joined dataset/stream.
+    __eq__(self, other) -> bool
+        Checks if two metadata objects are equal. This is useful for
+        validating metadata objects before joining or appending.
     __or__(self, other: AbstractDataMetaData, **kwargs) -> AbstractDataMetaData
         Merges two metadata objects. This is useful for joining datasets that
         are large to download in one go. Each sub-dataset is downloaded for a
@@ -1036,6 +1040,12 @@ class AbstractDataMetadata:
         """
         return self.calendar_type.schedule
 
+    def __eq__(self, other: object) -> bool:
+        equal = (self.data_schema == other.data_schema
+                 and self.resolution == other.resolution
+                 and self.calendar_type == other.calendar_type)
+        return equal
+
     def __or__(self, other: AbstractDataMetadata,
                **kwargs) -> AbstractDataMetadata:
         """
@@ -1085,10 +1095,6 @@ class AbstractDataMetadata:
                                          **kwargs)
 
         return joined_metadata
-    
-    def __eq__(self, other: object) -> bool:
-        return self.
-
 
     def __add__(self, other: AbstractDataMetadata,
                 **kwargs) -> AbstractDataMetadata:
@@ -1152,6 +1158,7 @@ class AbstractDataMetadata:
                                            **kwargs)
 
         return appended_metadata
+
 
 @dataclass
 class StreamMetaData(AbstractDataMetadata):
@@ -1965,7 +1972,7 @@ class AsyncDataFeeder(AbstractDataFeeder):
     @property
     def done(self):
         return False
-    
+
     def get_features_generator(self):
         """
         Returns a generator object that can be used to iteratively
