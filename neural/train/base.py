@@ -239,7 +239,7 @@ class AbstractTrainer(ABC):
 
         return train_data_feeder, test_data_feeder
 
-    def _get_train_market_env(self) -> TrainMarketEnv:
+    def _get_market_env(self) -> TrainMarketEnv:
         """
         Deep copies of agent pipe is create when n_envs > 1. This is to
         avoid complications arised during parallel training and possibly
@@ -253,35 +253,30 @@ class AbstractTrainer(ABC):
         observation normalizer stats to target account initial
         cash/assets.
         """
-
         caller_name = inspect.stack()[1].function
-
         if caller_name == 'train':
             data_feeder = self.train_data_feeder
         elif caller_name == 'test':
             data_feeder = self.test_data_feeder
-
-        n_assets = self.agent.dataset_metadata.n_assets
 
         def initial_cash() -> float:
             cash = np.random.uniform(
                 *self.initial_cash_range
             ) if self.initial_cash_range is not None else None
             return cash
-
         def initial_asset_quantities() -> np.ndarray:
             asset_quantities = np.random.uniform(
-                *self.initial_assets_range, size=len(n_assets, )
+                *self.initial_assets_range, size=len(self.n_assets, )
             ) if self.initial_assets_range is not None else None
             return asset_quantities
 
         if self.n_async_envs == 1:
-            train_market_env = TrainMarketEnv(
+            market_env = TrainMarketEnv(
                 data_feeder=data_feeder,
                 initial_cash=initial_cash(),
                 initial_asset_quantities=initial_asset_quantities())
-            train_market_env = self.agent.pipe.pipe(train_market_env)
-            return train_market_env
+            market_env = self.pipe.pipe(market_env)
+            return market_env
 
         if self.exclusive_async_envs:
             data_feeders = data_feeder.split(n=self.n_async_envs)
@@ -299,11 +294,11 @@ class AbstractTrainer(ABC):
         ]
 
         if self.async_envs:
-            train_market_env = AsyncVectorEnv(env_callables)
+            market_env = AsyncVectorEnv(env_callables)
         else:
-            train_market_env = SyncVectorEnv(env_callables)
+            market_env = SyncVectorEnv(env_callables)
 
-        return train_market_env
+        return market_env
 
     def test(self, n_episode: int = 1) -> None:
         """
@@ -325,15 +320,14 @@ class AbstractTrainer(ABC):
                              'Ensure train_ratio < 1. '
                              'train_ratio = {self.train_ratio}')
 
-        piped_market_env = self._get_train_market_env()
-        observation = piped_market_env.reset()
-
+        test_market_env = self._get_market_env()
+        observation = test_market_env.reset()
         with torch.no_grad(), torch.set_grad_enabled(False):
             for _ in range(n_episode):
                 done = False
                 while not done:
                     action = self.agent.model(observation)
-                    observation, reward, done, info = piped_market_env.step(
+                    observation, reward, done, info = test_market_env.step(
                         action)
         return None
 

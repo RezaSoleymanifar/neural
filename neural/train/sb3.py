@@ -52,7 +52,7 @@ class StableBaselinesTrainer(AbstractTrainer):
               steps: int = 1_000_000,
               **kwargs) -> nn.Module:
 
-        piped_market_env = self._get_train_market_env()
+        piped_market_env = self._get_market_env()
         model = self.agent.model
 
         algorithm_ = algorithm(policy=model,
