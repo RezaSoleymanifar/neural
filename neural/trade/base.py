@@ -85,14 +85,14 @@ class AbstractTrader(ABC):
     
     Methods:
     --------
-        _check_time:
+        _check_time(self) -> bool:
             A method to check if the current time is within the trading
             schedule. If the current time is not within the trading
             schedule, then all open orders are cancelled.
-        trade:
+        trade (self) -> None:
             Starts the trading process by creating a trading
             environment and executing actions from the model.
-        place_orders:
+        place_orders(self, actions: np.ndarray, *args, **kwargs) -> None:
             Abstract method for placing an order for a single asset. The
             restrictions of the API should be enforced in this method.
     """
