@@ -178,17 +178,17 @@ class AbstractTrainer(ABC):
 
         self.env_pipes = None
 
-        if not 0 < train_ratio <= 1:
-            raise ValueError("train_ratio must be in (0, 1]")
+        if not 0 <= train_ratio <= 1:
+            raise ValueError("train_ratio must be in [0, 1]")
 
-        if not n_envs >= 1:
-            raise ValueError("n_envs must be >= 1")
+        if not isinstance(n_envs, int) or not n_envs >= 1:
+            raise ValueError('n_envs must be an integer greater than 0.')
 
-        self._initialize_data_feeders()
+        self._get_data_feeders()
 
         return None
 
-    def _initialize_data_feeders(self) -> None:
+    def _get_data_feeders(self) -> None:
         """
         Splits the dataset time horizon into training and testing
         intervals, and creates data feeders for training and testing
