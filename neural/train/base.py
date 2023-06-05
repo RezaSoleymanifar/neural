@@ -163,7 +163,7 @@ class AbstractTrainer(ABC):
         async_envs: bool = True,
         exclusive_envs: bool = False,
         initial_cash_range: Optional[Tuple[float, float]] = None,
-        initial_assets_range: Optional[Tuple[float, float]] = None,
+        initial_asset_quantities_range: Optional[Tuple[float, float]] = None,
     ) -> None:
 
         self.agent = agent
@@ -175,7 +175,7 @@ class AbstractTrainer(ABC):
         self.async_envs = async_envs
         self.exclusive_envs = exclusive_envs
         self.initial_cash_range = initial_cash_range
-        self.initial_assets_range = initial_assets_range
+        self.initial_assets_range = initial_asset_quantities_range
 
         self.train_market_env = None
         self.test_market_env = None
@@ -246,20 +246,24 @@ class AbstractTrainer(ABC):
             data_feeder = self.test_data_feeder
 
         n_assets = self.agent.dataset_metadata.n_assets
+
         def initial_cash() -> float:
+            if isinstance(self.initial_cash_range, float):
+                return self.initial_cash_range
             return np.random.uniform(
                 *self.initial_cash_range
             ) if self.initial_cash_range is not None else None
 
-        def initial_assets() -> np.ndarray:
+        def initial_asset_quantities() -> np.ndarray:
             return np.random.uniform(
                 *self.initial_assets_range, size=len(n_assets, )
             ) if self.initial_assets_range is not None else None
 
         if self.n_envs == 1:
-            train_market_env = TrainMarketEnv(data_feeder=data_feeder,
-                                              initial_cash=initial_cash(),
-                                              initial_asset_quantities==initial_assets())
+            train_market_env = TrainMarketEnv(
+                data_feeder=data_feeder,
+                initial_cash=initial_cash(),
+                initial_asset_quantities=initial_asset_quantities())
             piped_market_env = self.agent.pipe.pipe(train_market_env)
 
             return piped_market_env
@@ -272,7 +276,7 @@ class AbstractTrainer(ABC):
         envs = [
             TrainMarketEnv(data_feeder=data_feeder,
                            initial_cash=initial_cash(),
-                           initial_assets=initial_assets())
+                           initial_assets=initial_asset_quantities())
             for data_feeder in data_feeders
         ]
         self.async_env_pipes = [
