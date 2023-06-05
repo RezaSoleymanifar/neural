@@ -143,13 +143,6 @@ class AbstractTrader(ABC):
         return market_metadata_wrapper
 
     @property
-    def model(self) -> nn.Module:
-        """
-        Returns the model used by the agent to generate actions.
-        """
-        return self.agent.model
-
-    @property
     def schedule(self) -> pd.DataFrame:
         """
         The schedule of the trading environment. The schedule is a list
@@ -217,6 +210,13 @@ class AbstractTrader(ABC):
         """
         return self.market_metadata_wrapper.asset_prices
 
+    @property
+    def model(self) -> nn.Module:
+        """
+        Returns the model used by the agent to generate actions.
+        """
+        return self.agent.model
+    
     def _check_time(self) -> bool:
         """
         A method to check if the current time is within the trading
