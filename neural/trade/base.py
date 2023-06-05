@@ -102,7 +102,7 @@ class AbstractTrader(ABC):
         self._data_feeder = None
         self._trade_market_env = None
         self._model = None
-        self.handle_non_trade = False
+        self.handle_non_trade_time = False
 
         return None
 
@@ -233,7 +233,7 @@ class AbstractTrader(ABC):
         start, end = self.schedule.loc[current_day].values()
 
         if not start <= current_time <= end:
-            if not self.handle_non_trade:
+            if self.handle_non_trade_time:
                 self.trade_client.cancel_all_orders()
                 if current_time < start:
                     logger.log(f'Waiting for market to open at {start}')
@@ -241,9 +241,9 @@ class AbstractTrader(ABC):
                     next_day = current_day + timedelta(days=1)
                     next_start = self.schedule[next_day]['start']
                     logger.log(f'Waiting for market to open at {next_start}')
-                self.handle_non_trade = True
+                self.handle_non_trade_time = False
             return False
-        self.handle_non_trade = False
+        self.handle_non_trade_time = True
         return True
 
     def trade(self):
@@ -251,6 +251,7 @@ class AbstractTrader(ABC):
         Starts the trading process by creating a trading environment and
         executing actions from the model.
         """
+        logger.info('Initiating trading process.')
         self.trade_client.check_connection()
         model = self.model
 
