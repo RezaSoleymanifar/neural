@@ -97,7 +97,7 @@ class AbstractTrader(ABC):
             restrictions of the API should be enforced in this method.
     """
     def __init__(self, trade_client: AbstractTradeClient,
-                 data_client: AbstractDataClient, agent: Agent):
+                 data_client: AbstractDataClient, agent: Agent) -> None:
         """
         Initializes an AbstractTrader object.
 
@@ -142,6 +142,11 @@ class AbstractTrader(ABC):
     def trade_market_env(self) -> TradeMarketEnv:
         """
         The trading environment used to execute orders.
+
+        Returns:
+        --------
+            trade_market_env (TradeMarketEnv):
+                An instance of the trading environment.
         """
         if self._trade_market_env is None:
             env = TradeMarketEnv(trader=self)
@@ -152,9 +157,14 @@ class AbstractTrader(ABC):
     def market_metadata_wrapper(self) -> AbstractMarketEnvMetadataWrapper:
         """
         The metadata wrapper used by the trading environment.
+
+        Returns:
+        --------
+            market_metadata_wrapper (AbstractMarketEnvMetadataWrapper):
+                An instance of the metadata wrapper used by the
+                trading environment.
         """
-        pipe = self.agent.pipe
-        market_metadata_wrapper = pipe.get_market_metadata_wrapper(
+        market_metadata_wrapper = self.agent.pipe.get_market_metadata_wrapper(
             self.trade_market_env)
         return market_metadata_wrapper
 
