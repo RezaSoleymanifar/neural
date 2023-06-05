@@ -184,11 +184,10 @@ class AbstractTrainer(ABC):
 
         if not 0 < train_ratio <= 1:
             raise ValueError("train_ratio must be in (0, 1]")
-
         if not isinstance(n_envs, int) or n_envs < 1:
             raise ValueError('n_envs must be an integer greater than 0.')
 
-        self._get_data_feeders()
+        self.train_data_feeder, self.test_data_feeder =  self._get_data_feeders()
 
         return None
 
@@ -208,7 +207,8 @@ class AbstractTrainer(ABC):
                     metadata=dataset_metadata,
                     datasets=datasets,
                     n_chunks=self.n_chunks)
-            
+            self._data_feeder = data_feeder
+        return self._data_feeder
 
     def _get_data_feeders(self) -> None:
         """
