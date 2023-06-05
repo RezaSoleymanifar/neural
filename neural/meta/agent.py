@@ -27,10 +27,20 @@ Classes:
         object interacts with this model to update the parameters
         (training) of the model and Trader object interacts with this
         model to make trading decisions (inference).
+
+Examples:
+---------
+    >>> from neural.meta.agent import Agent
+    >>> from neural.meta.pipe import MarginAccountPipe
+    >>> from torch import nn
+    >>> pipe = MarginAccountPipe(...)
+    >>> model = nn.Sequential(...)
+    >>> agent = Agent(model, pipe)
 """
 from dataclasses import dataclass
-from torch import nn
 from typing import Optional
+
+from torch import nn
 
 from neural.data.base import DatasetMetadata
 from neural.meta.pipe import AbstractPipe
