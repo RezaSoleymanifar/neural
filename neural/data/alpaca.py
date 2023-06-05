@@ -54,9 +54,9 @@ from neural.client.alpaca import AlpacaDataClient
 from neural.common.constants import (ALPACA_ACCEPTED_DOWNLOAD_RESOLUTIONS,
                                      GLOBAL_DATA_TYPE)
 from neural.common.log import logger
-from neural.data.base import (AbstractDataSource, AbstractAsset, CalendarType,
+from neural.data.base import (AbstractDataSource, AbstractAsset,
                               DatasetMetadata, DataSchema, FeatureSchema)
-from neural.data.enums import AssetType
+from neural.data.enums import AssetType, CalendarType
 from neural.utils.base import (progress_bar, validate_path, RunningStatistics)
 from neural.utils.io import to_hdf5
 from neural.utils.misc import resolution_to_timeframe
@@ -861,6 +861,7 @@ class AlpacaDataProcessor:
             interval. The final interval will have time_index = close -
             resolution.
     """
+
     def __init__(self):
         """
         Initializes the AlpacaDataProcessor class.

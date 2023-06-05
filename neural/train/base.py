@@ -202,7 +202,6 @@ class AbstractTrainer(ABC):
         """
         dataset_metadata, datasets = from_hdf5(self.file_path,
                                                self.dataset_name)
-        
         if self.agent.dataset_metadata is None:
             self.agent.dataset_metadata = dataset_metadata
         elif not self.agent.dataset_metadata == dataset_metadata:

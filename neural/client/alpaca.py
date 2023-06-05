@@ -58,6 +58,7 @@ from neural.common.log import logger
 from neural.data.enums import AssetType
 from neural.utils.misc import objects_list_to_dataframe
 
+
 if TYPE_CHECKING:
     from neural.data.alpaca import AlpacaAsset
 

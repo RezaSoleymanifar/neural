@@ -1085,6 +1085,10 @@ class AbstractDataMetadata:
                                          **kwargs)
 
         return joined_metadata
+    
+    def __eq__(self, other: object) -> bool:
+        return self.
+
 
     def __add__(self, other: AbstractDataMetadata,
                 **kwargs) -> AbstractDataMetadata:
@@ -1129,7 +1133,7 @@ class AbstractDataMetadata:
                 if the calendar types of the two metadata objects are
                 not the same.
         """
-        if dill.dumps(self.data_schema) != dill.dumps(other.data_schema):
+        if self.data_schema != other.data_schema:
             raise ValueError('Datasets must have identical data schemas.')
 
         if self.resolution != other.resolution:
@@ -1149,8 +1153,6 @@ class AbstractDataMetadata:
 
         return appended_metadata
 
-    def __eq__(self, __value: object) -> bool:
-        # Uses dill dump to compare 
 @dataclass
 class StreamMetaData(AbstractDataMetadata):
     """
