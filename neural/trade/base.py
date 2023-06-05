@@ -235,14 +235,12 @@ class AbstractTrader(ABC):
         if not start <= current_time <= end:
             if not self.cancel_occurred:
                 self.trade_client.cancel_all_orders()
-
                 if current_time < start:
                     logger.log(f'Waiting for market to open at {start}')
                 elif current_time > end:
-                        next_day = current_day + timedelta(days=1)
-                        next_start = self.schedule[next_day]['start']
-                    logger.log(f'Waiting for market to close at {next_start}')
-
+                    next_day = current_day + timedelta(days=1)
+                    next_start = self.schedule[next_day]['start']
+                    logger.log(f'Waiting for market to open at {next_start}')
                 self.cancel_occurred = True
             return False
         self.cancel_occurred = False
