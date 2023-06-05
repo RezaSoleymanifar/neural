@@ -576,41 +576,6 @@ class DataSchema:
         """
         return self.get_features_mask(FeatureType.ASSET_CLOSE_PRICE)
 
-    def get_features_mask(self, feature_type: FeatureType) -> List[bool]:
-        """
-        Retrievs the boolean mask for a given feature type. This is
-        useful for filtering out features of a particular type from the
-        data. For example if the user wants to filter out all features
-        that are text based, they can use this method to get the mask
-        for text features FeatureType.TEXT and filter out the columns
-        that have True values in the mask. 
-
-        Args:
-        ------
-            feature_type (FeatureType):
-                The feature type for which the mask is to be retrieved.
-
-        Returns:
-        --------
-            List[bool]:
-                A boolean mask for the given feature type.
-            
-        Raises:
-        -------
-            ValueError:
-                If the feature type is not in the data schema.
-
-        Notes:
-        ------
-            Assuming features is a row of data, features(mask) will
-            return the features of the given feature type.
-        """
-        mask = [
-            mask_value for data_type in self.schema for mask_value in
-            self.schema[data_type]['feature_schema'][feature_type]
-        ]
-        return mask
-
     def __repr__(self) -> str:
         """
         Returns a string representation of the data schema.
@@ -624,6 +589,9 @@ class DataSchema:
                 False, True, False]}}}
         """
         return str(self.schema)
+
+    def __eq__(self, other: DataSchema) -> bool:
+        return self.schema == other.schema
     
     def __add__(self, other: DataSchema) -> DataSchema:
         """
@@ -664,6 +632,41 @@ class DataSchema:
                 schema[data_type] = other.schema[data_type]
         return new_data_schema
 
+    def get_features_mask(self, feature_type: FeatureType) -> List[bool]:
+        """
+        Retrievs the boolean mask for a given feature type. This is
+        useful for filtering out features of a particular type from the
+        data. For example if the user wants to filter out all features
+        that are text based, they can use this method to get the mask
+        for text features FeatureType.TEXT and filter out the columns
+        that have True values in the mask. 
+
+        Args:
+        ------
+            feature_type (FeatureType):
+                The feature type for which the mask is to be retrieved.
+
+        Returns:
+        --------
+            List[bool]:
+                A boolean mask for the given feature type.
+            
+        Raises:
+        -------
+            ValueError:
+                If the feature type is not in the data schema.
+
+        Notes:
+        ------
+            Assuming features is a row of data, features(mask) will
+            return the features of the given feature type.
+        """
+        mask = [
+            mask_value for data_type in self.schema for mask_value in
+            self.schema[data_type]['feature_schema'][feature_type]
+        ]
+        return mask
+    
 
 class FeatureSchema:
     """
