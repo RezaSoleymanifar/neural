@@ -198,10 +198,6 @@ class AbstractTrainer(ABC):
         return self.agent.dataset_metadata
 
     @property
-    def n_assets(self) -> int:
-        return self.agent.dataset_metadata.n_assets
-
-    @property
     def async_env_pipes(self) -> list:
         if self._async_env_pipes is None:
             self.async_env_pipes = [
@@ -266,8 +262,9 @@ class AbstractTrainer(ABC):
             return cash
 
         def initial_asset_quantities() -> np.ndarray:
+            n_assets = self.agent.dataset_metadata.n_assets
             asset_quantities = np.random.uniform(
-                *self.initial_assets_range, size=len(self.n_assets, )
+                *self.initial_assets_range, size=len(n_assets, )
             ) if self.initial_assets_range is not None else None
             return asset_quantities
 
