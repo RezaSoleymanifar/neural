@@ -30,6 +30,7 @@ Classes:
 """
 from dataclasses import dataclass
 from torch import nn
+from typing import Optional
 
 from neural.data.base import DatasetMetadata
 from neural.meta.pipe import AbstractPipe
@@ -48,15 +49,15 @@ class Agent:
     objects interact with this model to update the parameters of the
     model and to make trading decisions, respectively.
 
-    Attributes:
+    Args:
     ----------
         model (nn.Module): 
             The PyTorch neural network model used by the agent.
         pipe (AbstractPipe): 
             The data pipe used to transform input data.
-        dataset_metadata (DatasetMetadata): 
+        dataset_metadata (Optional[DatasetMetadata]): 
             Metadata about the dataset used by the agent.
     """
     model: nn.Module
     pipe: AbstractPipe
-    dataset_metadata: DatasetMetadata
+    dataset_metadata: Optional[DatasetMetadata] = None
