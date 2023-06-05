@@ -20,6 +20,7 @@ from neural.env.base import TrainMarketEnv
 from neural.meta.agent import Agent
 from neural.utils.io import from_hdf5
 
+
 class AbstractTrainer(ABC):
     """
     This is an abstract class for training agents. It is designed to
@@ -149,6 +150,7 @@ class AbstractTrainer(ABC):
     environments with random initial conditions can potentially help the
     model generalize better.
     """
+
     def __init__(
         self,
         agent: Agent,
@@ -179,7 +181,7 @@ class AbstractTrainer(ABC):
         self.train_data_feeder = None
         self.test_data_feeder = None
 
-        self._data_feeder = None    
+        self._data_feeder = None
         self.env_pipes = None
 
         if not 0 < train_ratio <= 1:
@@ -187,12 +189,12 @@ class AbstractTrainer(ABC):
         if not isinstance(n_envs, int) or n_envs < 1:
             raise ValueError('n_envs must be an integer greater than 0.')
 
-        self.train_data_feeder, self.test_data_feeder =  self._get_data_feeders()
+        self.train_data_feeder, self.test_data_feeder = (
+            self._get_train_test_data_feeders())
 
         return None
 
-
-    def _get_data_feeders(self) -> None:
+    def _get_train_test_data_feeders(self) -> None:
         """
         Splits the dataset time horizon into training and testing
         intervals, and creates data feeders for training and testing
@@ -202,28 +204,25 @@ class AbstractTrainer(ABC):
         training and no testing is performed.
         """
         dataset_metadata, datasets = from_hdf5(self.file_path,
-                                                self.dataset_name)
+                                               self.dataset_name)
         if self.agent.dataset_metadata is None:
             self.agent.dataset_metadata = dataset_metadata
         elif not self.agent.dataset_metadata == dataset_metadata:
-            raise ValueError(
-                'Agent dataset metadata does not match metadata '
-                f'in path {self.file_path}.')
+            raise ValueError('Agent dataset metadata does not match metadata '
+                             f'in path {self.file_path}.')
 
-        data_feeder = StaticDataFeeder(
-                metadata=dataset_metadata,
-                datasets=datasets,
-                n_chunks=self.n_chunks)
-        self._data_feeder = data_feeder
-        
+        data_feeder = StaticDataFeeder(metadata=dataset_metadata,
+                                       datasets=datasets,
+                                       n_chunks=self.n_chunks)
+
         if self.train_ratio == 1:
-            self.train_data_feeder  = self._data_feeder
-            self.test_data_feeder = None
-            return None
-        self.train_data_feeder, self.test_data_feeder = (
-            data_feeder.split(n=self.train_ratio))
+            train_data_feeder = data_feeder
+            test_data_feeder = None
+        else:
+            train_data_feeder, test_data_feeder = data_feeder.split(
+                n=self.train_ratio)
 
-        return None
+        return train_data_feeder, test_data_feeder
 
     def _get_piped_env(self) -> TrainMarketEnv:
         """
@@ -258,9 +257,9 @@ class AbstractTrainer(ABC):
 
         if self.n_envs == 1:
             train_market_env = TrainMarketEnv(data_feeder=data_feeder,
-                                        trainer=self,
-                                        initial_cash=initial_cash(),
-                                        initial_assets=initial_assets())
+                                              trainer=self,
+                                              initial_cash=initial_cash(),
+                                              initial_assets=initial_assets())
             piped_market_env = self.agent.pipe.pipe(train_market_env)
 
             return piped_market_env
@@ -309,8 +308,7 @@ class AbstractTrainer(ABC):
         if self.test_data_feeder is None:
             raise ValueError('Test data feeder is set to None. '
                              'Ensure train_ratio < 1. '
-                             'train_ratio = {self.train_ratio}'
-                             )
+                             'train_ratio = {self.train_ratio}')
 
         piped_market_env = self._get_piped_env()
         observation = piped_market_env.reset()
