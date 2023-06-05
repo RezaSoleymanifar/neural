@@ -179,7 +179,7 @@ class AbstractTrainer(ABC):
 
         self.train_market_env = None
         self.test_market_env = None
-        self.async_env_pipes = None
+        self._async_env_pipes = None
 
         if not 0 < train_ratio <= 1:
             raise ValueError("train_ratio must be in (0, 1]")
@@ -193,6 +193,22 @@ class AbstractTrainer(ABC):
     def pipe(self) -> AbstractPipe:
         return self.agent.pipe
 
+    @property
+    def dataset_metadata(self) -> dict:
+        return self.agent.dataset_metadata
+
+    @property
+    def n_assets(self) -> int:
+        return self.agent.dataset_metadata.n_assets
+
+    @property
+    def async_env_pipes(self) -> list:
+        if self._async_env_pipes is None:
+            self.async_env_pipes = [
+                copy.deepcopy(self.agent.pipe) for _ in range(self.n_async_envs)
+            ] if self.async_env_pipes is None else self.async_env_pipes
+        return self._async_env_pipes
+
     def _get_train_test_data_feeders(self) -> None:
         """
         Splits the dataset time horizon into training and testing
@@ -204,9 +220,9 @@ class AbstractTrainer(ABC):
         """
         dataset_metadata, datasets = from_hdf5(self.file_path,
                                                self.dataset_name)
-        if self.agent.dataset_metadata is None:
+        if self.dataset_metadata is None:
             self.agent.dataset_metadata = dataset_metadata
-        elif not self.agent.dataset_metadata == dataset_metadata:
+        elif not self.dataset_metadata == dataset_metadata:
             raise ValueError('Agent dataset metadata does not match metadata '
                              f'in path {self.file_path}.')
 
@@ -277,9 +293,6 @@ class AbstractTrainer(ABC):
                            initial_assets=initial_asset_quantities())
             for data_feeder in data_feeders
         ]
-        self.async_env_pipes = [
-            copy.deepcopy(self.agent.pipe) for _ in range(self.n_async_envs)
-        ] if self.async_env_pipes is None else self.async_env_pipes
         env_callables = [
             lambda pipe=pipe, env=env: pipe.pipe(env)
             for pipe, env in zip(self.async_env_pipes, async_envs)
