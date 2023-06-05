@@ -4,8 +4,8 @@ alpaca.py
 import numpy as np
 
 from neural.client.alpaca import AlpacaTradeClient, AlpacaDataClient
-from neural.common.exceptions import TradeConstraintViolationError
 from neural.common.constants import PATTERN_DAY_TRADER_MINIMUM_EQUITY
+from neural.common.exceptions import TradeConstraintViolationError
 from neural.meta.agent import Agent
 from neural.trade.base import AbstractTrader
 
@@ -18,9 +18,11 @@ class AlpacaTrader(AbstractTrader):
     method to check if the trader meets the constraints to trade. The
     constraints are:
         - The trader must have at least 120% of the pattern day trader
-            minimum equity if delta = 0.20. Pattern day trader minimum
+            minimum equity (if delta = 0.20). Pattern day trader minimum
             equity is $25,000.
         - The trader must have a positive excess margin.
+        - The trader must satisfy a certain return on equity (ROE) 
+            threshold. This threshold is set by the agent.
     
     Methods:
     --------
@@ -98,6 +100,7 @@ class AlpacaTrader(AbstractTrader):
             raise TradeConstraintViolationError(
                 'Trader may receive a margin call if no action is taken.')
 
+        if self.market_metadata_wrapper.return_ < 
         return None
 
     def place_orders(
