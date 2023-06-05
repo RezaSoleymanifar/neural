@@ -72,7 +72,7 @@ class AbstractMarketEnv(Env, ABC):
         Abstract method for updating the market environment. Thismethod
         uses the generator returned by the data feeder to update the 
         environment state.
-    construct_observation(self):
+    get_observation(self):
         Abstract method for constructing the market observation.
     place_orders(actions):
         Abstract method for placing orders in the market environment.

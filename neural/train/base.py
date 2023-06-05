@@ -248,8 +248,6 @@ class AbstractTrainer(ABC):
         n_assets = self.agent.dataset_metadata.n_assets
 
         def initial_cash() -> float:
-            if isinstance(self.initial_cash_range, float):
-                return self.initial_cash_range
             return np.random.uniform(
                 *self.initial_cash_range
             ) if self.initial_cash_range is not None else None
