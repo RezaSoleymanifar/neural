@@ -1308,7 +1308,7 @@ class AlpacaTradeClient(AbstractTradeClient, AlpacaClient):
         asset_quantities = np.array(asset_quantities)
         return asset_quantities
 
-    def cancel_all_orders(self):
+    def cancel_all_orders(self) -> None:
         """
         Cancels all open orders.
         """

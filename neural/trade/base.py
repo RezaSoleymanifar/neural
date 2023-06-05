@@ -219,7 +219,13 @@ class AbstractTrader(ABC):
     def check_time(self):
         """
         A method to check if the current time is within the trading
-        schedule.
+        schedule. If the current time is not within the trading
+        schedule, then all open orders are cancelled.
+
+        Returns:
+        --------
+            bool:
+                True if the current time is within the trading schedule,
         """
         current_time = datetime.utcnow().date()
         current_date = current_time.date()

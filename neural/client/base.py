@@ -198,6 +198,8 @@ class AbstractTradeClient(AbstractClient):
             use this method to check the connection before start of
             trading process.
             execution of trading process.
+        cancel_all_orders(*args, **kwargs):
+            Cancel all open orders.
         place_order(*args, **kwargs):
             Place an order for a single asset.
 
@@ -296,6 +298,18 @@ class AbstractTradeClient(AbstractClient):
         """
         raise NotImplementedError
 
+    @abstractmethod
+    def cancel_all_orders(self, *args, **kwargs):
+        """
+        Cancel all open orders.
+
+        Raises:
+        --------
+            NotImplementedError: 
+                This method must be implemented by a subclass.
+        """
+        raise NotImplementedError
+    
     @abstractmethod
     def place_order(self, *args, **kwargs):
         """
