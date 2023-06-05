@@ -151,7 +151,7 @@ class AlpacaTrader(AbstractTrader):
             if not asset.shortable:
                 if quantity == 0 and new_quantity < 0:
                     new_quantity = 0
-            if quantity == 0 and new_quantity < 0:
+            if quantity <= 0 and new_quantity < 0:
                 new_quantity = int(new_quantity)
             if (quantity > 0 and quantity + new_quantity < 0
                     or quantity < 0 and quantity + new_quantity > 0):
