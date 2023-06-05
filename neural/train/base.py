@@ -266,13 +266,12 @@ class AbstractTrainer(ABC):
                 initial_asset_quantities=initial_asset_quantities())
             train_market_env = self.agent.pipe.pipe(train_market_env)
             return train_market_env
-        elif self.async_envs:
-            if self.exclusive_async_envs:
-                data_feeders = data_feeder.split(n=self.n_async_envs)
-            else:
-                data_feeders = [data_feeder] * self.n_async_envs
 
-        envs = [
+        if self.exclusive_async_envs:
+            data_feeders = data_feeder.split(n=self.n_async_envs)
+        else:
+            data_feeders = [data_feeder] * self.n_async_envs
+        async_envs = [
             TrainMarketEnv(data_feeder=data_feeder,
                            initial_cash=initial_cash(),
                            initial_assets=initial_asset_quantities())
@@ -283,7 +282,7 @@ class AbstractTrainer(ABC):
         ] if self.async_env_pipes is None else self.async_env_pipes
         env_callables = [
             lambda pipe=pipe, env=env: pipe.pipe(env)
-            for pipe, env in zip(self.async_env_pipes, envs)
+            for pipe, env in zip(self.async_env_pipes, async_envs)
         ]
 
         if self.async_envs:
