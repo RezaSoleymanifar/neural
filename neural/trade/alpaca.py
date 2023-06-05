@@ -66,8 +66,8 @@ class AlpacaTrader(AbstractTrader):
                 The current equity of the trader.
         """
         return self.trade_client.equity
-    
-    def check_constraints(self, delta=0.2):
+
+    def check_constraints(self, delta=0.2, return_threshold=-0.1):
         """
         Checks trading constraints. The constraints are:
             - The trader must have at least 120% of the pattern day
@@ -100,7 +100,9 @@ class AlpacaTrader(AbstractTrader):
             raise TradeConstraintViolationError(
                 'Trader may receive a margin call if no action is taken.')
 
-        if self.market_metadata_wrapper.return_ < 
+        if self.market_metadata_wrapper.return_ < return_threshold:
+            raise TradeConstraintViolationError(
+                'Trader does not meet the return threshold to continue to trade.')
         return None
 
     def place_orders(
