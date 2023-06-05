@@ -159,7 +159,7 @@ class AbstractTrainer(ABC):
         dataset_name: Optional[str] = None,
         n_chunks: int = 1,
         train_ratio: float = 1,
-        n_envs: int = 1,
+        n_async_envs: int = 1,
         async_envs: bool = True,
         exclusive_envs: bool = False,
         initial_cash_range: Optional[Tuple[float, float]] = None,
@@ -171,7 +171,7 @@ class AbstractTrainer(ABC):
         self.dataset_name = dataset_name
         self.n_chunks = n_chunks
         self.train_ratio = train_ratio
-        self.n_envs = n_envs
+        self.n_async_envs = n_async_envs
         self.async_envs = async_envs
         self.exclusive_envs = exclusive_envs
         self.initial_cash_range = initial_cash_range
@@ -223,7 +223,7 @@ class AbstractTrainer(ABC):
 
         return train_data_feeder, test_data_feeder
 
-    def _get_piped_env(self) -> TrainMarketEnv:
+    def _get_train_market_env(self) -> TrainMarketEnv:
         """
         Deep copies of agent pipe is create when n_envs > 1. This is to
         avoid complications arised during parallel training and possibly
@@ -251,25 +251,25 @@ class AbstractTrainer(ABC):
             return np.random.uniform(
                 *self.initial_cash_range
             ) if self.initial_cash_range is not None else None
-
         def initial_asset_quantities() -> np.ndarray:
             return np.random.uniform(
                 *self.initial_assets_range, size=len(n_assets, )
             ) if self.initial_assets_range is not None else None
 
-        if self.n_envs == 1:
+        if self.n_async_envs == 1:
             train_market_env = TrainMarketEnv(
                 data_feeder=data_feeder,
                 initial_cash=initial_cash(),
                 initial_asset_quantities=initial_asset_quantities())
-            piped_market_env = self.agent.pipe.pipe(train_market_env)
+            train_market_env = self.agent.pipe.pipe(train_market_env)
 
-            return piped_market_env
-
-        if self.exclusive_envs:
-            data_feeders = data_feeder.split(n=self.n_envs)
-        else:
-            data_feeders = [data_feeder] * self.n_envs
+            return train_market_env
+        
+        elif self.:
+            if self.exclusive_envs:
+                data_feeders = data_feeder.split(n=self.n_async_envs)
+            else:
+                data_feeders = [data_feeder] * self.n_async_envs
 
         envs = [
             TrainMarketEnv(data_feeder=data_feeder,
@@ -278,7 +278,7 @@ class AbstractTrainer(ABC):
             for data_feeder in data_feeders
         ]
         self.async_env_pipes = [
-            copy.deepcopy(self.agent.pipe) for _ in range(self.n_envs)
+            copy.deepcopy(self.agent.pipe) for _ in range(self.n_async_envs)
         ] if self.async_env_pipes is None else self.async_env_pipes
         env_callables = [
             lambda pipe=pipe, env=env: pipe.pipe(env)
@@ -286,11 +286,11 @@ class AbstractTrainer(ABC):
         ]
 
         if self.async_envs:
-            piped_market_env = AsyncVectorEnv(env_callables)
+            train_market_env = AsyncVectorEnv(env_callables)
         else:
-            piped_market_env = SyncVectorEnv(env_callables)
+            train_market_env = SyncVectorEnv(env_callables)
 
-        return piped_market_env
+        return train_market_env
 
     def test(self, n_episode: int = 1) -> None:
         """
@@ -312,7 +312,7 @@ class AbstractTrainer(ABC):
                              'Ensure train_ratio < 1. '
                              'train_ratio = {self.train_ratio}')
 
-        piped_market_env = self._get_piped_env()
+        piped_market_env = self._get_train_market_env()
         observation = piped_market_env.reset()
 
         with torch.no_grad(), torch.set_grad_enabled(False):

@@ -37,7 +37,7 @@ class StableBaselinesTrainer(AbstractTrainer):
                          dataset_name=dataset_name,
                          n_chunks=n_chunks,
                          train_ratio=train_ratio,
-                         n_envs=n_envs,
+                         n_async_envs=n_envs,
                          async_envs=async_envs,
                          exclusive_envs=exclusive_envs,
                          initial_cash_range=initial_cash_range,
@@ -52,7 +52,7 @@ class StableBaselinesTrainer(AbstractTrainer):
               steps: int = 1_000_000,
               **kwargs) -> nn.Module:
 
-        piped_market_env = self._get_piped_env()
+        piped_market_env = self._get_train_market_env()
         model = self.agent.model
 
         algorithm_ = algorithm(policy=model,
