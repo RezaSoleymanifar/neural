@@ -1,21 +1,20 @@
 """
 base.py
 """
-import os
-import inspect
+from abc import ABC, abstractmethod
 import copy
+import inspect
+import os
 from typing import Optional, Tuple
 
-from abc import ABC, abstractmethod
-
+from gym.vector import AsyncVectorEnv, SyncVectorEnv
 import numpy as np
 import torch
 from torch import nn
-from gym.vector import AsyncVectorEnv, SyncVectorEnv
 
+from neural.data.base import StaticDataFeeder
 from neural.env.base import TrainMarketEnv
 from neural.meta.agent import Agent
-from neural.data.base import StaticDataFeeder
 from neural.utils.io import from_hdf5
 
 class AbstractTrainer(ABC):

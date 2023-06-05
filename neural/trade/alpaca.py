@@ -1,5 +1,31 @@
 """
 alpaca.py
+
+Description:
+------------
+    This module contains the AlpacaTrader class. This class implements the
+    place_orders method to place orders using the Alpaca trading client. This
+    class also implements the check_constraints method to check if the trader
+    meets the constraints to trade. The constraints are:
+        - The trader must have at least 120% of the pattern day trader minimum
+            equity (if delta = 0.20). Pattern day trader minimum equity is
+            $25,000.
+        - The trader must have a positive excess margin.    
+        - The trader must satisfy a certain return on equity (ROE) threshold.   
+            This threshold is set by the agent.
+        
+License:
+--------
+    MIT License. See LICENSE.md file.
+
+Author(s):
+-------
+    Reza Soleymanifar, Email: Reza@Soleymanifar.com
+
+Class(es):
+---------
+    AlpacaTrader:
+        A concrete implementation of the AbstractTrader class.
 """
 import numpy as np
 
