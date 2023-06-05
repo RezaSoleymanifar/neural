@@ -1950,7 +1950,7 @@ class StaticDataFeeder(AbstractDataFeeder):
         Raises:
         -------
             ValueError: 
-                if n is not an int or float in (0, 1]
+                if n is not an int or float in (0, 1)
 
         Notes:
         ------
@@ -1967,8 +1967,8 @@ class StaticDataFeeder(AbstractDataFeeder):
                                        dtype=int,
                                        endpoint=True)
         elif isinstance(n, float):
-            if not 0 < n <= 1:
-                raise ValueError("n must be a float in (0, 1]")
+            if not 0 < n < 1:
+                raise ValueError("n must be a float in (0, 1)")
 
             edge_indices = np.array([
                 self.start_index,
