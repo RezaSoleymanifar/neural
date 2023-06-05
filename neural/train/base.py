@@ -205,7 +205,9 @@ class AbstractTrainer(ABC):
         
         if self.agent.dataset_metadata is None:
             self.agent.dataset_metadata = dataset_metadata
-        
+        elif not self.agent.dataset_metadata == dataset_metadata:
+            raise ValueError(
+                'Agent dataset metadata does not match dataset metadata.')
 
         data_feeders = StaticDataFeeder(
             metadata=dataset_metadata,

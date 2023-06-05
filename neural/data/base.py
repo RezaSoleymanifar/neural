@@ -1126,7 +1126,8 @@ class AbstractDataMetadata:
 
         return appended_metadata
 
-
+    def __eq__(self, __value: object) -> bool:
+        # Uses dill dump to compare 
 @dataclass
 class StreamMetaData(AbstractDataMetadata):
     """
