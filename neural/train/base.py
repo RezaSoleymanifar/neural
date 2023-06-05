@@ -209,6 +209,15 @@ class AbstractTrainer(ABC):
                 'Agent dataset metadata does not match metadata '
                 f'in path {self.file_path}.')
 
+        data_feeder = StaticDataFeeder(
+                metadata=dataset_metadata,
+                datasets=datasets,
+                n_chunks=self.n_chunks)
+        if self.train_ratio == 1:
+            self.train_data_feeder  = data_feeder
+            self.test_data_feeder = None
+            return None
+        
         data_feeders = StaticDataFeeder(
             metadata=dataset_metadata,
             datasets=datasets,
