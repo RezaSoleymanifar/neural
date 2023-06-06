@@ -157,7 +157,6 @@ class AbstractPipe(ABC):
                     f'{AbstractMarketEnvMetadataWrapper.__name__}.')
         return env
 
-
     @abstractmethod
     def pipe(self, env: Env) -> Env:
         """

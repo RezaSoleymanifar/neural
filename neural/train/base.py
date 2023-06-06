@@ -325,7 +325,7 @@ class AbstractTrainer(ABC):
                     break
         return None
 
-    def test(self, n_episode: int = 1, warump: bool = False) -> None:
+    def test(self, n_episodes: int = 1, warump: bool = False) -> None:
         """
         This method is used to test the agent's performance on the
         testing dataset. If n_envs = 1 then test is performed on
@@ -348,7 +348,7 @@ class AbstractTrainer(ABC):
         test_market_env = self._get_market_env()
         if warump:
             self.run_episode(test_market_env, random_actions=True)
-        for _ in range(n_episode):
+        for episode in range(n_episodes):
             self.run_episode(test_market_env, random_actions=False)
         return None
 
