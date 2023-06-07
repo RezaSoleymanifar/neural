@@ -68,7 +68,7 @@ class AlpacaDataSource(AbstractDataSource):
     Represents Alpaca API as a data source. Provides standardized enums
     for historical and live data from Alpaca API.
     """
-
+    class Bar(AbstractDataSource.DataType)
     class DatasetType(AbstractDataSource.DatasetType):
         """
         Enumeration class that defines constants for the different types
