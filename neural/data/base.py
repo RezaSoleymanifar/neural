@@ -99,6 +99,7 @@ from neural.data.enums import FeatureType, AssetType, CalendarType
 if TYPE_CHECKING:
     from neural.utils.time import Resolution
 
+class AbstractDataType(ABC):
 
 class AbstractDataSource(ABC):
     """
@@ -589,12 +590,6 @@ class FeatureSchema:
         FeatureType.ASSET_CLOSE_PRICE and ASSET_OPEN_PRICE respectively.
         This process is case insensitive.
         """
-        feature_schema = dict()
-        for feature_type in FeatureType:
-            feature_type_mask = dataframe.columns.str.lower().str.match(
-                '.*' + feature_type.value.lower() + '.*').to_list()
-            feature_schema[feature_type] = feature_type_mask
-        return feature_schema
 
 
 class DataSchema:
