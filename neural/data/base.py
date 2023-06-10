@@ -232,13 +232,14 @@ class AbstractAsset(ABC):
 class DataSchema:
     """
     A class that represents a data schema. A data schema has an internal
-    representation of a dictionary that maps data types (dataset type or stream
-    type) to the corresponding assets and feature schema. It serves as a nexus
-    to bundle data type, feature schema and assets together. Bundling data
-    types with assets also makes streaming data for the matching stream type
-    easier, since all the corresponding assets are already associated with the
-    stream type. This allows downloading data for different asset groups and
-    streaming them in a unified manner.
+    representation of a dictionary that maps data types (dataset type or
+    stream type) to the corresponding assets and feature schema. It
+    serves as a nexus to bundle data type, feature schema and assets
+    together. Bundling data types with assets also makes streaming data
+    for the matching stream type easier, since all the corresponding
+    assets are already associated with the stream type. This allows
+    downloading data for different asset groups and streaming them in a
+    unified manner.
 
     
     Attributes:
@@ -250,63 +251,67 @@ class DataSchema:
             _feature_schema (Dict[FeatureType, List[bool]]):
                 An internal representation of a dictionary that maps
                 feature types to boolean masks. The boolean masks
-                indicate where the columns of the corresponding
-                feature types are located in the data. Lenght of
-                boolean mask is equal to the number columns in the
-                data.
+                indicate where the columns of the corresponding feature
+                types are located in the data. Lenght of boolean mask is
+                equal to the number columns in the data.
     
     Properties:
     -----------
-        n_features: int
+        feature_schema (Dict[FeatureType, List[bool]]):
+                An internal representation of a dictionary that maps
+                feature types to boolean masks. The boolean masks
+                indicate where the columns of the corresponding feature
+                types are located in the data. Lenght of boolean mask is
+                equal to the number columns in the data. 
+        n_features (int):
             Returns the number of columns in the dataset. Can be used to
-            compare against the number columns in the underlying data for
-            sanity checks.
-        assets: List[AbstractAsset] 
-            Returns a list of assets that have a True price mask associated
-            with them. This is useful to filter out tradable assets from the
-            assets that exist to provide feature information for the tradable
-            assets.
-        asset_prices_mask: List[bool]
-            Returns a mask for the asset close price feature type. This price
-            is used by market environments as the point of reference for    
-            placing orders. when a time interval is over and features are
-            observed the closing price of interval is used to place orders.
-    
-    Properties:
-    ----------
-    fea        
+            compare against the number columns in the underlying data
+            for sanity checks.
+        assets (List[AbstractAsset]): 
+            Returns a list of assets that have a True price mask
+            associated with them. This is useful to filter out tradable
+            assets from the assets that exist to provide feature
+            information for the tradable assets.
+        asset_prices_mask (List[bool]):
+            Returns a mask for the asset close price feature type. This
+            price is used by market environments as the point of
+            reference for placing orders. when a time interval is over
+            and features are observed the closing price of interval is
+            used to place orders.
+   
     
     Methods:
     --------
         get_features_mask(feature_type: FeatureType) -> List[bool]:
-            Retrievs the boolean mask for a given feature type. This is useful
-            for filtering out features of a particular type from the data. For
-            example if the user wants to filter out all features that are text
-            based, they can use this method to get the mask for text features
-            FeatureType.TEXT and filter out the columns that have True values
-            in the mask.
+            Retrievs the boolean mask for a given feature type. This is
+            useful for filtering out features of a particular type from
+            the data. For example if the user wants to filter out all
+            features that are text based, they can use this method to
+            get the mask for text features FeatureType.TEXT and filter
+            out the columns that have True values in the mask.
         __repr__(self) -> str:
             Returns a string representation of the data schema.
         __eq__(self, other) -> bool:
             Returns if two data schemas are equal. This is useful for
             validating data schemas before joining or appending.
         __add__(self, other) -> DataSchema:
-            Adds two data schemas together. This is useful for joining datasets
-            or streams. If assets in a common data type overlap then an error
-            is raised. This is due to the fact that same assets for the same
-            data type gives redundant information.
+            Adds two data schemas together. This is useful for joining
+            datasets or streams. If assets in a common data type overlap
+            then an error is raised. This is due to the fact that same
+            assets for the same data type gives redundant information.
 
     Notes:
     ------
-        Data schemas can be added together to represent a monolithic data
-        schema that consists of smaller data schemas. This is useful for have a
-        unified interface for joined datasets or streams that abstracts away
-        the construction of data from final representation of data.
+        Data schemas can be added together to represent a monolithic
+        data schema that consists of smaller data schemas. This is
+        useful for have a unified interface for joined datasets or
+        streams that abstracts away the construction of data from final
+        representation of data.
 
     Example:
     --------
-        Assuming AAPL, MSFT, GOOG are AbstractAsset objects and feature_schema
-        is a FeatureSchema object:
+        Assuming AAPL, MSFT, GOOG are AbstractAsset objects and
+        feature_schema is a FeatureSchema object:
         
         >>> data_schema = DataSchema(
         ...     DatasetType.BAR, [AAPL, ,MSFT GOOG], feature_schema)
