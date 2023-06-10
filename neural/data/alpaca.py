@@ -158,8 +158,14 @@ class AlpacaDataType(AbstractDataType):
     @classmethod
     def get_feature_schema(cls, data_type: AlpacaDataType):
         column_schema = cls.COLUMN_SCHEMA[data_type]
+        feature_schema = dict()
         for feature_type in FeatureType:
-            pass
+            mask = list()
+            for column in column_schema:
+                mask.append(column_schema[column] == feature_type)
+            feature_schema[feature_type] = mask
+        return feature_schema
+            
 
 @dataclass(frozen=True)
 class AlpacaAsset(AbstractAsset):
