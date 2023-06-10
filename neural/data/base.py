@@ -290,15 +290,11 @@ class DataSchema:
 
         for data_type in self.schema:
             n_assets = len(self.schema[data_type])
-            data_type_feature_schems = data_type.feature_schema
+            data_type_feature_schema = data_type.feature_schema
 
-            for feature_type in data_type_feature_schems:
-                if feature_type in feature_schema:
+            for feature_type in data_type_feature_schema:
                     feature_schema[feature_type].extend(
-                        data_type_feature_schems[feature_type] * n_assets)
-                else:
-                    feature_schema[feature_type] = data_type_feature_schems[
-                        feature_type] * n_assets
+                        data_type_feature_schema[feature_type] * n_assets)
 
         return feature_schema
 
