@@ -155,15 +155,18 @@ class AlpacaDataType(AbstractDataType):
         }
     }
 
-    @classmethod
-    def get_feature_schema(cls, dataset_type: AlpacaDataType) -> Dict[FeatureType: List[bool]]:
-        feature_schema = dict()
-        column_schema = cls.COLUMN_SCHEMA[dataset_type]
-        for feature_type in FeatureType:
-            feature_type_mask = dataframe.columns.str.lower().str.match(
-                '.*' + feature_type.value.lower() + '.*').to_list()
-            feature_schema[feature_type] = feature_type_mask
-        return feature_schema
+    FEATURE_SCHEMA = {
+        BAR: {
+            FeatureType.ASSET_OPEN_PRICE: [
+                True,
+                False,
+                False,
+                False,
+                False,
+                False,
+                False,
+            ],
+            ]
 
 @dataclass(frozen=True)
 class AlpacaAsset(AbstractAsset):
