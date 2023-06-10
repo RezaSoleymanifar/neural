@@ -100,7 +100,6 @@ if TYPE_CHECKING:
     from neural.utils.time import Resolution
 
 
-
 class AbstractDataSource(ABC):
     """
     Abstract base class for a data source that standardizes the interface for
