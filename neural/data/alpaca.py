@@ -227,8 +227,8 @@ class AlpacaDataSource(AbstractDataSource):
         DatasetType.QUOTE: {
             'ask_price': FeatureType.ASSET_ASK_PRICE,
             'ask_size': None,
-            
-
+            'bid_price': FeatureType.ASSET_BID_PRICE,
+            'bid_size': None}
     }
 
 
