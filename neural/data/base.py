@@ -101,6 +101,11 @@ if TYPE_CHECKING:
 
 
 class AbstractDataSource(ABC):
+
+    class Dataset:
+        COLUMN_NAMES
+
+class AbstractDataSource(ABC):
     """
     Abstract base class for a data source that standardizes the interface for
     accessing data from different sources. A data source is typically an API or
@@ -180,7 +185,8 @@ class AbstractDataSource(ABC):
 
     class Data:
         columns = ['open', 'high', 'low', 'close', 'volume']
-        feature_schmea = {FeatureType.ASSET_OPEN_PRICE: [True, False, False, False, False],
+        feature_schmea = {FeatureType.ASSET_OPEN_PRICE: [
+            True, False, False, False, False],
                           FeatureType.ASSET_HIGH_PRICE: [False, True, False, False, False],}
 
     class DatasetType(Enum):
