@@ -317,16 +317,19 @@ class DataSchema:
     @property
     def assets(self) -> List[AbstractAsset]:
         """
-        Returns a list of assets that have a True price mask associated with
-        them. This is useful to filter out tradable assets from the assets that
-        exist to provide feature information for the tradable assets.
+        Returns a list of tradable assets that have a True price mask
+        associated with them. If any of the assets associated with a
+        data type in the data schema have a True price mask associated
+        with it, then all assets associated with that data type are
+        considered tradable. Ensure that all assets associated with a
+        
+
+
         """
         assets = list()
         for data_type in self.schema:
-            if any data_type.feature_schema[FeatureType.ASSET_CLOSE_PRICE]:
+            if any(data_type.feature_schema[FeatureType.ASSET_CLOSE_PRICE]):
                 assets.extend(self.schema[data_type])
-                break
-
         return assets
 
     @property
@@ -442,11 +445,7 @@ class DataSchema:
             Assuming features is a row of data, features(mask) will
             return the features of the given feature type.
         """
-        mask = [
-            mask_value for data_type in self.schema for mask_value in
-            self.schema[data_type]['feature_schema'][feature_type]
-        ]
-        return mask
+        return self.feature_schema[feature_type]
 
 
 @dataclass
