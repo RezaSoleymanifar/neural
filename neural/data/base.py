@@ -177,7 +177,6 @@ class AbstractDataType(ABC):
             for column in column_schema:
                 mask.append(column_schema[column] == feature_type)
             feature_schema[feature_type] = mask
-
         return feature_schema
 
 
@@ -240,28 +239,24 @@ class DataSchema:
     easier, since all the corresponding assets are already associated with the
     stream type. This allows downloading data for different asset groups and
     streaming them in a unified manner.
-    
-    The feature schema is a dictionary that maps feature types to boolean
-    masks. The boolean masks indicate where the columns of the corresponding
-    feature types are located in the data. Lenght of boolean mask is equal to
-    the number columns in the data.
 
     
     Attributes:
     -----------
-        schema (Dict[AbstractDataSource.DatasetType:Dict[str, List[bool] |
-        List[AbstractAssets]]] | Dict[AbstractDataSource.StreamType:Dict[str,
-        List[bool] | List[AbstractAssets]]]):
-            A dictionary that maps data types to the corresponding assets and
-            feature schema. The feature schema is a dictionary that maps
-            feature types to boolean masks.
+            data_type_assets_map (Dict[AbstractDataType,
+            List[AbstractAsset]]):
+                An internal representation of a dictionary that maps
+                data types to the corresponding assets.
+            _feature_schema (Dict[FeatureType, List[bool]]):
+                An internal representation of a dictionary that maps
+                feature types to boolean masks. The boolean masks
+                indicate where the columns of the corresponding
+                feature types are located in the data. Lenght of
+                boolean mask is equal to the number columns in the
+                data.
     
     Properties:
     -----------
-        is_dataset: bool
-            Returns if the data schema is for a dataset or a stream. If the
-            data schema is for a dataset then the data type is a dataset type,
-            otherwise it is a stream type.
         n_features: int
             Returns the number of columns in the dataset. Can be used to
             compare against the number columns in the underlying data for
@@ -276,7 +271,11 @@ class DataSchema:
             is used by market environments as the point of reference for    
             placing orders. when a time interval is over and features are
             observed the closing price of interval is used to place orders.
-        
+    
+    Properties:
+    ----------
+    fea        
+    
     Methods:
     --------
         get_features_mask(feature_type: FeatureType) -> List[bool]:
