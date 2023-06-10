@@ -155,18 +155,10 @@ class AlpacaDataType(AbstractDataType):
         }
     }
 
-    FEATURE_SCHEMA = {
-        BAR: {
-            FeatureType.ASSET_OPEN_PRICE: [
-                True,
-                False,
-                False,
-                False,
-                False,
-                False,
-                False,
-            ],
-            ]
+    @classmethod
+    def get_feature_schema(sls, data_type: AlpacaDataType):
+        for feature_type in FeatureType:
+            pass
 
 @dataclass(frozen=True)
 class AlpacaAsset(AbstractAsset):
