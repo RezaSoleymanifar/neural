@@ -100,7 +100,9 @@ if TYPE_CHECKING:
     from neural.utils.time import Resolution
 
 class AbstractDataType(ABC):
+
     COLUMN_SCHEMA = dict()
+
     @property
     def feature_schema(self):
         column_schema = self.COLUMN_SCHEMA[self]
@@ -251,9 +253,8 @@ class DataSchema:
         {FeatureType.ASSET_CLOSE_PRICE: [True, False, True, False, True, False]}
     """
 
-    def __init__(self, data_type: AbstractDataSource.DatasetType
-                 | AbstractDataSource.StreamType, assets: List[AbstractAsset],
-                 feature_schema: FeatureSchema) -> None:
+    def __init__(self, data_type: AbstractDataType, assets: List[AbstractAsset]
+                 ) -> None:
         """
         Initializes the data schema using a data type, assets and a feature
         schema. The data type can be a dataset type or a stream type. The
@@ -274,11 +275,8 @@ class DataSchema:
             feature_schema (FeatureSchema):
                 A dictionary that maps feature types to boolean masks.
         """
-
         self.schema = OrderedDict()
         self.schema[data_type]['assets'] = assets
-        self.schema[data_type]['feature_schema'] = feature_schema
-
         return None
 
     @property
