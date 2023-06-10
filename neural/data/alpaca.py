@@ -156,7 +156,8 @@ class AlpacaDataType(AbstractDataType):
     }
 
     @classmethod
-    def get_feature_schema(sls, data_type: AlpacaDataType):
+    def get_feature_schema(cls, data_type: AlpacaDataType):
+        column_schema = cls.COLUMN_SCHEMA[data_type]
         for feature_type in FeatureType:
             pass
 
