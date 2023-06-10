@@ -107,6 +107,24 @@ class AbstractDataType(ABC):
     with it that maps column names to feature types. This is left to
     user to implement.
 
+    Attributes:
+    -----------
+        COLUMN_SCHEMA (Dict[str, FeatureType]):
+            A dictionary that maps column names to feature types. This
+            is left to user to implement.
+
+    Properties:
+    -----------
+        feature_schema (Dict[FeatureType, List[bool]]):
+            A dictionary that maps feature types to boolean masks. The
+            boolean masks indicate where the columns of the
+            corresponding feature types are located in the data.
+            Lenght of boolean mask is equal to the number columns in
+            the data. example:
+            APIDataType.BAR.feature_schema[FetureType.ASSET_CLOSE_PRICE]
+            returns a boolean mask that indicates where the close price
+            columns are located in the data.
+
     Example:
     --------
     >>> class APIDataType(Enum, AbstractDataType):
@@ -118,14 +136,29 @@ class AbstractDataType(ABC):
     ...             'high': FeatureType.ASSET_HIGH_PRICE
     ...         },
     ...         TRADE: {
-    ...             'price': FeatureType.ASSET_CLOSE_PRICE, 
-    ...             'volume': FeatureType.ASSET_VOLUME
-    
+    ...             'ask_price': FeatureType.ASSET_ASK_PRICE, 
+    ...             'bid_price': FeatureType.ASSET_BID_PRICE
+    ...         }
     """
     COLUMN_SCHEMA = dict()
 
     @property
     def feature_schema(self):
+        """
+        Returns a dictionary that maps feature types to boolean masks.
+        The boolean masks indicate where the columns of the
+        corresponding feature types are located in the data. Lenght of
+        boolean mask is equal to the number columns in the data.
+
+        Returns:
+        --------
+            Dict[FeatureType, List[bool]]:
+                A dictionary that maps feature types to boolean masks.
+                The boolean masks indicate where the columns of the
+                corresponding feature types are located in the data.
+                Lenght of boolean mask is equal to the number columns
+                in the data.
+        """
         column_schema = self.COLUMN_SCHEMA[self]
         feature_schema = {}
 
