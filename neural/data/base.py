@@ -82,7 +82,7 @@ Classes:
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 from copy import deepcopy
 from dataclasses import dataclass
 from datetime import datetime
@@ -286,15 +286,15 @@ class DataSchema:
 
         if self._feature_schema is not None:
             return self._feature_schema
-        feature_schema = {}
+        feature_schema = defaultdict(list)
 
         for data_type in self.schema:
             n_assets = len(self.schema[data_type])
             data_type_feature_schema = {feature_type: mask * n_assets
-                for feature_type and mask in data_type.feature_schema.items()
+                for feature_type, mask in data_type.feature_schema.items()
             }
 
-            for feature_type in data_type_feature_schema:
+            for feature_type in FeatureType:
                 feature_schema[feature_type].extend(
                     data_type_feature_schema[feature_type] * n_assets)
         self._feature_schema = feature_schema
