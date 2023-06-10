@@ -359,10 +359,7 @@ class DataSchema:
         Returns:
         --------
             str:
-                A string representation of the data schema.
-                example: {DatasetType.BAR: {'assets': [AAPL, MSFT],
-                'feature_schema': {FeatureType.ASSET_CLOSE_PRICE: [True,
-                False, True, False]}}}
+                A string representation of the data schema. 
         """
         return str(self.schema)
 
@@ -405,22 +402,17 @@ class DataSchema:
                 A new data schema that is the result of joining the
                 current data schema with the other data schema.
         """
-        if other.is_dataset != self.is_dataset:
-            raise ValueError(
-                'Only joining all streams or all datasets are accepted.')
-
         new_data_schema = deepcopy(self)
         schema = new_data_schema.schema
-        for data_type in other.schema.keys():
-            if data_type in schema:
-                assets = schema[data_type]['assets']
-                other_assets = other.schema[data_type]['assets']
-                if set(assets).intersection(set(other_assets)):
-                    raise ValueError(f'Overlap between {assets} and '
-                                     f'{other_assets} in data type {data_type}')
-                schema[data_type]['assets'] += other.schema[data_type]['assets']
-                schema[data_type]['feature_schema'] += other.schema[data_type][
-                    'feature_schema']
+        for data_type in schema:
+            assets = schema[data_type]
+            other_assets = other.schema[data_type]
+            if set(assets).intersection(set(other_assets)):
+                raise ValueError(f'Overlap between {assets} and '
+                    f'{other_assets} in data type {data_type}')
+            schema[data_type]['assets'] += other.schema[data_type]['assets']
+            schema[data_type]['feature_schema'] += other.schema[data_type][
+                'feature_schema']
             else:
                 schema[data_type] = other.schema[data_type]
         return new_data_schema
