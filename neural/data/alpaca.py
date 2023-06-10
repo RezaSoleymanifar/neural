@@ -133,6 +133,22 @@ class AlpacaDataType(Enum, AbstractDataType):
     QUOTE = 'QUOTE'
     ORDERBOOK = 'ORDERBOOK'
 
+    @property
+    def column_schema(self) -> Dict[str, FeatureType | None]:
+        """
+        Returns the column schema of the data type. This is a
+        dictionary that maps the column names to the feature types.
+        This is used to extract feature schema from the data. This is
+        used to standardize the representation of data from Alpaca API.
+
+        Returns:
+        --------
+            Dict[str, FeatureType | None]:
+                A dictionary that maps the column names to the feature
+                types.
+        """
+        return AlpacaDataType.COLUMN_SCHEMA[self]
+
     COLUMN_SCHEMA = {
         BAR: {
             'open': FeatureType.ASSET_OPEN_PRICE,
@@ -145,13 +161,13 @@ class AlpacaDataType(Enum, AbstractDataType):
         },
         TRADE: {
             'price': None,
-            'size': None,
-            QUOTE: {
-                'ask_price': FeatureType.ASSET_ASK_PRICE,
-                'ask_size': None,
-                'bid_price': FeatureType.ASSET_BID_PRICE,
-                'bid_size': None
-            }
+            'size': None
+        },
+        QUOTE: {
+            'ask_price': FeatureType.ASSET_ASK_PRICE,
+            'ask_size': None,
+            'bid_price': FeatureType.ASSET_BID_PRICE,
+            'bid_size': None
         }
     }
 

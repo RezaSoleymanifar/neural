@@ -140,6 +140,7 @@ class AbstractDataType(ABC):
     ...             'bid_price': FeatureType.ASSET_BID_PRICE
     ...         }    
     """
+
     @property
     @abstractmethod
     def column_schema(self) -> Dict[str, FeatureType]:
@@ -153,7 +154,7 @@ class AbstractDataType(ABC):
                 A dictionary that maps column names to feature types.
         """
         raise NotImplementedError
-    
+
     @property
     def feature_schema(self):
         """
@@ -171,11 +172,11 @@ class AbstractDataType(ABC):
                 Lenght of boolean mask is equal to the number columns
                 in the data.
         """
-        column_schema = self.get_column_schema[self]
-        feature_schema = {}
+        column_schema = self.column_schema
+        feature_schema = dict()
 
         for feature_type in FeatureType:
-            mask = []
+            mask = list()
             for column in column_schema:
                 mask.append(column_schema[column] == feature_type)
             feature_schema[feature_type] = mask
