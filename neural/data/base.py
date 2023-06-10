@@ -277,15 +277,27 @@ class DataSchema:
         """
         self.schema = OrderedDict()
         self.schema[data_type] = assets
+        self._feature_schema = None
         return None
 
     @property
     def feature_schema(self) -> Dict[FeatureType, List[bool]]:
-        feature_shcema = {}
+
+        if self._feature_schema is not None:
+            return self._feature_schema
+        feature_schema = {}
+
         for data_type in self.schema:
             n_assets = len(self.schema[data_type])
-            schema = datatype.feature_schema
-            data_type_feature_schema = {schema[key] * n_assets for key in schema}
+            schema = data_type.feature_schema
+
+            for key in schema:
+                if key in feature_schema:
+                    feature_schema[key].extend(schema[key] * n_assets)
+                else:
+                    feature_schema[key] = schema[key] * n_assets
+
+        return feature_schema
         
     @property
     def n_features(self) -> int:
