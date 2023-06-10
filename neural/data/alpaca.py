@@ -79,10 +79,6 @@ class AlpacaDataSource(AbstractDataSource):
         BAR (str):
             Represents one bar/candlestick of aggregated trade data over
             a specified interval. Includes following fields:
-            - symbol (str):
-                the symbol of the asset.
-            - timestamp (datetime):
-                the closing time stamp of the bar.
             - open (float):
                 the opening price of the bar.
             - high (float):
@@ -141,7 +137,6 @@ class AlpacaDataSource(AbstractDataSource):
         BAR = 'BAR'
         TRADE = 'TRADE'
         QUOTE = 'QUOTE'
-        ORDER_BOOK = 'ORDER_BOOK'
 
     class StreamType(AbstractDataSource.StreamType):
         """
@@ -216,12 +211,12 @@ class AlpacaDataSource(AbstractDataSource):
 
     SCHEMA = {
         DatasetType.BAR: {
-            'close': FeatureType.ASSET_CLOSE_PRICE,
+            'open': FeatureType.ASSET_OPEN_PRICE,
             'high': FeatureType.ASSET_HIGH_PRICE,
             'low': FeatureType.ASSET_LOW_PRICE,
-            'open': FeatureType.ASSET_OPEN_PRICE,
-            'trade_count': None,
+            'close': FeatureType.ASSET_CLOSE_PRICE,
             'volume': None,
+            'trade_count': None,
             'vwap': None
         },
         DatasetType.QUOTE: {
