@@ -283,20 +283,19 @@ class DataSchema:
 
     @property
     def feature_schema(self) -> Dict[FeatureType, List[bool]]:
-
+        """
+        A dictionary that maps feature types to boolean masks. The
+        boolean.
+        """
         if self._feature_schema is not None:
             return self._feature_schema
         feature_schema = defaultdict(list)
 
         for data_type in self.schema:
             n_assets = len(self.schema[data_type])
-            data_type_feature_schema = {feature_type: mask * n_assets
-                for feature_type, mask in data_type.feature_schema.items()
-            }
-
             for feature_type in FeatureType:
                 feature_schema[feature_type].extend(
-                    data_type_feature_schema[feature_type] * n_assets)
+                    data_type.feature_schema[feature_type] * n_assets)
         self._feature_schema = feature_schema
         return self._feature_schema
 
@@ -312,9 +311,7 @@ class DataSchema:
             int:
                 The number of columns in the dataset.
         """
-        n_features = sum(
-            len(self.schema[data_type]['feature_schema'].values()[0])
-            for data_type in self.schema)
+        n_features = len(self.feature_schema.values()[0])
         return n_features
 
     @property
