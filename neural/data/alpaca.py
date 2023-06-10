@@ -63,86 +63,78 @@ from neural.utils.misc import resolution_to_timeframe
 from neural.utils.time import Resolution
 
 
+
 class AlpacaDataType(AbstractDataType):
+    """
+    Shows the types of data that can be downloaded from the Alpaca API.
+    Each type has certain column schema that can be used to extract
+    feature schema from the data. This is used to standardize the
+    representation of data from Alpaca API.
+
+    Attributes
+    ----------
+    BAR (str):
+        Represents one bar/candlestick of aggregated trade data over
+        a specified interval. Includes following fields:
+        - open (float):
+            the opening price of the bar.
+        - high (float):
+            the highest price of the bar.
+        - low (float):
+            the lowest price of the bar.
+        - close (float):
+            the closing price of the bar.
+        - volume (int):
+            the trade volume of the bar.
+        - trade_count (int):
+            the number of trades in the bar.
+        - vwap (float):
+            the volume weighted average price of the bar.
+    TRADE (str):
+        Represents one trade of the asset. Includes following
+        fields:
+        - price (float):    
+            the price of the trade.
+        - size (int):
+            the quantity of shares in trade.
+    QUOTE (str):
+        Represents one quote of the asset. Includes following
+        fields:
+        - ask_price (float):
+            the ask price of the quote.
+        - ask_size (int):
+            the ask size of the quote.
+        - bid_exchange (str):
+            the exchange where the bid occurred.
+        - bid_price (float):
+            the bid price of the quote.
+        - bid_size (int):
+            the bid size of the quote.
+    ORDERBOOK (str):
+        Represents the orderbook of the asset. Includes following
+        fields:
+        - asks (List[Dict[str, float]]):
+            the list of asks in the orderbook. Each ask is a
+            dictionary with following fields:
+            - price (float):
+                the price of the bid.
+            - size (int):
+                the size of the bid.
+        - bids (List[Dict[str, float]]):
+            the list of bids in the orderbook. Each bid is a
+            dictionary with following fields:
+            - price (float):
+                the price of the bid.
+            - size (int):
+                the size of the bid.
+    """
     BAR = 'BAR'
     TRADE = 'TRADE'
     QUOTE = 'QUOTE'
     ORDERBOOK = 'ORDERBOOK'
 
-
-class AlpacaDataSource(AbstractDataSource):
-    """
-    Represents Alpaca API as a data source. Provides standardized enums
-    for historical and live data from Alpaca API.
-    """
-
-    class StreamType(AbstractDataSource.StreamType):
-        """
-
-        Attributes
-        ----------
-        BAR (str):
-            Represents one bar/candlestick of aggregated trade data over
-            a specified interval. Includes following fields:
-            - open (float):
-                the opening price of the bar.
-            - high (float):
-                the highest price of the bar.
-            - low (float):
-                the lowest price of the bar.
-            - close (float):
-                the closing price of the bar.
-            - volume (int):
-                the trade volume of the bar.
-            - trade_count (int):
-                the number of trades in the bar.
-            - vwap (float):
-                the volume weighted average price of the bar.
-        TRADE (str):
-            Represents one trade of the asset. Includes following
-            fields:
-            - price (float):    
-                the price of the trade.
-            - size (int):
-                the quantity of shares in trade.
-        QUOTE (str):
-            Represents one quote of the asset. Includes following
-            fields:
-            - ask_price (float):
-                the ask price of the quote.
-            - ask_size (int):
-                the ask size of the quote.
-            - bid_exchange (str):
-                the exchange where the bid occurred.
-            - bid_price (float):
-                the bid price of the quote.
-            - bid_size (int):
-                the bid size of the quote.
-        ORDERBOOK (str):
-            Represents the orderbook of the asset. Includes following
-            fields:
-            - asks (List[Dict[str, float]]):
-                the list of asks in the orderbook. Each ask is a
-                dictionary with following fields:
-                - price (float):
-                    the price of the bid.
-                - size (int):
-                    the size of the bid.
-            - bids (List[Dict[str, float]]):
-                the list of bids in the orderbook. Each bid is a
-                dictionary with following fields:
-                - price (float):
-                    the price of the bid.
-                - size (int):
-                    the size of the bid.
-        """
-        BAR = 'BAR'
-        TRADE = 'TRADE'
-        QUOTE = 'QUOTE'
-        ORDERBOOK = 'ORDERBOOK'
-
     SCHEMA = {
-        AlpacaDataType.BAR: {
+        BAR: {
             'open': FeatureType.ASSET_OPEN_PRICE,
             'high': FeatureType.ASSET_HIGH_PRICE,
             'low': FeatureType.ASSET_LOW_PRICE,
@@ -151,7 +143,7 @@ class AlpacaDataSource(AbstractDataSource):
             'trade_count': None,
             'vwap': None
         },
-        AlpacaDataType.TRADE: {
+        TRADE: {
             'price': None,
             'size': None,
         AlpacaDataType.QUOTE: {
