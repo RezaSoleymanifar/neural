@@ -99,6 +99,7 @@ from neural.data.enums import FeatureType, AssetType, CalendarType
 if TYPE_CHECKING:
     from neural.utils.time import Resolution
 
+
 class AbstractDataType(ABC):
 
     COLUMN_SCHEMA = dict()
@@ -253,8 +254,8 @@ class DataSchema:
         {FeatureType.ASSET_CLOSE_PRICE: [True, False, True, False, True, False]}
     """
 
-    def __init__(self, data_type: AbstractDataType, assets: List[AbstractAsset]
-                 ) -> None:
+    def __init__(self, data_type: AbstractDataType,
+                 assets: List[AbstractAsset]) -> None:
         """
         Initializes the data schema using a data type, assets and a feature
         schema. The data type can be a dataset type or a stream type. The
@@ -289,16 +290,18 @@ class DataSchema:
 
         for data_type in self.schema:
             n_assets = len(self.schema[data_type])
-            schema = data_type.feature_schema
+            data_type_feature_schems = data_type.feature_schema
 
-            for key in schema:
-                if key in feature_schema:
-                    feature_schema[key].extend(schema[key] * n_assets)
+            for feature_type in data_type_feature_schems:
+                if feature_type in feature_schema:
+                    feature_schema[feature_type].extend(
+                        data_type_feature_schems[feature_type] * n_assets)
                 else:
-                    feature_schema[key] = schema[key] * n_assets
+                    feature_schema[feature_type] = data_type_feature_schems[
+                        feature_type] * n_assets
 
         return feature_schema
-        
+
     @property
     def n_features(self) -> int:
         """

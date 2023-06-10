@@ -55,14 +55,13 @@ from neural.client.alpaca import AlpacaDataClient
 from neural.common.constants import (ALPACA_ACCEPTED_DOWNLOAD_RESOLUTIONS,
                                      GLOBAL_DATA_TYPE)
 from neural.common.log import logger
-from neural.data.base import (AbstractDataType, AbstractAsset,
-                              DatasetMetadata, DataSchema)
+from neural.data.base import (AbstractDataType, AbstractAsset, DatasetMetadata,
+                              DataSchema)
 from neural.data.enums import AssetType, CalendarType, FeatureType
 from neural.utils.base import (progress_bar, validate_path, RunningStatistics)
 from neural.utils.io import to_hdf5
 from neural.utils.misc import resolution_to_timeframe
 from neural.utils.time import Resolution
-
 
 
 class AlpacaDataType(Enum, AbstractDataType):
@@ -147,7 +146,7 @@ class AlpacaDataType(Enum, AbstractDataType):
         TRADE: {
             'price': None,
             'size': None,
-        QUOTE: {
+            QUOTE: {
                 'ask_price': FeatureType.ASSET_ASK_PRICE,
                 'ask_size': None,
                 'bid_price': FeatureType.ASSET_BID_PRICE,
