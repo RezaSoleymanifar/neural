@@ -113,8 +113,6 @@ class AlpacaDataSource(AbstractDataSource):
                 the bid price of the quote.
             - bid_size (int):
                 the bid size of the quote.
-        ORDER_BOOK : str
-            The type of dataset for aggregated order book data.
         """
         BAR = 'BAR'
         TRADE = 'TRADE'
@@ -130,10 +128,6 @@ class AlpacaDataSource(AbstractDataSource):
         BAR (str):
             Represents one bar/candlestick of aggregated trade data over
             a specified interval. Includes following fields:
-            - symbol (str):
-                the symbol of the asset.
-            - timestamp (datetime):
-                the closing time stamp of the bar.
             - open (float):
                 the opening price of the bar.
             - high (float):
@@ -151,27 +145,13 @@ class AlpacaDataSource(AbstractDataSource):
         TRADE (str):
             Represents one trade of the asset. Includes following
             fields:
-            - symbol (str):
-                the symbol of the asset.
-            - timestamp (datetime):
-                the time stamp of the trade.
-            - exchange (str):
-                the exchange where the trade occurred.
             - price (float):    
                 the price of the trade.
             - size (int):
                 the quantity of shares in trade.
-            - conditions (List[str]):
-                the conditions of the trade.
-            - tape (str):
-                the tape where the trade occurred.  
         QUOTE (str):
             Represents one quote of the asset. Includes following
             fields:
-            - symbol (str): 
-                the symbol of the asset.
-            - timestamp (datetime):
-                the time stamp of the quote.
             - ask_price (float):
                 the ask price of the quote.
             - ask_size (int):
@@ -182,14 +162,28 @@ class AlpacaDataSource(AbstractDataSource):
                 the bid price of the quote.
             - bid_size (int):
                 the bid size of the quote.
-            - conditions (List[str]):
-                the conditions of the quote.
-            - tape (str):
-                the tape where the quote occurred.
+        ORDERBOOK (str):
+            Represents the orderbook of the asset. Includes following
+            fields:
+            - asks (List[Dict[str, float]]):
+                the list of asks in the orderbook. Each ask is a
+                dictionary with following fields:
+                - price (float):
+                    the price of the bid.
+                - size (int):
+                    the size of the bid.
+            - bids (List[Dict[str, float]]):
+                the list of bids in the orderbook. Each bid is a
+                dictionary with following fields:
+                - price (float):
+                    the price of the bid.
+                - size (int):
+                    the size of the bid.
         """
         BAR = 'BAR'
         TRADE = 'TRADE'
         QUOTE = 'QUOTE'
+        ORDERBOOK = 'ORDERBOOK'
 
     SCHEMA = {
         DatasetType.BAR: {
