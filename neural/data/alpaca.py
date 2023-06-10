@@ -96,27 +96,13 @@ class AlpacaDataSource(AbstractDataSource):
         TRADE (str):
             Represents one trade of the asset. Includes following
             fields:
-            - symbol (str):
-                the symbol of the asset.
-            - timestamp (datetime):
-                the time stamp of the trade.
-            - exchange (str):
-                the exchange where the trade occurred.
             - price (float):    
                 the price of the trade.
             - size (int):
                 the quantity of shares in trade.
-            - conditions (List[str]):
-                the conditions of the trade.
-            - tape (str):
-                the tape where the trade occurred.  
         QUOTE (str):
             Represents one quote of the asset. Includes following
             fields:
-            - symbol (str): 
-                the symbol of the asset.
-            - timestamp (datetime):
-                the time stamp of the quote.
             - ask_price (float):
                 the ask price of the quote.
             - ask_size (int):
@@ -127,10 +113,6 @@ class AlpacaDataSource(AbstractDataSource):
                 the bid price of the quote.
             - bid_size (int):
                 the bid size of the quote.
-            - conditions (List[str]):
-                the conditions of the quote.
-            - tape (str):
-                the tape where the quote occurred.
         ORDER_BOOK : str
             The type of dataset for aggregated order book data.
         """
@@ -219,11 +201,16 @@ class AlpacaDataSource(AbstractDataSource):
             'trade_count': None,
             'vwap': None
         },
-        DatasetType.QUOTE: {
-            'ask_price': FeatureType.ASSET_ASK_PRICE,
-            'ask_size': None,
-            'bid_price': FeatureType.ASSET_BID_PRICE,
-            'bid_size': None}
+        DatasetType.TRADE: {
+            'price': None,
+            'size': None,
+            DatasetType.QUOTE: {
+                'ask_price': FeatureType.ASSET_ASK_PRICE,
+                'ask_size': None,
+                'bid_price': FeatureType.ASSET_BID_PRICE,
+                'bid_size': None
+            }
+        }
     }
 
 
