@@ -99,8 +99,21 @@ from neural.data.enums import FeatureType, AssetType, CalendarType
 if TYPE_CHECKING:
     from neural.utils.time import Resolution
 
-class AbstractDataType(ABC):
+class AbstractDataType(Enum, ABC):
+    COLUMN_SCHEMA = dict()
+    @property
+    def feature_schema(self):
+        column_schema = self.COLUMN_SCHEMA[self]
+        feature_schema = {}
 
+        for feature_type in FeatureType:
+            mask = []
+            for column in column_schema:
+                mask.append(column_schema[column] == feature_type)
+            feature_schema[feature_type] = mask
+
+        return feature_schema
+    
 class AbstractDataSource(ABC):
     """
     Abstract base class for a data source that standardizes the interface for
