@@ -102,14 +102,11 @@ class AbstractDataType(ABC):
     with it that maps column names to feature types. This is left to
     user to implement.
 
-    Attributes:
-    -----------
-        COLUMN_SCHEMA (Dict[str, FeatureType]):
-            A dictionary that maps column names to feature types. This
-            is left to user to implement.
-
     Properties:
     -----------
+        column_schema (Dict[str, FeatureType]):
+            A dictionary that maps column names to feature types. This
+            is left to user to implement.
         feature_schema (Dict[FeatureType, List[bool]]):
             A dictionary that maps feature types to boolean masks. The
             boolean masks indicate where the columns of the
@@ -125,15 +122,20 @@ class AbstractDataType(ABC):
     >>> class APIDataType(Enum, AbstractDataType):
     ...     BAR = 'BAR'
     ...     TRADE = 'TRADE'
-    ...     COLUMN_SCHEMA = {
-    ...         BAR: {
-    ...             'open': FeatureType.ASSET_OPEN_PRICE,
-    ...             'high': FeatureType.ASSET_HIGH_PRICE
-    ...         },
-    ...         TRADE: {
-    ...             'ask_price': FeatureType.ASSET_ASK_PRICE, 
-    ...             'bid_price': FeatureType.ASSET_BID_PRICE
-    ...         }    
+    ... @property
+    ... def column_schema(self) -> Dict[str, FeatureType]:
+    ...     return APIDataType.COLUMN_SCHEMA[self]
+    ... COLUMN_SCHEMA = {
+    ...     APIDataType.BAR: {  
+    ...         'open': FeatureType.ASSET_OPEN_PRICE,   
+    ...         'high': FeatureType.ASSET_HIGH_PRICE}
+    ...     APIDataType.TRADE: {
+    ...         'price': None,
+    ...         'volume': None}
+    ... } 
+    ... APIDataType.BAR.feature_schema
+    {FeatureType.ASSET_OPEN_PRICE: [True, False, False, False],
+    FeatureType.ASSET_HIGH_PRICE: [False, True, False, False]}
     """
 
     @property
