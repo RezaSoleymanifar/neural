@@ -323,15 +323,9 @@ class DataSchema:
         """
         assets = list()
         for data_type in self.schema:
-            asset_prices_mask = self.schema[data_type]['feature_schema'][
-                FeatureType.ASSET_CLOSE_PRICE]
-            data_type_assets = self.schema[data_type]['assets']
-            assets.extend([
-                asset for asset, mask_value in zip(
-                    data_type_assets, asset_prices_mask) if mask_value is True
-            ])
-        if len(assets) != len(set(assets)):
-            raise ValueError('Duplicate tradable assets in data schema.')
+            if any data_type.feature_schema[FeatureType.ASSET_CLOSE_PRICE]:
+                assets.extend(self.schema[data_type])
+                break
 
         return assets
 
