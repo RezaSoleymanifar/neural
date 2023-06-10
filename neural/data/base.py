@@ -130,6 +130,8 @@ class AbstractDataType(ABC):
     >>> class APIDataType(Enum, AbstractDataType):
     ...     BAR = 'BAR'
     ...     TRADE = 'TRADE'
+    ... def get_column_schema(self, data_type: APIDataType) -> Dict[str,
+    ... FeatureType]:
     ...     COLUMN_SCHEMA = {
     ...         BAR: {
     ...             'open': FeatureType.ASSET_OPEN_PRICE,
@@ -139,8 +141,29 @@ class AbstractDataType(ABC):
     ...             'ask_price': FeatureType.ASSET_ASK_PRICE, 
     ...             'bid_price': FeatureType.ASSET_BID_PRICE
     ...         }
+        
     """
-    COLUMN_SCHEMA = dict()
+
+    @abstractmethod
+    def get_column_schema(
+            self, data_type: AbstractDataType) -> Dict[str, FeatureType]:
+        """
+        Returns a dictionary that maps column names to feature types.
+        This is left to user to implement.
+
+        Args:
+        ------
+            data_type (AbstractDataType):
+                The data type for which the column schema is to be
+                retrieved.
+
+        Returns:
+        --------
+                Dict[str, FeatureType]:
+                    A dictionary that maps column names to feature
+                    types.
+        """
+        raise NotImplementedError
 
     @property
     def feature_schema(self):
