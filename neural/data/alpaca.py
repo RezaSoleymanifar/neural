@@ -69,8 +69,12 @@ class AlpacaDataSource(AbstractDataSource):
     for historical and live data from Alpaca API.
     """
 
-    class AssetDataType(AbstractDataSource.AssetDataType):
-        Asset
+    class DataType(AbstractDataSource.DatasetType):
+        BAR = 'BAR'
+        TRADE = 'TRADE'
+        QUOTE = 'QUOTE'
+        ORDERBOOK = 'ORDERBOOK'
+
     class DatasetType(AbstractDataSource.DatasetType):
         """
         Enumeration class that defines constants for the different types
