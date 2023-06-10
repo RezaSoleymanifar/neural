@@ -183,12 +183,6 @@ class AbstractDataSource(ABC):
         ...         ...
     """
 
-    class Data:
-        columns = ['open', 'high', 'low', 'close', 'volume']
-        feature_schmea = {FeatureType.ASSET_OPEN_PRICE: [
-            True, False, False, False, False],
-                          FeatureType.ASSET_HIGH_PRICE: [False, True, False, False, False],}
-
     class DatasetType(Enum):
         """
         Enumeration class that defines constants for the different types of

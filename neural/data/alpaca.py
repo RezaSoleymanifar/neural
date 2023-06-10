@@ -68,6 +68,14 @@ class AlpacaDataSource(AbstractDataSource):
     Represents Alpaca API as a data source. Provides standardized enums
     for historical and live data from Alpaca API.
     """
+
+    class Bar(AbstractDataSource.DataType):
+        COLUMN_NAMES = [
+            'symbol', 'timestamp', 'open', 'high', 'low', 'close', 'volume',
+            'trade_count', 'vwap']
+        FEATURE_SCHEMA = {FeatureType.PRICE: [False, True, True, True, True]}
+        
+
     class DatasetType(AbstractDataSource.DatasetType):
         """
         Enumeration class that defines constants for the different types
