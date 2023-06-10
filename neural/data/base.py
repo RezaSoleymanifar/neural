@@ -701,6 +701,22 @@ class AbstractDataMetadata:
         return self.calendar_type.schedule
 
     def __eq__(self, other: object) -> bool:
+        """
+        Returns if two metadata objects are equal. This is useful for
+        validating metadata objects before joining or appending.
+
+        Args:
+        ------
+            other (object):
+                The metadata object to be compared with the current
+                metadata object.
+
+        Returns:
+        --------
+            bool:
+                True if the two metadata objects are equal, False
+                otherwise.
+        """
         equal = (self.data_schema == other.data_schema
                  and self.resolution == other.resolution
                  and self.calendar_type == other.calendar_type)
@@ -1002,11 +1018,7 @@ class DatasetMetadata(AbstractDataMetadata):
                 A StreamMetaData object that corresponds to the current
                 dataset metadata.
         """
-        data_schema = {
-            dataset_type.stream: self.data_schema.data_type_assets_map[dataset_type]
-            for dataset_type in self.data_schema.data_type_assets_map
-        }
-        stream = StreamMetaData(data_schema=data_schema,
+        stream = StreamMetaData(data_schema=self.data_schema,
                                 resolution=self.resolution,
                                 calendar_type=self.calendar_type)
         return stream
