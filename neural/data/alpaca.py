@@ -44,6 +44,7 @@ Classes:
 """
 from dataclasses import dataclass
 from datetime import datetime
+from enum import Enum
 import os
 from typing import List, Optional, Dict
 
@@ -54,8 +55,8 @@ from neural.client.alpaca import AlpacaDataClient
 from neural.common.constants import (ALPACA_ACCEPTED_DOWNLOAD_RESOLUTIONS,
                                      GLOBAL_DATA_TYPE)
 from neural.common.log import logger
-from neural.data.base import (AbstractDataSource, AbstractAsset,
-                              DatasetMetadata, DataSchema, FeatureSchema)
+from neural.data.base import (AbstractDataType, AbstractAsset,
+                              DatasetMetadata, DataSchema)
 from neural.data.enums import AssetType, CalendarType, FeatureType
 from neural.utils.base import (progress_bar, validate_path, RunningStatistics)
 from neural.utils.io import to_hdf5
@@ -64,7 +65,7 @@ from neural.utils.time import Resolution
 
 
 
-class AlpacaDataType(AbstractDataType):
+class AlpacaDataType(Enum, AbstractDataType):
     """
     Shows the types of data that can be downloaded from the Alpaca API.
     Each type has certain column schema that can be used to extract
@@ -154,7 +155,7 @@ class AlpacaDataType(AbstractDataType):
             }
         }
     }
-            
+
 
 @dataclass(frozen=True)
 class AlpacaAsset(AbstractAsset):

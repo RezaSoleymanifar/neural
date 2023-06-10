@@ -99,7 +99,7 @@ from neural.data.enums import FeatureType, AssetType, CalendarType
 if TYPE_CHECKING:
     from neural.utils.time import Resolution
 
-class AbstractDataType(Enum, ABC):
+class AbstractDataType(ABC):
     COLUMN_SCHEMA = dict()
     @property
     def feature_schema(self):
