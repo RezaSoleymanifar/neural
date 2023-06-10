@@ -27,32 +27,27 @@ Author(s):
 
 Classes:
 --------
-    AbstractDataSource:
-        Abstract base class for a data source that standardizes the
-        interface for accessing data from different sources. A data
-        source is typically an API or a database that provides access to
-        data. Data can be static (dataset) or live (stream).
+    AbstractDataType:
+        Abstract base class for defining a data type. A data type is a
+        representation of data that is used to define the structure of
+        the data for a single asset. A data type has column schema
+        associated with it that maps column names to feature types. This
+        is left to user to implement.
     AbstractAsset:
         A generic financial asset. This class standardizes the
         representation of assets throughout the framework.
-    FeatureSchema:
-        A class that represents a feature schema. A feature schema is a
-        an object that maps feature types to boolean masks. The boolean
-        masks indicate where the columns of the corresponding feature
-        types are located in the data. Lenght of boolean mask is equal
-        to the number columns in the data.
     DataSchema:
         A class that represents a data schema. A data schema has an
         internal representation of a dictionary that maps data types
-        (dataset type or stream type) to the corresponding assets and
-        feature schema. It serves as a nexus to bundle data type,
-        feature schema and assets together. Bundling data types with
-        assets also makes streaming data for the matching stream type
-        easier, since all the corresponding assets are already
-        associated with the stream type. This allows downloading data
-        for different asset groups and streaming them in a unified
-        manner.
-    AbstractDataMetaData: abstract base class for data metadata that
+        (dataset type or stream type) to the corresponding assets. It
+        serves as a nexus to bundle data type and assets together.
+        Bundling data types with assets also makes streaming data for
+        the matching stream type easier, since all the corresponding
+        assets are already associated with the stream type. This allows
+        downloading data for different asset groups and streaming them
+        in a unified manner.
+    AbstractDataMetaData: 
+        abstract base class for data metadata that
         provides a universal representation of data throughout the
         framework. This is useful for abstracting away the construction
         of data from the representation of data. Data metadata also

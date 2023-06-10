@@ -104,8 +104,6 @@ class AlpacaDataType(Enum, AbstractDataType):
             the ask price of the quote.
         - ask_size (int):
             the ask size of the quote.
-        - bid_exchange (str):
-            the exchange where the bid occurred.
         - bid_price (float):
             the bid price of the quote.
         - bid_size (int):
