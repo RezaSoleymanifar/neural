@@ -86,7 +86,6 @@ from collections import OrderedDict, defaultdict
 from copy import deepcopy
 from dataclasses import dataclass
 from datetime import datetime
-from enum import Enum
 from typing import (TYPE_CHECKING, Dict, List, Callable, Iterable, Optional)
 
 import h5py as h5
@@ -101,7 +100,28 @@ if TYPE_CHECKING:
 
 
 class AbstractDataType(ABC):
+    """
+    Abstract base class for defining a data type. A data type is a
+    representation of data that is used to define the structure of the
+    data for a single asset. A data type has column schema associated
+    with it that maps column names to feature types. This is left to
+    user to implement.
 
+    Example:
+    --------
+    >>> class APIDataType(Enum, AbstractDataType):
+    ...     BAR = 'BAR'
+    ...     TRADE = 'TRADE'
+    ...     COLUMN_SCHEMA = {
+    ...         BAR: {
+    ...             'open': FeatureType.ASSET_OPEN_PRICE,
+    ...             'high': FeatureType.ASSET_HIGH_PRICE
+    ...         },
+    ...         TRADE: {
+    ...             'price': FeatureType.ASSET_CLOSE_PRICE, 
+    ...             'volume': FeatureType.ASSET_VOLUME
+    
+    """
     COLUMN_SCHEMA = dict()
 
     @property
@@ -409,12 +429,8 @@ class DataSchema:
             other_assets = other.schema[data_type]
             if set(assets).intersection(set(other_assets)):
                 raise ValueError(f'Overlap between {assets} and '
-                    f'{other_assets} in data type {data_type}')
-            schema[data_type]['assets'] += other.schema[data_type]['assets']
-            schema[data_type]['feature_schema'] += other.schema[data_type][
-                'feature_schema']
-            else:
-                schema[data_type] = other.schema[data_type]
+                                 f'{other_assets} in data type {data_type}')
+            schema[data_type] += other.schema[data_type]
         return new_data_schema
 
     def get_features_mask(self, feature_type: FeatureType) -> List[bool]:
