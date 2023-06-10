@@ -45,7 +45,7 @@ Classes:
 from dataclasses import dataclass
 from datetime import datetime
 import os
-from typing import List, Optional
+from typing import List, Optional, Dict
 
 import numpy as np
 import pandas as pd
@@ -156,7 +156,14 @@ class AlpacaDataType(AbstractDataType):
     }
 
     @classmethod
-
+    def get_feature_schema(cls, dataset_type: AlpacaDataType) -> Dict[FeatureType: List[bool]]:
+        feature_schema = dict()
+        column_schema = cls.COLUMN_SCHEMA[dataset_type]
+        for feature_type in FeatureType:
+            feature_type_mask = dataframe.columns.str.lower().str.match(
+                '.*' + feature_type.value.lower() + '.*').to_list()
+            feature_schema[feature_type] = feature_type_mask
+        return feature_schema
 
 @dataclass(frozen=True)
 class AlpacaAsset(AbstractAsset):
