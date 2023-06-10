@@ -342,8 +342,8 @@ class DataSchema:
             feature_schema (FeatureSchema):
                 A dictionary that maps feature types to boolean masks.
         """
-        self.schema = OrderedDict()
-        self.schema[data_type] = assets
+        self.data_type_assets_map = OrderedDict()
+        self.data_type_assets_map[data_type] = assets
         self._feature_schema = None
         return None
 
@@ -355,14 +355,13 @@ class DataSchema:
         """
         if self._feature_schema is not None:
             return self._feature_schema
-        feature_schema = defaultdict(list)
+        self._feature_schema = defaultdict(list)
 
-        for data_type in self.schema:
-            n_assets = len(self.schema[data_type])
+        for data_type in self.data_type_assets_map:
+            n_assets = len(self.data_type_assets_map[data_type])
             for feature_type in FeatureType:
-                feature_schema[feature_type].extend(
+                self._feature_schema[feature_type].extend(
                     data_type.feature_schema[feature_type] * n_assets)
-        self._feature_schema = feature_schema
         return self._feature_schema
 
     @property
@@ -398,9 +397,9 @@ class DataSchema:
                 information for the tradable assets.
         """
         assets = list()
-        for data_type in self.schema:
+        for data_type in self.data_type_assets_map:
             if any(data_type.feature_schema[FeatureType.ASSET_CLOSE_PRICE]):
-                assets.extend(self.schema[data_type])
+                assets.extend(self.data_type_assets_map[data_type])
         if len(set(assets)) != len(assets):
             raise ValueError('Duplicate assets in tradable assets list.'
                              'Same asset with a True price mask is defined '
@@ -427,7 +426,7 @@ class DataSchema:
             str:
                 A string representation of the data schema. 
         """
-        return str(self.schema)
+        return str(self.data_type_assets_map)
 
     def __eq__(self, other: object) -> bool:
         """
@@ -447,7 +446,7 @@ class DataSchema:
         """
         if not isinstance(other, DataSchema):
             return False
-        return self.schema == other.schema
+        return self.data_type_assets_map == other.data_type_assets_map
 
     def __add__(self, other: DataSchema) -> DataSchema:
         """
@@ -469,14 +468,14 @@ class DataSchema:
                 current data schema with the other data schema.
         """
         new_data_schema = deepcopy(self)
-        schema = new_data_schema.schema
+        schema = new_data_schema.data_type_assets_map
         for data_type in schema:
             assets = schema[data_type]
-            other_assets = other.schema[data_type]
+            other_assets = other.data_type_assets_map[data_type]
             if set(assets).intersection(set(other_assets)):
                 raise ValueError(f'Overlap between {assets} and '
                                  f'{other_assets} in data type {data_type}')
-            schema[data_type] += other.schema[data_type]
+            schema[data_type] += other.data_type_assets_map[data_type]
         return new_data_schema
 
     def get_features_mask(self, feature_type: FeatureType) -> List[bool]:
@@ -1004,8 +1003,8 @@ class DatasetMetadata(AbstractDataMetadata):
                 dataset metadata.
         """
         data_schema = {
-            dataset_type.stream: self.data_schema.schema[dataset_type]
-            for dataset_type in self.data_schema.schema
+            dataset_type.stream: self.data_schema.data_type_assets_map[dataset_type]
+            for dataset_type in self.data_schema.data_type_assets_map
         }
         stream = StreamMetaData(data_schema=data_schema,
                                 resolution=self.resolution,
