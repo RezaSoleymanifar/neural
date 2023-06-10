@@ -100,10 +100,6 @@ if TYPE_CHECKING:
     from neural.utils.time import Resolution
 
 
-class AbstractDataSource(ABC):
-
-    class Dataset:
-        COLUMN_NAMES
 
 class AbstractDataSource(ABC):
     """
