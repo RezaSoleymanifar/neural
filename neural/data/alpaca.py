@@ -155,15 +155,17 @@ class AlpacaDataType(AbstractDataType):
         }
     }
 
-    @classmethod
-    def get_feature_schema(cls, data_type: AlpacaDataType):
-        column_schema = cls.COLUMN_SCHEMA[data_type]
-        feature_schema = dict()
+    @property
+    def feature_schema(self):
+        column_schema = self.COLUMN_SCHEMA[self]
+        feature_schema = {}
+
         for feature_type in FeatureType:
-            mask = list()
+            mask = []
             for column in column_schema:
                 mask.append(column_schema[column] == feature_type)
             feature_schema[feature_type] = mask
+
         return feature_schema
             
 
