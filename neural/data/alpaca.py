@@ -63,71 +63,21 @@ from neural.utils.misc import resolution_to_timeframe
 from neural.utils.time import Resolution
 
 
+class AlpacaDataType(AbstractDataType):
+    BAR = 'BAR'
+    TRADE = 'TRADE'
+    QUOTE = 'QUOTE'
+    ORDERBOOK = 'ORDERBOOK'
+
+
 class AlpacaDataSource(AbstractDataSource):
     """
     Represents Alpaca API as a data source. Provides standardized enums
     for historical and live data from Alpaca API.
     """
 
-    class DataType(AbstractDataSource.DatasetType):
-        BAR = 'BAR'
-        TRADE = 'TRADE'
-        QUOTE = 'QUOTE'
-        ORDERBOOK = 'ORDERBOOK'
-
-    class DatasetType(AbstractDataSource.DatasetType):
-        """
-        Enumeration class that defines constants for the different types
-        of datasets.
-
-        Attributes
-        ----------
-        BAR (str):
-            Represents one bar/candlestick of aggregated trade data over
-            a specified interval. Includes following fields:
-            - open (float):
-                the opening price of the bar.
-            - high (float):
-                the highest price of the bar.
-            - low (float):
-                the lowest price of the bar.
-            - close (float):
-                the closing price of the bar.
-            - volume (int):
-                the trade volume of the bar.
-            - trade_count (int):
-                the number of trades in the bar.
-            - vwap (float):
-                the volume weighted average price of the bar.
-        TRADE (str):
-            Represents one trade of the asset. Includes following
-            fields:
-            - price (float):    
-                the price of the trade.
-            - size (int):
-                the quantity of shares in trade.
-        QUOTE (str):
-            Represents one quote of the asset. Includes following
-            fields:
-            - ask_price (float):
-                the ask price of the quote.
-            - ask_size (int):
-                the ask size of the quote.
-            - bid_exchange (str):
-                the exchange where the bid occurred.
-            - bid_price (float):
-                the bid price of the quote.
-            - bid_size (int):
-                the bid size of the quote.
-        """
-        BAR = 'BAR'
-        TRADE = 'TRADE'
-        QUOTE = 'QUOTE'
-
     class StreamType(AbstractDataSource.StreamType):
         """
-        Enumeration class that defines constants for the different types
-        of data streams.
 
         Attributes
         ----------
@@ -192,7 +142,7 @@ class AlpacaDataSource(AbstractDataSource):
         ORDERBOOK = 'ORDERBOOK'
 
     SCHEMA = {
-        DatasetType.BAR: {
+        AlpacaDataType.BAR: {
             'open': FeatureType.ASSET_OPEN_PRICE,
             'high': FeatureType.ASSET_HIGH_PRICE,
             'low': FeatureType.ASSET_LOW_PRICE,
@@ -201,10 +151,10 @@ class AlpacaDataSource(AbstractDataSource):
             'trade_count': None,
             'vwap': None
         },
-        DatasetType.TRADE: {
+        AlpacaDataType.TRADE: {
             'price': None,
             'size': None,
-            DatasetType.QUOTE: {
+        AlpacaDataType.QUOTE: {
                 'ask_price': FeatureType.ASSET_ASK_PRICE,
                 'ask_size': None,
                 'bid_price': FeatureType.ASSET_BID_PRICE,
@@ -212,6 +162,55 @@ class AlpacaDataSource(AbstractDataSource):
             }
         }
     }
+
+    class DatasetType(AbstractDataSource.DatasetType):
+        """
+        Enumeration class that defines constants for the different types
+        of datasets.
+
+        Attributes
+        ----------
+        BAR (str):
+            Represents one bar/candlestick of aggregated trade data over
+            a specified interval. Includes following fields:
+            - open (float):
+                the opening price of the bar.
+            - high (float):
+                the highest price of the bar.
+            - low (float):
+                the lowest price of the bar.
+            - close (float):
+                the closing price of the bar.
+            - volume (int):
+                the trade volume of the bar.
+            - trade_count (int):
+                the number of trades in the bar.
+            - vwap (float):
+                the volume weighted average price of the bar.
+        TRADE (str):
+            Represents one trade of the asset. Includes following
+            fields:
+            - price (float):    
+                the price of the trade.
+            - size (int):
+                the quantity of shares in trade.
+        QUOTE (str):
+            Represents one quote of the asset. Includes following
+            fields:
+            - ask_price (float):
+                the ask price of the quote.
+            - ask_size (int):
+                the ask size of the quote.
+            - bid_exchange (str):
+                the exchange where the bid occurred.
+            - bid_price (float):
+                the bid price of the quote.
+            - bid_size (int):
+                the bid size of the quote.
+        """
+        BAR = 'BAR'
+        TRADE = 'TRADE'
+        QUOTE = 'QUOTE'
 
 
 @dataclass(frozen=True)
