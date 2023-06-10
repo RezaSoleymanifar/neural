@@ -276,33 +276,14 @@ class DataSchema:
                 A dictionary that maps feature types to boolean masks.
         """
         self.schema = OrderedDict()
-        self.schema[data_type]['assets'] = assets
+        self.schema[data_type] = assets
         return None
 
     @property
-    def is_dataset(self) -> bool:
-        """
-        Returns if the data schema is for a dataset or a stream. If
-        the data schema is for a dataset then the data type is a
-        dataset type, otherwise it is a stream type.
-
-        Returns:
-        --------    
-            bool:
-                True if the data schema is for a dataset, False if the
-                data schema is for a stream.
-        
-        Notes:
-        ------
-            Useful to ensure all data types are either datasets or
-            streams.
-        """
-        data_type = self.schema.keys()[0]
-        if isinstance(data_type, AbstractDataSource.DatasetType):
-            return True
-        elif isinstance(data_type, AbstractDataSource.StreamType):
-            return False
-
+    def feature_schema(self) -> Dict[FeatureType, List[bool]]:
+        for data_type in self.schema:
+            n_assets = len(self.schema[data_type])
+            data_type_feature_schema = datatype.feature_schema
     @property
     def n_features(self) -> int:
         """
