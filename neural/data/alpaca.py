@@ -56,7 +56,7 @@ from neural.common.constants import (ALPACA_ACCEPTED_DOWNLOAD_RESOLUTIONS,
 from neural.common.log import logger
 from neural.data.base import (AbstractDataSource, AbstractAsset,
                               DatasetMetadata, DataSchema, FeatureSchema)
-from neural.data.enums import AssetType, CalendarType
+from neural.data.enums import AssetType, CalendarType, FeatureType
 from neural.utils.base import (progress_bar, validate_path, RunningStatistics)
 from neural.utils.io import to_hdf5
 from neural.utils.misc import resolution_to_timeframe
@@ -68,13 +68,6 @@ class AlpacaDataSource(AbstractDataSource):
     Represents Alpaca API as a data source. Provides standardized enums
     for historical and live data from Alpaca API.
     """
-
-    class Bar(AbstractDataSource.DataType):
-        COLUMN_NAMES = [
-            'symbol', 'timestamp', 'open', 'high', 'low', 'close', 'volume',
-            'trade_count', 'vwap']
-        FEATURE_SCHEMA = {FeatureType.PRICE: [False, True, True, True, True]}
-        
 
     class DatasetType(AbstractDataSource.DatasetType):
         """
@@ -220,6 +213,16 @@ class AlpacaDataSource(AbstractDataSource):
         BAR = 'BAR'
         TRADE = 'TRADE'
         QUOTE = 'QUOTE'
+
+    SCHEMA = {AlpacaDataSource.DatasetType.BAR: {
+        'close': FeatureType.ASSET_CLOSE_PRICE,
+        'high': FeatureType.ASSET_HIGH_PRICE,
+        'low': FeatureType.ASSET_LOW_PRICE,
+        'open': FeatureType.ASSET_OPEN_PRICE,
+        
+    }
+    }
+
 
 
 @dataclass(frozen=True)
