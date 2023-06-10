@@ -321,15 +321,24 @@ class DataSchema:
         associated with them. If any of the assets associated with a
         data type in the data schema have a True price mask associated
         with it, then all assets associated with that data type are
-        considered tradable. Ensure that all assets associated with a
-        
+        considered tradable.
 
-
+        Returns:
+        --------
+            List[AbstractAsset]:
+                A list of assets that have a True price mask associated
+                with them. This is useful to filter out tradable assets
+                from the assets that exist to provide feature
+                information for the tradable assets.
         """
         assets = list()
         for data_type in self.schema:
             if any(data_type.feature_schema[FeatureType.ASSET_CLOSE_PRICE]):
                 assets.extend(self.schema[data_type])
+        if len(set(assets)) != len(assets):
+            raise ValueError('Duplicate assets in tradable assets list.'
+                             'Same asset with a True price mask is defined '
+                             'multiple times.')
         return assets
 
     @property
