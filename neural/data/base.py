@@ -281,9 +281,12 @@ class DataSchema:
 
     @property
     def feature_schema(self) -> Dict[FeatureType, List[bool]]:
+        feature_shcema = {}
         for data_type in self.schema:
             n_assets = len(self.schema[data_type])
-            data_type_feature_schema = datatype.feature_schema
+            schema = datatype.feature_schema
+            data_type_feature_schema = {schema[key] * n_assets for key in schema}
+        
     @property
     def n_features(self) -> int:
         """
