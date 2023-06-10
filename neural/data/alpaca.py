@@ -214,13 +214,16 @@ class AlpacaDataSource(AbstractDataSource):
         TRADE = 'TRADE'
         QUOTE = 'QUOTE'
 
-    SCHEMA = {AlpacaDataSource.DatasetType.BAR: {
+    SCHEMA = {DatasetType.BAR: {
         'close': FeatureType.ASSET_CLOSE_PRICE,
         'high': FeatureType.ASSET_HIGH_PRICE,
         'low': FeatureType.ASSET_LOW_PRICE,
         'open': FeatureType.ASSET_OPEN_PRICE,
-        
-    }
+        'trade_count': None,
+        'volume': None,
+        'vwap': None},
+                DatasetType.TRADE: {
+                    'conditions': None,
     }
 
 
