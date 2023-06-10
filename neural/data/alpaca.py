@@ -127,6 +127,17 @@ class AlpacaDataType(Enum, AbstractDataType):
                 the price of the bid.
             - size (int):
                 the size of the bid.
+    COLUMN_SCHEMA (Dict[str, FeatureType | None]):
+        A dictionary that maps the column names to the feature
+        types. This is used to extract feature schema from the data.
+
+    Properties:
+    -----------
+        column_schema (Dict[str, FeatureType | None]):  
+            A dictionary that maps the column names to the feature
+            types. This is used to extract feature schema from the data.
+            This is used to standardize the representation of data from
+            Alpaca API.
     """
     BAR = 'BAR'
     TRADE = 'TRADE'
