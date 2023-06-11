@@ -153,7 +153,6 @@ def from_hdf5(
     sorted_hdf5_file = sorted(
         hdf5_file, key=lambda dataset: hdf5_file[dataset].id.get_offset())
     for dataset_name in sorted_hdf5_file:
-
         dataset_metadata, dataset = extract_hdf5_dataset(
             hdf5_file=hdf5_file, dataset_name=dataset_name)
 
