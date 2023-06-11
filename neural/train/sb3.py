@@ -175,9 +175,8 @@ class StableBaselinesTrainer(AbstractTrainer):
                  async_envs: bool = True,
                  exclusive_envs: True = False,
                  initial_cash_range: Optional[Tuple[float, float]] = None,
-                 initial_assets_range: Optional[Tuple[float, float]] = None,
-                 *args,
-                 **kwargs) -> None:
+                 initial_assets_range: Optional[Tuple[float, float]] = None
+                 ) -> None:
 
         super().__init__(agent=agent,
                          file_path=file_path,
@@ -198,13 +197,27 @@ class StableBaselinesTrainer(AbstractTrainer):
               steps: int = 1_000_000,
               progress_bar: bool = True,
               **kwargs) -> nn.Module:
+        """
+        This method is used to train the agent using the given
+        algorithm.
 
+        Args:
+        ----
+            algorithm (OnPolicyAlgorithm):
+                Algorithm to be used for training.
+            steps (int):
+                Number of steps to train the agent for.
+            progress_bar (bool):
+                If True, a progress bar is shown during training.
+            **kwargs:
+                Additional keyword arguments.
+            
+        """
         piped_market_env = self._get_market_env()
         model = self.agent.model
 
         alg = algorithm(policy=model,
                                env=piped_market_env,
-                               verbose=self.verbose,
                                **kwargs)
         alg.learn(total_timesteps=steps, progress_bar=progress_bar)
 
