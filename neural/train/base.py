@@ -275,15 +275,17 @@ class AbstractTrainer(ABC):
 
     def _get_market_env(self) -> TrainMarketEnv:
         """
-        Deep copies of agent pipe is create when n_envs > 1. This is to
-        avoid complications arised during parallel training and possibly
-        modifying the same pipe object at the same time. Pipes created
-        in parallel training will be saved for future reference so that
-        when performing more paralell training/testing state of the
-        parallel pipes are preserved.
+        If n_envs = 1 or caller is test then a single environment is
+        returned and agent's pipe is used to pipe the environment. when
+        caller is train and n_envs > 1, deep copies of agent pipe is
+        created. This is to avoid complications arised during parallel
+        training and possibly modifying the same pipe object at the same
+        time. Pipes created in parallel training will be saved for
+        future reference so that when performing more paralell
+        training state of the parallel pipes are preserved.
         
         The common practice is to train on multiple environments and
-        perform a final test on a single environement, to tune the 
+        perform a final train/test on a single environement, to tune the
         observation normalizer stats to target account initial
         cash/assets.
         """
@@ -325,7 +327,7 @@ class AbstractTrainer(ABC):
             ) if self.initial_assets_range is not None else None
             return asset_quantities
 
-        if self.n_async_envs == 1:
+        if self.n_async_envs == 1 or caller_name == 'test':
             market_env = TrainMarketEnv(
                 data_feeder=data_feeder,
                 initial_cash=initial_cash(),
