@@ -1628,7 +1628,6 @@ class StaticDataFeeder(AbstractDataFeeder):
                                                   end_index=end,
                                                   n_chunks=self.n_chunks)
             static_data_feeders.append(static_data_feeder)
-
         return static_data_feeders
 
 
@@ -1638,7 +1637,6 @@ class AsyncDataFeeder(AbstractDataFeeder):
     required for the environment from an asynchronous source. This is
     useful for loading data from a live stream.
     """
-
     def __init__(self, stream_metadata: StreamMetaData,
                  data_client: AbstractDataClient) -> None:
         self.stream_metadata = stream_metadata
