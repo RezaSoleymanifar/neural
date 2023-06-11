@@ -111,14 +111,17 @@ class AbstractPipe(ABC):
     according to your specific needs. Wrappers are intantiated every
     time the pipe method is called. If you need to restore state of some
     wrappers (e.g. normalizer parameters), you can make that state a
-    constructor argument of both wrapper class and the pipe and set
-    the argument passed to wrapper equal to state of wrapper. If both
-    states are immutable, the values will be synchronized pointing at
-    the same memory space. This way When saving the pipe, the state of
-    the wrappers will be saved as well.
+    constructor argument of both wrapper class and the pipe and set the
+    argument passed to wrapper equal to state of wrapper. If both states
+    are immutable, the values will be synchronized pointing at the same
+    memory space. This way When saving the pipe, the state of the
+    wrappers will be saved as well.
 
     Methods:
     --------
+        __call__(env):
+            Allows the pipe to be called as a function. This is
+            equivalent to calling the pipe method on an environment.
         get_market_metadata_wrapper(env):
             This method returns the metadata wrapper of the environment.
             The metadata wrapper is responsible for providing metadata
@@ -135,6 +138,23 @@ class AbstractPipe(ABC):
         etc. You can then combine these pipes to create a more complex
         pipe.
     """
+    def __call__(self, env: Env):
+        """
+        Allows the pipe to be called as a function. This is equivalent
+        to calling the pipe method on an environment.
+
+        Args:
+        -----
+            env (Env):
+                environment to be wrapped.
+        
+        Returns:
+        --------
+            env (Env):
+                wrapped environment.
+        """
+        return self.pipe(env)
+
     @staticmethod
     def get_market_metadata_wrapper(env: AbstractMarketEnv) -> AbstractMarketEnv:
         """
