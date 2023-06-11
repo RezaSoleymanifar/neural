@@ -15,7 +15,7 @@ import numpy as np
 import torch
 from torch import nn
 
-from neural.data.base import StaticDataFeeder
+from neural.data.base import DatasetMetadata, StaticDataFeeder
 from neural.env.base import TrainMarketEnv
 from neural.meta.agent import Agent
 from neural.meta.pipe import AbstractPipe
@@ -204,7 +204,7 @@ class AbstractTrainer(ABC):
         return self.agent.pipe
 
     @property
-    def dataset_metadata(self) -> dict:
+    def dataset_metadata(self) -> DatasetMetadata:
         """
         Returns the dataset metadata. If dataset metadata is not set in
         the agent, then it is set to the metadata of the dataset in the
@@ -217,14 +217,26 @@ class AbstractTrainer(ABC):
         return self.agent.dataset_metadata
 
     @property
-    def async_env_pipes(self) -> list:
+    def async_env_pipes(self) -> list[AbstractPipe]:
+        """
+        Returns a list of pipes saved after parallel training. If
+        training is resumed, then the saved pipes are used to restore
+        the state of the parallel environments. Useful for multi-stage
+        training with different configurations.
+
+        Returns:
+        --------
+            list[AbstractPipe]: List of pipes for saved for parallel
+                training. Can be reused to continue training in
+                parallel.
+        """
         if self._async_env_pipes is None:
             self.async_env_pipes = [
                 copy.deepcopy(self.agent.pipe) for _ in range(self.n_async_envs)
             ] if self.async_env_pipes is None else self.async_env_pipes
         return self._async_env_pipes
 
-    def _get_train_test_data_feeders(self) -> None:
+    def _get_train_test_data_feeders(self) -> Tuple[StaticDataFeeder, StaticDataFeeder]:
         """
         Splits the dataset time horizon into training and testing
         intervals, and creates data feeders for training and testing
@@ -232,6 +244,11 @@ class AbstractTrainer(ABC):
         dataset is is used for training and the last 20% is used for
         testing. If train ratio is 1 then the entire dataset is used for
         training and no testing is performed.
+
+        Returns:
+        --------
+            Tuple[StaticDataFeeder, StaticDataFeeder]: 
+                Data feeders for
         """
         dataset_metadata, datasets = from_hdf5(self.file_path,
                                                self.dataset_name)
