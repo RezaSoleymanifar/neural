@@ -151,7 +151,6 @@ class AbstractTrainer(ABC):
     environments with random initial conditions can potentially help the
     model generalize better.
     """
-
     def __init__(
         self,
         agent: Agent,
