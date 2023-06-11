@@ -198,7 +198,8 @@ class AbstractTrainer(ABC):
             run with random actions before testing.
         train(*args, **kwargs) -> nn.Module:
             This method is left to be implemented by the child class. It
-            should contain the training procedure of the agent. An
+            should contain the training procedure of the agent. An RL
+            trainer must be used to implement this method.
 
     Notes:
     -----
