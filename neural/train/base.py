@@ -293,13 +293,32 @@ class AbstractTrainer(ABC):
         elif caller_name == 'test':
             data_feeder = self.test_data_feeder
 
-        def initial_cash() -> float:
+        def initial_cash() -> float | None:
+            """
+            Returns a random initial cash value. If initial_cash_range
+            is None then None is returned.
+
+            Returns:
+            --------
+                float: 
+                    Random initial cash value.
+            """
             cash = np.random.uniform(
                 *self.initial_cash_range
             ) if self.initial_cash_range is not None else None
             return cash
 
-        def initial_asset_quantities() -> np.ndarray:
+        def initial_asset_quantities() -> np.ndarray | None:
+            """
+            Returns a random initial asset quantities. If
+            initial_asset_quantities_range is None then None is
+            returned.
+
+            Returns:
+            --------
+                np.ndarray: 
+                    Random initial asset quantities.
+            """
             n_assets = self.agent.dataset_metadata.n_assets
             asset_quantities = np.random.uniform(
                 *self.initial_assets_range, size=len(n_assets, )
