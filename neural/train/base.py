@@ -4,8 +4,34 @@ base.py
 Description:
 ------------
     This module contains the abstract class for training agents. It is
+    designed to proivde common functionalities for training agents. The
+    features provided by this class are:
+        - Train/test split
+        - Training on multiple environments
+        - Random initializaiton of environments
+        - Splitting environments into exclusive temporal groups
     
+    Training can happen in parallel with random initialization of
+    environment conditions. However for the purpose of saving stats for
+    observation normalization a final test must be performed on a single
+    environment. Only in single environment mode and testing the agent's
+    pipe is used. In multi-environment mode, the agent's pipe is deep
+    copied to avoid simultaneous modification of the same pipe by
+    parallel environments.
 
+License:
+--------
+    MIT License. See LICENSE.md file.
+
+Author(s):
+-------
+    Reza Soleymanifar, Email: Reza@Soleymanifar.com
+
+Classes:
+--------
+    AbstractTrainer:
+        This is an abstract class for training agents. It is designed to
+        proivde common functionalities for training agents.
 """
 from abc import ABC, abstractmethod
 import copy
