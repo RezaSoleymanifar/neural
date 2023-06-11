@@ -470,13 +470,17 @@ class DataSchema:
         """
         new_data_schema = deepcopy(self)
         schema = new_data_schema.data_type_assets_map
-        for data_type in other:
-            assets = schema[data_type]
-            other_assets = other.data_type_assets_map[data_type]
-            if set(assets).intersection(set(other_assets)):
-                raise ValueError(f'Overlap between {assets} and '
-                                 f'{other_assets} in data type {data_type}')
-            schema[data_type] += other_assets
+        other_schema = other.data_type_assets_map
+        for data_type in other_schema:
+            if data_type in schema:
+                assets = schema[data_type]
+                other_assets = other.data_type_assets_map[data_type]
+                if set(assets).intersection(set(other_assets)):
+                    raise ValueError(f'Overlap between      {assets} and '
+                                    f'{other_assets} in data type {data_type}')
+                schema[data_type] += other_assets
+            else:
+                schema[data_type] = other_schema[data_type]
         return new_data_schema
 
     def get_features_mask(self, feature_type: FeatureType) -> List[bool]:
