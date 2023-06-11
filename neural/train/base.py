@@ -373,8 +373,9 @@ class AbstractTrainer(ABC):
         """
         with torch.no_grad(), torch.set_grad_enabled(False):
             observation = env.reset()
+            model = self.agent.model
             while True:
-                action = self.agent.model(
+                action = model(
                     observation
                 ) if not random_actions else env.action_space.sample()
                 observation, reward, done, info = env.step(action)
@@ -382,7 +383,7 @@ class AbstractTrainer(ABC):
                     break
         return None
 
-    def test(self, n_episodes: int = 1, warump: bool = False) -> None:
+    def test(self, n_episodes: int = 1, n_warumup: float = 0) -> None:
         """
         This method is used to test the agent's performance on the
         testing dataset. If n_envs = 1 then test is performed on
@@ -403,8 +404,9 @@ class AbstractTrainer(ABC):
                              'train_ratio = {self.train_ratio}')
 
         test_market_env = self._get_market_env()
-        if warump:
-            self.run_episode(test_market_env, random_actions=True)
+        if n_warumup != 0:
+            for episode in range(n_warumup):
+                self.run_episode(test_market_env, random_actions=True)
         for episode in range(n_episodes):
             self.run_episode(test_market_env, random_actions=False)
         return None
