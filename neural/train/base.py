@@ -342,7 +342,7 @@ class AbstractTrainer(ABC):
         async_envs = [
             TrainMarketEnv(data_feeder=data_feeder,
                            initial_cash=initial_cash(),
-                           initial_assets=initial_asset_quantities())
+                           initial_asset_quantities=initial_asset_quantities())
             for data_feeder in data_feeders
         ]
         env_callables = [
@@ -354,7 +354,6 @@ class AbstractTrainer(ABC):
             market_env = AsyncVectorEnv(env_callables)
         else:
             market_env = SyncVectorEnv(env_callables)
-
         return market_env
 
     def run_episode(self,
