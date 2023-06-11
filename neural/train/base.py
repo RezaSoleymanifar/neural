@@ -3,6 +3,9 @@ base.py
 
 Description:
 ------------
+    This module contains the abstract class for training agents. It is
+    
+
 """
 from abc import ABC, abstractmethod
 import copy
