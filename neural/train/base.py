@@ -149,6 +149,8 @@ class AbstractTrainer(ABC):
 
     Properties:
     ----------
+        model (nn.Module):
+            Returns the agent's model.
         pipe (AbstractPipe):
             Returns the agent's pipe. If n_envs > 1 then instead of
             using the agent's pipe, a deep copy of the agent's pipe is
@@ -247,6 +249,17 @@ class AbstractTrainer(ABC):
 
         return None
 
+    @property
+    def model(self) -> nn.Module:
+        """
+        Returns the agent's model.
+
+        Returns:
+        --------
+            nn.Module: Agent's model.
+        """
+        return self.agent.model
+    
     @property
     def pipe(self) -> AbstractPipe:
         """
@@ -390,7 +403,7 @@ class AbstractTrainer(ABC):
                 np.ndarray: 
                     Random initial asset quantities.
             """
-            n_assets = self.agent.dataset_metadata.n_assets
+            n_assets = len(self.dataset_metadata.assets)
             asset_quantities = np.random.uniform(
                 *self.initial_assets_range, size=len(n_assets, )
             ) if self.initial_assets_range is not None else None
@@ -444,7 +457,7 @@ class AbstractTrainer(ABC):
         """
         with torch.no_grad(), torch.set_grad_enabled(False):
             observation = env.reset()
-            model = self.agent.model
+            model = self.model
             while True:
                 action = model(
                     observation
