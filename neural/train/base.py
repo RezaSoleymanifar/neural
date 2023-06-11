@@ -166,28 +166,37 @@ class AbstractTrainer(ABC):
 
     Methods:
     -------
-        _get_train_test_data_feeders():
+        _get_train_test_data_feeders() -> Tuple[StaticDataFeeder,
+        StaticDataFeeder]:
             Splits the dataset time horizon into training and testing
-            intervals, and creates data feeders for training and
-            testing environments. If train ratio is 0.8 then the first
-            80% of the dataset is is used for training and the last 20%
-            is used for testing. If train ratio is 1 then the entire
-            dataset is used for training and no testing is performed.
-        _get_market_env():
-            If n_envs = 1 or caller is test then a single environment
-            is returned and agent's pipe is used to pipe the
-            environment. when caller is train and n_envs > 1, deep
-            copies of agent pipe is created. This is to avoid
-            complications arised during parallel training and possibly
-            modifying the same pipe object at the same time. Pipes
-            created in parallel training will be saved for future
-            reference so that when performing more paralell training
-            state of the parallel pipes are preserved.
-        _run_episode(env: TrainMarketEnv, random_actions: bool = False):
+            intervals, and creates data feeders for training and testing
+            environments. If train ratio is 0.8 then the first 80% of
+            the dataset is is used for training and the last 20% is used
+            for testing. If train ratio is 1 then the entire dataset is
+            used for training and no testing is performed.
+        _get_market_env() -> TrainMarketEnv | AsyncVectorEnv |
+        SyncVectorEnv:
+            If n_envs = 1 or caller is test then a single environment is
+            returned and agent's pipe is used to pipe the environment.
+            when caller is train and n_envs > 1, deep copies of agent
+            pipe is created. This is to avoid complications arised
+            during parallel training and possibly modifying the same
+            pipe object at the same time. Pipes created in parallel
+            training will be saved for future reference so that when
+            performing more paralell training state of the parallel
+            pipes are preserved.
+        _run_episode(env: TrainMarketEnv, random_actions: bool = False)
+        -> None:
             Runs a single episode on the given environment. If random
             actions are used then the agent's model is not used to
-            generate actions. This method is used to test the agent's
-            
+            generate actions.
+        test(n_episodes: int = 1, n_warmup: int = 0) -> None:
+            This method is used to test the agent's performance on the
+            testing dataset. if n_warmup > 0 then n_warmup episodes are
+            run with random actions before testing.
+        train(*args, **kwargs) -> nn.Module:
+            This method is left to be implemented by the child class. It
+            should contain the training procedure of the agent. An
 
     Notes:
     -----
@@ -200,6 +209,7 @@ class AbstractTrainer(ABC):
     environments with random initial conditions can potentially help the
     model generalize better.
     """
+
     def __init__(
         self,
         agent: Agent,
