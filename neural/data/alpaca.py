@@ -591,7 +591,7 @@ class AlpacaDataDownloader():
         """
         timeframe = resolution_to_timeframe(resolution)
         downloader, request = self.data_client.get_downloader_and_request(
-            dataset_type=dataset_type, asset_type=asset_type)
+            data_type=dataset_type, asset_type=asset_type)
         data = downloader(
             request(symbol_or_symbols=symbols,
                     timeframe=timeframe,

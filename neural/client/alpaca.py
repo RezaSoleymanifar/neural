@@ -55,6 +55,7 @@ from neural.client.base import (AbstractClient, AbstractTradeClient,
                                 AbstractDataClient)
 from neural.common.constants import API_KEY, API_SECRET
 from neural.common.log import logger
+from neural.data.alpaca import AlpacaDataType
 from neural.data.enums import AssetType
 from neural.utils.misc import objects_list_to_dataframe
 
@@ -696,22 +697,6 @@ class AlpacaDataClient(AbstractDataClient, AlpacaClient):
 
         return None
 
-    @property
-    def data_source(self) -> AlpacaDataSource:
-        """
-        Determines the data source for this client. Provides a
-        standardized way to refer to the specific type of data provided
-        by Alpaca API. Data source is also used to match clients to
-        stream metadata.
-
-        Returns:
-        ---------
-            AlpacaDataSource:
-                The data source for the Alpaca API.
-        """
-        data_source = AlpacaDataSource
-        return data_source
-
     @staticmethod
     def safe_method_call(object: object, method_name: str) -> Callable:
         """"
@@ -784,7 +769,7 @@ class AlpacaDataClient(AbstractDataClient, AlpacaClient):
 
     def get_downloader_and_request(
             self,
-            dataset_type: AlpacaDataSource.DatasetType,
+            data_type: AlpacaDataType,
             asset_type=AssetType) -> Tuple[Callable, BaseTimeseriesDataRequest]:
         """
         Given asset type and dataset type, returns the facilities for
@@ -858,14 +843,14 @@ class AlpacaDataClient(AbstractDataClient, AlpacaClient):
         client = client_map[asset_type]
 
         downloader_request_map = {
-            AlpacaDataSource.DatasetType.BAR: {
+            AlpacaDataType.BAR: {
                 AssetType.STOCK: ('get_stock_bars', StockBarsRequest),
                 AssetType.CRYPTOCURRENCY: ('get_crypto_bars', CryptoBarsRequest)
             },
-            AlpacaDataSource.DatasetType.QUOTE: {
+            AlpacaDataType.QUOTE: {
                 AssetType.STOCK: ('get_stock_quotes', StockQuotesRequest)
             },
-            AlpacaDataSource.DatasetType.TRADE: {
+            AlpacaDataType.TRADE: {
                 AssetType.STOCK: ('get_stock_trades', StockTradesRequest),
                 AssetType.CRYPTOCURRENCY:
                 ('get_crypto_trades', CryptoTradesRequest)
@@ -874,10 +859,10 @@ class AlpacaDataClient(AbstractDataClient, AlpacaClient):
 
         try:
             downloader_method_name, request = downloader_request_map[
-                dataset_type][asset_type]
+                data_type][asset_type]
         except KeyError:
             raise ValueError(
-                f'Dataset type {dataset_type}, asset type {asset_type} '
+                f'Dataset type {data_type}, asset type {asset_type} '
                 'is not a valid combination.')
         downloader = AlpacaDataClient.safe_method_call(
             object=client, method_name=downloader_method_name)
@@ -886,7 +871,7 @@ class AlpacaDataClient(AbstractDataClient, AlpacaClient):
 
     def get_streamer(
         self,
-        stream_type: AlpacaDataSource.StreamType,
+        data_type: AlpacaDataType,
         asset_type: AssetType,
     ) -> Callable:
         """
@@ -927,7 +912,7 @@ class AlpacaDataClient(AbstractDataClient, AlpacaClient):
             }
         }
 
-        stream_method_name, stream = stream_map[stream_type][asset_type]
+        stream_method_name, stream = stream_map[data_type][asset_type]
 
         streamer = AlpacaDataClient.safe_method_call(
             object=stream, method_name=stream_method_name)
