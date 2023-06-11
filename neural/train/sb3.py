@@ -15,7 +15,8 @@ from neural.meta.agent import Agent
 
 class StableBaselinesTrainer(AbstractTrainer):
     """
-    A trainer for Stable Baselines 3 algorithms.
+    A trainer for Stable Baselines 3 algorithms. Provides a unified
+    interface for training and testing Stable Baselines 3 algorithms.
 
     Args:
     ----
@@ -152,6 +153,7 @@ class StableBaselinesTrainer(AbstractTrainer):
         **kwargs) -> None:
             Trains the agent using the given algorithm for the given
             number of steps.
+
     Notes:
     -----
     Note that if n_envs > 1 then a deep copy of pipe is created for each
@@ -174,6 +176,7 @@ class StableBaselinesTrainer(AbstractTrainer):
                  exclusive_envs: True = False,
                  initial_cash_range: Optional[Tuple[float, float]] = None,
                  initial_assets_range: Optional[Tuple[float, float]] = None,
+                 verbose: bool = True,
                  *args,
                  **kwargs) -> None:
 
@@ -186,9 +189,9 @@ class StableBaselinesTrainer(AbstractTrainer):
                          async_envs=async_envs,
                          exclusive_async_envs=exclusive_envs,
                          initial_cash_range=initial_cash_range,
-                         initial_asset_quantities_range=initial_assets_range,
-                         *args,
-                         **kwargs)
+                         initial_asset_quantities_range=initial_assets_range
+                         )
+        self.ver
 
         return None
 
