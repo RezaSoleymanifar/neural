@@ -898,15 +898,15 @@ class AlpacaDataClient(AbstractDataClient, AlpacaClient):
                 type.
         """
         stream_map = {
-            AlpacaDataSource.StreamType.BAR: {
+            AlpacaDataType.BAR: {
                 AssetType.STOCK: ('subscribe_bars', StockDataStream),
                 AssetType.CRYPTOCURRENCY: ('subscribe_bars', CryptoDataStream)
             },
-            AlpacaDataSource.StreamType.QUOTE: {
+            AlpacaDataType.QUOTE: {
                 AssetType.STOCK: ('subscribe_quotes', StockDataStream),
                 AssetType.CRYPTOCURRENCY: ('subscribe_quotes', CryptoDataStream)
             },
-            AlpacaDataSource.StreamType.TRADE: {
+            AlpacaDataType.TRADE: {
                 AssetType.STOCK: ('subscribe_trades', StockDataStream),
                 AssetType.CRYPTOCURRENCY: ('subscribe_trades', CryptoDataStream)
             }
