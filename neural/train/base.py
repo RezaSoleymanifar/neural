@@ -271,7 +271,6 @@ class AbstractTrainer(ABC):
         else:
             train_data_feeder, test_data_feeder = data_feeder.split(
                 n=self.train_ratio)
-
         return train_data_feeder, test_data_feeder
 
     def _get_market_env(self) -> TrainMarketEnv:
