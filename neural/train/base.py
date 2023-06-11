@@ -273,7 +273,8 @@ class AbstractTrainer(ABC):
                 n=self.train_ratio)
         return train_data_feeder, test_data_feeder
 
-    def _get_market_env(self) -> TrainMarketEnv:
+    def _get_market_env(
+            self) -> TrainMarketEnv | AsyncVectorEnv | SyncVectorEnv:
         """
         If n_envs = 1 or caller is test then a single environment is
         returned and agent's pipe is used to pipe the environment. when
@@ -288,6 +289,16 @@ class AbstractTrainer(ABC):
         perform a final train/test on a single environement, to tune the
         observation normalizer stats to target account initial
         cash/assets.
+
+        Returns:
+        --------
+            TrainMarketEnv | AsyncVectorEnv | SyncVectorEnv:
+                Training environment. If n_envs = 1 or caller is test
+                then a single environment is returned and agent's pipe
+                is used to pipe the environment. when caller is train
+                and n_envs > 1, deep copies of agent pipe is created.
+                if async_envs = True then an AsyncVectorEnv is returned,
+                otherwise a SyncVectorEnv is returned.
         """
         caller_name = inspect.stack()[1].function
         if caller_name == 'train':
