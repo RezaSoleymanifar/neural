@@ -354,6 +354,7 @@ class AbstractTrainer(ABC):
             market_env = AsyncVectorEnv(env_callables)
         else:
             market_env = SyncVectorEnv(env_callables)
+
         return market_env
 
     def run_episode(self,
@@ -390,31 +391,32 @@ class AbstractTrainer(ABC):
         testing dataset. If n_envs = 1, then the test is performed on
         multiple parallel environments.
 
-        Raises:
-        ------
-        ValueError: 
-            If test_data_feeder is None.
-
         Args:
         -----
-        n_episode (int, optional): 
-            Number of episodes to test. Defaults to 1.
+            n_episode (int, optional): 
+                Number of episodes to test. Defaults to 1.
+            n_warmup (int, optional):
+                Number of warmup episodes to run before testing.
+                Defaults to 0.
+    
+        Raises:
+        ------
+            ValueError: 
+                If test_data_feeder is None.
         """
         if self.test_data_feeder is None:
             raise ValueError('Test data feeder is set to None. '
-                            'Ensure train_ratio < 1. '
-                            f'train_ratio = {self.train_ratio}')
+                             'Ensure train_ratio < 1. '
+                             f'train_ratio = {self.train_ratio}')
 
         test_market_env = self._get_market_env()
 
         for episode in range(n_warmup):
             self.run_episode(test_market_env, random_actions=True)
-
         for episode in range(n_episodes):
             self.run_episode(test_market_env, random_actions=False)
 
         return None
-
 
     @abstractmethod
     def train(self, *args, **kwargs) -> nn.Module:
