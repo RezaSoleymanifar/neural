@@ -176,8 +176,6 @@ class StableBaselinesTrainer(AbstractTrainer):
                  exclusive_envs: True = False,
                  initial_cash_range: Optional[Tuple[float, float]] = None,
                  initial_assets_range: Optional[Tuple[float, float]] = None,
-                 verbose: bool = True,
-                 progress_bar: bool = True,
                  *args,
                  **kwargs) -> None:
 
@@ -192,13 +190,13 @@ class StableBaselinesTrainer(AbstractTrainer):
                          initial_cash_range=initial_cash_range,
                          initial_asset_quantities_range=initial_assets_range
                          )
-        self.ver
 
         return None
 
     def train(self,
               algorithm: OnPolicyAlgorithm,
               steps: int = 1_000_000,
+              progress_bar: bool = True,
               **kwargs) -> nn.Module:
 
         piped_market_env = self._get_market_env()
@@ -208,6 +206,6 @@ class StableBaselinesTrainer(AbstractTrainer):
                                env=piped_market_env,
                                verbose=self.verbose,
                                **kwargs)
-        alg.learn(total_timesteps=steps, progress_bar=self.progress_bar)
+        alg.learn(total_timesteps=steps, progress_bar=progress_bar)
 
         return None
