@@ -322,7 +322,8 @@ class AbstractTrader(ABC):
                 action = model(observation)
                 observation, reward, done, info = (
                     self.trade_market_env.step(action))
-
+                if done:
+                    break
         return None
 
     def place_orders(self, actions: np.ndarray, *args, **kwargs):
@@ -337,5 +338,9 @@ class AbstractTrader(ABC):
                 notional value of trades for each asset. i.e. acttion =
                 +100 means buy $100 worth of the corresponding asset if
                 base currency is USD.
+            *args:
+                Variable length argument list.
+            **kwargs:
+                Arbitrary keyword arguments.
         """
         raise NotImplementedError
