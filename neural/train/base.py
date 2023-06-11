@@ -236,7 +236,8 @@ class AbstractTrainer(ABC):
             ] if self.async_env_pipes is None else self.async_env_pipes
         return self._async_env_pipes
 
-    def _get_train_test_data_feeders(self) -> Tuple[StaticDataFeeder, StaticDataFeeder]:
+    def _get_train_test_data_feeders(
+            self) -> Tuple[StaticDataFeeder, StaticDataFeeder]:
         """
         Splits the dataset time horizon into training and testing
         intervals, and creates data feeders for training and testing
@@ -248,7 +249,9 @@ class AbstractTrainer(ABC):
         Returns:
         --------
             Tuple[StaticDataFeeder, StaticDataFeeder]: 
-                Data feeders for
+                Data feeders for training and testing environments. If
+                train ratio is 1 then the second element of the tuple is
+                None.
         """
         dataset_metadata, datasets = from_hdf5(self.file_path,
                                                self.dataset_name)
