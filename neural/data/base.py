@@ -1532,18 +1532,18 @@ class StaticDataFeeder(AbstractDataFeeder):
 
     def get_features_generator(self) -> Iterable[np.ndarray]:
         """
-        This method returns a generator object that can be used to for
-        iterative providing data for market simulation. Data is loaded in
-        chunks and each chunk is loaded into memory and then iteratively
-        returned until chunk is exhausted and next chunk is loaded. This is
-        useful for loading large datasets that do not fit in memory or to
-        allocate more memory for the training.
+        This method returns a generator object that can be used for
+        iterative provision of data for market simulation. Data is
+        loaded in chunks and each chunk is loaded into memory and then
+        iteratively returned until chunk is exhausted and next chunk is
+        loaded. This is useful for loading large datasets that do not
+        fit in memory or to allocate more memory for the training.
 
         Returns:
         --------
             Iterable[np.ndarray]: 
-                a generator object returning features corresponding to each
-                time interval as a numpy array.
+                a generator object returning features corresponding to
+                each time interval as a numpy array.
         """
         chunk_edge_indices = np.linspace(start=self.start_index,
                                          stop=self.end_index,
