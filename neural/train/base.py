@@ -177,8 +177,8 @@ class AbstractTrainer(ABC):
         self.initial_cash_range = initial_cash_range
         self.initial_assets_range = initial_asset_quantities_range
 
-        self.train_market_env = None
-        self.test_market_env = None
+        self._train_market_env = None
+        self._test_market_env = None
         self._async_env_pipes = None
 
         if not 0 < train_ratio <= 1:
@@ -191,10 +191,29 @@ class AbstractTrainer(ABC):
 
     @property
     def pipe(self) -> AbstractPipe:
+        """
+        Returns the agent's pipe. If n_envs > 1 then instead of using
+        the agent's pipe, a deep copy of the agent's pipe is used to
+        avoid simultaneous modification of the same pipe by parallel
+        environments.
+
+        Returns:
+        --------
+            AbstractPipe: Agent's pipe.
+        """
         return self.agent.pipe
 
     @property
     def dataset_metadata(self) -> dict:
+        """
+        Returns the dataset metadata. If dataset metadata is not set in
+        the agent, then it is set to the metadata of the dataset in the
+        file path.
+
+        Returns:
+        --------
+            dict: Dataset metadata.
+        """
         return self.agent.dataset_metadata
 
     @property
