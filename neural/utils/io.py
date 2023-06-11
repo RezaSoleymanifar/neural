@@ -159,7 +159,7 @@ def from_hdf5(
         dataset_list.append(dataset)
         dataset_metadata_list.append(dataset_metadata)
 
-    datasets_by_dataset_type_dict = defaultdict(list)
+    datasets_by_dataset_type_dict = OrderedDict(list)
     for dataset, dataset_metadata in zip(dataset_list, dataset_metadata_list):
         dataset_type = (
             dataset_metadata.data_schema.data_type_assets_map.popitem()[0])
