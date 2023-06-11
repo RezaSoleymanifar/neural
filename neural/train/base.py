@@ -383,33 +383,37 @@ class AbstractTrainer(ABC):
                     break
         return None
 
-    def test(self, n_episodes: int = 1, n_warumup: float = 0) -> None:
+    def test(self, n_episodes: int = 1, n_warmup: int = 0) -> None:
         """
         This method is used to test the agent's performance on the
-        testing dataset. If n_envs = 1 then test is performed on
+        testing dataset. If n_envs = 1, then the test is performed on
         multiple parallel environments.
 
         Raises:
         ------
-            ValueError: If test_data_feeder is None.
+        ValueError: 
+            If test_data_feeder is None.
 
         Args:
         -----
-            n_episode (int, optional): 
-                Number of episodes to test. Defaults to 1.
+        n_episode (int, optional): 
+            Number of episodes to test. Defaults to 1.
         """
         if self.test_data_feeder is None:
             raise ValueError('Test data feeder is set to None. '
-                             'Ensure train_ratio < 1. '
-                             'train_ratio = {self.train_ratio}')
+                            'Ensure train_ratio < 1. '
+                            f'train_ratio = {self.train_ratio}')
 
         test_market_env = self._get_market_env()
-        if n_warumup != 0:
-            for episode in range(n_warumup):
-                self.run_episode(test_market_env, random_actions=True)
+
+        for episode in range(n_warmup):
+            self.run_episode(test_market_env, random_actions=True)
+
         for episode in range(n_episodes):
             self.run_episode(test_market_env, random_actions=False)
+
         return None
+
 
     @abstractmethod
     def train(self, *args, **kwargs) -> nn.Module:
