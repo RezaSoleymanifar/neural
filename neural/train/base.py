@@ -131,43 +131,63 @@ class AbstractTrainer(ABC):
             5 then for each interval [0, 20), [20, 40), [40, 60), [60,
             80), [80, 100) a new environment is created. If False, then
             n_envs copies of the same environment are created, with
-            entire time horizon.
-        train_market_env (TrainMarketEnv):
+        initial_cash_range (Optional[Tuple[float, float]]):
+            Range of initial cash values. If None, then initial cash is
+            not randomized.
+        initial_asset_quantities_range (Optional[Tuple[float, float]]):
+            Range of initial asset quantities. If None, then initial
+            asset quantities are not randomized. entire time horizon.
+        _train_market_env (TrainMarketEnv):
             Training environment.
-        test_market_env (TrainMarketEnv):
+        _test_market_env (TrainMarketEnv):
             Testing environment.
-        train_data_feeder (StaticDataFeeder):
-            Data feeder for training environment.
-        test_data_feeder (StaticDataFeeder):
-            Data feeder for testing environment.
-        env_pipes (list):
-            List of pipes for saved for parallel training. Can be reused
-            to continue training in parallel.
+        _async_env_pipes (list[AbstractPipe]):
+            List of pipes saved after parallel training. If training is
+            resumed, then the saved pipes are used to restore the state
+            of the parallel environments. Useful for multi-stage
+            training with different configurations.
+
+    Properties:
+    ----------
+        pipe (AbstractPipe):
+            Returns the agent's pipe. If n_envs > 1 then instead of
+            using the agent's pipe, a deep copy of the agent's pipe is
+            used to avoid simultaneous modification of the same pipe by
+            parallel environments.
+        dataset_metadata (DatasetMetadata):
+            Returns the dataset metadata of the agent. If dataset
+            metadata is not set, then it is set to the metadata of the
+            dataset in the file path.
+        async_env_pipes (list[AbstractPipe]):
+            Returns a list of pipes saved after parallel training. If
+            training is resumed, then the saved pipes are used to
+            restore the state of the parallel environments. Useful for
+            multi-stage training with different configurations.
 
     Methods:
     -------
-        _initialize_data_feeders():
-            Initializes data feeders for training and testing
-            environments.
-        _get_piped_envs():
-            Returns a list of piped environments for parallel training.
-            if n_envs = 1 then a single environment is returned. If
-            n_envs > 1 then a single parallel environment is returned.
-            Parallel environments are like single environments, except
-            that they return a list of observations, actions, rewards,
-            info pairs, and take a list of actions as input. If called
-            from 'train' method, then the environments are created using
-            train_data_feeder. If called from 'test' method, then the
-            environments are created using test_data_feeder.
-        test():
-            tests the agent using the test data feeder. If n_envs > 1
-            then a single environment is used for testing. If n_envs =
-            1 then multiple environments are used for testing.
-        train():
-            Uses an RL trainer to train the agent. Implementation is
-            left to the child class. If n_envs > 1 then a single
-            environment is used for training. If n_envs = 1 then
-            multiple environments are used for training.
+        _get_train_test_data_feeders():
+            Splits the dataset time horizon into training and testing
+            intervals, and creates data feeders for training and
+            testing environments. If train ratio is 0.8 then the first
+            80% of the dataset is is used for training and the last 20%
+            is used for testing. If train ratio is 1 then the entire
+            dataset is used for training and no testing is performed.
+        _get_market_env():
+            If n_envs = 1 or caller is test then a single environment
+            is returned and agent's pipe is used to pipe the
+            environment. when caller is train and n_envs > 1, deep
+            copies of agent pipe is created. This is to avoid
+            complications arised during parallel training and possibly
+            modifying the same pipe object at the same time. Pipes
+            created in parallel training will be saved for future
+            reference so that when performing more paralell training
+            state of the parallel pipes are preserved.
+        _run_episode(env: TrainMarketEnv, random_actions: bool = False):
+            Runs a single episode on the given environment. If random
+            actions are used then the agent's model is not used to
+            generate actions. This method is used to test the agent's
+            
 
     Notes:
     -----
