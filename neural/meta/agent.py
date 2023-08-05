@@ -32,9 +32,9 @@ Examples:
 ---------
     >>> from neural.meta.agent import Agent
     >>> from neural.meta.pipe import MarginAccountPipe
-    >>> from neural.meta.model import StableBaselines3A2CModel
+    >>> from neural.meta.model import ActorCriticModel
     >>> pipe = MarginAccountPipe(...)
-    >>> model = StableBaselines3A2CModel(...)
+    >>> model = ActorCriticModel(...)
     >>> agent = Agent(model, pipe)
 """
 from dataclasses import dataclass
