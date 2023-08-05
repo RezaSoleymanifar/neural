@@ -521,3 +521,10 @@ class AbstractTrainer(ABC):
         """
 
         raise NotImplementedError
+
+class AutoTrainerFromModel(AbstractTrainer):
+    def __init__(model: AbstractModel):
+        self.model = model
+    
+    get_trainer(self):
+        if isinstance(self.model, StableBaselinesModel)

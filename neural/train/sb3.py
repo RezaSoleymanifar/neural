@@ -206,7 +206,7 @@ class StableBaselinesTrainer(AbstractTrainer):
         return market_env
 
     def train(self,
-              algorithm: OnPolicyAlgorithm,
+              model: AbstractModel,
               steps: int = 1_000_000,
               progress_bar: bool = True,
               **kwargs) -> nn.Module:
