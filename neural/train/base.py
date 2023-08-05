@@ -49,6 +49,7 @@ from neural.data.base import DatasetMetadata, StaticDataFeeder
 from neural.env.base import TrainMarketEnv
 from neural.meta.agent import Agent
 from neural.meta.pipe import AbstractPipe
+from neural.model.base import AbstractModel
 from neural.utils.io import from_hdf5
 
 
@@ -258,10 +259,11 @@ class AbstractTrainer(ABC):
 
         Returns:
         --------
-            nn.Module: Agent's model.
+            AbstractModel: Agent's model.
         """
         return self.agent.model
-    
+
+
     @property
     def pipe(self) -> AbstractPipe:
         """
