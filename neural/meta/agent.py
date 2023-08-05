@@ -25,7 +25,7 @@ Classes:
         is used to map the training dataset to a matching trading stream
         to reconstruct the data that agent was trained on. Trainer
         object interacts with this model to update the parameters
-        (training) of the model and Trader object interacts with this
+        of the model (training) and Trader object interacts with this
         model to make trading decisions (inference).
 
 Examples:
@@ -50,7 +50,7 @@ class Agent:
     """
     A reinforcement learning agent. This is a self-contained entity that
     can be used with any other training or trading object. It bundles
-    together a Pytorch neural network model, a pipe object that
+    together a neural network model, a pipe object that
     transforms the outputs of market envvironment to the inputs of the
     model, and metadata about the dataset used to train the agent. This
     later is used to map the training data to a trading stream that
