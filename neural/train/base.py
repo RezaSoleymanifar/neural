@@ -37,8 +37,9 @@ from abc import ABC, abstractmethod
 import copy
 import inspect
 import os
-from typing import Optional, Tuple
+from typing import List, Optional, Tuple, 
 
+import gym
 from gym.vector import AsyncVectorEnv, SyncVectorEnv
 import numpy as np
 import torch
@@ -522,3 +523,6 @@ class AbstractTrainer(ABC):
         """
 
         raise NotImplementedError
+
+    def get_async_env(self, env_list: List[gym.Env]):
+        
