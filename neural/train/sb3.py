@@ -228,7 +228,7 @@ class StableBaselinesTrainer(AbstractTrainer):
             
         """
         piped_market_env = self._get_market_env()
-        model = self.agent.model
+        model = self.agent.model.
         model.learn(total_timesteps=steps, progress_bar=progress_bar)
 
         return None

@@ -60,8 +60,10 @@ class StableBaselinesModel(AbstractModel):
 
     def __init__(self):
         super().__init__()
+        self.base_model = None
 
-    def train(self, env: Env):
-        return super().train(env)
+    def train(self, *args, **kwargs):
+        self.base_model.learn(*args, **kwargs)
+    
     def build_model(self, env: gym.Env, feature_extractor: nn.Module, policy: nn.Module):
         return super().build_model()
