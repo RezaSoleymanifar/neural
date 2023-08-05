@@ -37,7 +37,7 @@ from abc import ABC, abstractmethod
 import copy
 import inspect
 import os
-from typing import List, Optional, Tuple, 
+from typing import Optional, Tuple
 
 import gym
 from gym.vector import AsyncVectorEnv, SyncVectorEnv
@@ -252,7 +252,7 @@ class AbstractTrainer(ABC):
         return None
 
     @property
-    def model(self) -> nn.Module:
+    def model(self) -> AbstractModel:
         """
         Returns the agent's model.
 

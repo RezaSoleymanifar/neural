@@ -227,8 +227,10 @@ class StableBaselinesTrainer(AbstractTrainer):
                 Additional keyword arguments.
             
         """
-        piped_market_env = self._get_market_env()
-        model = self.agent.model.
+        market_env = self._get_market_env()
+        model = self.agent.model
+        if self.agent.model is None:
+
         model.learn(total_timesteps=steps, progress_bar=progress_bar)
 
         return None
