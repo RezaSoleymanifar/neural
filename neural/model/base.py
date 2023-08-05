@@ -3,6 +3,7 @@ This module contains the base class for all models.
 """
 
 import gym
+from torch import nn
 
 
 class AbstractModel:
@@ -62,5 +63,5 @@ class StableBaselinesModel(AbstractModel):
 
     def train(self, env: Env):
         return super().train(env)
-    def build_model(self, env: gym.Env):
+    def build_model(self, env: gym.Env, feature_extractor: nn.Module, policy: nn.Module):
         return super().build_model()
