@@ -70,7 +70,7 @@ class StableBaselinesModel(AbstractModel):
     def train(self, env, *args, **kwargs):
         if self.base_model is None:
             self.build_model(env)
-        self.base_model.learn(*args, **kwargs)
+            model.learn(market_env, total_timesteps=steps, progress_bar=progress_bar)
 
     def build_model(self, env: gym.Env, feature_extractor: nn.Module, policy: nn.Module):
         return super().build_model()
