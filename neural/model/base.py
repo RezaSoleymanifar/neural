@@ -55,7 +55,6 @@ class AbstractModel:
         raise NotImplementedError
 
 
-class StableBaselinesModel(AbstractModel):
 
 class ActorCriticModel(AbstractModel):
     """
