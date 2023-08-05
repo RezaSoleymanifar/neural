@@ -62,8 +62,15 @@ class StableBaselinesModel(AbstractModel):
         super().__init__()
         self.base_model = None
 
+    def __call__(self, observation):
+        if self.base_model is None:
+            raise RuntimeError("Model is not trained yet.")
+        return self.base_model(observation)
+
     def train(self, *args, **kwargs):
+        if self.base_model is None:
+            self.build_model(market_env)
         self.base_model.learn(*args, **kwargs)
-    
+
     def build_model(self, env: gym.Env, feature_extractor: nn.Module, policy: nn.Module):
         return super().build_model()

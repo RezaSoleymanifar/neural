@@ -229,9 +229,7 @@ class StableBaselinesTrainer(AbstractTrainer):
         """
         market_env = self._get_market_env()
         model = self.agent.model
-        if model.base_model is None:
-            model.build_model(market_env)
 
-        model.learn(total_timesteps=steps, progress_bar=progress_bar)
+        model.train(market_env, total_timesteps=steps, progress_bar=progress_bar)
 
         return None
