@@ -217,7 +217,7 @@ class StableBaselinesTrainer(AbstractTrainer):
 
         Args:
         ----
-            algorithm (OnPolicyAlgorithm):
+            algorithm (AbstractModel):
                 Algorithm to be used for training.
             steps (int):
                 Number of steps to train the agent for.
@@ -229,10 +229,6 @@ class StableBaselinesTrainer(AbstractTrainer):
         """
         piped_market_env = self._get_market_env()
         model = self.agent.model
-
-        alg = algorithm(policy=model,
-                               env=piped_market_env,
-                               **kwargs)
-        alg.learn(total_timesteps=steps, progress_bar=progress_bar)
+        model.learn(total_timesteps=steps, progress_bar=progress_bar)
 
         return None
