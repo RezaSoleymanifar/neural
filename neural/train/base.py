@@ -502,6 +502,14 @@ class AbstractTrainer(ABC):
         return None
 
     @abstractmethod
+    def get_async_env(self, *args, **kwargs) -> TrainMarketEnv:
+        """
+        This method is left to be implemented by the child class. It
+        should return a TrainMarketEnv object. This method is used to
+        create asynchronous environments for parallel training.
+        """
+    
+    @abstractmethod
     def train(self, *args, **kwargs) -> nn.Module:
         """
         This method is left to be implemented by the child class. It
