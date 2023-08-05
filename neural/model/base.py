@@ -2,6 +2,9 @@
 This module contains the base class for all models.
 """
 
+import gym
+
+
 class AbstractModel:
     """
     This is the base class for all models.
@@ -40,7 +43,19 @@ class AbstractModel:
         """
         raise NotImplementedError
     
-    def train(self, )
+    def train(self, env: gym.Env):
+        """
+        Train the model.
+
+        Parameters:
+        ----------
+        env (gym.Env): 
+            The environment to train the model on.
+        """
+        raise NotImplementedError
+
+
+class StableBaselinesModel(AbstractModel):
 
 class ActorCriticModel(AbstractModel):
     """
