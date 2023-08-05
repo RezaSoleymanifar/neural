@@ -434,10 +434,7 @@ class AbstractTrainer(ABC):
             for pipe, env in zip(self.async_env_pipes, async_envs)
         ]
 
-        if self.async_envs:
-            market_env = AsyncVectorEnv(env_callables)
-        else:
-            market_env = SyncVectorEnv(env_callables)
+        market_env = self.get_async_env(env_callables)
 
         return market_env
 
@@ -509,6 +506,7 @@ class AbstractTrainer(ABC):
         should return a TrainMarketEnv object. This method is used to
         create asynchronous environments for parallel training.
         """
+        raise NotImplementedError
     
     @abstractmethod
     def train(self, *args, **kwargs) -> nn.Module:
@@ -525,4 +523,7 @@ class AbstractTrainer(ABC):
         raise NotImplementedError
 
     def get_async_env(self, env_list: List[gym.Env]):
-        
+        if self.async_envs:
+            market_env = AsyncVectorEnv(env_callables)
+        else:
+            market_env = SyncVectorEnv(env_callables)

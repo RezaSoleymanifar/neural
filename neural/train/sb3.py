@@ -9,8 +9,9 @@ from torch import nn
 from stable_baselines3.common.on_policy_algorithm import OnPolicyAlgorithm
 from stable_baselines3 import PPO, A2C, DQN, SAC, TD3, DDPG, HerReplayBuffer
 
-from neural.train.base import AbstractTrainer
+from neural.env.base import TrainMarketEnv
 from neural.meta.agent import Agent
+from neural.train.base import AbstractTrainer
 
 
 class StableBaselinesTrainer(AbstractTrainer):
@@ -192,6 +193,15 @@ class StableBaselinesTrainer(AbstractTrainer):
 
         return None
 
+    @abstractmethod
+    def get_async_env(self, *args, **kwargs) -> TrainMarketEnv:
+        """
+        This method is left to be implemented by the child class. It
+        should return a TrainMarketEnv object. This method is used to
+        create asynchronous environments for parallel training.
+        """
+        raise NotImplementedError
+    
     def train(self,
               algorithm: OnPolicyAlgorithm,
               steps: int = 1_000_000,
