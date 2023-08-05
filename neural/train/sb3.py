@@ -197,13 +197,14 @@ class StableBaselinesTrainer(AbstractTrainer):
 
     def get_async_env(self, env_callables) -> Union[DummyVecEnv, SubprocVecEnv]:
         """
-
+        Returns a vectorized environment for parallel training.
         """
         if self.async_envs:
             market_env = SubprocVecEnv(env_callables)
         else:
             market_env = DummyVecEnv(env_callables)
-    
+        return market_env
+
     def train(self,
               algorithm: OnPolicyAlgorithm,
               steps: int = 1_000_000,
