@@ -527,4 +527,5 @@ class AutoTrainerFromModel(AbstractTrainer):
         self.model = model
     
     get_trainer(self):
-        if isinstance(self.model, StableBaselinesModel)
+        if isinstance(self.model, StableBaselinesModel):
+            return Stable
