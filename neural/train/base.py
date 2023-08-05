@@ -416,7 +416,7 @@ class AbstractTrainer(ABC):
                 data_feeder=data_feeder,
                 initial_cash=initial_cash(),
                 initial_asset_quantities=initial_asset_quantities())
-            market_env = self.pipe.pipe(market_env)
+            market_env = self.pipe(market_env)
             return market_env
 
         if self.exclusive_async_envs:
@@ -521,11 +521,3 @@ class AbstractTrainer(ABC):
         """
 
         raise NotImplementedError
-
-class AutoTrainerFromModel(AbstractTrainer):
-    def __init__(model: AbstractModel):
-        self.model = model
-    
-    get_trainer(self):
-        if isinstance(self.model, StableBaselinesModel):
-            return Stable
