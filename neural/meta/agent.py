@@ -32,18 +32,17 @@ Examples:
 ---------
     >>> from neural.meta.agent import Agent
     >>> from neural.meta.pipe import MarginAccountPipe
-    >>> from torch import nn
+    >>> from neural.meta.model import StableBaselines3A2CModel
     >>> pipe = MarginAccountPipe(...)
-    >>> model = nn.Sequential(...)
+    >>> model = StableBaselines3A2CModel(...)
     >>> agent = Agent(model, pipe)
 """
 from dataclasses import dataclass
 from typing import Optional
 
-from torch import nn
-
 from neural.data.base import DatasetMetadata
 from neural.meta.pipe import AbstractPipe
+from neural.model.base import AbstractModel
 
 
 @dataclass
@@ -61,13 +60,13 @@ class Agent:
 
     Args:
     ----------
-        model (nn.Module): 
+        model (AbstractModel): 
             The PyTorch neural network model used by the agent.
         pipe (AbstractPipe): 
             The data pipe used to transform input data.
         dataset_metadata (Optional[DatasetMetadata]): 
             Metadata about the dataset used by the agent.
     """
-    model: nn.Module
+    model: AbstractModel
     pipe: AbstractPipe
     dataset_metadata: Optional[DatasetMetadata] = None

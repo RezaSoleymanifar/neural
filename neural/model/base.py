@@ -1,5 +1,6 @@
-from gym import spaces
-
+"""
+This module contains the base class for all models.
+"""
 
 class AbstractModel:
     """
