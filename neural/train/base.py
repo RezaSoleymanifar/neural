@@ -521,9 +521,3 @@ class AbstractTrainer(ABC):
         """
 
         raise NotImplementedError
-
-    def get_async_env(self, env_list: List[gym.Env]):
-        if self.async_envs:
-            market_env = AsyncVectorEnv(env_callables)
-        else:
-            market_env = SyncVectorEnv(env_callables)

@@ -3,11 +3,13 @@ sb3.py
 
 """
 import os
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Union, List
 from torch import nn
 
-from stable_baselines3.common.on_policy_algorithm import OnPolicyAlgorithm
 from stable_baselines3 import PPO, A2C, DQN, SAC, TD3, DDPG, HerReplayBuffer
+from stable_baselines3.common.on_policy_algorithm import OnPolicyAlgorithm
+from stable_baselines3.common.env_util import make_vec_env
+from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv
 
 from neural.env.base import TrainMarketEnv
 from neural.meta.agent import Agent
@@ -193,14 +195,14 @@ class StableBaselinesTrainer(AbstractTrainer):
 
         return None
 
-    @abstractmethod
-    def get_async_env(self, *args, **kwargs) -> TrainMarketEnv:
+    def get_async_env(self, env_callables) -> Union[DummyVecEnv, SubprocVecEnv]:
         """
-        This method is left to be implemented by the child class. It
-        should return a TrainMarketEnv object. This method is used to
-        create asynchronous environments for parallel training.
+
         """
-        raise NotImplementedError
+        if self.async_envs:
+            market_env = SubprocVecEnv(env_callables)
+        else:
+            market_env = DummyVecEnv(env_callables)
     
     def train(self,
               algorithm: OnPolicyAlgorithm,
