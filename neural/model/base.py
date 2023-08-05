@@ -42,7 +42,7 @@ class AbstractModel:
             Path to save the model.
         """
         raise NotImplementedError
-    
+
     def train(self, env: gym.Env, *args, **kwargs):
         """
         Train the model.
@@ -56,7 +56,11 @@ class AbstractModel:
 
 
 class StableBaselinesModel(AbstractModel):
+
     def __init__(self):
         super().__init__()
+
     def train(self, env: Env):
         return super().train(env)
+    def build_model(self, env: gym.Env):
+        return super().build_model()
