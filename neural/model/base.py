@@ -67,9 +67,9 @@ class StableBaselinesModel(AbstractModel):
             raise RuntimeError("Model is not trained yet.")
         return self.base_model(observation)
 
-    def train(self, *args, **kwargs):
+    def train(self, env, *args, **kwargs):
         if self.base_model is None:
-            self.build_model(market_env)
+            self.build_model(env)
         self.base_model.learn(*args, **kwargs)
 
     def build_model(self, env: gym.Env, feature_extractor: nn.Module, policy: nn.Module):

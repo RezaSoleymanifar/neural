@@ -207,7 +207,6 @@ class StableBaselinesTrainer(AbstractTrainer):
         return market_env
 
     def train(self,
-              model: AbstractModel,
               steps: int = 1_000_000,
               progress_bar: bool = True,
               **kwargs) -> nn.Module:
@@ -228,8 +227,7 @@ class StableBaselinesTrainer(AbstractTrainer):
             
         """
         market_env = self._get_market_env()
-        model = self.agent.model
-
+        self.model.env = market_env
         model.train(market_env, total_timesteps=steps, progress_bar=progress_bar)
 
         return None
