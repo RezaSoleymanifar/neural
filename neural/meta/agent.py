@@ -34,7 +34,7 @@ Examples:
     >>> from neural.meta.pipe import MarginAccountPipe
     >>> from neural.meta.model import ActorCriticModel
     >>> pipe = MarginAccountPipe(...)
-    >>> model = ActorCriticModel(...)
+    >>> model = StableBaselinesModel(...)
     >>> agent = Agent(model, pipe)
 """
 from dataclasses import dataclass

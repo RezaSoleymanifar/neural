@@ -19,6 +19,7 @@ from neural.common.exceptions import CorruptDataError
 from neural.data.base import DatasetMetadata
 from neural.meta.pipe import AbstractPipe
 from neural.meta.agent import Agent
+from neural.model.base import StableBaselinesModel
 from neural.utils.base import validate_path
 
 
@@ -275,81 +276,3 @@ def add_to_tarfile(file_path, file_tar_info, file_like):
         file.addfile(tarinfo=file_tar_info, fileobj=file_like)
 
     return None
-
-
-def save_agent(dir: str | os.PathLike, agent: Agent):
-    """
-    A function to save an agent to a tarfile. The agent is saved as a
-    tarfile with the following structure:
-    agent.tar
-    ├── dataset_metadata
-    ├── pipe
-    └── model.tar
-        └── base_model.zip
-        └── model
-
-    Args:
-    -------
-        file_path (str | os.PathLike):
-            The path to the tarfile to save the agent to.
-        agent (Agent):
-            The agent to save.
-    """
-    model = agent.model
-    pipe = agent.pipe
-    dataset_metadata = agent.dataset_metadata
-
-    os.makedirs(dir, exist_ok=True)
-
-    model = agent.model
-    pipe = agent.pipe
-    dataset_metadata = agent.dataset_metadata
-
-    with open(os.path.join(dir, 'pipe'), 'wb') as pipe_file:
-        dill.dump(pipe, pipe_file)
-
-    with open(os.path.join(dir, 'dataset_metadata'),
-              'wb') as dataset_metadata_file:
-        dill.dump(dataset_metadata, dataset_metadata_file)
-
-    model_dir = os.path.join(dir, 'model')
-    os.makedirs(model_dir, exist_ok=True)
-    model.save(model_dir)
-
-
-def load_agent(
-    dir: str | os.PathLike,
-) -> Tuple[nn.Module, AbstractPipe, DatasetMetadata]:
-    """
-    Loads an agent from a tarfile. The agent is saved as a tarfile with
-    the following structure:
-    agent.tar
-    ├── dataset_metadata
-    ├── pipe
-    └── model.tar
-        └── base_model.zip
-        └── model
-
-    Args:
-    -------
-        file_path (str | os.PathLike):
-            The path to the tarfile to load the agent from.
-    Returns:
-    --------
-        model (nn.Module):
-            The model of the agent.
-        pipe (AbstractPipe):
-            The pipe of the agent.
-        dataset_metadata (DatasetMetadata):
-            The metadata of the dataset used to train the agent.
-    """
-    with open(os.path.join(dir, 'pipe'), 'rb') as pipe_file:
-        pipe = dill.load(pipe_file)
-
-    with open(os.path.join(dir, 'dataset_metadata'), 'rb') as meta_file:
-        dataset_metadata = dill.load(meta_file)
-
-    model_dir = os.path.join(dir, 'model')
-    StableBaselinesModel.load(model_dir)
-
-    return Agent(model=model, pipe=pipe, dataset_metadata=dataset_metadata)
