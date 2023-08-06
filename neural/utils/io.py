@@ -11,15 +11,9 @@ import numpy as np
 import dill
 import h5py as h5
 
-import torch
-from torch import nn
-
 from neural.common.constants import (HDF5_DEFAULT_MAX_ROWS, GLOBAL_DATA_TYPE)
 from neural.common.exceptions import CorruptDataError
 from neural.data.base import DatasetMetadata
-from neural.meta.pipe import AbstractPipe
-from neural.meta.agent import Agent
-from neural.model.base import StableBaselinesModel
 from neural.utils.base import validate_path
 
 
