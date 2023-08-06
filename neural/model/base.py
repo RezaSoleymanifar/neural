@@ -94,10 +94,9 @@ class StableBaselinesModel(AbstractModel):
         'td3': TD3,
         'ddpg': DDPG,
     }
-    
-    MODEL_SAVE_NAME = 'model'
-    BASE_MODEL_SAVE_NAME = 'stable_baselines3_model'
-    
+
+    MODEL_SAVE_FILE_NAME = 'model'
+    BASE_MODEL_SAVE_FILE_NAME = 'stable_baselines3_model'
 
     def __init__(self, algorithm: str, policy: str | nn.Module = 'MlpPolicy'):
 
@@ -121,8 +120,8 @@ class StableBaselinesModel(AbstractModel):
 
     def save(self, dir: str | os.PathLike):
         os.makedirs(dir, exist_ok=True)
-        self.base_model.save(os.path.join(dir, cls.BASE_MODEL_SAVE_NAME))
-        with open(os.path.join(dir, cls.MODEL_SAVE_NAME), 'wb') as model_file:
+        self.base_model.save(os.path.join(dir, self.BASE_MODEL_SAVE_FILE_NAME))
+        with open(os.path.join(dir, self.MODEL_SAVE_FILE_NAME), 'wb') as model_file:
             model_copy = copy(self)
             del model_copy.base_model
             dill.dump(model_copy, model_file)
@@ -141,10 +140,10 @@ class StableBaselinesModel(AbstractModel):
             dir (str):
                 The directory to load the model from.
         """
-        with open(os.path.join(dir, cls.MODEL_SAVE_NAME), 'rb') as model_file:
+        with open(os.path.join(dir, cls.MODEL_SAVE_FILE_NAME), 'rb') as model_file:
             model = dill.load(model_file)
             model.base_model = model.algorithm.load(
-                os.path.join(dir, cls.BASE_MODEL_SAVE_NAME))
+                os.path.join(dir, cls.BASE_MODEL_SAVE_FILE_NAME))
 
         return model
 

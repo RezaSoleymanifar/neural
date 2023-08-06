@@ -73,6 +73,10 @@ class Agent:
     pipe: AbstractPipe
     dataset_metadata: Optional[DatasetMetadata] = None
 
+    MODEL_SAVE_NAME = 'model'
+    PIPE_SAVE_NAME = 'pipe'
+    DATASET_METADATA_SAVE_NAME = 'dataset_metadata'
+
     def save(self, dir: str | os.PathLike):
         """
         A function to save an agent to a tarfile. The agent is saved in
@@ -91,14 +95,14 @@ class Agent:
         """
         os.makedirs(dir, exist_ok=True)
 
-        with open(os.path.join(dir, 'pipe'), 'wb') as pipe_file:
+        with open(os.path.join(dir, self.PIPE_SAVE_NAME), 'wb') as pipe_file:
             dill.dump(self.pipe, pipe_file)
 
-        with open(os.path.join(dir, 'dataset_metadata'),
+        with open(os.path.join(dir, self.DATASET_METADATA_SAVE_NAME),
                   'wb') as dataset_metadata_file:
             dill.dump(self.dataset_metadata, dataset_metadata_file)
 
-        model_dir = os.path.join(dir, 'model')
+        model_dir = os.path.join(dir, self.MODEL_SAVE_NAME)
         os.makedirs(model_dir, exist_ok=True)
         self.model.save(model_dir)
 
