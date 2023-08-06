@@ -57,9 +57,13 @@ class AbstractModel:
 
 
 class StableBaselinesModel(AbstractModel):
-
-    def __init__(self):
+    """
+    This is the base class for all models that use stable-baselines.
+    """
+    def __init__(self, feature_extractor: nn.Module, policy: nn.Module):
         super().__init__()
+        self.feature_extractor = feature_extractor
+        self.policy = policy
         self.base_model = None
 
     def __call__(self, observation):
