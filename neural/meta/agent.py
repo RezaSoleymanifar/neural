@@ -73,9 +73,9 @@ class Agent:
     pipe: AbstractPipe
     dataset_metadata: Optional[DatasetMetadata] = None
 
-    MODEL_SAVE_NAME = 'model'
-    PIPE_SAVE_NAME = 'pipe'
-    DATASET_METADATA_SAVE_NAME = 'dataset_metadata'
+    MODEL_SAVE_DIR_NAME = 'model'
+    PIPE_SAVE_FILE_NAME = 'pipe'
+    DATASET_METADATA_SAVE_FILE_NAME = 'dataset_metadata'
 
     def save(self, dir: str | os.PathLike):
         """
@@ -95,14 +95,14 @@ class Agent:
         """
         os.makedirs(dir, exist_ok=True)
 
-        with open(os.path.join(dir, self.PIPE_SAVE_NAME), 'wb') as pipe_file:
+        with open(os.path.join(dir, self.PIPE_SAVE_FILE_NAME), 'wb') as pipe_file:
             dill.dump(self.pipe, pipe_file)
 
-        with open(os.path.join(dir, self.DATASET_METADATA_SAVE_NAME),
+        with open(os.path.join(dir, self.DATASET_METADATA_SAVE_FILE_NAME),
                   'wb') as dataset_metadata_file:
             dill.dump(self.dataset_metadata, dataset_metadata_file)
 
-        model_dir = os.path.join(dir, self.MODEL_SAVE_NAME)
+        model_dir = os.path.join(dir, self.MODEL_SAVE_DIR_NAME)
         os.makedirs(model_dir, exist_ok=True)
         self.model.save(model_dir)
 
@@ -142,6 +142,14 @@ class Agent:
             dataset_metadata = dill.load(dataset_metadata_file)
 
         model_dir = os.path.join(dir, 'model')
-        model = StableBaselinesModel.load(model_dir)
+        model_class = self._get_model_class(model_dir)
+        model = model_class.load(model_dir)
 
         return Agent(model=model, pipe=pipe, dataset_metadata=dataset_metadata)
+    
+    def _get_model_class(self, model_dir: str | os.PathLike):
+        file_name_to_model_class = {
+            StableBaselinesModel.MODEL_SAVE_FILE_NAME: StableBaselinesModel}
+        for file_name, model_class in file_name_to_model_class.items():
+            if os.path.exists(os.path.join(model_dir, file_name)):
+                return model_class
