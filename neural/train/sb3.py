@@ -9,7 +9,6 @@ from torch import nn
 from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv
 
 from neural.meta.agent import Agent
-from neural.env.base import TrainMarketEnv
 from neural.train.base import AbstractTrainer
 
 
