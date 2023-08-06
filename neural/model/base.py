@@ -82,4 +82,5 @@ class StableBaselinesModel(AbstractModel):
         return None
 
     def build_model(self, env: gym.Env):
-        model = self.algorithm(env, 
+        model = self.algorithm(policy = self.policy, env = env)
+        return model
