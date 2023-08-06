@@ -123,8 +123,14 @@ class StableBaselinesModel(AbstractModel):
         model = self.algorithm(policy=self.policy, env=env)
         return model
 
-    def save(self, file_path):
-        return super().save(file_path)
+    def save(self, dir: str | os.PathLike):
+        os.makedirs(dir, exist_ok=True)
+        with open(os.path.join(dir, 'model'),
+            'wb') as model_file:
+            dill.dump(self, model_file)
+        self.base_model.save(os.path.join(dir, 'base_model'))
+        return None
+    
     def load(self, dir: str | os.PathLike):
         """
         Load the model from a directory.
