@@ -5,6 +5,7 @@ This module contains the base class for all models.
 import gym
 from torch import nn
 from stable_baselines3.common.on_policy_algorithm import OnPolicyAlgorithm
+from stable_baselines3 import PPO, A2C, DQN, SAC, TD3, DDPG
 
 class AbstractModel:
     """
@@ -74,13 +75,13 @@ class StableBaselinesModel(AbstractModel):
 
     def train(self, env, *args, **kwargs):
         if self.base_model is None:
-            self.base_model = self.build_model(env)
+            self.base_model = self._build_model(env)
         else:
             self.base_model.env = env
 
         self.base_model.learn(*args, **kwargs)
         return None
 
-    def build_model(self, env: gym.Env):
+    def _build_model(self, env: gym.Env):
         model = self.algorithm(policy = self.policy, env = env)
         return model
