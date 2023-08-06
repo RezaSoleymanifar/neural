@@ -94,7 +94,7 @@ class StableBaselinesModel(AbstractModel):
         'ddpg': DDPG,
     }
 
-    def __init__(self, algorithm: str, policy: nn.Module):
+    def __init__(self, algorithm: str, policy: str | nn.Module = 'MlpPolicy'):
 
         super().__init__()
         self.algorithm = self._get_algorithm(algorithm)
@@ -127,9 +127,9 @@ class StableBaselinesModel(AbstractModel):
     def load(dir: str | os.PathLike):
         """
         Load the model from a directory. File structure should be:
-        - dir
-            └── model
-            └── base_model.zip
+        dir
+        └── model
+        └── base_model.zip
 
         Args:
         ----------
@@ -143,11 +143,11 @@ class StableBaselinesModel(AbstractModel):
 
         return model
 
-    def _build_model(self, env: TrainMarketEnv):
+    def _build_base_model(self, env: TrainMarketEnv):
         model = self.algorithm(policy=self.policy, env=env)
         return model
 
-    def _set_env(self, env: TrainMarketEnv) -> None:
+    def _set_base_model_env(self, env: TrainMarketEnv) -> None:
         self.base_model.save("temp_model")
         self.base_model = self.base_model.load("temp_model", env)
         os.remove("temp_model")
@@ -155,9 +155,11 @@ class StableBaselinesModel(AbstractModel):
 
     def train(self, env, *args, **kwargs):
         if self.base_model is None:
-            self.base_model = self._build_model(env)
+            self.base_model = self._build_base_model(env)
         else:
-            self._set_env(env)
+            self._set_base_model_env(env)
 
         self.base_model.learn(*args, **kwargs)
         return None
+    
+    
