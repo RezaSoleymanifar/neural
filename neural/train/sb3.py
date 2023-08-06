@@ -190,7 +190,7 @@ class StableBaselinesTrainer(AbstractTrainer):
                          )
 
         return None
-    
+
     def get_async_env(self, env_callables) -> Union[DummyVecEnv, SubprocVecEnv]:
         """
         Returns a vectorized environment for parallel training.
@@ -200,7 +200,7 @@ class StableBaselinesTrainer(AbstractTrainer):
         else:
             market_env = DummyVecEnv(env_callables)
         return market_env
-    
+
     def train(self,
               n_warmup_episodes: int = 1,
               steps: int = 1_000_000,
