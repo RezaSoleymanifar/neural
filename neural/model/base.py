@@ -119,7 +119,7 @@ class StableBaselinesModel(AbstractModel):
         model = self.algorithm(policy=self.policy, env=env)
         return model
 
-    def load(self, dir: str):
+    def load(self, dir: str | os.PathLike):
         """
         Load the model from a directory.
 
@@ -131,3 +131,7 @@ class StableBaselinesModel(AbstractModel):
         with open(os.path.join(dir, 'model'), 'rb') as model_file:
             model = dill.load(model_file)
             model.base_model = model.algorithm.load(os.path.join(dir, 'base_model'))
+
+        for attr_name, attr_value in vars(model).items():
+            if hasattr(self, attr_name):
+                setattr(self, attr_name, attr_value)
