@@ -4,7 +4,7 @@ This module contains the base class for all models.
 
 import gym
 from torch import nn
-
+from stable_baselines3.common.on_policy_algorithm import OnPolicyAlgorithm
 
 class AbstractModel:
     """
@@ -60,8 +60,9 @@ class StableBaselinesModel(AbstractModel):
     """
     This is the base class for all models that use stable-baselines.
     """
-    def __init__(self, algorith: OnePolicyAlgorithm feature_extractor: nn.Module, policy: nn.Module):
+    def __init__(self, algorithm: OnPolicyAlgorithm, feature_extractor: nn.Module, policy: nn.Module):
         super().__init__()
+        self.algorithm = algorithm
         self.feature_extractor = feature_extractor
         self.policy = policy
         self.base_model = None
@@ -74,7 +75,11 @@ class StableBaselinesModel(AbstractModel):
     def train(self, env, *args, **kwargs):
         if self.base_model is None:
             self.base_model = self.build_model(env)
-            self.base_model.learn(*args, **kwargs)
+        else:
+            self.base_model.env = env
 
-    def build_model(self, env: gym.Env, feature_extractor: nn.Module, policy: nn.Module):
-        raise NotImplementedError
+        self.base_model.learn(*args, **kwargs)
+        return None
+
+    def build_model(self, env: gym.Env):
+        model = self.algorithm(env, 
