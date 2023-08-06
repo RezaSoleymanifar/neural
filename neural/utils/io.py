@@ -1,11 +1,13 @@
 """
 io.py
 """
-from typing import List, Optional, Tuple
-import os
+
+from collections import defaultdict
+import io
 from functools import reduce
 import tarfile
-from collections import defaultdict
+from typing import List, Optional, Tuple
+import os
 
 import numpy as np
 import dill
@@ -194,8 +196,9 @@ def extract_hdf5_dataset(
 
     try:
         dataset = hdf5_file[dataset_name]
-    except KeyError:
-        raise ValueError(f'Dataset {dataset_name} does not exist in file.')
+    except KeyError as key_error:
+        raise ValueError(
+            f'Dataset {dataset_name} does not exist in file.') from key_error
 
     serialized_dataset_metadata = dataset.attrs['metadata']
     dataset_metadata = dill.loads(serialized_dataset_metadata.encode())
@@ -212,7 +215,7 @@ def extract_hdf5_dataset(
 
 
 def get_file_like(object: object,
-                  file_name: str) -> Tuple[tarfile.TarInfo, dill.BytesIO]:
+                  file_name: str) -> Tuple[tarfile.TarInfo, io.BytesIO]:
     """
     Creates a file-like object and its tar info from an object. This can
     be used to add an object to a tarfile as a file. Similarly if object
@@ -229,7 +232,7 @@ def get_file_like(object: object,
     --------
         file_tar_info (tarfile.TarInfo):
             The tar info of the file.
-        file (dill.BytesIO):
+        file (io.BytesIO):
             The file-like object.
     """
 
@@ -241,7 +244,7 @@ def get_file_like(object: object,
 
     else:
         object_bytes = dill.dumps(object)
-        file = dill.BytesIO(object_bytes)
+        file = io.BytesIO(object_bytes)
         file_tar_info = tarfile.TarInfo(name='dataset_metadata')
         file_tar_info.size = len(object_bytes)
 
@@ -260,7 +263,7 @@ def add_to_tarfile(file_path, file_tar_info, file_like):
             The path to the tarfile to add the file to.
         file_tar_info (tarfile.TarInfo):
             The tar info of the file to add.
-        file_like (dill.BytesIO):
+        file_like (io.BytesIO):
             The file-like object to add.
     """
 
