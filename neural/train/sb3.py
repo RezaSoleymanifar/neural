@@ -232,3 +232,22 @@ class StableBaselinesTrainer(AbstractTrainer):
             progress_bar=progress_bar)
 
         return None
+
+
+class Trainer:
+    def __new__(cls, **kwargs):
+        agent = kwargs.get('agent')
+        
+        if agent is None:
+            raise ValueError("Agent must be specified.")
+        
+        elif agent.model is None:
+            return StableBaselinesTrainer(**kwargs)
+        else:
+            # Use model_to_trainer_map to choose the appropriate trainer
+            model_type = type(agent.model)
+            if model_type in model_to_trainer_map:
+                trainer_cls = model_to_trainer_map[model_type]
+                return trainer_cls(model=agent.model, **kwargs)
+            else:
+                raise ValueError(f"No trainer found for model type: {model_type}")
