@@ -277,7 +277,7 @@ def add_to_tarfile(file_path, file_tar_info, file_like):
     return None
 
 
-def save_agent(file_path: str | os.PathLike, agent: Agent):
+def save_agent(save_dir: str | os.PathLike, agent: Agent):
     """
     A function to save an agent to a tarfile. The agent is saved as a
     tarfile with the following structure:
@@ -299,19 +299,23 @@ def save_agent(file_path: str | os.PathLike, agent: Agent):
     pipe = agent.pipe
     dataset_metadata = agent.dataset_metadata
 
-    dataset_metadata_tar_info, dataset_metadata_file = get_file_like(
-        dataset_metadata, 'dataset_metadata')
-    add_to_tarfile(file_path, dataset_metadata_tar_info, dataset_metadata_file)
+    os.makedirs(save_dir, exist_ok=True)
 
-    pipe_tar_info, pipe_file = get_file_like(pipe, 'pipe')
-    add_to_tarfile(file_path, pipe_tar_info, pipe_file)
+    model = agent.model
+    pipe = agent.pipe
+    dataset_metadata = agent.dataset_metadata
 
-    model_file_path = os.path.join(os.path.dirname(file_path), 'model')
-    model.save(model_file_path)
-    model_tar_info, model_file = get_file_like(model_file_path, 'model')
-    add_to_tarfile(file_path, model_tar_info, model_file)
+    with open(os.path.join(save_dir, 'pipe'), 'wb') as pipe_file:
+        dill.dump(pipe, pipe_file)
 
-    os.remove(os.path.join(os.path.dirname(file_path), 'model'))
+    with open(os.path.join(save_dir, 'dataset_metadata'),
+              'wb') as dataset_metadata_file:
+        dill.dump(dataset_metadata, dataset_metadata_file)
+
+    model_dir = os.path.join(save_dir, 'model')
+    os.makedirs(model_dir, exist_ok=True)
+    model.save(model_dir)
+
 
 def load_agent(
     file_path: str | os.PathLike,
