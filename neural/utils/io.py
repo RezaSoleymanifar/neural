@@ -350,8 +350,6 @@ def load_agent(
         dataset_metadata = dill.load(meta_file)
 
     model_dir = os.path.join(dir, 'model')
-    with open(os.path.join(dir, 'model'), 'rb') as model_file:
-        pipe = dill.load(model_file)
-    self.load(model_dir)
+    StableBaselinesModel.load(model_dir)
 
     return Agent(model=model, pipe=pipe, dataset_metadata=dataset_metadata)
