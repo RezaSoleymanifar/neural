@@ -6,6 +6,7 @@ import dill
 import os
 
 import gym
+import torch
 from torch import nn
 from stable_baselines3.common.on_policy_algorithm import OnPolicyAlgorithm
 from stable_baselines3 import PPO, A2C, DQN, SAC, TD3, DDPG
@@ -102,7 +103,8 @@ class StableBaselinesModel(AbstractModel):
     def __call__(self, observation):
         if self.base_model is None:
             raise RuntimeError("Model is not trained yet.")
-        return self.base_model(observation)
+        with torch.no_grad(), torch.set_grad_enabled(False):
+            return self.base_model(observation)
 
     def _get_algorithm(self, algorithm_name: str) -> OnPolicyAlgorithm:
         algorithm_class = self.ALGORITHMS.get(algorithm_name.lower())

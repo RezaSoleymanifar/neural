@@ -436,16 +436,16 @@ class AbstractTrainer(ABC):
             random_actions (bool, optional):
                 If True, random actions are used. Defaults to False.
         """
-        with torch.no_grad(), torch.set_grad_enabled(False):
-            observation = env.reset()
-            model = self.model
-            while True:
-                action = model(
-                    observation
-                ) if not random_actions else env.action_space.sample()
-                observation, reward, done, info = env.step(action)
-                if done:
-                    break
+        
+        observation = env.reset()
+        model = self.model
+        while True:
+            action = model(
+                observation
+            ) if not random_actions else env.action_space.sample()
+            observation, reward, done, info = env.step(action)
+            if done:
+                break
         return None
 
     def test(self, n_episodes: int = 1, n_warmup_episodes: int = 0) -> None:
