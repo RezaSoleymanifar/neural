@@ -102,7 +102,9 @@ class Agent:
         os.makedirs(model_dir, exist_ok=True)
         self.model.save(model_dir)
 
+    @classmethod
     def load(
+        cls,
         dir: str | os.PathLike,
     ) -> Agent:
         """

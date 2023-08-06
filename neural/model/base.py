@@ -2,8 +2,9 @@
 This module contains the base class for all models.
 """
 from copy import copy
-import dill
 import os
+
+import dill
 
 import gym
 import torch
@@ -11,7 +12,7 @@ from torch import nn
 from stable_baselines3.common.on_policy_algorithm import OnPolicyAlgorithm
 from stable_baselines3 import PPO, A2C, DQN, SAC, TD3, DDPG
 
-from neural.envs.market import TrainMarketEnv
+from neural.env.base import TrainMarketEnv
 
 class AbstractModel:
     """
@@ -124,7 +125,7 @@ class StableBaselinesModel(AbstractModel):
         return None
 
     @classmethod
-    def load(dir: str | os.PathLike):
+    def load(cls, dir: str | os.PathLike):
         """
         Load the model from a directory. File structure should be:
         dir
@@ -161,5 +162,3 @@ class StableBaselinesModel(AbstractModel):
 
         self.base_model.learn(*args, **kwargs)
         return None
-    
-    
