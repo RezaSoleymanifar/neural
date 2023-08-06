@@ -4,17 +4,23 @@ from gymnasium import spaces
 import torch as th
 from torch import nn
 
-from stable_baselines3 import PPO
 from stable_baselines3.common.policies import ActorCriticPolicy
 
 
-class CustomActorCriticPolicy(ActorCriticPolicy):
+class StableBaselinesActorCriticPolicy(ActorCriticPolicy):
 
     def set_policy_value_networks(cls, policy_network: nn.Module, value_network: nn.Module):
+        """
+        Set the policy and value networks for the policy.
+        """
         cls.policy_network = policy_network
         cls.value_network = value_network
+        return None
 
     def build_policy_value_networks(cls, features_dim):
+        """
+        Build the policy and value networks using the specified features dimension.
+        """
         class CustomNetwork(nn.Module):
 
             def __init__(
@@ -40,7 +46,7 @@ class CustomActorCriticPolicy(ActorCriticPolicy):
             def forward_critic(self, features: th.Tensor) -> th.Tensor:
                 return self.value_net(features)
             
-        return CustomNetwork(features_dim, self.policy_network, value_network)
+        return CustomNetwork(features_dim, cls.policy_network, cls.value_network)
 
     def __init__(
         self,
@@ -56,10 +62,9 @@ class CustomActorCriticPolicy(ActorCriticPolicy):
             observation_space,
             action_space,
             lr_schedule,
-            # Pass remaining arguments to base class
             *args,
             **kwargs,
         )
 
     def _build_mlp_extractor(self) -> None:
-        self.mlp_extractor = self.build_policy_value_networks(fea
+        self.mlp_extractor = self.build_policy_value_networks(self.features_dim)

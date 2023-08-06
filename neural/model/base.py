@@ -99,7 +99,7 @@ class StableBaselinesModel(AbstractModel):
     MODEL_SAVE_FILE_NAME = 'model'
     BASE_MODEL_SAVE_FILE_NAME = 'stable_baselines3_model'
 
-    def __init__(self, algorithm: str, policy: str | nn.Module = 'MlpPolicy'):
+    def __init__(self, algorithm: str = 'ppo', policy: str | nn.Module = 'MlpPolicy'):
 
         super().__init__()
         self.algorithm = self._get_algorithm(algorithm)
