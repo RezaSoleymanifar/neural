@@ -5,6 +5,7 @@ from copy import copy
 import os
 
 import dill
+import numpy as np
 
 import gym
 import torch
@@ -105,11 +106,12 @@ class StableBaselinesModel(AbstractModel):
         self.policy = policy
         self.base_model = None
 
-    def __call__(self, observation):
+    def __call__(self, observation) -> np.ndarray[float]:
         if self.base_model is None:
             raise RuntimeError("Model is not trained yet.")
         with torch.no_grad(), torch.set_grad_enabled(False):
-            return self.base_model(observation)
+            actions = self.base_model.predict(observation)
+            return actions
 
     def _get_algorithm(self, algorithm_name: str) -> OnPolicyAlgorithm:
         algorithm_class = self.ALGORITHMS.get(algorithm_name.lower())
