@@ -1,6 +1,7 @@
 """
 This module contains the base class for all models.
 """
+from copy import copy
 import dill
 import os
 
@@ -125,10 +126,12 @@ class StableBaselinesModel(AbstractModel):
 
     def save(self, dir: str | os.PathLike):
         os.makedirs(dir, exist_ok=True)
+        self.base_model.save(os.path.join(dir, 'base_model'))
         with open(os.path.join(dir, 'model'),
             'wb') as model_file:
-            dill.dump(self, model_file)
-        self.base_model.save(os.path.join(dir, 'base_model'))
+            model_copy = copy(self)
+            del model_copy.base_model
+            dill.dump(model_copy, model_file)
         return None
     
     def load(self, dir: str | os.PathLike):
