@@ -10,31 +10,37 @@ from stable_baselines3.common.policies import ActorCriticPolicy
 
 class CustomActorCriticPolicy(ActorCriticPolicy):
 
-    def build_network
-    class CustomNetwork(nn.Module):
+    def set_policy_value_networks(cls, policy_network: nn.Module, value_network: nn.Module):
+        cls.policy_network = policy_network
+        cls.value_network = value_network
 
-        def __init__(
-            self,
-            features_dim: Tuple[int],
-            policy_network: Type[nn.Module],
-            value_network: Type[nn.Module],
-        ):
-            self.policy_network = policy_network(features_dim)
-            self.value_network = value_network(features_dim)
-            super().__init__()
+    def build_policy_value_networks(cls, features_dim):
+        class CustomNetwork(nn.Module):
 
-        def forward(self, features: th.Tensor) -> Tuple[th.Tensor, th.Tensor]:
-            """
-            :return: (th.Tensor, th.Tensor) latent_policy, latent_value of the specified network.
-                If all layers are shared, then ``latent_policy == latent_value``
-            """
-            return self.forward_actor(features), self.forward_critic(features)
+            def __init__(
+                self,
+                features_dim: Tuple[int],
+                policy_network: Type[nn.Module],
+                value_network: Type[nn.Module],
+            ):
+                self.policy_network = policy_network(features_dim)
+                self.value_network = value_network(features_dim)
+                super().__init__()
 
-        def forward_actor(self, features: th.Tensor) -> th.Tensor:
-            return self.policy_net(features)
+            def forward(self, features: th.Tensor) -> Tuple[th.Tensor, th.Tensor]:
+                """
+                :return: (th.Tensor, th.Tensor) latent_policy, latent_value of the specified network.
+                    If all layers are shared, then ``latent_policy == latent_value``
+                """
+                return self.forward_actor(features), self.forward_critic(features)
 
-        def forward_critic(self, features: th.Tensor) -> th.Tensor:
-            return self.value_net(features)
+            def forward_actor(self, features: th.Tensor) -> th.Tensor:
+                return self.policy_net(features)
+
+            def forward_critic(self, features: th.Tensor) -> th.Tensor:
+                return self.value_net(features)
+            
+        return CustomNetwork(features_dim, self.policy_network, value_network)
 
     def __init__(
         self,
@@ -56,6 +62,4 @@ class CustomActorCriticPolicy(ActorCriticPolicy):
         )
 
     def _build_mlp_extractor(self) -> None:
-        self.mlp_extractor = cls.CustomNetwork(self.features_dim,
-                                           cls.policy_network,
-                                           cls.value_network)
+        self.mlp_extractor = self.build_policy_value_networks(fea
