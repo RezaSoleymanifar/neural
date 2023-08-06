@@ -1,6 +1,8 @@
 """
 This module contains the base class for all models.
 """
+import dill
+import os
 
 import gym
 from torch import nn
@@ -116,3 +118,16 @@ class StableBaselinesModel(AbstractModel):
     def _build_model(self, env: gym.Env):
         model = self.algorithm(policy=self.policy, env=env)
         return model
+
+    def load(self, dir: str):
+        """
+        Load the model from a directory.
+
+        Parameters:
+        ----------
+        dir (str): 
+            The directory to load the model from.
+        """
+        with open(os.path.join(dir, 'model'), 'rb') as model_file:
+            model = dill.load(model_file)
+            model.base_model = model.algorithm.load(os.path.join(dir, 'base_model'))
