@@ -39,10 +39,10 @@ import inspect
 import os
 from typing import Optional, Tuple
 
-import gym
-from gym.vector import AsyncVectorEnv, SyncVectorEnv
 import numpy as np
-import torch
+
+from gym.vector import AsyncVectorEnv, SyncVectorEnv
+from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv
 from torch import nn
 
 from neural.data.base import DatasetMetadata, StaticDataFeeder
