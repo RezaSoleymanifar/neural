@@ -202,6 +202,7 @@ class StableBaselinesTrainer(AbstractTrainer):
         return market_env
 
     def train(self,
+              n_warmup_episodes: int = 1,
               steps: int = 1_000_000,
               progress_bar: bool = True,
               **kwargs) -> nn.Module:
@@ -222,6 +223,9 @@ class StableBaselinesTrainer(AbstractTrainer):
             
         """
         market_env = self._get_market_env()
+        for episode in range(n_warmup_episodes):
+            self.run_episode(market_env, random_actions=True)
+
         self.model.train(
             market_env, 
             total_timesteps=steps, 
