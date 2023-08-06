@@ -11,6 +11,7 @@ from torch import nn
 from stable_baselines3.common.on_policy_algorithm import OnPolicyAlgorithm
 from stable_baselines3 import PPO, A2C, DQN, SAC, TD3, DDPG
 
+from neural.envs.market import TrainMarketEnv
 
 class AbstractModel:
     """
@@ -142,10 +143,16 @@ class StableBaselinesModel(AbstractModel):
 
         return model
 
-    def _build_model(self, env: gym.Env):
+    def _build_model(self, env: TrainMarketEnv):
         model = self.algorithm(policy=self.policy, env=env)
         return model
-    
+
+    def _set_env(self, env: TrainMarketEnv) -> None:
+        self.base_model.save("temp_model")
+        self.base_model = self.base_model.load("temp_model", env)
+        os.remove("temp_model")
+        return None
+
     def train(self, env, *args, **kwargs):
         if self.base_model is None:
             self.base_model = self._build_model(env)

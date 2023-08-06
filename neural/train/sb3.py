@@ -201,12 +201,6 @@ class StableBaselinesTrainer(AbstractTrainer):
         else:
             market_env = DummyVecEnv(env_callables)
         return market_env
-
-    def _set_env(self, env: TrainMarketEnv) -> None:
-        self.model.save("temp_model")
-        self.model = self.model.load("temp_model", env)
-        os.remove("temp_model")
-        return None
     
     def train(self,
               n_warmup_episodes: int = 1,
@@ -232,7 +226,7 @@ class StableBaselinesTrainer(AbstractTrainer):
         market_env = self._get_market_env()
         for episode in range(n_warmup_episodes):
             self.run_episode(market_env, random_actions=True)
-        
+
         self.model.train(
             market_env,
             total_timesteps=steps,
