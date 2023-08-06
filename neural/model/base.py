@@ -111,19 +111,6 @@ class StableBaselinesModel(AbstractModel):
                              f"Supported options: {self.ALGORITHMS.keys()}")
         return algorithm_class
 
-    def train(self, env, *args, **kwargs):
-        if self.base_model is None:
-            self.base_model = self._build_model(env)
-        else:
-            self.base_model.env = env
-
-        self.base_model.learn(*args, **kwargs)
-        return None
-
-    def _build_model(self, env: gym.Env):
-        model = self.algorithm(policy=self.policy, env=env)
-        return model
-
     def save(self, dir: str | os.PathLike):
         os.makedirs(dir, exist_ok=True)
         self.base_model.save(os.path.join(dir, 'base_model'))
@@ -138,13 +125,13 @@ class StableBaselinesModel(AbstractModel):
         """
         Load the model from a directory. File structure should be:
         - dir
-            - model
-            - base_model.zip
+            └── model
+            └── base_model.zip
 
         Args:
         ----------
-        dir (str): 
-            The directory to load the model from.
+            dir (str):
+                The directory to load the model from.
         """
         with open(os.path.join(dir, 'model'), 'rb') as model_file:
             model = dill.load(model_file)
@@ -152,3 +139,16 @@ class StableBaselinesModel(AbstractModel):
                 os.path.join(dir, 'base_model'))
 
         return model
+
+    def _build_model(self, env: gym.Env):
+        model = self.algorithm(policy=self.policy, env=env)
+        return model
+    
+    def train(self, env, *args, **kwargs):
+        if self.base_model is None:
+            self.base_model = self._build_model(env)
+        else:
+            self.base_model.env = env
+
+        self.base_model.learn(*args, **kwargs)
+        return None
