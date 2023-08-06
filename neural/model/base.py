@@ -7,6 +7,7 @@ from torch import nn
 from stable_baselines3.common.on_policy_algorithm import OnPolicyAlgorithm
 from stable_baselines3 import PPO, A2C, DQN, SAC, TD3, DDPG
 
+
 class AbstractModel:
     """
     This is the base class for all models.
@@ -60,10 +61,35 @@ class AbstractModel:
 class StableBaselinesModel(AbstractModel):
     """
     This is the base class for all models that use stable-baselines.
+    Options for the algorithm are:
+        - 'ppo':
+            Proximal Policy Optimization (PPO)
+        - 'a2c':
+            Advantage Actor Critic (A2C)
+        - 'dqn':
+            Deep Q-Network (DQN)
+        - 'sac':
+            Soft Actor Critic (SAC)
+        - 'td3':    
+            Twin Delayed Deep Deterministic Policy Gradient (TD3)
+        - 'ddpg':
+            Deep Deterministic Policy Gradient (DDPG)
     """
-    def __init__(self, algorithm: OnPolicyAlgorithm, feature_extractor: nn.Module, policy: nn.Module):
+    ALGORITHMS = {
+        'ppo': PPO,
+        'a2c': A2C,
+        'dqn': DQN,
+        'sac': SAC,
+        'td3': TD3,
+        'ddpg': DDPG,
+    }
+
+    def __init__(self, 
+                 algorithm: str,
+                 feature_extractor: nn.Module, 
+                 policy: nn.Module):
         super().__init__()
-        self.algorithm = algorithm
+        self.algorithm = self._get_algorithm(algorithm)
         self.feature_extractor = feature_extractor
         self.policy = policy
         self.base_model = None
@@ -72,6 +98,12 @@ class StableBaselinesModel(AbstractModel):
         if self.base_model is None:
             raise RuntimeError("Model is not trained yet.")
         return self.base_model(observation)
+
+    def _get_algorithm(self, algorithm_name: str) -> BaseAlgorithm:
+        algorithm_class = self.ALGORITHMS.get(algorithm_name.lower())
+        if algorithm_class is None:
+            raise ValueError(f"Unsupported algorithm: {algorithm_name}")
+        return algorithm_class
 
     def train(self, env, *args, **kwargs):
         if self.base_model is None:
@@ -83,5 +115,5 @@ class StableBaselinesModel(AbstractModel):
         return None
 
     def _build_model(self, env: gym.Env):
-        model = self.algorithm(policy = self.policy, env = env)
+        model = self.algorithm(policy=self.policy, env=env)
         return model
