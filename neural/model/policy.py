@@ -9,6 +9,7 @@ from stable_baselines3.common.policies import ActorCriticPolicy
 
 class StableBaselinesActorCriticPolicy(ActorCriticPolicy):
 
+    @classmethod
     def set_actor_critic_networks(cls, actor_network: nn.Module, critic_network: nn.Module):
         """
         Set the policy and value networks for the policy.
@@ -17,7 +18,7 @@ class StableBaselinesActorCriticPolicy(ActorCriticPolicy):
         cls.critic_network = critic_network
         return None
 
-    def build_actor_critic_policy(cls, features_dim):
+    def build_actor_critic_policy(self, features_dim):
         """
         Build the policy and value networks using the specified features dimension.
         """
@@ -31,6 +32,8 @@ class StableBaselinesActorCriticPolicy(ActorCriticPolicy):
             ):
                 self.actor_network = actor_network(features_dim)
                 self.critic_network = critic_network(features_dim)
+                self.latent_dim_pi = self.actor_network.last_layer_dim
+                self.latent_dim_vf = self.critic_network.last_layer_dim
                 super().__init__()
 
             def forward(self, features: th.Tensor) -> Tuple[th.Tensor, th.Tensor]:
