@@ -90,7 +90,7 @@ class CustomNetwork(nn.Module):
         self.policy_network = policy_network
         self.value_network = value_network
         super().__init__()
-
+    
     def forward(self, features: th.Tensor) -> Tuple[th.Tensor, th.Tensor]:
         """
         :return: (th.Tensor, th.Tensor) latent_policy, latent_value of the specified network.
