@@ -44,7 +44,7 @@ import os
 
 from neural.data.base import DatasetMetadata
 from neural.meta.pipe import AbstractPipe
-from neural.model.base import AbstractModel
+from neural.model.base import AbstractModel, StableBaselinesModel
 
 
 @dataclass
@@ -95,34 +95,33 @@ class Agent:
             dill.dump(self.pipe, pipe_file)
 
         with open(os.path.join(dir, 'dataset_metadata'),
-                'wb') as dataset_metadata_file:
+                  'wb') as dataset_metadata_file:
             dill.dump(self.dataset_metadata, dataset_metadata_file)
 
         model_dir = os.path.join(dir, 'model')
         os.makedirs(model_dir, exist_ok=True)
         self.model.save(model_dir)
 
-
-    def load_agent(
+    def load(
         dir: str | os.PathLike,
-    ) -> Tuple[nn.Module, AbstractPipe, DatasetMetadata]:
+    ) -> Agent:
         """
-        Loads an agent from a tarfile. The agent is saved as a tarfile with
-        the following structure:
-        agent.tar
+        Loads an agent from a directory. The directory should have the
+        following structure:
+        dir
         ├── dataset_metadata
         ├── pipe
-        └── model.tar
+        └── model
             └── base_model.zip
             └── model
 
         Args:
         -------
-            file_path (str | os.PathLike):
-                The path to the tarfile to load the agent from.
+            dir (str | os.PathLike):
+                directory to load the agent from.
         Returns:
         --------
-            model (nn.Module):
+            model (AbstractModel):
                 The model of the agent.
             pipe (AbstractPipe):
                 The pipe of the agent.
@@ -132,10 +131,11 @@ class Agent:
         with open(os.path.join(dir, 'pipe'), 'rb') as pipe_file:
             pipe = dill.load(pipe_file)
 
-        with open(os.path.join(dir, 'dataset_metadata'), 'rb') as dataset_metadata_file:
+        with open(os.path.join(dir, 'dataset_metadata'),
+                  'rb') as dataset_metadata_file:
             dataset_metadata = dill.load(dataset_metadata_file)
 
         model_dir = os.path.join(dir, 'model')
-        StableBaselinesModel.load(model_dir)
+        model = StableBaselinesModel.load(model_dir)
 
         return Agent(model=model, pipe=pipe, dataset_metadata=dataset_metadata)
