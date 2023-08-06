@@ -91,7 +91,7 @@ class StableBaselinesModel(AbstractModel):
         algorithm: str,
         feature_extractor: nn.Module,
         policy: nn.Module):
-        
+
         super().__init__()
         self.algorithm = self._get_algorithm(algorithm)
         self.feature_extractor = feature_extractor
@@ -123,6 +123,8 @@ class StableBaselinesModel(AbstractModel):
         model = self.algorithm(policy=self.policy, env=env)
         return model
 
+    def save(self, file_path):
+        return super().save(file_path)
     def load(self, dir: str | os.PathLike):
         """
         Load the model from a directory.
