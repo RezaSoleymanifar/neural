@@ -285,6 +285,7 @@ def save_agent(file_path: str | os.PathLike, agent: Agent):
     ├── dataset_metadata
     ├── pipe
     └── model.tar
+        └── base_model.zip
         └── model
 
     Args:
@@ -306,7 +307,7 @@ def save_agent(file_path: str | os.PathLike, agent: Agent):
     add_to_tarfile(file_path, pipe_tar_info, pipe_file)
 
     model_file_path = os.path.join(os.path.dirname(file_path), 'model')
-    torch.save(model, model_file_path)
+    model.save(model_file_path)
     model_tar_info, model_file = get_file_like(model_file_path, 'model')
     add_to_tarfile(file_path, model_tar_info, model_file)
 
