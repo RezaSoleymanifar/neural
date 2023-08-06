@@ -13,6 +13,29 @@ from neural.model.base import StableBaselinesModel
 from neural.train.base import AbstractTrainer
 
 
+class Trainer:
+    """
+    A factory class for creating trainers. This class is used to
+    instantiate the appropriate trainer for the given agent.
+    """
+    MODEL_TYPE_TO_TRAINER_MAP = {
+        StableBaselinesModel: StableBaselinesTrainer
+    }
+    def __new__(cls, **kwargs):
+        agent = kwargs.get('agent')
+
+        if agent is None:
+            raise ValueError("Agent must be specified.")
+        else:
+            # Use model_to_trainer_map to choose the appropriate trainer
+            model_type = type(agent.model)
+            if model_type in cls.MODEL_TYPE_TO_TRAINER_MAP:
+                trainer_class = cls.MODEL_TYPE_TO_TRAINER_MAP[model_type]
+                return trainer_class(**kwargs)
+            else:
+                raise ValueError(f"No trainer found for model type: {model_type}")
+
+
 class StableBaselinesTrainer(AbstractTrainer):
     """
     A trainer for Stable Baselines 3 algorithms. Provides a unified
@@ -233,23 +256,3 @@ class StableBaselinesTrainer(AbstractTrainer):
             progress_bar=progress_bar)
 
         return None
-
-
-class Trainer:
-
-    MODEL_TYPE_TO_TRAINER_MAP = {
-        StableBaselinesModel: StableBaselinesTrainer
-    }
-    def __new__(cls, **kwargs):
-        agent = kwargs.get('agent')
-        
-        if agent is None:
-            raise ValueError("Agent must be specified.")
-        else:
-            # Use model_to_trainer_map to choose the appropriate trainer
-            model_type = type(agent.model)
-            if model_type in cls.MODEL_TYPE_TO_TRAINER_MAP:
-                trainer_cls = cls.MODEL_TYPE_TO_TRAINER_MAP[model_type]
-                return trainer_cls(model=agent.model, **kwargs)
-            else:
-                raise ValueError(f"No trainer found for model type: {model_type}")
