@@ -60,7 +60,7 @@ class StableBaselinesModel(AbstractModel):
     """
     This is the base class for all models that use stable-baselines.
     """
-    def __init__(self, feature_extractor: nn.Module, policy: nn.Module):
+    def __init__(self, algorith: OnePolicyAlgorithm feature_extractor: nn.Module, policy: nn.Module):
         super().__init__()
         self.feature_extractor = feature_extractor
         self.policy = policy
