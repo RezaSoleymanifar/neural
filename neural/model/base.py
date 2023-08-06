@@ -99,10 +99,11 @@ class StableBaselinesModel(AbstractModel):
             raise RuntimeError("Model is not trained yet.")
         return self.base_model(observation)
 
-    def _get_algorithm(self, algorithm_name: str) -> BaseAlgorithm:
+    def _get_algorithm(self, algorithm_name: str) -> OnPolicyAlgorithm:
         algorithm_class = self.ALGORITHMS.get(algorithm_name.lower())
         if algorithm_class is None:
-            raise ValueError(f"Unsupported algorithm: {algorithm_name}")
+            raise ValueError(f"Unsupported algorithm: {algorithm_name}. "
+                             f"Supported options: {self.ALGORITHMS.keys()}")
         return algorithm_class
 
     def train(self, env, *args, **kwargs):
