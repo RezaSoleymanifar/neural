@@ -9,28 +9,28 @@ from stable_baselines3.common.policies import ActorCriticPolicy
 
 class StableBaselinesActorCriticPolicy(ActorCriticPolicy):
 
-    def set_policy_value_networks(cls, policy_network: nn.Module, value_network: nn.Module):
+    def set_actor_critic_networks(cls, actor_network: nn.Module, critic_network: nn.Module):
         """
         Set the policy and value networks for the policy.
         """
-        cls.policy_network = policy_network
-        cls.value_network = value_network
+        cls.actor_network = actor_network
+        cls.critic_network = critic_network
         return None
 
-    def build_policy_value_networks(cls, features_dim):
+    def build_actor_critic_networks(cls, features_dim):
         """
         Build the policy and value networks using the specified features dimension.
         """
-        class CustomNetwork(nn.Module):
+        class CustomActorCriticNetwork(nn.Module):
 
             def __init__(
                 self,
                 features_dim: Tuple[int],
-                policy_network: Type[nn.Module],
-                value_network: Type[nn.Module],
+                actor_network: Type[nn.Module],
+                critic_network: Type[nn.Module],
             ):
-                self.policy_network = policy_network(features_dim)
-                self.value_network = value_network(features_dim)
+                self.actor_network = actor_network(features_dim)
+                self.critic_network = critic_network(features_dim)
                 super().__init__()
 
             def forward(self, features: th.Tensor) -> Tuple[th.Tensor, th.Tensor]:
@@ -46,7 +46,7 @@ class StableBaselinesActorCriticPolicy(ActorCriticPolicy):
             def forward_critic(self, features: th.Tensor) -> th.Tensor:
                 return self.value_net(features)
             
-        return CustomNetwork(features_dim, cls.policy_network, cls.value_network)
+        return CustomActorCriticNetwork(features_dim, cls.actor_network, cls.critic_network)
 
     def __init__(
         self,
@@ -67,4 +67,4 @@ class StableBaselinesActorCriticPolicy(ActorCriticPolicy):
         )
 
     def _build_mlp_extractor(self) -> None:
-        self.mlp_extractor = self.build_policy_value_networks(self.features_dim)
+        self.mlp_extractor = self.build_actor_critic_networks(self.features_dim)
