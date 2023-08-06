@@ -259,7 +259,6 @@ class AbstractTrainer(ABC):
         """
         return self.agent.model
 
-
     @property
     def pipe(self) -> AbstractPipe:
         """
@@ -409,10 +408,11 @@ class AbstractTrainer(ABC):
         ]
 
         async_env_pipes = [
-                copy.deepcopy(self.agent.pipe) for _ in range(self.n_async_envs)
+            copy.deepcopy(self.agent.pipe) for _ in range(self.n_async_envs)
+        ]
 
         env_callables = [
-            lambda pipe=pipe, env=env: pipe.pipe(env)
+            lambda pipe=pipe, env=env: pipe(env)
             for pipe, env in zip(async_env_pipes, async_envs)
         ]
 
@@ -489,7 +489,7 @@ class AbstractTrainer(ABC):
         create asynchronous environments for parallel training.
         """
         raise NotImplementedError
-    
+
     @abstractmethod
     def train(self, *args, **kwargs) -> nn.Module:
         """

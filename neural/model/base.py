@@ -84,9 +84,7 @@ class StableBaselinesModel(AbstractModel):
         'ddpg': DDPG,
     }
 
-    def __init__(self, 
-                 algorithm: str,
-                 feature_extractor: nn.Module, 
+    def __init__(self, algorithm: str, feature_extractor: nn.Module,
                  policy: nn.Module):
         super().__init__()
         self.algorithm = self._get_algorithm(algorithm)
