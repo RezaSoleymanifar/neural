@@ -92,15 +92,10 @@ class StableBaselinesModel(AbstractModel):
         'ddpg': DDPG,
     }
 
-    def __init__(
-        self,
-        algorithm: str,
-        feature_extractor: nn.Module,
-        policy: nn.Module):
+    def __init__(self, algorithm: str, policy: nn.Module):
 
         super().__init__()
         self.algorithm = self._get_algorithm(algorithm)
-        self.feature_extractor = feature_extractor
         self.policy = policy
         self.base_model = None
 
@@ -132,26 +127,28 @@ class StableBaselinesModel(AbstractModel):
     def save(self, dir: str | os.PathLike):
         os.makedirs(dir, exist_ok=True)
         self.base_model.save(os.path.join(dir, 'base_model'))
-        with open(os.path.join(dir, 'model'),
-            'wb') as model_file:
+        with open(os.path.join(dir, 'model'), 'wb') as model_file:
             model_copy = copy(self)
             del model_copy.base_model
             dill.dump(model_copy, model_file)
         return None
-    
-    def load(self, dir: str | os.PathLike):
-        """
-        Load the model from a directory.
 
-        Parameters:
+    @classmethod
+    def load(dir: str | os.PathLike):
+        """
+        Load the model from a directory. File structure should be:
+        - dir
+            - model
+            - base_model.zip
+
+        Args:
         ----------
         dir (str): 
             The directory to load the model from.
         """
         with open(os.path.join(dir, 'model'), 'rb') as model_file:
             model = dill.load(model_file)
-            model.base_model = model.algorithm.load(os.path.join(dir, 'base_model'))
+            model.base_model = model.algorithm.load(
+                os.path.join(dir, 'base_model'))
 
-        for attr_name, attr_value in vars(model).items():
-            if hasattr(self, attr_name):
-                setattr(self, attr_name, attr_value)
+        return model
