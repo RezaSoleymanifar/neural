@@ -240,10 +240,6 @@ class AbstractTrainer(ABC):
         self.initial_cash_range = initial_cash_range
         self.initial_assets_range = initial_asset_quantities_range
 
-        self._train_market_env = None
-        self._test_market_env = None
-        self._async_env_pipes = None
-
         if not 0 < train_ratio <= 1:
             raise ValueError("train_ratio must be in (0, 1]")
 
@@ -290,26 +286,6 @@ class AbstractTrainer(ABC):
             dict: Dataset metadata.
         """
         return self.agent.dataset_metadata
-
-    @property
-    def async_env_pipes(self) -> list[AbstractPipe]:
-        """
-        Returns a list of pipes saved after parallel training. If
-        training is resumed, then the saved pipes are used to restore
-        the state of the parallel environments. Useful for multi-stage
-        training with different configurations.
-
-        Returns:
-        --------
-            list[AbstractPipe]: List of pipes for saved for parallel
-                training. Can be reused to continue training in
-                parallel.
-        """
-        if self._async_env_pipes is None:
-            self.async_env_pipes = [
-                copy.deepcopy(self.agent.pipe) for _ in range(self.n_async_envs)
-            ] if self.async_env_pipes is None else self.async_env_pipes
-        return self._async_env_pipes
 
     def _get_train_test_data_feeders(
             self) -> Tuple[StaticDataFeeder, StaticDataFeeder]:
@@ -431,9 +407,13 @@ class AbstractTrainer(ABC):
                            initial_asset_quantities=initial_asset_quantities())
             for data_feeder in data_feeders
         ]
+
+        async_env_pipes = [
+                copy.deepcopy(self.agent.pipe) for _ in range(self.n_async_envs)
+
         env_callables = [
             lambda pipe=pipe, env=env: pipe.pipe(env)
-            for pipe, env in zip(self.async_env_pipes, async_envs)
+            for pipe, env in zip(async_env_pipes, async_envs)
         ]
 
         market_env = self.get_async_env(env_callables)
