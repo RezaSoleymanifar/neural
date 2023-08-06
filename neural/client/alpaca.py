@@ -1245,7 +1245,7 @@ class AlpacaTradeClient(AbstractTradeClient, AlpacaClient):
 
         status = True if self.account.status == AccountStatus.ACTIVE else False
         return status
-    
+
     def get_positions_dataframe(self) -> pd.DataFrame:
         """
         Get all current positions in the account. Position is defined as
@@ -1262,7 +1262,7 @@ class AlpacaTradeClient(AbstractTradeClient, AlpacaClient):
         positions_dataframe = objects_list_to_dataframe(self._positions)
 
         return positions_dataframe
-    
+
     def get_asset_quantities(self,
                              assets: List[AlpacaAsset]) -> np.ndarray[float]:
         """
