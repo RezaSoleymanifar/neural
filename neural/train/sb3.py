@@ -227,8 +227,8 @@ class StableBaselinesTrainer(AbstractTrainer):
             self.run_episode(market_env, random_actions=True)
 
         self.model.train(
-            market_env, 
-            total_timesteps=steps, 
+            market_env,
+            total_timesteps=steps,
             progress_bar=progress_bar)
 
         return None
