@@ -133,6 +133,11 @@ class Agent:
                 The pipe of the agent.
             dataset_metadata (DatasetMetadata):
                 The metadata of the dataset used to train the agent.
+
+        Examples:
+        ---------
+            >>> from neural.meta.agent import Agent
+            >>> agent = Agent.load(...)
         """
         with open(os.path.join(dir, 'pipe'), 'rb') as pipe_file:
             pipe = dill.load(pipe_file)
@@ -142,14 +147,16 @@ class Agent:
             dataset_metadata = dill.load(dataset_metadata_file)
 
         model_dir = os.path.join(dir, 'model')
-        model_class = self._get_model_class(model_dir)
+        model_class = cls._get_model_class(model_dir)
         model = model_class.load(model_dir)
 
         return Agent(model=model, pipe=pipe, dataset_metadata=dataset_metadata)
-    
-    def _get_model_class(self, model_dir: str | os.PathLike):
+
+    @classmethod
+    def _get_model_class(cls, model_dir: str | os.PathLike) -> AbstractModel:
         file_name_to_model_class = {
             StableBaselinesModel.MODEL_SAVE_FILE_NAME: StableBaselinesModel}
         for file_name, model_class in file_name_to_model_class.items():
             if os.path.exists(os.path.join(model_dir, file_name)):
                 return model_class
+        raise ValueError(f"Could not find a model file in {model_dir}.")
