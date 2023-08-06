@@ -312,7 +312,6 @@ def save_agent(file_path: str | os.PathLike, agent: Agent):
 
     os.remove(os.path.join(os.path.dirname(file_path), 'model'))
 
-
 def load_agent(
     file_path: str | os.PathLike,
 ) -> Tuple[nn.Module, AbstractPipe, DatasetMetadata]:
@@ -323,6 +322,7 @@ def load_agent(
     ├── dataset_metadata
     ├── pipe
     └── model.tar
+        └── base_model.zip
         └── model
 
     Args:
