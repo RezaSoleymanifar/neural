@@ -157,7 +157,7 @@ class StableBaselinesModel(AbstractModel):
         if self.base_model is None:
             self.base_model = self._build_model(env)
         else:
-            self.base_model.env = env
+            self._set_env(env)
 
         self.base_model.learn(*args, **kwargs)
         return None
