@@ -277,7 +277,7 @@ def add_to_tarfile(file_path, file_tar_info, file_like):
     return None
 
 
-def save_agent(save_dir: str | os.PathLike, agent: Agent):
+def save_agent(dir: str | os.PathLike, agent: Agent):
     """
     A function to save an agent to a tarfile. The agent is saved as a
     tarfile with the following structure:
@@ -299,26 +299,26 @@ def save_agent(save_dir: str | os.PathLike, agent: Agent):
     pipe = agent.pipe
     dataset_metadata = agent.dataset_metadata
 
-    os.makedirs(save_dir, exist_ok=True)
+    os.makedirs(dir, exist_ok=True)
 
     model = agent.model
     pipe = agent.pipe
     dataset_metadata = agent.dataset_metadata
 
-    with open(os.path.join(save_dir, 'pipe'), 'wb') as pipe_file:
+    with open(os.path.join(dir, 'pipe'), 'wb') as pipe_file:
         dill.dump(pipe, pipe_file)
 
-    with open(os.path.join(save_dir, 'dataset_metadata'),
+    with open(os.path.join(dir, 'dataset_metadata'),
               'wb') as dataset_metadata_file:
         dill.dump(dataset_metadata, dataset_metadata_file)
 
-    model_dir = os.path.join(save_dir, 'model')
+    model_dir = os.path.join(dir, 'model')
     os.makedirs(model_dir, exist_ok=True)
     model.save(model_dir)
 
 
 def load_agent(
-    file_path: str | os.PathLike,
+    dir: str | os.PathLike,
 ) -> Tuple[nn.Module, AbstractPipe, DatasetMetadata]:
     """
     Loads an agent from a tarfile. The agent is saved as a tarfile with
@@ -343,18 +343,15 @@ def load_agent(
         dataset_metadata (DatasetMetadata):
             The metadata of the dataset used to train the agent.
     """
-    with tarfile.open(file_path, 'r') as agent_file:
+    with open(os.path.join(dir, 'pipe'), 'rb') as pipe_file:
+        pipe = dill.load(pipe_file)
 
-        dataset_metadata_file = agent_file.extractfile('dataset_metadata')
-        dataset_metadata_bytes = dataset_metadata_file.read()
-        dataset_metadata = dill.loads(dataset_metadata_bytes)
+    with open(os.path.join(dir, 'dataset_metadata'), 'rb') as meta_file:
+        dataset_metadata = dill.load(meta_file)
 
-        pipe_file = agent_file.extractfile('pipe')
-        pipe_bytes = pipe_file.read()
-        pipe = dill.loads(pipe_bytes)
-
-        with tarfile.open(mode='r', fileobj=agent_file) as inner_tar:
-            model_file = inner_tar.extractfile('model')
-            model = torch.load(model_file)
+    model_dir = os.path.join(dir, 'model')
+    with open(os.path.join(dir, 'model'), 'rb') as model_file:
+        pipe = dill.load(model_file)
+    self.load(model_dir)
 
     return Agent(model=model, pipe=pipe, dataset_metadata=dataset_metadata)
