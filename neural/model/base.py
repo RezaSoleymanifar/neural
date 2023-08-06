@@ -49,6 +49,11 @@ class AbstractModel:
         """
         raise NotImplementedError
 
+    def load(self, file_path):
+        """
+        This 
+        """
+
     def train(self, env: gym.Env, *args, **kwargs):
         """
         Train the model.
@@ -88,7 +93,7 @@ class StableBaselinesModel(AbstractModel):
     }
 
     def __init__(
-        self, 
+        self,
         algorithm: str,
         feature_extractor: nn.Module,
         policy: nn.Module):
