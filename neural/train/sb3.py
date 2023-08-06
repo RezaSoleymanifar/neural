@@ -9,6 +9,7 @@ from torch import nn
 from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv
 
 from neural.meta.agent import Agent
+from neural.env.base import TrainMarketEnv
 from neural.train.base import AbstractTrainer
 
 
@@ -190,7 +191,7 @@ class StableBaselinesTrainer(AbstractTrainer):
                          )
 
         return None
-
+    
     def get_async_env(self, env_callables) -> Union[DummyVecEnv, SubprocVecEnv]:
         """
         Returns a vectorized environment for parallel training.
@@ -201,6 +202,12 @@ class StableBaselinesTrainer(AbstractTrainer):
             market_env = DummyVecEnv(env_callables)
         return market_env
 
+    def _set_env(self, env: TrainMarketEnv) -> None:
+        self.model.save("temp_model")
+        self.model = self.model.load("temp_model", env)
+        os.remove("temp_model")
+        return None
+    
     def train(self,
               n_warmup_episodes: int = 1,
               steps: int = 1_000_000,
@@ -225,7 +232,7 @@ class StableBaselinesTrainer(AbstractTrainer):
         market_env = self._get_market_env()
         for episode in range(n_warmup_episodes):
             self.run_episode(market_env, random_actions=True)
-
+        
         self.model.train(
             market_env,
             total_timesteps=steps,
