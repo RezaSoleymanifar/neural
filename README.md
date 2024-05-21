@@ -5,4 +5,4 @@ neural is a Python open source project for real-time equity and cryptocurrency t
 this project is designed to be a framework to standardize the MLOps workflows for designing, deploying and maintaining DRL algorithms that can trade stocks. This will reduce the code requirements to create production ready DRL agents and allows more foucs on model discovery and hyperparameter optimization.
 
 ### About me
-I'm data sicentist and I am passionate about practical use of Deep Reinforcement Learning practical for trading stocks. I wanted to create a toolset for other enthusiasts like me to discover models that are good at trading stocks with minimal code requirements.
+I'm a data sicentist and I am passionate about practical use of Deep Reinforcement Learning practical for trading stocks. I wanted to create a toolset for other enthusiasts like me to discover models that are good at trading stocks with minimal code requirements.
