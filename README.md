@@ -1,1 +1,1 @@
-neural is a Python libarary that allows algorithmic traders to leverage Deep Reinforcement Learning for trading equity. This package provide end to end support for designing, training and deploying deep reinforcement learning algorithms in real-time trading environments.
+neural is a Python libarary that allows algorithmic traders use Deep Reinforcement Learning for trading equity. This package provides end to end support for designing, training and deploying deep reinforcement learning algorithms in real-time trading environments.
